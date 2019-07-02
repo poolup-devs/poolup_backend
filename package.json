@@ -1,0 +1,28 @@
+{
+  "name": "BruinPool_backEnd",
+  "version": "1.0.0",
+  "description": "#Local Environment Setup 1. Install nodeJS by following installation guides from https://nodejs.org/en/download/ 2. Install all used packages & dependencies using:     `npm install` 3. Install mongoDB by following installation guides from: Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/  - this is different form the npm package listed in package.json, which is the driver that connects the DB to the nodeJS app.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.486.0",
+    "bluebird": "^3.5.5",
+    "body-parser": "^1.19.0",
+    "chalk": "^2.4.2",
+    "dotenv": "^8.0.0",
+    "express": "^4.17.1",
+    "file-type": "^12.0.0",
+    "fs": "0.0.1-security",
+    "js-sha256": "^0.9.0",
+    "mongoose": "^5.6.2",
+    "multiparty": "^4.2.1",
+    "nodemon": "^1.19.1"
+  }
+}

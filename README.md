@@ -7,12 +7,14 @@ This is the backend code repository for Bruinpool, made with NodeJS and express.
     `npm install`
 3. Install mongoDB by following installation guides from:
 Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
+
 Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
- - this is different form the npm package listed in package.json, which is the driver that connects the DB to the nodeJS app.
+
+this is different form the npm package listed in package.json, which is the driver that connects the DB to the nodeJS app.
 
 ## Local Development Setup
 1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
-2. In the home directory, run npm start
+2. In the home directory, run `npm dev`; this starts the backend application with nodemon
 3. The local backend development is set to use the port 3000
 
 ## Additional Tools

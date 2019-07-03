@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const sha256 = require('js-sha256');
 const path = require('path');
-const db = require('../db');
+const db = require('./db');
 require('dotenv').config();
 
 const S3_BUCKET = process.env.S3_BUCKET;

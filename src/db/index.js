@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const User = require('../models/user').User
+
 mongoose.connect('mongodb://localhost/bruinpool');
 
 const db = mongoose.connection;
@@ -12,16 +14,16 @@ db.once('open', () => {
   console.log('mongoose connected successfully');
 });
 
-const userSchema = mongoose.Schema({
-  email: String,
-  username: String,
-  password: String,
-  phoneNumber: String,
-  driverList: Array,
-  riderList: Array,
-  picUrl: String,
-  authToken: String,
-});
+// const userSchema = mongoose.Schema({
+//   email: String,
+//   username: String,
+//   password: String,
+//   phoneNumber: String,
+//   driverList: Array,
+//   riderList: Array,
+//   picUrl: String,
+//   authToken: String,
+// });
 
 const listSchema = mongoose.Schema({
   ownerEmail: String,
@@ -44,7 +46,7 @@ const notiSchema = mongoose.Schema({
   viewed: Boolean,
 });
 
-const User = mongoose.model('User', userSchema);
+// const User = mongoose.model('User', userSchema);
 const List = mongoose.model('List', listSchema);
 const Noti = mongoose.model('Noti', notiSchema);
 

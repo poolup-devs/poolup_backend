@@ -1,23 +1,23 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const sha256 = require('js-sha256');
-const path = require('path');
-const db = require('./db');
-require('dotenv').config();
+const express = require("express");
+const bodyParser = require("body-parser");
+const sha256 = require("js-sha256");
+const path = require("path");
+const db = require("./db");
+require("dotenv").config();
 
 const S3_BUCKET = process.env.S3_BUCKET;
 const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
 const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 
-const AWS = require('aws-sdk');
-const fs = require('fs');
-const fileType = require('file-type');
-const bluebird = require('bluebird');
-const multiparty = require('multiparty');
+const AWS = require("aws-sdk");
+const fs = require("fs");
+const fileType = require("file-type");
+const bluebird = require("bluebird");
+const multiparty = require("multiparty");
 
 AWS.config.update({
   accessKeyId: AWS_ACCESS_KEY_ID,
-  secretAccessKey: AWS_SECRET_ACCESS_KEY,
+  secretAccessKey: AWS_SECRET_ACCESS_KEY
 });
 
 AWS.config.setPromisesDependency(bluebird);
@@ -25,7 +25,7 @@ const s3 = new AWS.S3();
 
 const uploadFile = (buffer, name, type) => {
   const params = {
-    ACL: 'public-read',
+    ACL: "public-read",
     Body: buffer,
     Bucket: S3_BUCKET,
     ContentType: type.mime,
@@ -38,15 +38,99 @@ const app = express();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(__dirname + '/../public'));
+app.use(express.static(__dirname + "/../public"));
 
-app.get('/test-connection', (req,res)=>{
+////////////////////////////////////////
+//TESTER
+////////////////////////////////////////
+
+app.get("/test-connection", (req, res) => {
   res.send({
-    "name":"Han"
-  })
-})
+    name: "Connection Successful"
+  });
+});
 
-app.post('/upload-profile-pic', (req, res) => {
+////////////////////////////////////////
+//USERS
+////////////////////////////////////////
+
+//User Login
+app.get("/login", (req, res) => {
+  if (req.query.password) {
+    req.query.password = sha256(req.query.password);
+  }
+  const newToken = sha256(new Date().toString());
+  db.login(req.query, newToken, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
+
+//User Signup
+app.post("/signup", (req, res) => {
+  req.body.password = sha256(req.body.password);
+  db.checkAvailability(
+    req.body.email,
+    req.body.username,
+    req.body.phoneNumber,
+    (err, result) => {
+      if (err) {
+        res.sendStatus(500);
+      } else {
+        if (result.length === 0) {
+          db.post(req.body, (err, result) => {
+            if (err) {
+              res.sendStatus(500);
+            } else {
+              res.sendStatus(201);
+            }
+          });
+        } else {
+          res.sendStatus(200);
+        }
+      }
+    }
+  );
+});
+
+//Validate User Email
+app.get("/emailValidation", (req, res) => {
+  db.emailValidation(req.query.email, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(201).send(data);
+    }
+  });
+});
+
+//Validate Username
+app.get("/usernameValidation", (req, res) => {
+  db.usernameValidation(req.query.username, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(201).send(data);
+    }
+  });
+});
+
+//Validate User Phonenumber
+app.get("/phoneNumberValidation", (req, res) => {
+  db.phoneNumberValidation(req.query.phoneNumber, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(201).send(data);
+    }
+  });
+});
+
+//Uploading User Profile Image
+app.post("/upload-profile-pic", (req, res) => {
   const form = new multiparty.Form();
   form.parse(req, async (error, fields, files) => {
     if (error) throw new Error(error);
@@ -64,7 +148,7 @@ app.post('/upload-profile-pic', (req, res) => {
         } else {
           return res.sendStatus(200);
         }
-      })
+      });
     } catch (error) {
       console.log(error);
       return res.status(400).send(error);
@@ -72,21 +156,40 @@ app.post('/upload-profile-pic', (req, res) => {
   });
 });
 
-app.get('/login', (req, res) => {
-  if (req.query.password) {
-    req.query.password = sha256(req.query.password);
-  }
-  const newToken = sha256((new Date()).toString());
-  db.login(req.query, newToken, (err, data) => {
+//Get a User's Profile Image
+app.get("/usersPic", (req, res) => {
+  db.getPicUrl(req.query.username, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {
-      res.status(200).send(data);
+      res.status(201).send(data);
     }
   });
 });
 
-app.get('/rideList', (req, res) => {
+//Update User Data - NOT IMPLEMENTED IN DB
+app.post("/updateUser", (req, res) => {
+  db.updateUser(
+    req.body.email,
+    req.body.username,
+    req.body.vid_id,
+    req.body.pull,
+    (err, result) => {
+      if (err) {
+        res.sendStatus(500);
+      } else {
+        res.status(201).send(result);
+      }
+    }
+  );
+});
+
+////////////////////////////////////////
+//Rides
+////////////////////////////////////////
+
+//Get List of Rides
+app.get("/rideList", (req, res) => {
   db.getList(req.query, req.query.type, req.query.pageNum, (err, data) => {
     if (err) {
       res.sendStatus(500);
@@ -96,7 +199,8 @@ app.get('/rideList', (req, res) => {
   });
 });
 
-app.post('/rideList', (req, res) => {
+//Post a Ride
+app.post("/rideList", (req, res) => {
   db.postRide(req.body.rideInfo, (err, data) => {
     if (err) {
       res.sendStatus(500);
@@ -106,17 +210,24 @@ app.post('/rideList', (req, res) => {
   });
 });
 
-app.put('/rideList', (req, res) => {
-  db.rideUpdate(req.body.entry, req.body.userInfo, req.body.status, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(200).send(data);
+//Modify Data of a Ride
+app.put("/rideList", (req, res) => {
+  db.rideUpdate(
+    req.body.entry,
+    req.body.userInfo,
+    req.body.status,
+    (err, data) => {
+      if (err) {
+        res.sendStatus(500);
+      } else {
+        res.status(200).send(data);
+      }
     }
-  });
+  );
 });
 
-app.delete('/rideList', (req, res) => {
+//Delete a ride
+app.delete("/rideList", (req, res) => {
   const ride = JSON.parse(req.query.ride);
   db.rideDelete(ride._id, (err, data) => {
     if (err) {
@@ -127,17 +238,12 @@ app.delete('/rideList', (req, res) => {
   });
 });
 
-app.get('/usersPic', (req, res) => {
-  db.getPicUrl(req.query.username, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(201).send(data);
-    }
-  });
-});
+////////////////////////////////////////
+//NOTIFS
+////////////////////////////////////////
 
-app.get('/notification', (req, res) => {
+//Get Notif
+app.get("/notification", (req, res) => {
   const authToken = JSON.parse(req.query.authToken);
   db.getNoti(authToken.email, (err, data) => {
     if (err) {
@@ -148,7 +254,8 @@ app.get('/notification', (req, res) => {
   });
 });
 
-app.put('/notification', (req, res) => {
+//Modify Notif
+app.put("/notification", (req, res) => {
   db.updateNoti(req.body.email, (err, data) => {
     if (err) {
       res.sendStatus(500);
@@ -158,76 +265,18 @@ app.put('/notification', (req, res) => {
   });
 });
 
-app.get('/emailValidation', (req, res) => {
-  db.emailValidation(req.query.email, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(201).send(data);
-    }
-  });
-});
+////////////////////////////////////////
+//ERROR STATUS
+////////////////////////////////////////
 
-app.get('/usernameValidation', (req, res) => {
-  db.usernameValidation(req.query.username, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(201).send(data);
-    }
-  });
-});
-
-app.get('/phoneNumberValidation', (req, res) => {
-  db.phoneNumberValidation(req.query.phoneNumber, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(201).send(data);
-    }
-  });
-});
-
-app.post('/signup', (req, res) => {
-  req.body.password = sha256(req.body.password);
-  db.checkAvailability(req.body.email, req.body.username, req.body.phoneNumber, (err, result) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      if (result.length === 0) {
-        db.post(req.body, (err, result) => {
-          if(err) {
-            res.sendStatus(500);
-          } else {
-            res.sendStatus(201);
-          }
-        });
-      } else {
-        res.sendStatus(200);
-      }
-    }
-  });
-});
-
-app.post('/updateUser', (req, res) => {
-  db.updateUser(req.body.email, req.body.username, req.body.vid_id, req.body.pull, (err, result) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(201).send(result);
-    }
-  });
-});
-
-app.get('/*', (req, res) => {
-  res.sendFile(path.join(__dirname, '/../public/index.html'), (err) => {
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "/../public/index.html"), err => {
     if (err) {
       res.status(500).send(err);
     }
   });
 });
 
-
 app.listen(process.env.PORT || 3000, () => {
-  console.log('listening!');
+  console.log("listening!");
 });

@@ -1,182 +1,207 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const User = require('../models/user').User
+const User = require("../models/user").User;
+const Ride = require("../models/ride").Ride;
+const Noti = require("../models/noti").Noti;
 
-mongoose.connect('mongodb://localhost/bruinpool');
+mongoose.connect("mongodb://localhost/bruinpool", {
+  useNewUrlParser: true
+});
 
 const db = mongoose.connection;
 
-db.on('error', () => {
-  console.log('mongoose connection error');
+db.on("error", () => {
+  console.log("mongoose connection error");
 });
 
-db.once('open', () => {
-  console.log('mongoose connected successfully');
+db.once("open", () => {
+  console.log("mongoose connected successfully");
 });
 
-// const userSchema = mongoose.Schema({
-//   email: String,
-//   username: String,
-//   password: String,
-//   phoneNumber: String,
-//   driverList: Array,
-//   riderList: Array,
-//   picUrl: String,
-//   authToken: String,
-// });
-
-const listSchema = mongoose.Schema({
-  ownerEmail: String,
-  ownerUsername: String,
-  ownerPhoneNumber: String,
-  from: String,
-  to: String,
-  date: Date,
-  price: String,
-  seats: Number,
-  detail: String,
-  passengers: Array,
-});
-
-const notiSchema = mongoose.Schema({
-  email: String,
-  msg: String,
-  passengerPhoneNumber: String,
-  passengerEmail: String,
-  viewed: Boolean,
-});
-
-// const User = mongoose.model('User', userSchema);
-const List = mongoose.model('List', listSchema);
-const Noti = mongoose.model('Noti', notiSchema);
-
-const getList = (query, type, pageNum, callback) => {
-  if (type === 'rideFeed' && query.filter) {
+const getRide = (query, type, pageNum, callback) => {
+  if (type === "rideFeed" && query.filter) {
     const filter = JSON.parse(query.filter);
 
-    List.find({ from: filter.from, to: filter.to, date: { $gte: filter.date } }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+    Ride.find(
+      { from: filter.from, to: filter.to, date: { $gte: filter.date } },
+      (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, result);
+        }
       }
-    }).sort({ date: 1 }).limit(10 * pageNum);
-  } else if (type === 'rideFeedMore' && query.filter) {
+    )
+      .sort({ date: 1 })
+      .limit(10 * pageNum);
+  } else if (type === "rideFeedMore" && query.filter) {
     const filter = JSON.parse(query.filter);
 
-    List.find({ from: filter.from, to: filter.to, date: { $gte: filter.date } }, (err, result) => {
+    Ride.find(
+      { from: filter.from, to: filter.to, date: { $gte: filter.date } },
+      (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, result);
+        }
+      }
+    )
+      .sort({ date: 1 })
+      .skip(pageNum * 10)
+      .limit(10);
+  } else if (type === "rideFeedMore" && !query.filter) {
+    Ride.find({ date: { $gte: new Date() } }, (err, result) => {
       if (err) {
         callback(err, null);
       } else {
         callback(null, result);
       }
-    }).sort({ date: 1 }).skip(pageNum * 10).limit(10);
-  } else if (type === 'rideFeedMore' && !query.filter) {
-    List.find({ date: { $gte: new Date() } }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
-      }
-    }).sort({ date: 1 }).skip(pageNum * 10).limit(10);
-  } else if (type === 'driveHistory') {
+    })
+      .sort({ date: 1 })
+      .skip(pageNum * 10)
+      .limit(10);
+  } else if (type === "driveHistory") {
     const userInfo = JSON.parse(query.userInfo);
 
-    List.find({ ownerUsername: userInfo.username, date: { $lt: new Date() } }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+    Ride.find(
+      { ownerUsername: userInfo.username, date: { $lt: new Date() } },
+      (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, result);
+        }
       }
-    }).sort({ date: 1 }).limit(10 * pageNum);
-  } else if (type === 'driveHistoryMyAccount') {
+    )
+      .sort({ date: 1 })
+      .limit(10 * pageNum);
+  } else if (type === "driveHistoryMyAccount") {
     const userInfo = JSON.parse(query.userInfo);
 
-    List.find({ ownerUsername: userInfo.username, date: { $lt: new Date() } }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+    Ride.find(
+      { ownerUsername: userInfo.username, date: { $lt: new Date() } },
+      (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, result);
+        }
       }
-    }).sort({ date: 1 }).skip(pageNum * 5).limit(5);
-  } else if (type === 'driveHistoryMore') {
+    )
+      .sort({ date: 1 })
+      .skip(pageNum * 5)
+      .limit(5);
+  } else if (type === "driveHistoryMore") {
     const userInfo = JSON.parse(query.userInfo);
-    List.find({ ownerUsername: userInfo.username, date: { $lt: new Date() } }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+    Ride.find(
+      { ownerUsername: userInfo.username, date: { $lt: new Date() } },
+      (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, result);
+        }
       }
-    }).sort({ date: 1 }).skip(pageNum * 10).limit(10);
-  } else if (type === 'driveUpcoming') {
-    const userInfo = JSON.parse(query.userInfo);
-
-    List.find({ ownerUsername: userInfo.username, date: { $gte: new Date() } }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
-      }
-    }).sort({ date: 1 }).limit(3);
-  } else if (type === 'rideHistory') {
-    const userInfo = JSON.parse(query.userInfo);
-
-    List.find({ passengers: userInfo.username, date: { $lt: new Date() } }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
-      }
-    }).sort({ date: 1 }).limit(5);
-  } else if (type === 'rideHistoryMyAccount') {
+    )
+      .sort({ date: 1 })
+      .skip(pageNum * 10)
+      .limit(10);
+  } else if (type === "driveUpcoming") {
     const userInfo = JSON.parse(query.userInfo);
 
-    List.find({ passengers: userInfo.username, date: { $lt: new Date() } }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+    Ride.find(
+      { ownerUsername: userInfo.username, date: { $gte: new Date() } },
+      (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, result);
+        }
       }
-    }).sort({ date: 1 }).skip(pageNum * 5).limit(5);
-  } else if (type === 'rideUpcoming') {
+    )
+      .sort({ date: 1 })
+      .limit(3);
+  } else if (type === "rideHistory") {
     const userInfo = JSON.parse(query.userInfo);
 
-    List.find({ passengers: userInfo.username, date: { $gte: new Date() } }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+    Ride.find(
+      { passengers: userInfo.username, date: { $lt: new Date() } },
+      (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, result);
+        }
       }
-    }).sort({ date: 1 }).limit(3);
-  } else if (type === 'fetchHistoryTotal') {
+    )
+      .sort({ date: 1 })
+      .limit(5);
+  } else if (type === "rideHistoryMyAccount") {
     const userInfo = JSON.parse(query.userInfo);
 
-    List.count({ passengers: userInfo.username }, (err1, rideHistoryTotal) => {
+    Ride.find(
+      { passengers: userInfo.username, date: { $lt: new Date() } },
+      (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, result);
+        }
+      }
+    )
+      .sort({ date: 1 })
+      .skip(pageNum * 5)
+      .limit(5);
+  } else if (type === "rideUpcoming") {
+    const userInfo = JSON.parse(query.userInfo);
+
+    Ride.find(
+      { passengers: userInfo.username, date: { $gte: new Date() } },
+      (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, result);
+        }
+      }
+    )
+      .sort({ date: 1 })
+      .limit(3);
+  } else if (type === "fetchHistoryTotal") {
+    const userInfo = JSON.parse(query.userInfo);
+
+    Ride.count({ passengers: userInfo.username }, (err1, rideHistoryTotal) => {
       if (err1) {
         callback(err1, null);
       } else {
-        List.count({ ownerUsername: userInfo.username }, (err2, driveHistoryTotal) => {
-          if (err2) {
-            callback(err2, null);
-          } else {
-            callback(null, [rideHistoryTotal, driveHistoryTotal]);
+        Ride.count(
+          { ownerUsername: userInfo.username },
+          (err2, driveHistoryTotal) => {
+            if (err2) {
+              callback(err2, null);
+            } else {
+              callback(null, [rideHistoryTotal, driveHistoryTotal]);
+            }
           }
-        });
+        );
       }
     });
   } else {
-    List.find({ date: { $gte: new Date() } }, (err, result) => {
+    Ride.find({ date: { $gte: new Date() } }, (err, result) => {
       if (err) {
         callback(err, null);
       } else {
         callback(null, result);
       }
-    }).sort({ date: 1 }).limit(10 * pageNum);
+    })
+      .sort({ date: 1 })
+      .limit(10 * pageNum);
   }
 };
 
 const postRide = (rideInfo, callback) => {
-  List.create(rideInfo, (err, result) => {
+  Ride.create(rideInfo, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
@@ -186,13 +211,16 @@ const postRide = (rideInfo, callback) => {
 };
 
 const fetchMore = (multiplier, callback) => {
-  List.find({}, (err, result) => {
+  Ride.find({}, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
       callback(null, result);
     }
-  }).sort({ _id: -1 }).skip(multiplier * 18).limit(18);
+  })
+    .sort({ _id: -1 })
+    .skip(multiplier * 18)
+    .limit(18);
 };
 
 const rideUpdate = (upadatedRide, userInfo, status, callback) => {
@@ -201,30 +229,35 @@ const rideUpdate = (upadatedRide, userInfo, status, callback) => {
     msg: `${userInfo.username} has ${status}ed a ride`,
     passengerPhoneNumber: userInfo.phoneNumber,
     passengerEmail: userInfo.email,
-    viewed: false,
+    viewed: false
   };
 
-  List.findOneAndUpdate({ _id: upadatedRide._id, seats: { $gte: upadatedRide.passengers.length} }, upadatedRide, { new: true }, (err1, result1) => {
-    if (err1) {
-      callback(err1, null);
-    } else {
-      if (!userInfo.username || !status) {
-        callback(null, result1);
+  Ride.findOneAndUpdate(
+    { _id: upadatedRide._id, seats: { $gte: upadatedRide.passengers.length } },
+    upadatedRide,
+    { new: true },
+    (err1, result1) => {
+      if (err1) {
+        callback(err1, null);
       } else {
-        Noti.create(noti, (err2, result2) => {
-          if (err2) {
-            callback(err2, null);
-          } else {
-            callback(null, result1);
-          }
-        });
+        if (!userInfo.username || !status) {
+          callback(null, result1);
+        } else {
+          Noti.create(noti, (err2, result2) => {
+            if (err2) {
+              callback(err2, null);
+            } else {
+              callback(null, result1);
+            }
+          });
+        }
       }
     }
-  });
+  );
 };
 
 const rideDelete = (id, callback) => {
-  List.deleteOne({ _id: id }, (err, result) => {
+  Ride.deleteOne({ _id: id }, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
@@ -260,7 +293,9 @@ const getNoti = (email, callback) => {
     } else {
       callback(null, result);
     }
-  }).sort({ _id: -1 }).limit(8);
+  })
+    .sort({ _id: -1 })
+    .limit(8);
 };
 
 const updateNoti = (email, callback) => {
@@ -270,7 +305,9 @@ const updateNoti = (email, callback) => {
     } else {
       callback(null, result);
     }
-  }).sort({ _id: -1 }).limit(8);
+  })
+    .sort({ _id: -1 })
+    .limit(8);
 };
 
 const emailValidation = (email, callback) => {
@@ -303,7 +340,6 @@ const phoneNumberValidation = (phoneNumber, callback) => {
   });
 };
 
-
 const checkAvailability = (email, username, phoneNumber, callback) => {
   User.find({ email, username, phoneNumber }, (err, result) => {
     if (err) {
@@ -315,33 +351,41 @@ const checkAvailability = (email, username, phoneNumber, callback) => {
 };
 
 const login = (query, newToken, callback) => {
-  if (query.type === 'cookie') {
+  if (query.type === "cookie") {
     const parsed = JSON.parse(query.authToken);
-    User.find({
-      email: parsed.email,
-      authToken: parsed.authToken,
-    }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+    User.find(
+      {
+        email: parsed.email,
+        authToken: parsed.authToken
+      },
+      (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, result);
+        }
       }
-    });
-  } else if (query.type === 'login') {
-    User.findOneAndUpdate({
-      email: query.email,
-      password: query.password,
-    }, {
-      authToken: newToken,
-    }, {
-      new: true,
-    }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+    );
+  } else if (query.type === "login") {
+    User.findOneAndUpdate(
+      {
+        email: query.email,
+        password: query.password
+      },
+      {
+        authToken: newToken
+      },
+      {
+        new: true
+      },
+      (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          callback(null, result);
+        }
       }
-    });
+    );
   }
 };
 
@@ -368,10 +412,10 @@ module.exports = {
   phoneNumberValidation,
   fetchMore,
   postRide,
-  getList,
+  getRide,
   rideDelete,
   uploadPicUrl,
   getNoti,
   updateNoti,
-  getPicUrl,
+  getPicUrl
 };

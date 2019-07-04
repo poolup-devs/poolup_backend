@@ -22,6 +22,7 @@ AWS.config.update({
 
 AWS.config.setPromisesDependency(bluebird);
 const s3 = new AWS.S3();
+const port = process.env.PORT || 3000;
 
 const uploadFile = (buffer, name, type) => {
   const params = {
@@ -190,7 +191,7 @@ app.post("/updateUser", (req, res) => {
 
 //Get List of Rides
 app.get("/rideList", (req, res) => {
-  db.getList(req.query, req.query.type, req.query.pageNum, (err, data) => {
+  db.getRide(req.query, req.query.type, req.query.pageNum, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {
@@ -203,7 +204,7 @@ app.get("/rideList", (req, res) => {
 app.post("/rideList", (req, res) => {
   db.postRide(req.body.rideInfo, (err, data) => {
     if (err) {
-      res.sendStatus(500);
+      res.status(500).send(err);
     } else {
       res.status(200).send(data);
     }
@@ -277,6 +278,6 @@ app.get("/*", (req, res) => {
   });
 });
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log("listening!");
+app.listen(port, () => {
+  console.log("Server Listening on Port ", port);
 });

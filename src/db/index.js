@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
-const User = require("../models/user").User;
-const Ride = require("../models/ride").Ride;
-const Noti = require("../models/noti").Noti;
+const User = require("../user/user").User;
+const Ride = require("../ride/ride").Ride;
+const Noti = require("../noti/noti").Noti;
 
 mongoose.connect("mongodb://localhost/bruinpool", {
   useNewUrlParser: true

@@ -1,0 +1,137 @@
+const express = require("express");
+const router = new express.Router();
+
+//const User = require("./user");
+const db = require("../db");
+
+//User Login
+router.get("/login", (req, res) => {
+  if (req.query.password) {
+    req.query.password = sha256(req.query.password);
+  }
+  const newToken = sha256(new Date().toString());
+  db.login(req.query, newToken, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
+
+//User Signup
+router.post("/signup", (req, res) => {
+  req.body.password = sha256(req.body.password);
+  db.checkAvailability(
+    req.body.email,
+    req.body.username,
+    req.body.phoneNumber,
+    (err, result) => {
+      if (err) {
+        res.sendStatus(500);
+      } else {
+        if (result.length === 0) {
+          db.post(req.body, (err, result) => {
+            if (err) {
+              res.sendStatus(500);
+            } else {
+              res.sendStatus(201);
+            }
+          });
+        } else {
+          res.sendStatus(200);
+        }
+      }
+    }
+  );
+});
+
+//Validate User Email
+router.get("/emailValidation", (req, res) => {
+  db.emailValidation(req.query.email, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(201).send(data);
+    }
+  });
+});
+
+//Validate Username
+router.get("/usernameValidation", (req, res) => {
+  db.usernameValidation(req.query.username, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(201).send(data);
+    }
+  });
+});
+
+//Validate User Phonenumber
+router.get("/phoneNumberValidation", (req, res) => {
+  db.phoneNumberValidation(req.query.phoneNumber, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(201).send(data);
+    }
+  });
+});
+
+//Uploading User Profile Image
+router.post("/upload-profile-pic", (req, res) => {
+  const form = new multiparty.Form();
+  form.parse(req, async (error, fields, files) => {
+    if (error) throw new Error(error);
+    try {
+      const path = files.file[0].path;
+      const buffer = fs.readFileSync(path);
+      const type = fileType(buffer);
+      const timestamp = Date.now().toString();
+      const fileName = `bucketFolder/${timestamp}-lg`;
+      const data = await uploadFile(buffer, fileName, type);
+      db.uploadPicUrl(req.headers.userid, data.Location, (err, result) => {
+        console.log(result);
+        if (err) {
+          return res.sendStatus(501);
+        } else {
+          return res.sendStatus(200);
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send(error);
+    }
+  });
+});
+
+//Get a User's Profile Image
+router.get("/usersPic", (req, res) => {
+  db.getPicUrl(req.query.username, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(201).send(data);
+    }
+  });
+});
+
+//Update User Data - NOT IMPLEMENTED IN DB
+router.post("/updateUser", (req, res) => {
+  db.updateUser(
+    req.body.email,
+    req.body.username,
+    req.body.vid_id,
+    req.body.pull,
+    (err, result) => {
+      if (err) {
+        res.sendStatus(500);
+      } else {
+        res.status(201).send(result);
+      }
+    }
+  );
+});
+
+module.exports = router;

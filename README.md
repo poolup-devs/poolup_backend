@@ -24,7 +24,7 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 ## Additional Tools
 
 1. Install Postman to test backend REST APIs
-   Here's a link to a sample set of HTTP requests w/Postman: https://www.getpostman.com/collections/bcd0df61c8abfc805865
+   Here's a link to a sample set of HTTP requests w/Postman: press the import buttwon on upper left, and use the url https://www.getpostman.com/collections/bcd0df61c8abfc805865
 2. Install Robo 3T for mongoDB GUI and create a new connection to the DB using port 27017, the default mongoDB port
 
 ## Directory Structure

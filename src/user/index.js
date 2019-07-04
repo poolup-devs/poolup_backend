@@ -1,8 +1,8 @@
 const express = require("express");
 const router = new express.Router();
-
-//const User = require("./user");
 const db = require("../db");
+
+const multiparty = require("multiparty");
 
 //User Login
 router.get("/login", (req, res) => {

@@ -1,36 +1,21 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const sha256 = require("js-sha256");
 const path = require("path");
 const db = require("./db");
 require("dotenv").config();
-const fs = require("fs");
-const fileType = require("file-type");
-const bluebird = require("bluebird");
-const multiparty = require("multiparty");
 
-//AWS config
-const S3_BUCKET = process.env.S3_BUCKET;
-const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
-const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
-const AWS = require("aws-sdk");
-AWS.config.update({
-  accessKeyId: AWS_ACCESS_KEY_ID,
-  secretAccessKey: AWS_SECRET_ACCESS_KEY
-});
-AWS.config.setPromisesDependency(bluebird);
-const s3 = new AWS.S3();
-
-const uploadFile = (buffer, name, type) => {
-  const params = {
-    ACL: "public-read",
-    Body: buffer,
-    Bucket: S3_BUCKET,
-    ContentType: type.mime,
-    Key: `${name}.${type.ext}`
-  };
-  return s3.upload(params).promise();
-};
+// //AWS config
+// const bluebird = require("bluebird");
+// const S3_BUCKET = process.env.S3_BUCKET;
+// const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
+// const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+// const AWS = require("aws-sdk");
+// AWS.config.update({
+//   accessKeyId: AWS_ACCESS_KEY_ID,
+//   secretAccessKey: AWS_SECRET_ACCESS_KEY
+// });
+// AWS.config.setPromisesDependency(bluebird);
+// const s3 = new AWS.S3();
 
 //Port config
 const port = process.env.PORT || 3000;

@@ -6,13 +6,14 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 ## Local Environment Setup
 
 1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
-2. Install all used packages & dependencies using:
+2. Clone the repository to your local environment using `git clone https://github.com/bruinpool-devs/BruinPool_backEnd.git`
+3. Install all used packages & dependencies using:
    `npm install`
-3. Install mongoDB by following installation guides from:
+4. Install mongoDB by following installation guides from:
    Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
    Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
 
-This is different form the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
+This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
 For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
 
 ## Local Development Setup

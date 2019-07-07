@@ -145,3 +145,29 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 ##### Get the notification
 
 ##### Modify a notification
+
+## Deployment Instructions
+
+Currently the website uses Netlify for frontend's deployment and AWS for backend's deployment. Backend Node application uses systemd to maintain app's continuous execution.
+
+**Only the current engineering manager/ specified deployment manager should be able to access deployment servers**
+
+**The servers are set to run continuously; unless there is a major patch or a server malfunction, do not run the following deployment instructions**
+
+1. Switch to root user with:
+   `sudo su`
+2. Start mongodb daemon with:
+   `sudo service mongod start`
+3. Start the Node application service with:
+   `systemctl start node-5000`
+   if it indicates an error in mongoose connection, make sure that mongodb.service is running correctly
+4. Check that the service is up and running by listing all current running services with:
+   `systemctl -r --type service --all`
+   and check that node-5000.service is active and running
+
+- systemd service file's (for NodeJS app) location:
+  /etc/systemd/system/node-5000.service
+- the application is set to use the port 5000, a custom TCP Rule set in the AWS console under "Security Groups->Group Name:Node"
+
+Further Resources regarding systemctl:
+https://nodesource.com/blog/running-your-node-js-app-with-systemd-part-1/

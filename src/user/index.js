@@ -3,6 +3,21 @@ const router = new express.Router();
 const db = require("../db");
 
 const multiparty = require("multiparty");
+const fileType = require("file-type");
+const fs = require("fs");
+
+//AWS config
+const bluebird = require("bluebird");
+const S3_BUCKET = process.env.S3_BUCKET;
+const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
+const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+const AWS = require("aws-sdk");
+AWS.config.update({
+  accessKeyId: AWS_ACCESS_KEY_ID,
+  secretAccessKey: AWS_SECRET_ACCESS_KEY
+});
+AWS.config.setPromisesDependency(bluebird);
+const s3 = new AWS.S3();
 
 //User Login
 router.get("/login", (req, res) => {
@@ -133,5 +148,17 @@ router.post("/updateUser", (req, res) => {
     }
   );
 });
+
+//Upload a user file
+const uploadFile = (buffer, name, type) => {
+  const params = {
+    ACL: "public-read",
+    Body: buffer,
+    Bucket: S3_BUCKET,
+    ContentType: type.mime,
+    Key: `${name}.${type.ext}`
+  };
+  return s3.upload(params).promise();
+};
 
 module.exports = router;

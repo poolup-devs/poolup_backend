@@ -155,6 +155,13 @@ Currently the website uses Netlify for frontend's deployment and AWS for backend
 
 **The servers are set to run continuously; unless there is a major patch or a server malfunction, do not run the following deployment instructions**
 
+### Connecting to AWS EC2 instance
+
+Ask your current engineering manager for the PEM key file, and connect to the instance via SSH with instructions that can be found online.
+For root access, also ask your current engineering manager for root access privelages.
+
+### Starting the web server in EC2
+
 1. Switch to root user with:
    `sudo su`
 2. Start mongodb daemon with:

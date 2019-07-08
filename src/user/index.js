@@ -5,6 +5,7 @@ const db = require("../db");
 const multiparty = require("multiparty");
 const fileType = require("file-type");
 const fs = require("fs");
+const sha256 = require("sha256")
 
 //AWS config
 const bluebird = require("bluebird");
@@ -54,7 +55,7 @@ router.post("/signup", (req, res) => {
             }
           });
         } else {
-          res.sendStatus(200);
+          res.status(200).send("User Created Successfully");
         }
       }
     }
@@ -78,7 +79,7 @@ router.get("/usernameValidation", (req, res) => {
     if (err) {
       res.sendStatus(500);
     } else {
-      res.status(201).send(data);
+      res.status(201).send(data);p
     }
   });
 });

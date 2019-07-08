@@ -355,7 +355,7 @@ const login = (query, newToken, callback) => {
     const parsed = JSON.parse(query.authToken);
     User.find(
       {
-        email: parsed.email,
+        email: query.email,
         authToken: parsed.authToken
       },
       (err, result) => {

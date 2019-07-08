@@ -76,17 +76,86 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 
 ##### User Login
 
+##### Initial Login:
+GET request
+**params**
+email, password, type(=login)
+
+**example**
+/login?email=sampleEmail1@gmail.compassword=samplePassword1&type=login
+
+**return value**
+200 status, returns a user object
+
+##### Cookie Login
+GET request; 
+This must be after the initial login request since you need the authToken value generated from that step
+
+**params**
+email, password, type(=cookie), authToken(copied from the authToken value acquired from the returned user object of initial login request)
+
+**example**
+localhost:3000/login?email=sampleEmail1@gmail.com&password=samplePassword1&type=cookie&authToken={"authToken": "979a3a3c7e590f8d84af2df7d6c9b442d36483c7f920aa39320bdcf88170c6e1"}
+
 ##### User Signup
+
+POST request
+**Body**
+```
+{
+	"password": "samplePassword1",
+	"email":"sampleEmail1@gmail.com",
+	"username" : "sampleUser1",
+	"phoneNumber": "1231231234"
+}
+```
+
+**return value**
+200 status, message: `User Created Successfully`
 
 ##### Validation/usability of Email
 
+Get request
+**params**
+email
+
+**example**
+localhost:3000/emailValidation?email=sampleEmail1@gmail.com
+
+**return value**
+array of user objects with that email
+
 ##### Validation/usability of a username
+
+GET request
+
+**params**
+username
+
+**example**
+localhost:3000/usernameValidation?username=sampleUser1
+
+**return value**
+array of user objects with that username
 
 ##### Validation/usability of a phone number
 
+GET request
+
+**params**
+phoneNumber
+
+**example**
+localhost:3000/phoneNumberValidation?phoneNumber=1231231234
+
+**return value**
+array of user objects with that username
+
 ##### upload a user profile image
+**needs work**
 
 ##### Get a user's profile image
+**needs work**
 
 ##### Update user data; NOT IMPLEMENTED IN DB YET
 

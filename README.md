@@ -6,7 +6,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 ## Local Environment Setup
 
 1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
-2. Clone the repository to your local environment using `git clone https://github.com/bruinpool-devs/BruinPool_backEnd.git`
+2. Clone the repository to your local environment using `git clone https://github.com/bruinpool-devs/bruinpool_backend.git`
 3. Install all used packages & dependencies using:
    `npm install`
 4. Install mongoDB by following installation guides from:

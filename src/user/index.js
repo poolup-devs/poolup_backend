@@ -117,7 +117,7 @@ router.post("/upload-profile-pic", (req, res) => {
       });
     } catch (error) {
       console.log(error);
-      return res.status(400).send(AWS_ACCESS_KEY_ID);
+      return res.status(400).send(error);
     }
   });
 });

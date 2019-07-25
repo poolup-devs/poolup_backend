@@ -7,11 +7,12 @@ const fileType = require("file-type");
 const fs = require("fs");
 const sha256 = require("sha256")
 
-//AWS config
+//AWS S3 config
+//The provided keys are for staging s3 bucket; no need for security concern
 const bluebird = require("bluebird");
-const S3_BUCKET = process.env.S3_BUCKET;
-const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
-const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+const S3_BUCKET = process.env.S3_BUCKET || 'bruinpool-bucket-staging';
+const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID|| "AKIAS4TN7JFAED2FL4VC";
+const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY||"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";
 const AWS = require("aws-sdk");
 AWS.config.update({
   accessKeyId: AWS_ACCESS_KEY_ID,
@@ -19,6 +20,7 @@ AWS.config.update({
 });
 AWS.config.setPromisesDependency(bluebird);
 const s3 = new AWS.S3();
+
 
 //User Login
 router.get("/login", (req, res) => {
@@ -97,6 +99,9 @@ router.get("/phoneNumberValidation", (req, res) => {
 
 //Uploading User Profile Image
 router.post("/upload-profile-pic", (req, res) => {
+  console.log(S3_BUCKET)
+  console.log(AWS_ACCESS_KEY_ID)
+  console.log(AWS_SECRET_ACCESS_KEY)
   const form = new multiparty.Form();
   form.parse(req, async (error, fields, files) => {
     if (error) throw new Error(error);
@@ -108,7 +113,6 @@ router.post("/upload-profile-pic", (req, res) => {
       const fileName = `bucketFolder/${timestamp}-lg`;
       const data = await uploadFile(buffer, fileName, type);
       db.uploadPicUrl(req.headers.userid, data.Location, (err, result) => {
-        console.log(result);
         if (err) {
           return res.sendStatus(501);
         } else {
@@ -116,7 +120,6 @@ router.post("/upload-profile-pic", (req, res) => {
         }
       });
     } catch (error) {
-      console.log(error);
       return res.status(400).send(error);
     }
   });

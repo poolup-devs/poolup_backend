@@ -79,7 +79,7 @@ router.get("/usernameValidation", (req, res) => {
     if (err) {
       res.sendStatus(500);
     } else {
-      res.status(201).send(data);p
+      res.status(201).send(data);
     }
   });
 });
@@ -101,6 +101,9 @@ router.post("/upload-profile-pic", (req, res) => {
   form.parse(req, async (error, fields, files) => {
     if (error) throw new Error(error);
     try {
+      console.log(S3_BUCKET)
+      console.log(AWS_ACCESS_KEY_ID)
+      console.log(AWS_SECRET_ACCESS_KEY)
       const path = files.file[0].path;
       const buffer = fs.readFileSync(path);
       const type = fileType(buffer);

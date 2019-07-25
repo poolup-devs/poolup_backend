@@ -34,13 +34,17 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
     ├── node_modules
     ├── src
     │   ├── db
-    |   |   └── noti.js
-    │   ├── models
+    |   |   └── index.js
+    │   ├── noti
     |   |   ├── noti.js
+    |   |   └── index.js
+    │   ├── ride
     |   |   ├── ride.js
-    |   |   └── user.js
-    │   ├── tests
-    │   └── server.js
+    |   |   └── index.js
+    │   └── user 
+    |       ├── user.js
+    |       └── index.js
+    ├── tests
     ├── package-lock.json
     └── package.json
 
@@ -236,15 +240,17 @@ For root access, also ask your current engineering manager for root access prive
 2. Start mongodb daemon with:
    `sudo service mongod start`
 3. Start the Node application service with:
-   `systemctl start node-5000`
+   `systemctl start node-8080`
    if it indicates an error in mongoose connection, make sure that mongodb.service is running correctly
 4. Check that the service is up and running by listing all current running services with:
    `systemctl -r --type service --all`
-   and check that node-5000.service is active and running
+   and check that node-8080.service is active and running
 
 - systemd service file's (for NodeJS app) location:
-  /etc/systemd/system/node-5000.service
-- the application is set to use the port 5000, a custom TCP Rule set in the AWS console under "Security Groups->Group Name:Node"
+  /etc/systemd/system/node-8080.service
+- systemd's environment file's location:
+  /root/sec/bruinPool_Backend_envFile
+- the application is set to use the port 8080 (http)
 
 Further Resources regarding systemctl:
 https://nodesource.com/blog/running-your-node-js-app-with-systemd-part-1/

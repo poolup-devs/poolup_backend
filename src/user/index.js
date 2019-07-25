@@ -21,7 +21,6 @@ AWS.config.update({
 AWS.config.setPromisesDependency(bluebird);
 const s3 = new AWS.S3();
 
-
 //User Login
 router.get("/login", (req, res) => {
   if (req.query.password) {
@@ -99,9 +98,6 @@ router.get("/phoneNumberValidation", (req, res) => {
 
 //Uploading User Profile Image
 router.post("/upload-profile-pic", (req, res) => {
-  console.log(S3_BUCKET)
-  console.log(AWS_ACCESS_KEY_ID)
-  console.log(AWS_SECRET_ACCESS_KEY)
   const form = new multiparty.Form();
   form.parse(req, async (error, fields, files) => {
     if (error) throw new Error(error);
@@ -129,7 +125,7 @@ router.post("/upload-profile-pic", (req, res) => {
 router.get("/usersPic", (req, res) => {
   db.getPicUrl(req.query.username, (err, data) => {
     if (err) {
-      res.sendStatus(500);
+      res.status(500).send(err);
     } else {
       res.status(201).send(data);
     }

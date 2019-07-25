@@ -278,9 +278,13 @@ const uploadPicUrl = (_id, picUrl, callback) => {
 
 const getPicUrl = (username, callback) => {
   User.find({ username }, (err, result) => {
+    console.log(err)
     if (err) {
       callback(err, null);
-    } else {
+    } else if(result.length === 0){
+      callback("no result; potentially wrong id", null)
+    }
+    else {
       callback(null, result[0].picUrl);
     }
   });

@@ -4,19 +4,6 @@ const path = require("path");
 const db = require("./db");
 require("dotenv").config();
 
-// //AWS config
-// const bluebird = require("bluebird");
-// const S3_BUCKET = process.env.S3_BUCKET;
-// const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
-// const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
-// const AWS = require("aws-sdk");
-// AWS.config.update({
-//   accessKeyId: AWS_ACCESS_KEY_ID,
-//   secretAccessKey: AWS_SECRET_ACCESS_KEY
-// });
-// AWS.config.setPromisesDependency(bluebird);
-// const s3 = new AWS.S3();
-
 //Port config
 const port = process.env.PORT || 3000;
 

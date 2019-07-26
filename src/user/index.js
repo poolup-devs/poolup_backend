@@ -10,9 +10,9 @@ const sha256 = require("sha256")
 //AWS S3 config
 //The provided keys are for staging s3 bucket; no need for security concern
 const bluebird = require("bluebird");
-const S3_BUCKET = process.env.S3_BUCKET || 'bruinpool-bucket-staging';
-const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID|| "AKIAS4TN7JFAED2FL4VC";
-const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY||"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";
+const S3_BUCKET = process.env.S3_BUCKET;
+const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
+const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 const AWS = require("aws-sdk");
 AWS.config.update({
   accessKeyId: AWS_ACCESS_KEY_ID,

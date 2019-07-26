@@ -282,7 +282,7 @@ const getPicUrl = (username, callback) => {
     if (err) {
       callback(err, null);
     } else if(result.length === 0){
-      callback("no result; potentially wrong id", null)
+      callback("no result; potentially wrong username", null)
     }
     else {
       callback(null, result[0].picUrl);

@@ -13,7 +13,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
     `npm run setup`
     , which would create the file .env in the root directory. There, enter the bucket name, access key, and the secret access key assigned from the engineering manager and save.
 
-    !!!Make sure NOT to remove .env in .gitignore, as the committing the access keys online would compromise security and AWS may force shutdown the EC2 instance automatically!!!
+    !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
 
 5. Install mongoDB by following installation guides from:
    Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
@@ -58,7 +58,7 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 
 ### Model: User
 
-#### Schema
+### Schema
 
 | column      | type   |
 | ----------- | ------ |
@@ -71,7 +71,7 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 | picUrl      | String |
 | authToken   | String |
 
-#### API Endpoints
+### API Endpoints
 
 | url                    | HTTP Method | description                                 |
 | ---------------------- | ----------- | ------------------------------------------- |
@@ -83,8 +83,8 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 | /upload-profile-pic    | POST        | upload a user profile image                 |
 | /usersPic              | GET         | Get a user's profile image                  |
 | /updateUser            | POST        | Update user data; NOT IMPLEMENTED IN DB YET |
-
-##### User Login
+---
+### User Login
 
 ##### Initial Login:
 GET request
@@ -106,8 +106,8 @@ email, password, type(=cookie), authToken(copied from the authToken value acquir
 
 **example**
 localhost:3000/login?email=sampleEmail1@gmail.com&password=samplePassword1&type=cookie&authToken={"authToken": "979a3a3c7e590f8d84af2df7d6c9b442d36483c7f920aa39320bdcf88170c6e1"}
-
-##### User Signup
+---
+### User Signup
 
 POST request
 **Body**
@@ -122,8 +122,8 @@ POST request
 
 **return value**
 200 status, message: `User Created Successfully`
-
-##### Validation/usability of Email
+---
+### Validation/usability of Email
 
 Get request
 **params**
@@ -134,8 +134,8 @@ localhost:3000/emailValidation?email=sampleEmail1@gmail.com
 
 **return value**
 array of user objects with that email
-
-##### Validation/usability of a username
+---
+### Validation/usability of a username
 
 GET request
 
@@ -147,7 +147,7 @@ localhost:3000/usernameValidation?username=sampleUser1
 
 **return value**
 array of user objects with that username
-
+---
 ##### Validation/usability of a phone number
 
 GET request
@@ -160,15 +160,38 @@ localhost:3000/phoneNumberValidation?phoneNumber=1231231234
 
 **return value**
 array of user objects with that username
-
+---
 ##### upload a user profile image
-**needs work**
 
+POST request
+
+**Body**
+```
+{
+    "file": <img file>
+}
+```
+
+**return value**
+200 OK status code if successfully uploaded to S3 bucket; if not, error
+---
 ##### Get a user's profile image
-**needs work**
 
+GET request
+
+**params**
+username (not id)
+
+**example**
+localhost:3000/usersPic?username=sampleUser1
+
+**return value**
+Accessible URL to the img file in S3 bucket
+---
 ##### Update user data; NOT IMPLEMENTED IN DB YET
 
+not functional yet
+---
 ### Model: Ride
 
 #### Schema
@@ -256,7 +279,7 @@ For root access, also ask your current engineering manager for root access prive
   /etc/systemd/system/node-8080.service
 - systemd's environment file's location:
   /root/sec/bruinPool_Backend_envFile
-- the application is set to use the port 8080 (http)
+- the application is set to use the port 8080 (http); environment variable is set for port 80, but NGINX proxies it to port 8080
 
 Further Resources regarding systemctl:
 https://nodesource.com/blog/running-your-node-js-app-with-systemd-part-1/

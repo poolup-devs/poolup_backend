@@ -8,9 +8,6 @@ const fs = require("fs");
 const sha256 = require("sha256")
 
 require("dotenv").config();
-console.log(process.env.S3_BUCKET)
-console.log(process.env.AWS_ACCESS_KEY_ID)
-console.log(process.env.AWS_SECRET_ACCESS_KEY)
 
 //AWS S3 config
 const bluebird = require("bluebird");

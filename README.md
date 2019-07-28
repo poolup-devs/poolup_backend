@@ -97,7 +97,7 @@ email, password, type(=login)
 **return value**
 200 status, returns a user object
 
-##### Cookie Login
+##### Cookie Login:
 GET request; 
 This must be after the initial login request since you need the authToken value generated from that step
 
@@ -106,6 +106,7 @@ email, password, type(=cookie), authToken(copied from the authToken value acquir
 
 **example**
 localhost:3000/login?email=sampleEmail1@gmail.com&password=samplePassword1&type=cookie&authToken={"authToken": "979a3a3c7e590f8d84af2df7d6c9b442d36483c7f920aa39320bdcf88170c6e1"}
+
 ---
 ### User Signup
 

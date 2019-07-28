@@ -163,7 +163,7 @@ array of user objects with that username
 
 ---
 
-##### Validation/usability of a phone number
+### Validation/usability of a phone number
 
 GET request
 
@@ -178,7 +178,7 @@ array of user objects with that username
 
 ---
 
-##### upload a user profile image
+### upload a user profile image
 
 POST request
 
@@ -194,7 +194,7 @@ POST request
 
 ---
 
-##### Get a user's profile image
+### Get a user's profile image
 
 GET request
 
@@ -209,7 +209,7 @@ Accessible URL to the img file in S3 bucket
 
 ---
 
-##### Update user data; NOT IMPLEMENTED IN DB YET
+### Update user data; NOT IMPLEMENTED IN DB YET
 
 not functional yet
 
@@ -243,19 +243,19 @@ not functional yet
 
 ---
 
-##### Get list of rides
+### Get list of rides
 
 ---
 
-##### Post a ride
+### Post a ride
 
 ---
 
-##### Modify data of a ride
+### Modify data of a ride
 
 ---
 
-##### Delete a ride
+### Delete a ride
 
 ---
 
@@ -280,11 +280,11 @@ not functional yet
 
 ---
 
-##### Get the notification
+### Get the notification
 
 ---
 
-##### Modify a notification
+### Modify a notification
 
 ---
 

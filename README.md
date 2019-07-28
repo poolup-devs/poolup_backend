@@ -9,7 +9,13 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 2. Clone the repository to your local environment using `git clone https://github.com/bruinpool-devs/bruinpool_backend.git`
 3. Install all used packages & dependencies using:
    `npm install`
-4. Install mongoDB by following installation guides from:
+4. To connect to the development s3 bucket, run:
+    `npm run setup`
+    , which would create the file .env in the root directory. There, enter the bucket name, access key, and the secret access key assigned from the engineering manager and save.
+
+    !!!Make sure NOT to remove .env in .gitignore, as the committing the access keys online would compromise security and AWS may force shutdown the EC2 instance automatically!!!
+
+5. Install mongoDB by following installation guides from:
    Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
    Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
 

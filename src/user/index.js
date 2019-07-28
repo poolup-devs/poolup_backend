@@ -7,8 +7,12 @@ const fileType = require("file-type");
 const fs = require("fs");
 const sha256 = require("sha256")
 
+require("dotenv").config();
+console.log(process.env.S3_BUCKET)
+console.log(process.env.AWS_ACCESS_KEY_ID)
+console.log(process.env.AWS_SECRET_ACCESS_KEY)
+
 //AWS S3 config
-//The provided keys are for staging s3 bucket; no need for security concern
 const bluebird = require("bluebird");
 const S3_BUCKET = process.env.S3_BUCKET;
 const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;

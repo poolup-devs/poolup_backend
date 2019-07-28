@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const path = require("path");
 const db = require("./db");
 
-require("dotenv").config();
+require("dotenv").config({override:true});
 
 //Port config
 const port = process.env.PORT || 3000;

@@ -1,4 +1,5 @@
 # BruinPool Backend
+### api.bruinpool.io
 
 This is the backend code repository for Bruinpool: made with NodeJS, Express, and MongoDB w/ Mongoose.
 For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineering Manager.
@@ -31,7 +32,7 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 ## Additional Tools
 
 1. Install Postman to test backend REST APIs
-   Here's a link to a sample set of HTTP requests w/Postman: press the import buttwon on upper left, and use the url https://www.getpostman.com/collections/bcd0df61c8abfc805865
+   Here's a link to a sample set of HTTP requests w/Postman: press the import button on upper left, and use the url https://www.getpostman.com/collections/bcd0df61c8abfc805865
 2. Install Robo 3T for mongoDB GUI and create a new connection to the DB using port 27017, the default mongoDB port
 
 ## Directory Structure
@@ -244,6 +245,90 @@ not functional yet
 ---
 
 ### Get list of rides
+
+GET request
+
+12 types of requests:
+
+1. "rideFeed"
+
+**parmas**
+type=rideFeed, pageNum, filter
+
+**example**
+
+localhost:3000/rideList?type=rideFeed&pageNum=1&filter={ "from" : "Irvine", "to":"Los Angeles" , "date":"2019-04-20 00:00:00.000Z"}
+
+**return value**
+
+List of 'top 10*pageNum' available earliest rides according to the filter
+
+2. "rideFeedMore"
+
+If filter exists:
+
+same as "rideFeed", but skips the first '10*pageNum' results
+
+If filter is undefined:
+
+returns all rides that are currently available, skips the first 10 results
+
+3. "driveHistory"
+
+**params**
+type=driveHistory, userInfo, pageNum
+
+**example**
+localhost:3000/rideList?userInfo={"username":"bin315a1"}&type=driveHistory
+
+**return value**
+list of (top 10*pageNum) all the rides the specified user had driven (prior to the currnet date&time)
+
+4. "driveHistoryMyAccount"
+-expected to be depricated as code is exaclty the same as "driveHistory"
+
+5. "driveHistoryMore"
+same as "driveHistory", but skipping the first (10*pageNum) results
+
+6. "driveUpcoming"
+
+**params**
+type=driveUpcoming, userInfo
+
+**example**
+localhost:3000/rideList?userInfo={"username":"bin315a1"}&type=driveUpcoming
+
+**return value**
+returns 3 earliest upcoming future drives that the specified user has
+
+7. "rideHistory"
+
+**params**
+type=rideHistory, userInfo
+
+- INCOMPLETE
+
+8. "rideHistoryMyAccount"
+- expected to be deprecated
+
+9. "rideUpcoming"
+
+**params**
+type=rideUpcoming, userInfo
+
+- INCOMPLETE
+
+10. "fetchHistoryTotal"
+
+- INCOMPLETE
+
+11. n/a
+
+**params/body**
+pageNum
+
+**return value**
+return list of all available rides without filtering
 
 ---
 

@@ -6,7 +6,7 @@ const db = require("../db");
 
 //Get List of Rides
 router.get("/rideList", (req, res) => {
-  db.getRide(req.query, req.query.type, req.query.pageNum, (err, data) => {
+  db.getRide(req.quuery, req.query.type, req.query.pageNum, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {

@@ -189,6 +189,8 @@ const getRide = (query, type, pageNum, callback) => {
     });
   } else {
     Ride.find({ date: { $gte: new Date() } }, (err, result) => {
+      const date = new Date()
+      console.log(date)
       if (err) {
         callback(err, null);
       } else {

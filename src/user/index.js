@@ -5,7 +5,8 @@ const db = require("../db");
 const multiparty = require("multiparty");
 const fileType = require("file-type");
 const fs = require("fs");
-const sha256 = require("sha256")
+const sha256 = require("sha256");
+const chalk = require("chalk");
 
 require("dotenv").config();
 
@@ -21,6 +22,22 @@ AWS.config.update({
 });
 AWS.config.setPromisesDependency(bluebird);
 const s3 = new AWS.S3();
+
+//Test S3 connection
+const checkS3Connection = async () => {
+  const params = {
+    Bucket: S3_BUCKET,
+    Key: "connectionTester"
+  };
+  try {
+    await s3.headObject(params).promise();
+    console.log("Staging S3 bucket connection successful");
+  } catch (err) {
+    console.log(
+      chalk.red("ERROR: Staging S3 bucket connection failure; check .env file")
+    );
+  }
+};
 
 //User Login
 router.get("/login", (req, res) => {
@@ -101,7 +118,9 @@ router.get("/phoneNumberValidation", (req, res) => {
 router.post("/upload-profile-pic", (req, res) => {
   const form = new multiparty.Form();
   form.parse(req, async (error, fields, files) => {
-    if (error) throw new Error(error);
+    if (error) {
+      return res.status(400).send(error);
+    }
     try {
       const path = files.file[0].path;
       const buffer = fs.readFileSync(path);
@@ -159,7 +178,13 @@ const uploadFile = (buffer, name, type) => {
     ContentType: type.mime,
     Key: `${name}.${type.ext}`
   };
-  return s3.upload(params).promise();
+  return s3
+    .upload(params)
+    .promise()
+    .catch();
 };
 
-module.exports = router;
+module.exports = {
+  router: router,
+  checkS3Connection: checkS3Connection
+};

@@ -1,9 +1,12 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
+
+const User = require("./user/index");
+
 const db = require("./db");
 
-require("dotenv").config({override:true});
+require("dotenv").config({ override: true });
 
 //Port config
 const port = process.env.PORT || 3000;
@@ -16,7 +19,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + "/../public"));
 
 //Routers
-const userRouter = require("./user/index");
+const userRouter = User.router;
 const rideRouter = require("./ride/index");
 const notiRouter = require("./noti/index");
 
@@ -30,7 +33,7 @@ app.use(notiRouter);
 
 app.get("/test-connection", (req, res) => {
   res.send({
-    name: "Connection Successful"
+    status: "Connection Successful"
   });
 });
 
@@ -45,6 +48,8 @@ app.get("/*", (req, res) => {
     }
   });
 });
+
+User.checkS3Connection();
 
 app.listen(port, () => {
   console.log("Server Listening on Port ", port);

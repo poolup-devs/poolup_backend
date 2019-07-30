@@ -189,6 +189,8 @@ const getRide = (query, type, pageNum, callback) => {
     });
   } else {
     Ride.find({ date: { $gte: new Date() } }, (err, result) => {
+      const date = new Date()
+      console.log(date)
       if (err) {
         callback(err, null);
       } else {
@@ -278,9 +280,13 @@ const uploadPicUrl = (_id, picUrl, callback) => {
 
 const getPicUrl = (username, callback) => {
   User.find({ username }, (err, result) => {
+    console.log(err)
     if (err) {
       callback(err, null);
-    } else {
+    } else if(result.length === 0){
+      callback("no result; potentially wrong username", null)
+    }
+    else {
       callback(null, result[0].picUrl);
     }
   });

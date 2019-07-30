@@ -1,4 +1,5 @@
 # BruinPool Backend
+### api.bruinpool.io
 
 This is the backend code repository for Bruinpool: made with NodeJS, Express, and MongoDB w/ Mongoose.
 For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineering Manager.
@@ -6,10 +7,16 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 ## Local Environment Setup
 
 1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
-2. Clone the repository to your local environment using `git clone https://github.com/bruinpool-devs/BruinPool_backEnd.git`
+2. Clone the repository to your local environment using `git clone https://github.com/bruinpool-devs/bruinpool_backend.git`
 3. Install all used packages & dependencies using:
    `npm install`
-4. Install mongoDB by following installation guides from:
+4. To connect to the development s3 bucket, run:
+    `npm run setup`
+    , which would create the file .env in the root directory. There, enter the bucket name, access key, and the secret access key assigned from the engineering manager and save.
+
+    !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
+
+5. Install mongoDB by following installation guides from:
    Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
    Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
 
@@ -25,7 +32,7 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 ## Additional Tools
 
 1. Install Postman to test backend REST APIs
-   Here's a link to a sample set of HTTP requests w/Postman: press the import buttwon on upper left, and use the url https://www.getpostman.com/collections/bcd0df61c8abfc805865
+   Here's a link to a sample set of HTTP requests w/Postman: press the import button on upper left, and use the url https://www.getpostman.com/collections/bcd0df61c8abfc805865
 2. Install Robo 3T for mongoDB GUI and create a new connection to the DB using port 27017, the default mongoDB port
 
 ## Directory Structure
@@ -34,13 +41,17 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
     ├── node_modules
     ├── src
     │   ├── db
-    |   |   └── noti.js
-    │   ├── models
+    |   |   └── index.js
+    │   ├── noti
     |   |   ├── noti.js
+    |   |   └── index.js
+    │   ├── ride
     |   |   ├── ride.js
-    |   |   └── user.js
-    │   ├── tests
-    │   └── server.js
+    |   |   └── index.js
+    │   └── user 
+    |       ├── user.js
+    |       └── index.js
+    ├── tests
     ├── package-lock.json
     └── package.json
 
@@ -48,7 +59,7 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 
 ### Model: User
 
-#### Schema
+### Schema
 
 | column      | type   |
 | ----------- | ------ |
@@ -61,7 +72,7 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 | picUrl      | String |
 | authToken   | String |
 
-#### API Endpoints
+### API Endpoints
 
 | url                    | HTTP Method | description                                 |
 | ---------------------- | ----------- | ------------------------------------------- |
@@ -74,10 +85,14 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 | /usersPic              | GET         | Get a user's profile image                  |
 | /updateUser            | POST        | Update user data; NOT IMPLEMENTED IN DB YET |
 
-##### User Login
+---
+
+### User Login
 
 ##### Initial Login:
+
 GET request
+
 **params**
 email, password, type(=login)
 
@@ -87,7 +102,8 @@ email, password, type(=login)
 **return value**
 200 status, returns a user object
 
-##### Cookie Login
+##### Cookie Login:
+
 GET request; 
 This must be after the initial login request since you need the authToken value generated from that step
 
@@ -97,9 +113,12 @@ email, password, type(=cookie), authToken(copied from the authToken value acquir
 **example**
 localhost:3000/login?email=sampleEmail1@gmail.com&password=samplePassword1&type=cookie&authToken={"authToken": "979a3a3c7e590f8d84af2df7d6c9b442d36483c7f920aa39320bdcf88170c6e1"}
 
-##### User Signup
+---
+
+### User Signup
 
 POST request
+
 **Body**
 ```
 {
@@ -113,9 +132,12 @@ POST request
 **return value**
 200 status, message: `User Created Successfully`
 
-##### Validation/usability of Email
+---
+
+### Validation/usability of Email
 
 Get request
+
 **params**
 email
 
@@ -125,7 +147,9 @@ localhost:3000/emailValidation?email=sampleEmail1@gmail.com
 **return value**
 array of user objects with that email
 
-##### Validation/usability of a username
+---
+
+### Validation/usability of a username
 
 GET request
 
@@ -138,7 +162,9 @@ localhost:3000/usernameValidation?username=sampleUser1
 **return value**
 array of user objects with that username
 
-##### Validation/usability of a phone number
+---
+
+### Validation/usability of a phone number
 
 GET request
 
@@ -151,17 +177,48 @@ localhost:3000/phoneNumberValidation?phoneNumber=1231231234
 **return value**
 array of user objects with that username
 
-##### upload a user profile image
-**needs work**
+---
 
-##### Get a user's profile image
-**needs work**
+### upload a user profile image
 
-##### Update user data; NOT IMPLEMENTED IN DB YET
+POST request
+
+**Body**
+```
+{
+    "file": <img file>
+}
+```
+
+**return value**
+200 OK status code if successfully uploaded to S3 bucket; if not, error
+
+---
+
+### Get a user's profile image
+
+GET request
+
+**params**
+username (not id)
+
+**example**
+localhost:3000/usersPic?username=sampleUser1
+
+**return value**
+Accessible URL to the img file in S3 bucket
+
+---
+
+### Update user data; NOT IMPLEMENTED IN DB YET
+
+not functional yet
+
+---
 
 ### Model: Ride
 
-#### Schema
+### Schema
 
 | column           | type   |
 | ---------------- | ------ |
@@ -176,7 +233,7 @@ array of user objects with that username
 | detail           | String |
 | passengers       | Array  |
 
-#### API Endpoints
+### API Endpoints
 
 | url       | HTTP Method | description           |
 | --------- | ----------- | --------------------- |
@@ -185,17 +242,133 @@ array of user objects with that username
 | /rideList | PUT         | Modify data of a ride |
 | /rideList | DELETE      | Delete a ride         |
 
-##### Get list of rides
+---
 
-##### Post a ride
+### Get list of rides
 
-##### Modify data of a ride
+GET request
 
-##### Delete a ride
+12 types of requests:
+
+---
+
+1. "rideFeed"
+
+**parmas**
+type=rideFeed, pageNum, filter
+
+**example**
+
+localhost:3000/rideList?type=rideFeed&pageNum=1&filter={ "from" : "Irvine", "to":"Los Angeles" , "date":"2019-04-20 00:00:00.000Z"}
+
+**return value**
+
+List of 'top 10*pageNum' available earliest rides according to the filter
+
+---
+
+2. "rideFeedMore"
+
+If filter exists:
+
+same as "rideFeed", but skips the first '10*pageNum' results
+
+If filter is undefined:
+
+returns all rides that are currently available, skips the first 10 results
+
+---
+
+3. "driveHistory"
+
+**params**
+type=driveHistory, userInfo, pageNum
+
+**example**
+localhost:3000/rideList?userInfo={"username":"bin315a1"}&type=driveHistory
+
+**return value**
+list of (top 10*pageNum) all the rides the specified user had driven (prior to the currnet date&time)
+
+---
+
+4. "driveHistoryMyAccount"
+-expected to be depricated as code is exaclty the same as "driveHistory"
+
+---
+
+5. "driveHistoryMore"
+same as "driveHistory", but skipping the first (10*pageNum) results
+
+---
+
+6. "driveUpcoming"
+
+**params**
+type=driveUpcoming, userInfo
+
+**example**
+localhost:3000/rideList?userInfo={"username":"bin315a1"}&type=driveUpcoming
+
+**return value**
+returns 3 earliest upcoming future drives that the specified user has
+
+---
+
+7. "rideHistory"
+
+**params**
+type=rideHistory, userInfo
+
+- INCOMPLETE
+
+---
+
+8. "rideHistoryMyAccount"
+- expected to be deprecated
+
+---
+
+9. "rideUpcoming"
+
+**params**
+type=rideUpcoming, userInfo
+
+- INCOMPLETE
+
+---
+
+10. "fetchHistoryTotal"
+
+- INCOMPLETE
+
+---
+
+11. n/a
+
+**params/body**
+pageNum
+
+**return value**
+return list of all available rides without filtering
+
+---
+
+### Post a ride
+
+---
+
+### Modify data of a ride
+
+---
+
+### Delete a ride
+
+---
 
 ### Model: Noti
 
-#### Schema
+### Schema
 
 | column               | type    |
 | -------------------- | ------- |
@@ -205,16 +378,22 @@ array of user objects with that username
 | passengerEmail       | String  |
 | viewed               | Boolean |
 
-#### API Endpoints
+### API Endpoints
 
 | url           | HTTP Method | description           |
 | ------------- | ----------- | --------------------- |
 | /notification | GET         | Get the notification  |
 | /notification | PUT         | Modify a notification |
 
-##### Get the notification
+---
 
-##### Modify a notification
+### Get the notification
+
+---
+
+### Modify a notification
+
+---
 
 ## Deployment Instructions
 
@@ -236,15 +415,17 @@ For root access, also ask your current engineering manager for root access prive
 2. Start mongodb daemon with:
    `sudo service mongod start`
 3. Start the Node application service with:
-   `systemctl start node-5000`
+   `systemctl start node-8080`
    if it indicates an error in mongoose connection, make sure that mongodb.service is running correctly
 4. Check that the service is up and running by listing all current running services with:
    `systemctl -r --type service --all`
-   and check that node-5000.service is active and running
+   and check that node-8080.service is active and running
 
 - systemd service file's (for NodeJS app) location:
-  /etc/systemd/system/node-5000.service
-- the application is set to use the port 5000, a custom TCP Rule set in the AWS console under "Security Groups->Group Name:Node"
+  /etc/systemd/system/node-8080.service
+- systemd's environment file's location:
+  /root/sec/bruinPool_Backend_envFile
+- the application is set to use the port 8080 (http); environment variable is set for port 80, but NGINX proxies it to port 8080
 
 Further Resources regarding systemctl:
 https://nodesource.com/blog/running-your-node-js-app-with-systemd-part-1/

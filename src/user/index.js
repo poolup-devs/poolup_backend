@@ -7,7 +7,9 @@ const fileType = require("file-type");
 const fs = require("fs");
 const sha256 = require("sha256")
 
-//AWS config
+require("dotenv").config();
+
+//AWS S3 config
 const bluebird = require("bluebird");
 const S3_BUCKET = process.env.S3_BUCKET;
 const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
@@ -79,7 +81,7 @@ router.get("/usernameValidation", (req, res) => {
     if (err) {
       res.sendStatus(500);
     } else {
-      res.status(201).send(data);p
+      res.status(201).send(data);
     }
   });
 });
@@ -108,7 +110,6 @@ router.post("/upload-profile-pic", (req, res) => {
       const fileName = `bucketFolder/${timestamp}-lg`;
       const data = await uploadFile(buffer, fileName, type);
       db.uploadPicUrl(req.headers.userid, data.Location, (err, result) => {
-        console.log(result);
         if (err) {
           return res.sendStatus(501);
         } else {
@@ -116,7 +117,6 @@ router.post("/upload-profile-pic", (req, res) => {
         }
       });
     } catch (error) {
-      console.log(error);
       return res.status(400).send(error);
     }
   });
@@ -126,7 +126,7 @@ router.post("/upload-profile-pic", (req, res) => {
 router.get("/usersPic", (req, res) => {
   db.getPicUrl(req.query.username, (err, data) => {
     if (err) {
-      res.sendStatus(500);
+      res.status(500).send(err);
     } else {
       res.status(201).send(data);
     }

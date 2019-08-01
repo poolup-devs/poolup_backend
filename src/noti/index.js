@@ -2,7 +2,7 @@ const express = require("express");
 const router = new express.Router();
 
 //const Noti = require("./noti");
-const db = require("../db");
+const db = require("./controller.js");
 
 //Get Notif
 router.get("/notification", (req, res) => {

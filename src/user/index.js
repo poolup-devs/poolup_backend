@@ -1,61 +1,15 @@
 const express = require("express");
 const router = new express.Router();
-const db = require("../db");
 
 const multiparty = require("multiparty");
 const fileType = require("file-type");
 const fs = require("fs");
 const sha256 = require("sha256");
 const jwt = require("jsonwebtoken");
-const chalk = require("chalk");
 
+const db = require("./controller.js");
+const uploadFile = require("../db/awsS3_controller.js").uploadFile;
 const checkAuth = require("../middleware/jwt_authenticator.js");
-
-require("dotenv").config();
-
-//AWS S3 config
-const bluebird = require("bluebird");
-const S3_BUCKET = process.env.S3_BUCKET;
-const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
-const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
-const AWS = require("aws-sdk");
-AWS.config.update({
-  accessKeyId: AWS_ACCESS_KEY_ID,
-  secretAccessKey: AWS_SECRET_ACCESS_KEY
-});
-AWS.config.setPromisesDependency(bluebird);
-const s3 = new AWS.S3();
-
-//Test S3 connection
-const checkS3Connection = async () => {
-  const params = {
-    Bucket: S3_BUCKET,
-    Key: "connectionTester"
-  };
-  try {
-    await s3.headObject(params).promise();
-    console.log("Staging S3 bucket connection successful");
-  } catch (err) {
-    console.log(
-      chalk.red("ERROR: Staging S3 bucket connection failure; check .env file")
-    );
-  }
-};
-
-// //User Login
-// router.get("/login", (req, res) => {
-//   if (req.query.password) {
-//     req.query.password = sha256(req.query.password);
-//   }
-//   const newToken = sha256(new Date().toString());
-//   db.login(req.query, newToken, (err, data) => {
-//     if (err) {
-//       res.sendStatus(500);
-//     } else {
-//       res.status(200).send(data);
-//     }
-//   });
-// });
 
 //User Login
 router.post("/login", (req, res) => {
@@ -191,22 +145,4 @@ router.post("/updateUser", checkAuth, (req, res) => {
   );
 });
 
-//Upload a user file
-const uploadFile = (buffer, name, type) => {
-  const params = {
-    ACL: "public-read",
-    Body: buffer,
-    Bucket: S3_BUCKET,
-    ContentType: type.mime,
-    Key: `${name}.${type.ext}`
-  };
-  return s3
-    .upload(params)
-    .promise()
-    .catch();
-};
-
-module.exports = {
-  router: router,
-  checkS3Connection: checkS3Connection
-};
+module.exports = router;

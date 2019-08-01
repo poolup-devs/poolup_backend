@@ -2,11 +2,11 @@ const express = require("express");
 const router = new express.Router();
 
 //const Ride = require("./ride");
-const db = require("../db");
+const db = require("./controller.js");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 
 //Get List of Rides
-router.get("/rideList", (req, res) => {
+router.get("/rideList", checkAuth, (req, res) => {
   db.getRide(req.query, req.query.type, req.query.pageNum, (err, data) => {
     if (err) {
       res.sendStatus(500);
@@ -17,7 +17,7 @@ router.get("/rideList", (req, res) => {
 });
 
 //Post a Ride
-router.post("/rideList", (req, res) => {
+router.post("/rideList", checkAuth, (req, res) => {
   db.postRide(req.body.rideInfo, (err, data) => {
     if (err) {
       res.status(500).send(err);
@@ -28,7 +28,7 @@ router.post("/rideList", (req, res) => {
 });
 
 //Modify Data of a Ride
-router.put("/rideList", (req, res) => {
+router.put("/rideList", checkAuth, (req, res) => {
   db.rideUpdate(
     req.body.entry,
     req.body.userInfo,
@@ -44,7 +44,7 @@ router.put("/rideList", (req, res) => {
 });
 
 //Delete a ride
-router.delete("/rideList", (req, res) => {
+router.delete("/rideList", checkAuth, (req, res) => {
   const ride = JSON.parse(req.query.ride);
   db.rideDelete(ride._id, (err, data) => {
     if (err) {

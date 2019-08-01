@@ -7,7 +7,11 @@ const userSchema = mongoose.Schema({
   phoneNumber: String,
   driverList: Array,
   riderList: Array,
-  picUrl: String
+  picUrl: String,
+  verified: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const User = mongoose.model("User", userSchema);

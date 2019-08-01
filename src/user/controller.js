@@ -1,5 +1,58 @@
 const User = require("./user").User;
 
+const login = (email, password, callback) => {
+  User.findOne(
+    {
+      email: email,
+      password: password
+    },
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else if (result === null) {
+        callback({ message: "user with email and password not found" }, null);
+      } else if (result.verified === false) {
+        callback({ message: "email not verified" }, null);
+      } else {
+        callback(null, result);
+      }
+    }
+  );
+};
+
+const verifyEmail = (email, callback) => {
+  User.findOneAndUpdate({ email }, { verified: true }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
+const checkAvailability = (email, username, phoneNumber, callback) => {
+  User.find({ email, username, phoneNumber }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
+const signup = (userInfo, callback) => {
+  const newUser = userInfo;
+  newUser.posting_list = [];
+  newUser.participate = [];
+  User.create(newUser, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
 const uploadPicUrl = (_id, picUrl, callback) => {
   User.findOneAndUpdate({ _id }, { picUrl }, (err, result) => {
     if (err) {
@@ -64,52 +117,14 @@ const phoneNumberValidation = (phoneNumber, callback) => {
   });
 };
 
-const checkAvailability = (email, username, phoneNumber, callback) => {
-  User.find({ email, username, phoneNumber }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
-  });
-};
-
-const login = (email, password, callback) => {
-  User.findOne(
-    {
-      email: email,
-      password: password
-    },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
-      }
-    }
-  );
-};
-
-const post = (userInfo, callback) => {
-  const newUser = userInfo;
-  newUser.posting_list = [];
-  newUser.participate = [];
-  User.create(newUser, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
-  });
-};
-
 module.exports = {
   checkAvailability,
   login,
+  verifyEmail,
   emailValidation,
   usernameValidation,
   phoneNumberValidation,
   uploadPicUrl,
   getPicUrl,
-  post
+  signup
 };

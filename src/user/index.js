@@ -6,10 +6,17 @@ const fileType = require("file-type");
 const fs = require("fs");
 const sha256 = require("sha256");
 const jwt = require("jsonwebtoken");
+const sgMail = require("@sendgrid/mail");
 
 const db = require("./controller.js");
 const uploadFile = require("../db/awsS3_controller.js").uploadFile;
 const checkAuth = require("../middleware/jwt_authenticator.js");
+
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
+const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+
+sgMail.setApiKey(SENDGRID_API_KEY);
 
 //User Login
 router.post("/login", (req, res) => {
@@ -18,9 +25,9 @@ router.post("/login", (req, res) => {
   }
   db.login(req.body.email, req.body.password, (err, data) => {
     if (err) {
-      res.sendStatus(500);
+      res.status(500).send(err);
     } else {
-      const token = jwt.sign({ _id: data._id }, process.env.JWT_SECRET_KEY, {
+      const token = jwt.sign({ _id: data._id }, JWT_SECRET_KEY, {
         expiresIn: "1h"
       });
       data = data.toJSON();
@@ -42,19 +49,58 @@ router.post("/signup", (req, res) => {
         res.sendStatus(500);
       } else {
         if (result.length === 0) {
-          db.post(req.body, (err, result) => {
+          db.signup(req.body, (err, result) => {
             if (err) {
               res.sendStatus(500);
             } else {
-              res.sendStatus(201);
+              const token = jwt.sign({ email: req.body.email }, JWT_EMAIL_KEY, {
+                expiresIn: 60000 //10 minutes
+              });
+              const url = "bruinpool.io?authorization=" + token;
+              const email = {
+                to: req.body.email,
+                from: "bruinpool@gmail.com",
+                subject: "Bruinpool: Email Verification Required",
+                text: "Here's the link",
+                html: "Here's the link: " + url
+              };
+              sgMail
+                .send(email)
+                .then(() => {
+                  res.sendStatus(201);
+                })
+                .catch(error => {
+                  console.log(error);
+                  res.sendStatus(500);
+                });
             }
           });
         } else {
-          res.status(200).send("User Created Successfully");
+          res.status(409).send({
+            message:
+              "User with email / username already exists, or is waiting for email verification"
+          });
         }
       }
     }
   );
+});
+
+//Verify Email
+router.get("/verify", (req, res) => {
+  try {
+    const userEmail = jwt.verify(req.query.token, JWT_EMAIL_KEY);
+    console.log(userEmail.email);
+    db.verifyEmail(userEmail.email, (err, data) => {
+      if (err) {
+        res.sendStatus(400);
+      } else {
+        res.redirect("https://bruinpool.io");
+      }
+    });
+  } catch (err) {
+    res.sendStatus(401);
+  }
 });
 
 //Validate User Email

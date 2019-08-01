@@ -3,6 +3,7 @@ const router = new express.Router();
 
 //const Ride = require("./ride");
 const db = require("../db");
+const checkAuth = require("../middleware/jwt_authenticator.js");
 
 //Get List of Rides
 router.get("/rideList", (req, res) => {

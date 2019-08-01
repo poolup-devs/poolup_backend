@@ -6,7 +6,10 @@ const multiparty = require("multiparty");
 const fileType = require("file-type");
 const fs = require("fs");
 const sha256 = require("sha256");
+const jwt = require("jsonwebtoken");
 const chalk = require("chalk");
+
+const checkAuth = require("../middleware/jwt_authenticator.js");
 
 require("dotenv").config();
 
@@ -39,16 +42,35 @@ const checkS3Connection = async () => {
   }
 };
 
+// //User Login
+// router.get("/login", (req, res) => {
+//   if (req.query.password) {
+//     req.query.password = sha256(req.query.password);
+//   }
+//   const newToken = sha256(new Date().toString());
+//   db.login(req.query, newToken, (err, data) => {
+//     if (err) {
+//       res.sendStatus(500);
+//     } else {
+//       res.status(200).send(data);
+//     }
+//   });
+// });
+
 //User Login
-router.get("/login", (req, res) => {
-  if (req.query.password) {
-    req.query.password = sha256(req.query.password);
+router.post("/login", (req, res) => {
+  if (req.body.password) {
+    req.body.password = sha256(req.body.password);
   }
-  const newToken = sha256(new Date().toString());
-  db.login(req.query, newToken, (err, data) => {
+  db.login(req.body.email, req.body.password, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {
+      const token = jwt.sign({ _id: data._id }, process.env.JWT_SECRET_KEY, {
+        expiresIn: "1h"
+      });
+      data = data.toJSON();
+      data.authorization = token;
       res.status(200).send(data);
     }
   });
@@ -115,7 +137,7 @@ router.get("/phoneNumberValidation", (req, res) => {
 });
 
 //Uploading User Profile Image
-router.post("/upload-profile-pic", (req, res) => {
+router.post("/upload-profile-pic", checkAuth, (req, res) => {
   const form = new multiparty.Form();
   form.parse(req, async (error, fields, files) => {
     if (error) {
@@ -142,7 +164,7 @@ router.post("/upload-profile-pic", (req, res) => {
 });
 
 //Get a User's Profile Image
-router.get("/usersPic", (req, res) => {
+router.get("/usersPic", checkAuth, (req, res) => {
   db.getPicUrl(req.query.username, (err, data) => {
     if (err) {
       res.status(500).send(err);
@@ -153,7 +175,7 @@ router.get("/usersPic", (req, res) => {
 });
 
 //Update User Data - NOT IMPLEMENTED IN DB
-router.post("/updateUser", (req, res) => {
+router.post("/updateUser", checkAuth, (req, res) => {
   db.updateUser(
     req.body.email,
     req.body.username,

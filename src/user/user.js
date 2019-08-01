@@ -7,8 +7,7 @@ const userSchema = mongoose.Schema({
   phoneNumber: String,
   driverList: Array,
   riderList: Array,
-  picUrl: String,
-  authToken: String
+  picUrl: String
 });
 
 const User = mongoose.model("User", userSchema);

@@ -281,7 +281,19 @@ const getPicUrl = (username, callback) => {
     if (err) {
       callback(err, null);
     } else if (result.length === 0) {
-      callback("no result; potentially wrong username", null);
+      callback(
+        {
+          message: "ERROR: no result; potentially wrong username"
+        },
+        null
+      );
+    } else if (result[0].picUrl === undefined) {
+      callback(
+        {
+          message: "ERROR: user's profile picture undefined"
+        },
+        null
+      );
     } else {
       callback(null, result[0].picUrl);
     }
@@ -352,44 +364,60 @@ const checkAvailability = (email, username, phoneNumber, callback) => {
   });
 };
 
-const login = (query, newToken, callback) => {
-  if (query.type === "cookie") {
-    const parsed = JSON.parse(query.authToken);
-    User.find(
-      {
-        email: query.email,
-        authToken: parsed.authToken
-      },
-      (err, result) => {
-        if (err) {
-          callback(err, null);
-        } else {
-          callback(null, result);
-        }
+const login = (email, password, callback) => {
+  User.findOne(
+    {
+      email: email,
+      password: password
+    },
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, result);
       }
-    );
-  } else if (query.type === "login") {
-    User.findOneAndUpdate(
-      {
-        email: query.email,
-        password: query.password
-      },
-      {
-        authToken: newToken
-      },
-      {
-        new: true
-      },
-      (err, result) => {
-        if (err) {
-          callback(err, null);
-        } else {
-          callback(null, result);
-        }
-      }
-    );
-  }
+    }
+  );
 };
+
+// const login = (query, newToken, callback) => {
+//   if (query.type === "cookie") {
+//     const parsed = JSON.parse(query.authToken);
+//     User.find(
+//       {
+//         email: query.email,
+//         authToken: parsed.authToken
+//       },
+//       (err, result) => {
+//         if (err) {
+//           callback(err, null);
+//         } else {
+//           callback(null, result);
+//         }
+//       }
+//     );
+//   } else if (query.type === "login") {
+//     User.findOneAndUpdate(
+//       {
+//         email: query.email,
+//         password: query.password
+//       },
+//       {
+//         authToken: newToken
+//       },
+//       {
+//         new: true
+//       },
+//       (err, result) => {
+//         if (err) {
+//           callback(err, null);
+//         } else {
+//           callback(null, result);
+//         }
+//       }
+//     );
+//   }
+// };
 
 const post = (userInfo, callback) => {
   const newUser = userInfo;

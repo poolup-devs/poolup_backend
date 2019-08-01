@@ -1,4 +1,5 @@
 # BruinPool Backend
+
 ### api.bruinpool.io
 
 This is the backend code repository for Bruinpool: made with NodeJS, Express, and MongoDB w/ Mongoose.
@@ -11,10 +12,10 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 3. Install all used packages & dependencies using:
    `npm install`
 4. To connect to the development s3 bucket, run:
-    `npm run setup`
-    , which would create the file .env in the root directory. There, enter the bucket name, access key, and the secret access key assigned from the engineering manager and save.
+   `npm run setup`
+   , which would create the file .env in the root directory. There, enter the bucket name, access key, and the secret access key assigned from the engineering manager and save.
 
-    !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
+   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
 
 5. Install mongoDB by following installation guides from:
    Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
@@ -48,12 +49,22 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
     │   ├── ride
     |   |   ├── ride.js
     |   |   └── index.js
-    │   └── user 
+    │   └── user
     |       ├── user.js
     |       └── index.js
     ├── tests
     ├── package-lock.json
     └── package.json
+
+## Auth Tokens
+
+For all API requests after login, the bearer token must be included in headers for authorization.
+
+| Key           | Value               |
+| ------------- | ------------------- |
+| Authorization | Bearer <Auth token> |
+
+There must be a white space between the string "Bearer" and the token string
 
 ## Models & API Endpoints Documentation
 
@@ -104,7 +115,7 @@ email, password, type(=login)
 
 ##### Cookie Login:
 
-GET request; 
+GET request;
 This must be after the initial login request since you need the authToken value generated from that step
 
 **params**
@@ -120,6 +131,7 @@ localhost:3000/login?email=sampleEmail1@gmail.com&password=samplePassword1&type=
 POST request
 
 **Body**
+
 ```
 {
 	"password": "samplePassword1",
@@ -184,6 +196,7 @@ array of user objects with that username
 POST request
 
 **Body**
+
 ```
 {
     "file": <img file>
@@ -263,7 +276,7 @@ localhost:3000/rideList?type=rideFeed&pageNum=1&filter={ "from" : "Irvine", "to"
 
 **return value**
 
-List of 'top 10*pageNum' available earliest rides according to the filter
+List of 'top 10\*pageNum' available earliest rides according to the filter
 
 ---
 
@@ -271,7 +284,7 @@ List of 'top 10*pageNum' available earliest rides according to the filter
 
 If filter exists:
 
-same as "rideFeed", but skips the first '10*pageNum' results
+same as "rideFeed", but skips the first '10\*pageNum' results
 
 If filter is undefined:
 
@@ -288,17 +301,17 @@ type=driveHistory, userInfo, pageNum
 localhost:3000/rideList?userInfo={"username":"bin315a1"}&type=driveHistory
 
 **return value**
-list of (top 10*pageNum) all the rides the specified user had driven (prior to the currnet date&time)
+list of (top 10\*pageNum) all the rides the specified user had driven (prior to the currnet date&time)
 
 ---
 
 4. "driveHistoryMyAccount"
--expected to be depricated as code is exaclty the same as "driveHistory"
+   -expected to be depricated as code is exaclty the same as "driveHistory"
 
 ---
 
 5. "driveHistoryMore"
-same as "driveHistory", but skipping the first (10*pageNum) results
+   same as "driveHistory", but skipping the first (10\*pageNum) results
 
 ---
 
@@ -325,6 +338,7 @@ type=rideHistory, userInfo
 ---
 
 8. "rideHistoryMyAccount"
+
 - expected to be deprecated
 
 ---

@@ -49,7 +49,9 @@ app.get("/*", (req, res) => {
   });
 });
 
-User.checkS3Connection();
+if (process.env.MODE === "STAGING") {
+  User.checkS3Connection();
+}
 
 app.listen(port, () => {
   console.log("Server Listening on Port ", port);

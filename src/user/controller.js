@@ -20,16 +20,6 @@ const login = (email, password, callback) => {
   );
 };
 
-const verifyEmail = (email, callback) => {
-  User.findOneAndUpdate({ email }, { verified: true }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
-  });
-};
-
 const checkAvailability = (email, username, phoneNumber, callback) => {
   User.find({ email, username, phoneNumber }, (err, result) => {
     if (err) {
@@ -53,36 +43,12 @@ const signup = (userInfo, callback) => {
   });
 };
 
-const uploadPicUrl = (_id, picUrl, callback) => {
-  User.findOneAndUpdate({ _id }, { picUrl }, (err, result) => {
+const verifyEmail = (email, callback) => {
+  User.findOneAndUpdate({ email }, { verified: true }, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
       callback(null, result);
-    }
-  });
-};
-
-const getPicUrl = (username, callback) => {
-  User.find({ username }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else if (result.length === 0) {
-      callback(
-        {
-          message: "ERROR: no result; potentially wrong username"
-        },
-        null
-      );
-    } else if (result[0].picUrl === undefined) {
-      callback(
-        {
-          message: "ERROR: user's profile picture undefined"
-        },
-        null
-      );
-    } else {
-      callback(null, result[0].picUrl);
     }
   });
 };
@@ -113,6 +79,40 @@ const phoneNumberValidation = (phoneNumber, callback) => {
       callback(err, null);
     } else {
       callback(null, result);
+    }
+  });
+};
+
+const uploadPicUrl = (username, picUrl, callback) => {
+  User.findOneAndUpdate({ username }, { picUrl }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
+const getPicUrl = (username, callback) => {
+  User.find({ username }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else if (result.length === 0) {
+      callback(
+        {
+          message: "ERROR: no result; potentially wrong username"
+        },
+        null
+      );
+    } else if (result[0].picUrl === undefined) {
+      callback(
+        {
+          message: "ERROR: user's profile picture undefined"
+        },
+        null
+      );
+    } else {
+      callback(null, result[0].picUrl);
     }
   });
 };

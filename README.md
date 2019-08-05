@@ -62,7 +62,7 @@ For all API requests after login, the bearer token must be included in headers f
 
 | Key           | Value               |
 | ------------- | ------------------- |
-| Authorization | Bearer <Auth token> |
+| Authorization | Bearer [Auth token] |
 
 There must be a white space between the string "Bearer" and the token string
 

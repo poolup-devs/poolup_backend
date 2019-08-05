@@ -1,13 +1,19 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
+
 const router = new express.Router();
 
 //const Noti = require("./noti");
 const db = require("./controller.js");
+const checkAuth = require("../middleware/jwt_authenticator.js");
+const tokenParser = require("../utils/token-parser.js");
 
-//Get Notif
-router.get("/notification", (req, res) => {
-  const authToken = JSON.parse(req.query.authToken);
-  db.getNoti(authToken.email, (err, data) => {
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
+
+//Get Noti for driver
+router.get("/driverNoti", checkAuth, (req, res) => {
+  const username = tokenParser(req.headers.authorization).username;
+  db.getNoti(username, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {
@@ -16,9 +22,23 @@ router.get("/notification", (req, res) => {
   });
 });
 
-//Modify Notif
-router.put("/notification", (req, res) => {
-  db.updateNoti(req.body.email, (err, data) => {
+//Create Noti for driver
+router.post("/driverNoti", checkAuth, (req, res) => {
+  const username = tokenParser(req.headers.authorization).username;
+  req.body.username = username;
+  db.createNoti(req.body, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(201).send(data);
+    }
+  });
+});
+
+//Modify Noti for driver
+router.put("/driverNoti", checkAuth, (req, res) => {
+  const username = tokenParser(req.headers.authorization).username;
+  db.updateNoti(username, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {

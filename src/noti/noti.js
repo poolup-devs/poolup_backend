@@ -1,11 +1,14 @@
 const mongoose = require("mongoose");
 
 const notiSchema = mongoose.Schema({
-  email: String,
+  username: String,
   msg: String,
   passengerPhoneNumber: String,
   passengerEmail: String,
-  viewed: Boolean
+  viewed: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const Noti = mongoose.model("Noti", notiSchema);

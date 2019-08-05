@@ -11,6 +11,7 @@ const sgMail = require("@sendgrid/mail");
 const db = require("./controller.js");
 const uploadFile = require("../db/awsS3_controller.js").uploadFile;
 const checkAuth = require("../middleware/jwt_authenticator.js");
+const tokenParser = require("../utils/token-parser.js");
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
@@ -27,12 +28,12 @@ router.post("/login", (req, res) => {
     if (err) {
       res.status(500).send(err);
     } else {
-      const token = jwt.sign({ _id: data._id }, JWT_SECRET_KEY, {
+      const token = jwt.sign({ username: data.username }, JWT_SECRET_KEY, {
         expiresIn: "1h"
       });
-      data = data.toJSON();
-      data.authorization = token;
-      res.status(200).send(data);
+      res.status(200).send({
+        authToken: token
+      });
     }
   });
 });
@@ -70,7 +71,6 @@ router.post("/signup", (req, res) => {
                   res.sendStatus(201);
                 })
                 .catch(error => {
-                  console.log(error);
                   res.sendStatus(500);
                 });
             }
@@ -90,7 +90,6 @@ router.post("/signup", (req, res) => {
 router.get("/verify", (req, res) => {
   try {
     const userEmail = jwt.verify(req.query.token, JWT_EMAIL_KEY);
-    console.log(userEmail.email);
     db.verifyEmail(userEmail.email, (err, data) => {
       if (err) {
         res.sendStatus(400);
@@ -150,11 +149,13 @@ router.post("/upload-profile-pic", checkAuth, (req, res) => {
       const timestamp = Date.now().toString();
       const fileName = `bucketFolder/${timestamp}-lg`;
       const data = await uploadFile(buffer, fileName, type);
-      db.uploadPicUrl(req.headers.userid, data.Location, (err, result) => {
+      const username = tokenParser(req.headers.authorization).username;
+
+      db.uploadPicUrl(username, data.Location, (err, result) => {
         if (err) {
           return res.sendStatus(501);
         } else {
-          return res.sendStatus(200);
+          return res.status(200).send(result);
         }
       });
     } catch (error) {
@@ -174,21 +175,21 @@ router.get("/usersPic", checkAuth, (req, res) => {
   });
 });
 
-//Update User Data - NOT IMPLEMENTED IN DB
-router.post("/updateUser", checkAuth, (req, res) => {
-  db.updateUser(
-    req.body.email,
-    req.body.username,
-    req.body.vid_id,
-    req.body.pull,
-    (err, result) => {
-      if (err) {
-        res.sendStatus(500);
-      } else {
-        res.status(201).send(result);
-      }
-    }
-  );
-});
+// //Update User Data - NOT IMPLEMENTED IN DB
+// router.post("/updateUser", checkAuth, (req, res) => {
+//   db.updateUser(
+//     req.body.email,
+//     req.body.username,
+//     req.body.vid_id,
+//     req.body.pull,
+//     (err, result) => {
+//       if (err) {
+//         res.sendStatus(500);
+//       } else {
+//         res.status(201).send(result);
+//       }
+//     }
+//   );
+// });
 
 module.exports = router;

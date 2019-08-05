@@ -1,7 +1,7 @@
 const Noti = require("./noti").Noti;
 
-const getNoti = (email, callback) => {
-  Noti.find({ email }, (err, result) => {
+const getNoti = (username, callback) => {
+  Noti.find({ username, viewed: false }, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
@@ -12,8 +12,18 @@ const getNoti = (email, callback) => {
     .limit(8);
 };
 
-const updateNoti = (email, callback) => {
-  Noti.updateMany({ email }, { $set: { viewed: true } }, (err, result) => {
+const createNoti = (notiInfo, callback) => {
+  Noti.create(notiInfo, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
+const updateNoti = (username, callback) => {
+  Noti.updateMany({ username }, { $set: { viewed: true } }, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
@@ -26,5 +36,6 @@ const updateNoti = (email, callback) => {
 
 module.exports = {
   getNoti,
+  createNoti,
   updateNoti
 };

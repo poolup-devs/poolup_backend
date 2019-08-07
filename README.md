@@ -356,13 +356,82 @@ return list of all available rides without filtering
 
 ### Post a ride
 
+POST request
+
+**body/example**
+```
+{
+	"rideInfo": {
+		"ownerEmail": "bin315a1@gmail.com",
+		"ownerUsername": "bin315a1",
+		"ownerPhoneNumber": "1231231234",
+		"from": "Irvine",
+		"to": "Los Angeles",
+		"date": "2019-07-30",
+		"price": "20",
+		"seats": 4,
+		"detail": "Third test for post",
+		"passengers": []
+	}
+}
+```
+
+***return value**
+created ride object
+
 ---
 
-### Modify data of a ride
+### Modify data of a ride - NEEDS WORK
+
+PUT request
+
+**body**
+```
+{
+    "entry": <updated ride object>,
+    "userInfo":<user(owner of the ride) object>,
+    "status":<what has been changed>
+}
+```
+
+**example**
+
 
 ---
 
 ### Delete a ride
+
+DELETE request
+
+**params**
+ride (ride object)
+
+**example**
+localhost:3000/rideList?ride={
+        "passengers": [],
+        "_id": "5d3de5f718df732a7bcbccec",
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-04-20T00:00:00.000Z",
+        "price": "20",
+        "seats": 4,
+        "detail": "Third test for post",
+        "__v": 0
+    }
+
+**return value**
+200 OK status with number of deleted rides
+
+```
+{
+    "n": 1,
+    "ok": 1,
+    "deletedCount": 1
+}
+```
 
 ---
 
@@ -388,6 +457,13 @@ return list of all available rides without filtering
 ---
 
 ### Get the notification
+
+**params**
+authToken
+
+**example**
+
+**return value**
 
 ---
 

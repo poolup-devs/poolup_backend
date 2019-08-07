@@ -57,7 +57,7 @@ router.post("/signup", (req, res) => {
               const token = jwt.sign({ email: req.body.email }, JWT_EMAIL_KEY, {
                 expiresIn: 60000 //10 minutes
               });
-              const url = "bruinpool.io?authorization=" + token;
+              const url = "bruinpool.io/verify?authorization=" + token;
               const email = {
                 to: req.body.email,
                 from: "bruinpool@gmail.com",

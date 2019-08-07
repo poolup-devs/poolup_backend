@@ -8,7 +8,10 @@ const userSchema = mongoose.Schema({
   driverList: Array,
   riderList: Array,
   picUrl: String,
-  authToken: String
+  verified: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const User = mongoose.model("User", userSchema);

@@ -1,9 +1,26 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const path = require("path");
-const db = require("./db");
+const chalk = require("chalk");
 
-require("dotenv").config({override:true});
+const checkS3Connection = require("./db/awsS3_controller.js").checkS3Connection;
+
+require("dotenv").config({ override: true });
+
+//Mongoose config
+mongoose.connect("mongodb://localhost/bruinpool", {
+  useNewUrlParser: true
+});
+const db = mongoose.connection;
+
+db.on("error", () => {
+  console.log(chalk.red("[ERROR]: Mongoose connection error"));
+});
+
+db.once("open", () => {
+  console.log(chalk.green("[INIT]: ") + "Mongoose connected successfully");
+});
 
 //Port config
 const port = process.env.PORT || 3000;
@@ -30,7 +47,7 @@ app.use(notiRouter);
 
 app.get("/test-connection", (req, res) => {
   res.send({
-    name: "Connection Successful"
+    status: "Connection Successful"
   });
 });
 
@@ -46,6 +63,12 @@ app.get("/*", (req, res) => {
   });
 });
 
+if (process.env.MODE === "STAGING") {
+  checkS3Connection();
+}
+
 app.listen(port, () => {
-  console.log("Server Listening on Port ", port);
+  console.log(
+    chalk.green("[INIT]: ") + "Server Listening on Port " + chalk.yellow(port)
+  );
 });

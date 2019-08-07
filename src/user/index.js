@@ -1,38 +1,39 @@
 const express = require("express");
 const router = new express.Router();
-const db = require("../db");
 
 const multiparty = require("multiparty");
 const fileType = require("file-type");
 const fs = require("fs");
-const sha256 = require("sha256")
+const sha256 = require("sha256");
+const jwt = require("jsonwebtoken");
+const sgMail = require("@sendgrid/mail");
 
-require("dotenv").config();
+const db = require("./controller.js");
+const uploadFile = require("../db/awsS3_controller.js").uploadFile;
+const checkAuth = require("../middleware/jwt_authenticator.js");
+const tokenParser = require("../utils/token-parser.js");
 
-//AWS S3 config
-const bluebird = require("bluebird");
-const S3_BUCKET = process.env.S3_BUCKET;
-const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
-const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
-const AWS = require("aws-sdk");
-AWS.config.update({
-  accessKeyId: AWS_ACCESS_KEY_ID,
-  secretAccessKey: AWS_SECRET_ACCESS_KEY
-});
-AWS.config.setPromisesDependency(bluebird);
-const s3 = new AWS.S3();
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
+const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+
+sgMail.setApiKey(SENDGRID_API_KEY);
 
 //User Login
-router.get("/login", (req, res) => {
-  if (req.query.password) {
-    req.query.password = sha256(req.query.password);
+router.post("/login", (req, res) => {
+  if (req.body.password) {
+    req.body.password = sha256(req.body.password);
   }
-  const newToken = sha256(new Date().toString());
-  db.login(req.query, newToken, (err, data) => {
+  db.login(req.body.email, req.body.password, (err, data) => {
     if (err) {
-      res.sendStatus(500);
+      res.status(500).send(err);
     } else {
-      res.status(200).send(data);
+      const token = jwt.sign({ username: data.username }, JWT_SECRET_KEY, {
+        expiresIn: "1h"
+      });
+      res.status(200).send({
+        authToken: token
+      });
     }
   });
 });
@@ -49,19 +50,56 @@ router.post("/signup", (req, res) => {
         res.sendStatus(500);
       } else {
         if (result.length === 0) {
-          db.post(req.body, (err, result) => {
+          db.signup(req.body, (err, result) => {
             if (err) {
               res.sendStatus(500);
             } else {
-              res.sendStatus(201);
+              const token = jwt.sign({ email: req.body.email }, JWT_EMAIL_KEY, {
+                expiresIn: 60000 //10 minutes
+              });
+              const url = "bruinpool.io?authorization=" + token;
+              const email = {
+                to: req.body.email,
+                from: "bruinpool@gmail.com",
+                subject: "Bruinpool: Email Verification Required",
+                text: "Here's the link",
+                html: "Here's the link: " + url
+              };
+              sgMail
+                .send(email)
+                .then(() => {
+                  res.sendStatus(201);
+                })
+                .catch(error => {
+                  res.sendStatus(500);
+                });
             }
           });
         } else {
-          res.status(200).send("User Created Successfully");
+          res.status(409).send({
+            message:
+              "User with email / username already exists, or is waiting for email verification"
+          });
         }
       }
     }
   );
+});
+
+//Verify Email
+router.get("/verify", (req, res) => {
+  try {
+    const userEmail = jwt.verify(req.query.token, JWT_EMAIL_KEY);
+    db.verifyEmail(userEmail.email, (err, data) => {
+      if (err) {
+        res.sendStatus(400);
+      } else {
+        res.redirect("https://bruinpool.io");
+      }
+    });
+  } catch (err) {
+    res.sendStatus(401);
+  }
 });
 
 //Validate User Email
@@ -98,10 +136,12 @@ router.get("/phoneNumberValidation", (req, res) => {
 });
 
 //Uploading User Profile Image
-router.post("/upload-profile-pic", (req, res) => {
+router.post("/upload-profile-pic", checkAuth, (req, res) => {
   const form = new multiparty.Form();
   form.parse(req, async (error, fields, files) => {
-    if (error) throw new Error(error);
+    if (error) {
+      return res.status(400).send(error);
+    }
     try {
       const path = files.file[0].path;
       const buffer = fs.readFileSync(path);
@@ -109,11 +149,13 @@ router.post("/upload-profile-pic", (req, res) => {
       const timestamp = Date.now().toString();
       const fileName = `bucketFolder/${timestamp}-lg`;
       const data = await uploadFile(buffer, fileName, type);
-      db.uploadPicUrl(req.headers.userid, data.Location, (err, result) => {
+      const username = tokenParser(req.headers.authorization).username;
+
+      db.uploadPicUrl(username, data.Location, (err, result) => {
         if (err) {
           return res.sendStatus(501);
         } else {
-          return res.sendStatus(200);
+          return res.status(200).send(result);
         }
       });
     } catch (error) {
@@ -123,7 +165,7 @@ router.post("/upload-profile-pic", (req, res) => {
 });
 
 //Get a User's Profile Image
-router.get("/usersPic", (req, res) => {
+router.get("/usersPic", checkAuth, (req, res) => {
   db.getPicUrl(req.query.username, (err, data) => {
     if (err) {
       res.status(500).send(err);
@@ -133,33 +175,21 @@ router.get("/usersPic", (req, res) => {
   });
 });
 
-//Update User Data - NOT IMPLEMENTED IN DB
-router.post("/updateUser", (req, res) => {
-  db.updateUser(
-    req.body.email,
-    req.body.username,
-    req.body.vid_id,
-    req.body.pull,
-    (err, result) => {
-      if (err) {
-        res.sendStatus(500);
-      } else {
-        res.status(201).send(result);
-      }
-    }
-  );
-});
-
-//Upload a user file
-const uploadFile = (buffer, name, type) => {
-  const params = {
-    ACL: "public-read",
-    Body: buffer,
-    Bucket: S3_BUCKET,
-    ContentType: type.mime,
-    Key: `${name}.${type.ext}`
-  };
-  return s3.upload(params).promise();
-};
+// //Update User Data - NOT IMPLEMENTED IN DB
+// router.post("/updateUser", checkAuth, (req, res) => {
+//   db.updateUser(
+//     req.body.email,
+//     req.body.username,
+//     req.body.vid_id,
+//     req.body.pull,
+//     (err, result) => {
+//       if (err) {
+//         res.sendStatus(500);
+//       } else {
+//         res.status(201).send(result);
+//       }
+//     }
+//   );
+// });
 
 module.exports = router;

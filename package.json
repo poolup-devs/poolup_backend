@@ -6,13 +6,14 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "setup" : "node setup.js",
-    "test" : "echo \"Error: no test specified\" && exit 1"
+    "setup": "node setup.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sendgrid/mail": "^6.4.0",
     "aws-sdk": "^2.486.0",
     "bluebird": "^3.5.5",
     "body-parser": "^1.19.0",
@@ -22,6 +23,7 @@
     "file-type": "^12.0.0",
     "fs": "0.0.1-security",
     "js-sha256": "^0.9.0",
+    "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.13",
     "mongoose": "^5.6.2",
     "multiparty": "^4.2.1",

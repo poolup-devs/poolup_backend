@@ -8,6 +8,7 @@ const userSchema = mongoose.Schema({
   driverList: Array,
   riderList: Array,
   picUrl: String,
+  picType: String,
   verified: {
     type: Boolean,
     default: false

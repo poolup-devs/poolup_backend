@@ -50,8 +50,23 @@ const uploadFile = (buffer, name, type) => {
     .catch();
 };
 
+const deleteFile = (name, type) => {
+  const params = {
+    Bucket: S3_BUCKET,
+    Key: `${name}.${type}`
+  };
+  s3.deleteObject(params, function(err, data) {
+    if (err) {
+      throw new err();
+    } else {
+      return;
+    }
+  });
+};
+
 module.exports = {
   s3,
   checkS3Connection,
-  uploadFile
+  uploadFile,
+  deleteFile
 };

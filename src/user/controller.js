@@ -83,8 +83,18 @@ const phoneNumberValidation = (phoneNumber, callback) => {
   });
 };
 
-const uploadPicUrl = (username, picUrl, callback) => {
-  User.findOneAndUpdate({ username }, { picUrl }, (err, result) => {
+const getPicType = (username, callback) => {
+  User.findOne({ username }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
+const uploadPicUrl = (username, picUrl, picType, callback) => {
+  User.findOneAndUpdate({ username }, { picUrl, picType }, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
@@ -124,6 +134,7 @@ module.exports = {
   emailValidation,
   usernameValidation,
   phoneNumberValidation,
+  getPicType,
   uploadPicUrl,
   getPicUrl,
   signup

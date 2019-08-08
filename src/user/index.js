@@ -10,6 +10,7 @@ const sgMail = require("@sendgrid/mail");
 
 const db = require("./controller.js");
 const uploadFile = require("../db/awsS3_controller.js").uploadFile;
+const deleteFile = require("../db/awsS3_controller.js").deleteFile;
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
 
@@ -78,7 +79,7 @@ router.post("/signup", (req, res) => {
         } else {
           res.status(409).send({
             message:
-              "User with email / username already exists, or is waiting for email verification"
+              "ERROR: User with email / username already exists, or is waiting for email verification"
           });
         }
       }
@@ -146,12 +147,32 @@ router.post("/upload-profile-pic", checkAuth, (req, res) => {
       const path = files.file[0].path;
       const buffer = fs.readFileSync(path);
       const type = fileType(buffer);
-      const timestamp = Date.now().toString();
-      const fileName = `bucketFolder/${timestamp}-lg`;
-      const data = await uploadFile(buffer, fileName, type);
-      const username = tokenParser(req.headers.authorization).username;
 
-      db.uploadPicUrl(username, data.Location, (err, result) => {
+      const allowedFileType = ["jpg", "jpeg", "heic", "png"];
+      if (!allowedFileType.includes(type.ext)) {
+        res.status(400).send({
+          message: "ERROR: file type must be of: jpg, jpeg, heic, or png"
+        });
+      }
+
+      const username = tokenParser(req.headers.authorization).username;
+      const fileName = `bucketFolder/${username}-pic`;
+
+      db.getPicType(username, (err, result) => {
+        if (err) return res.sendStatus(500);
+        else {
+          try {
+            console.log(result.picType);
+            deleteFile(fileName, result.picType || "jpg");
+          } catch (err) {
+            return res.status(500);
+          }
+        }
+      });
+
+      const data = await uploadFile(buffer, fileName, type);
+
+      db.uploadPicUrl(username, data.Location, type.ext, (err, result) => {
         if (err) {
           return res.sendStatus(501);
         } else {

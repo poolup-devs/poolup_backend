@@ -470,7 +470,7 @@ localhost:3000/rideList?ride={
 | url           | HTTP Method | description           |
 | ------------- | ----------- | --------------------- |
 | /notification | GET         | Get the notification for driver  |
-| /notification | POST        | Create a new notification for driver
+| /notification | POST        | Create a new notification for driver |
 | /notification | PUT         | Modify a notification for driver |
 
 ---
@@ -484,6 +484,7 @@ none needed
 
 **return value**
 200 OK, 500 error if failure
+
 ---
 
 ###Create a notification for driver

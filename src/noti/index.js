@@ -17,7 +17,7 @@ router.get("/driverNoti", checkAuth, (req, res) => {
     if (err) {
       res.sendStatus(500);
     } else {
-      res.status(201).send(data);
+      res.status(200).send(data);
     }
   });
 });
@@ -42,7 +42,7 @@ router.put("/driverNoti", checkAuth, (req, res) => {
     if (err) {
       res.sendStatus(500);
     } else {
-      res.status(201).send(data);
+      res.status(200).send(data);
     }
   });
 });

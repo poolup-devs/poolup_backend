@@ -44,6 +44,7 @@ const uploadFile = (buffer, name, type) => {
     ContentType: type.mime,
     Key: `${name}.${type.ext}`
   };
+  console.log("up: ", type.ext);
   return s3
     .upload(params)
     .promise()
@@ -55,13 +56,11 @@ const deleteFile = (name, type) => {
     Bucket: S3_BUCKET,
     Key: `${name}.${type}`
   };
-  s3.deleteObject(params, function(err, data) {
-    if (err) {
-      throw new err();
-    } else {
-      return;
-    }
-  });
+  console.log("del: ", type);
+  return s3
+    .deleteObject(params)
+    .promise()
+    .catch();
 };
 
 module.exports = {

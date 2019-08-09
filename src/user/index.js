@@ -158,25 +158,29 @@ router.post("/upload-profile-pic", checkAuth, (req, res) => {
       const username = tokenParser(req.headers.authorization).username;
       const fileName = `bucketFolder/${username}-pic`;
 
-      db.getPicType(username, (err, result) => {
+      db.getPicType(username, async (err, result) => {
         if (err) return res.sendStatus(500);
         else {
           try {
-            console.log(result.picType);
-            deleteFile(fileName, result.picType || "jpg");
+            await deleteFile(fileName, result.picType).then(async () => {
+              const data = await uploadFile(buffer, fileName, type);
+
+              db.uploadPicUrl(
+                username,
+                data.Location,
+                type.ext,
+                (err, result) => {
+                  if (err) {
+                    return res.sendStatus(501);
+                  } else {
+                    return res.status(200).send(result);
+                  }
+                }
+              );
+            });
           } catch (err) {
             return res.status(500);
           }
-        }
-      });
-
-      const data = await uploadFile(buffer, fileName, type);
-
-      db.uploadPicUrl(username, data.Location, type.ext, (err, result) => {
-        if (err) {
-          return res.sendStatus(501);
-        } else {
-          return res.status(200).send(result);
         }
       });
     } catch (error) {

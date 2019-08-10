@@ -162,22 +162,21 @@ router.post("/upload-profile-pic", checkAuth, (req, res) => {
         if (err) return res.sendStatus(500);
         else {
           try {
-            await deleteFile(fileName, result.picType).then(async () => {
-              const data = await uploadFile(buffer, fileName, type);
+            await deleteFile(fileName, result.picType);
+            const data = await uploadFile(buffer, fileName, type);
 
-              db.uploadPicUrl(
-                username,
-                data.Location,
-                type.ext,
-                (err, result) => {
-                  if (err) {
-                    return res.sendStatus(501);
-                  } else {
-                    return res.status(200).send(result);
-                  }
+            db.uploadPicUrl(
+              username,
+              data.Location,
+              type.ext,
+              (err, result) => {
+                if (err) {
+                  return res.sendStatus(501);
+                } else {
+                  return res.status(200).send(result);
                 }
-              );
-            });
+              }
+            );
           } catch (err) {
             return res.status(500);
           }

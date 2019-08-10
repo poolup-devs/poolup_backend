@@ -94,13 +94,18 @@ const getPicType = (username, callback) => {
 };
 
 const uploadPicUrl = (username, picUrl, picType, callback) => {
-  User.findOneAndUpdate({ username }, { picUrl, picType }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
+  User.findOneAndUpdate(
+    { username },
+    { picUrl, picType },
+    { new: true },
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, result);
+      }
     }
-  });
+  );
 };
 
 const getPicUrl = (username, callback) => {

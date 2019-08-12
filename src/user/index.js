@@ -21,7 +21,7 @@ const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 sgMail.setApiKey(SENDGRID_API_KEY);
 
 //User Login
-router.post("/login", (req, res) => {
+router.post("/users/login", (req, res) => {
   if (req.body.password) {
     req.body.password = sha256(req.body.password);
   }
@@ -40,7 +40,7 @@ router.post("/login", (req, res) => {
 });
 
 //User Signup
-router.post("/signup", (req, res) => {
+router.post("/users/signup", (req, res) => {
   req.body.password = sha256(req.body.password);
   db.checkAvailability(
     req.body.email,
@@ -88,7 +88,7 @@ router.post("/signup", (req, res) => {
 });
 
 //Verify Email
-router.get("/verify", (req, res) => {
+router.get("/users/verify", (req, res) => {
   try {
     const userEmail = jwt.verify(req.query.token, JWT_EMAIL_KEY);
     db.verifyEmail(userEmail.email, (err, data) => {
@@ -104,7 +104,7 @@ router.get("/verify", (req, res) => {
 });
 
 //Validate User Email
-router.get("/emailValidation", (req, res) => {
+router.get("/users/emailValidation", (req, res) => {
   db.emailValidation(req.query.email, (err, data) => {
     if (err) {
       res.sendStatus(500);
@@ -115,7 +115,7 @@ router.get("/emailValidation", (req, res) => {
 });
 
 //Validate Username
-router.get("/usernameValidation", (req, res) => {
+router.get("/users/usernameValidation", (req, res) => {
   db.usernameValidation(req.query.username, (err, data) => {
     if (err) {
       res.sendStatus(500);
@@ -126,7 +126,7 @@ router.get("/usernameValidation", (req, res) => {
 });
 
 //Validate User Phonenumber
-router.get("/phoneNumberValidation", (req, res) => {
+router.get("/users/phoneNumberValidation", (req, res) => {
   db.phoneNumberValidation(req.query.phoneNumber, (err, data) => {
     if (err) {
       res.sendStatus(500);
@@ -137,7 +137,7 @@ router.get("/phoneNumberValidation", (req, res) => {
 });
 
 //Uploading User Profile Image
-router.post("/upload-profile-pic", checkAuth, (req, res) => {
+router.post("/users/upload-profile-pic", checkAuth, (req, res) => {
   const form = new multiparty.Form();
   form.parse(req, async (error, fields, files) => {
     if (error) {
@@ -189,7 +189,7 @@ router.post("/upload-profile-pic", checkAuth, (req, res) => {
 });
 
 //Get a User's Profile Image
-router.get("/usersPic", checkAuth, (req, res) => {
+router.get("/users/usersPic", checkAuth, (req, res) => {
   db.getPicUrl(req.query.username, (err, data) => {
     if (err) {
       res.status(500).send(err);

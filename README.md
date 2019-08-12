@@ -95,16 +95,17 @@ There must be a white space between the string "Bearer" and the token string
 
 ### API Endpoints
 
-| url                    | HTTP Method | description                                 |
-| ---------------------- | ----------- | ------------------------------------------- |
-| /login                 | GET         | User Login                                  |
-| /signup                | POST        | User Signup                                 |
-| /emailValidation       | GET         | Validation/usability of Email               |
-| /usernameValidation    | GET         | Validation/usability of a username          |
-| /phoneNumberValidation | GET         | Validation/usability of a phone number      |
-| /upload-profile-pic    | POST        | upload a user profile image                 |
-| /usersPic              | GET         | Get a user's profile image                  |
-| /updateUser            | POST        | Update user data; NOT IMPLEMENTED IN DB YET |
+| url                          | HTTP Method | description                                 |
+| ---------------------------- | ----------- | ------------------------------------------- |
+| /users/login                 | GET         | User Login                                  |
+| /users/signup                | POST        | User Signup                                 |
+| /users/verify                | GET         | Send a verification Email for signup        |
+| /users/emailValidation       | GET         | Validation/usability of Email               |
+| /users/usernameValidation    | GET         | Validation/usability of a username          |
+| /users/phoneNumberValidation | GET         | Validation/usability of a phone number      |
+| /users/upload-profile-pic    | POST        | upload a user profile image                 |
+| /users/usersPic              | GET         | Get a user's profile image                  |
+| /users/updateUser            | POST        | Update user data; NOT IMPLEMENTED IN DB YET |
 
 ---
 
@@ -146,7 +147,24 @@ POST request
 **return value**
 201 status, Created
 
-A confirmation email is sent, which contains a link back to the sign-in page with a confirmation token attached as query; as the user presses the URL, the user is then "verified", and can login
+A confirmation email is sent, which contains a link the link: https://bruinpool.io/users/verify?token=TOKENATTACHEDHERE , with a email verification token attached on the url as query
+
+---
+
+### Email Verification
+
+GET request
+
+This is different from an "Email VALIDATION", since this is "verifying" that the user has the email that it claims to have
+
+**params**
+token
+
+**example**
+localhost:3000/users/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImlhbWJyeWFuLmxlZUBnbWFpbC5jb20iLCJpYXQiOjE1NjU1ODIxMDUsImV4cCI6MTU2NTY0MjEwNX0.78CKxrCkfidoby-iYDKKe5_KQR4BKIV4D6LI4koHKEQ
+
+**return value**
+Returns a 401 on failure, if not it returns a redirection to https://bruinpool.io where the user can now login with the verified email & password
 
 ---
 
@@ -158,7 +176,7 @@ Get request
 email
 
 **example**
-localhost:3000/emailValidation?email=sampleEmail1@gmail.com
+localhost:3000/users/emailValidation?email=sampleEmail1@gmail.com
 
 **return value**
 array of user objects with that email
@@ -173,7 +191,7 @@ GET request
 username
 
 **example**
-localhost:3000/usernameValidation?username=sampleUser1
+localhost:3000/users/usernameValidation?username=sampleUser1
 
 **return value**
 array of user objects with that username
@@ -188,7 +206,7 @@ GET request
 phoneNumber
 
 **example**
-localhost:3000/phoneNumberValidation?phoneNumber=1231231234
+localhost:3000/users/phoneNumberValidation?phoneNumber=1231231234
 
 **return value**
 array of user objects with that username
@@ -220,7 +238,7 @@ GET request
 username (not id)
 
 **example**
-localhost:3000/usersPic?username=sampleUser1
+localhost:3000/users/usersPic?username=sampleUser1
 
 **return value**
 Accessible URL to the img file in S3 bucket
@@ -377,6 +395,7 @@ return list of all available rides without filtering
 POST request
 
 **body/example**
+
 ```
 {
 	"rideInfo": {
@@ -394,7 +413,7 @@ POST request
 }
 ```
 
-***return value**
+**\*return value**
 created ride object
 
 ---
@@ -404,6 +423,7 @@ created ride object
 PUT request
 
 **body**
+
 ```
 {
     "entry": <updated ride object>,
@@ -413,7 +433,6 @@ PUT request
 ```
 
 **example**
-
 
 ---
 
@@ -426,19 +445,19 @@ ride (ride object)
 
 **example**
 localhost:3000/rideList?ride={
-        "passengers": [],
-        "_id": "5d3de5f718df732a7bcbccec",
-        "ownerEmail": "bin315a1@gmail.com",
-        "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
-        "from": "Irvine",
-        "to": "Los Angeles",
-        "date": "2019-04-20T00:00:00.000Z",
-        "price": "20",
-        "seats": 4,
-        "detail": "Third test for post",
-        "__v": 0
-    }
+"passengers": [],
+"\_id": "5d3de5f718df732a7bcbccec",
+"ownerEmail": "bin315a1@gmail.com",
+"ownerUsername": "bin315a1",
+"ownerPhoneNumber": "1231231234",
+"from": "Irvine",
+"to": "Los Angeles",
+"date": "2019-04-20T00:00:00.000Z",
+"price": "20",
+"seats": 4,
+"detail": "Third test for post",
+"\_\_v": 0
+}
 
 **return value**
 200 OK status with number of deleted rides
@@ -467,11 +486,11 @@ localhost:3000/rideList?ride={
 
 ### API Endpoints
 
-| url           | HTTP Method | description           |
-| ------------- | ----------- | --------------------- |
-| /notification | GET         | Get the notification for driver  |
+| url           | HTTP Method | description                          |
+| ------------- | ----------- | ------------------------------------ |
+| /notification | GET         | Get the notification for driver      |
 | /notification | POST        | Create a new notification for driver |
-| /notification | PUT         | Modify a notification for driver |
+| /notification | PUT         | Modify a notification for driver     |
 
 ---
 
@@ -492,6 +511,7 @@ none needed
 POST request
 
 **body**
+
 ```
 {
     msg: <message>,
@@ -539,17 +559,17 @@ For root access, also ask your current engineering manager for root access prive
 2. Start mongodb daemon with:
    `sudo service mongod start`
 3. Start the Node application service with:
-   `systemctl start node-8080`
+   `systemctl start node-80`
    if it indicates an error in mongoose connection, make sure that mongodb.service is running correctly
 4. Check that the service is up and running by listing all current running services with:
    `systemctl -r --type service --all`
-   and check that node-8080.service is active and running
+   and check that node-80.service is active and running
 
 - systemd service file's (for NodeJS app) location:
-  /etc/systemd/system/node-8080.service
+  /etc/systemd/system/node-80.service
 - systemd's environment file's location:
   /root/sec/bruinPool_Backend_envFile
-- the application is set to use the port 8080 (http); environment variable is set for port 80, but NGINX proxies it to port 8080
+- the application is set to use the port 8080 (http); environment variable for the service is set for port 80, but NGINX proxies it to port 8080
 
 Further Resources regarding systemctl:
 https://nodesource.com/blog/running-your-node-js-app-with-systemd-part-1/

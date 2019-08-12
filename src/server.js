@@ -8,6 +8,12 @@ const checkS3Connection = require("./db/awsS3_controller.js").checkS3Connection;
 
 require("dotenv").config({ override: true });
 
+console.log(
+  chalk.green("[INIT]: Service is in ") +
+    chalk.yellow(process.env.MODE) +
+    " MODE"
+);
+
 //Mongoose config
 mongoose.connect("mongodb://localhost/bruinpool", {
   useNewUrlParser: true
@@ -63,9 +69,7 @@ app.get("/*", (req, res) => {
   });
 });
 
-if (process.env.MODE === "STAGING") {
-  checkS3Connection();
-}
+checkS3Connection();
 
 app.listen(port, () => {
   console.log(

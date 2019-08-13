@@ -133,14 +133,16 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
 
 POST request
 
+Only requiremetn for user signup is password and email; the username is set as the substring in the email and phone number entry is voluntary later.
+
+ex) the username for bin315a1@g.ucla.edu would become bin315a1
+
 **Body**
 
 ```
 {
 	"password": "samplePassword1",
-	"email":"sampleEmail1@gmail.com",
-	"username" : "sampleUser1",
-	"phoneNumber": "1231231234"
+	"email":"sampleEmail1@gmail.com"
 }
 ```
 

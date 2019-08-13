@@ -272,22 +272,22 @@ not functional yet
 
 ### API Endpoints
 
-| url                       | HTTP Method | description                                                                         |
-| ------------------------- | ----------- | ----------------------------------------------------------------------------------- |
-| /rides/matching-rides     | GET         | [Get List of ANY Available/ future Rides](#get-list-of-any-available/-future-rides) |
-| /rides/user-rides-history | GET         | Get ANOTHER USER's ride history                                                     |
-| /rides/my-rides-history   | GET         | Get MY ride history                                                                 |
-| /rides/my-rides-upcoming  | GET         | Get MY ride upcoming                                                                |
-| /rides/drives-history     | GET         | Get a user's (OTHER'S AND MINE) drive history                                       |
-| /rides/drives-upcoming    | GET         | Get a user's (OTHER'S AND MINE) upcoming drives                                     |
-| /rides/post-ride          | POST        | Post a Ride                                                                         |
-| /rides/join-ride          | PUT         | Join a Ride                                                                         |
-| /rides/cancel-ride        | PUT         | Cancel a Ride                                                                       |
-| /rides/delete-ride        | DELETE      | Delete a ride                                                                       |
+| url                       | HTTP Method | description                                                                       |
+| ------------------------- | ----------- | --------------------------------------------------------------------------------- |
+| /rides/matching-rides     | GET         | [Get List of ANY Available future Rides](#get-list-of-any-available-future-rides) |
+| /rides/user-rides-history | GET         | Get ANOTHER USER's ride history                                                   |
+| /rides/my-rides-history   | GET         | Get MY ride history                                                               |
+| /rides/my-rides-upcoming  | GET         | Get MY ride upcoming                                                              |
+| /rides/drives-history     | GET         | Get a user's (OTHER'S AND MINE) drive history                                     |
+| /rides/drives-upcoming    | GET         | Get a user's (OTHER'S AND MINE) upcoming drives                                   |
+| /rides/post-ride          | POST        | Post a Ride                                                                       |
+| /rides/join-ride          | PUT         | Join a Ride                                                                       |
+| /rides/cancel-ride        | PUT         | Cancel a Ride                                                                     |
+| /rides/delete-ride        | DELETE      | Delete a ride                                                                     |
 
 ---
 
-### Get List of ANY Available/ future Rides
+### Get List of ANY Available future Rides
 
 ---
 

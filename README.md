@@ -86,9 +86,11 @@ There must be a white space between the string "Bearer" and the token string
 
 ## Models & API Endpoints Documentation
 
-1. [User-Model](#user-model)
-2. [Ride-Model](#ride-model)
-3. [Noti-Model](#noti-model)
+Models:
+
+1. [User](#user-model)
+2. [Ride](#ride-model)
+3. [Noti](#noti-model)
 
 ---
 

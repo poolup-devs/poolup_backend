@@ -1,10 +1,12 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require("path");
 const chalk = require("chalk");
 
 const checkS3Connection = require("./db/awsS3_controller.js").checkS3Connection;
+const corsOriginContoller = require("./middleware/cors_origin_control.js");
 
 require("dotenv").config({ override: true });
 
@@ -21,7 +23,7 @@ mongoose.connect("mongodb://localhost/bruinpool", {
 const db = mongoose.connection;
 
 db.on("error", () => {
-  console.log(chalk.red("[ERROR]: Mongoose connection error"));
+  console.log(chalk.red("[ERROR]: Mongoose / Database connection error"));
 });
 
 db.once("open", () => {
@@ -33,6 +35,8 @@ const port = process.env.PORT || 3000;
 
 //Express config
 const app = express();
+
+app.use(cors());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

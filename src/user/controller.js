@@ -20,8 +20,8 @@ const login = (email, password, callback) => {
   );
 };
 
-const checkAvailability = (email, username, phoneNumber, callback) => {
-  User.find({ email, username, phoneNumber }, (err, result) => {
+const checkAvailability = (email, username, callback) => {
+  User.find({ email, username }, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
@@ -30,10 +30,9 @@ const checkAvailability = (email, username, phoneNumber, callback) => {
   });
 };
 
-const signup = (userInfo, callback) => {
+const signup = (userInfo, ucla_email, callback) => {
   const newUser = userInfo;
-  newUser.posting_list = [];
-  newUser.participate = [];
+  newUser.email = ucla_email;
   User.create(newUser, (err, result) => {
     if (err) {
       callback(err, null);

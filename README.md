@@ -570,6 +570,7 @@ For root access, also ask your current engineering manager for root access prive
 - systemd's environment file's location:
   /root/sec/bruinPool_Backend_envFile
 - the application is set to use the port 8080 (http); environment variable for the service is set for port 80, but NGINX proxies it to port 8080
+- the .env file in the server doesn't have to be updated for the web server to work, but can be used with `npm run dev` if the server fails to run node-80.service and you need to check the error log
 
 Further Resources regarding systemctl:
 https://nodesource.com/blog/running-your-node-js-app-with-systemd-part-1/

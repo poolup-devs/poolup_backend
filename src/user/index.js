@@ -42,55 +42,52 @@ router.post("/users/login", (req, res) => {
 //User Signup
 router.post("/users/signup", (req, res) => {
   req.body.password = sha256(req.body.password);
-  db.checkAvailability(
-    req.body.email,
-    req.body.username,
-    req.body.phoneNumber,
-    (err, result) => {
-      if (err) {
-        res.sendStatus(500);
-      } else {
-        if (result.length === 0) {
-          db.signup(req.body, (err, result) => {
-            if (err) {
-              res.sendStatus(500);
-            } else {
-              const token = jwt.sign({ email: req.body.email }, JWT_EMAIL_KEY, {
-                expiresIn: 60000 //10 minutes
+  const ucla_email = req.body.username + "@g.ucla.edu";
+  db.checkAvailability(ucla_email, req.body.username, (err, result) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      if (result.length === 0) {
+        db.signup(req.body, ucla_email, (err, result) => {
+          if (err) {
+            res.sendStatus(500);
+          } else {
+            const token = jwt.sign({ email: ucla_email }, JWT_EMAIL_KEY, {
+              expiresIn: 60000 //10 minutes
+            });
+            const url = "bruinpool.io/verify?authorization=" + token;
+            const email = {
+              to: ucla_email,
+              from: "bruinpool@gmail.com",
+              subject: "Bruinpool: Email Verification Required",
+              text: "Here's the link",
+              html: "Here's the link: " + url
+            };
+            sgMail
+              .send(email)
+              .then(() => {
+                res.sendStatus(201);
+              })
+              .catch(error => {
+                res.sendStatus(500);
               });
-              const url = "bruinpool.io/verify?authorization=" + token;
-              const email = {
-                to: req.body.email,
-                from: "bruinpool@gmail.com",
-                subject: "Bruinpool: Email Verification Required",
-                text: "Here's the link",
-                html: "Here's the link: " + url
-              };
-              sgMail
-                .send(email)
-                .then(() => {
-                  res.sendStatus(201);
-                })
-                .catch(error => {
-                  res.sendStatus(500);
-                });
-            }
-          });
-        } else {
-          res.status(409).send({
-            message:
-              "ERROR: User with email / username already exists, or is waiting for email verification"
-          });
-        }
+          }
+        });
+      } else {
+        res.status(409).send({
+          message:
+            "ERROR: User with email / username already exists, or is waiting for email verification"
+        });
       }
     }
-  );
+  });
 });
 
 //Verify Email
 router.get("/users/verify", (req, res) => {
   try {
     const userEmail = jwt.verify(req.query.token, JWT_EMAIL_KEY);
+    console.log(userEmail);
     db.verifyEmail(userEmail.email, (err, data) => {
       if (err) {
         res.sendStatus(400);

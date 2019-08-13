@@ -274,7 +274,7 @@ not functional yet
 
 | url                       | HTTP Method | description                                                                         |
 | ------------------------- | ----------- | ----------------------------------------------------------------------------------- |
-| /rides/matching-rides     | GET         | [Get List of ANY Available/ future Rides](#Get-List-of-ANY-Available/-future-Rides) |
+| /rides/matching-rides     | GET         | [Get List of ANY Available/ future Rides](#get-list-of-any-available/-future-rides) |
 | /rides/user-rides-history | GET         | Get ANOTHER USER's ride history                                                     |
 | /rides/my-rides-history   | GET         | Get MY ride history                                                                 |
 | /rides/my-rides-upcoming  | GET         | Get MY ride upcoming                                                                |

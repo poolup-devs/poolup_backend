@@ -1,5 +1,5 @@
 const Ride = require("./ride").Ride;
-const Noti = require("../noti").Noti;
+const Noti = require("../noti/noti.js").Noti;
 
 ///////////////////////////////////////////////////////////////
 ///////////GET RIDES///////////////////////////////////////////
@@ -141,37 +141,59 @@ const postRide = (rideInfo, callback) => {
 //     .limit(18);
 // };
 
-// const joinRide = ( ownerUsername, owner_id, passengerInfo, callback) => {
-//   const noti = {
-//     username: ownerUsername,
-//     msg: `${userInfo.username} has joined your ride`,
-//     passengerPhoneNumber: passengerInfo.phoneNumber,
-//     passengerEmail: passengerInfo.email,
-//   };
-//   Ride.findOneAndUpdate(
-//     { _id: owner_id, seats: { $gte: upadatedRide.passengers.length } },
-//     upadatedRide,
-//     { new: true },
-//     (err1, result1) => {
-//       if (err1) {
-//         callback(err1, null);
-//       } else {
-//         if (!userInfo.username || !status) {
-//           callback(null, result1);
-//         } else {
-//           Noti.create(noti, (err2, result2) => {
-//             if (err2) {
-//               callback(err2, null);
-//             } else {
-//               callback(null, result1);
-//             }
-//           });
-//         }
-//       }
-//     }
-//   );
+const joinRide = (ownerUsername, ride_id, passengerUsername, callback) => {
+  const noti = {
+    username: ownerUsername,
+    msg: `${passengerUsername} has joined your ride`,
+    passengerEmail: passengerUsername + "@g.ucla.edu",
+    date: new Date()
+  };
+  Ride.findOneAndUpdate(
+    { _id: ride_id, seats: { $gte: 1 } },
+    { $push: { passengers: passengerUsername }, $inc: { seats: -1 } },
+    { new: true },
+    (err1, result1) => {
+      if (err1) {
+        callback(err1, null);
+      } else {
+        Noti.create(noti, (err2, result2) => {
+          if (err2) {
+            callback(err2, null);
+          } else {
+            callback(null, result1);
+          }
+        });
+      }
+    }
+  );
+};
 
-// };
+const cancelRide = (ownerUsername, ride_id, passengerUsername, callback) => {
+  const noti = {
+    username: ownerUsername,
+    msg: `${passengerUsername} has cancelled your ride`,
+    passengerEmail: passengerUsername + "@g.ucla.edu",
+    date: new Date()
+  };
+  Ride.findOneAndUpdate(
+    { _id: ride_id },
+    { $pull: { passengers: passengerUsername }, $inc: { seats: 1 } },
+    { new: true },
+    (err1, result1) => {
+      if (err1) {
+        callback(err1, null);
+      } else {
+        Noti.create(noti, (err2, result2) => {
+          if (err2) {
+            callback(err2, null);
+          } else {
+            callback(null, result1);
+          }
+        });
+      }
+    }
+  );
+};
 
 const rideUpdate = (upadatedRide, userInfo, status, callback) => {
   const noti = {
@@ -225,6 +247,7 @@ module.exports = {
   getDriveUpcoming,
   rideUpdate,
   postRide,
-  //joinRide,
+  joinRide,
+  cancelRide,
   rideDelete
 };

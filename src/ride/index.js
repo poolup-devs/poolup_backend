@@ -93,20 +93,39 @@ router.post("/rides/post-ride", checkAuth, (req, res) => {
   });
 });
 
-// //Join a Ride
-// router.put("/rides/join-ride", checkAuth, (req, res) => {
-//   const ride = JSON.parse(req.body.ride);
-//   const passengerInfo = JSON.parse(req.body.user); //requires a GET MY USER INFO API CALL
-//   db.joinRide(ride.ownerUsername, ride._id, passengerInfo, (err, data) => {
-//     if (err) {
-//       res.sendStatus(500);
-//     } else {
-//       res.status(200).send(data);
-//     }
-//   });
-// });
+//Join a Ride
+router.put("/rides/join-ride", checkAuth, (req, res) => {
+  const ride = req.body.ride; //need the _id and owner's username of the ride
+  const authUsername = tokenParser(req.headers.authorization).username; //my username
+  db.joinRide(ride.ownerUsername, ride._id, authUsername, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else if (data.length === 0) {
+      res.status(404).send({
+        message: "ERROR: The ride is full"
+      });
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
 
 //Cancel a Ride
+router.put("/rides/cancel-ride", checkAuth, (req, res) => {
+  const ride = req.body.ride; //need the _id and owner's username of the ride
+  const authUsername = tokenParser(req.headers.authorization).username; //my username
+  db.cancelRide(ride.ownerUsername, ride._id, authUsername, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else if (data.length === 0) {
+      res.status(404).send({
+        message: "ERROR: The ride is full"
+      });
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
 
 //Modify Data of a Ride
 router.put("/rides/rideList", checkAuth, (req, res) => {
@@ -125,7 +144,7 @@ router.put("/rides/rideList", checkAuth, (req, res) => {
 });
 
 //Delete a ride
-router.delete("/rideList", checkAuth, (req, res) => {
+router.delete("/rides/rideList", checkAuth, (req, res) => {
   const ride = JSON.parse(req.body.ride);
   db.rideDelete(ride._id, (err, data) => {
     if (err) {

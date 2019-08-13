@@ -11,7 +11,7 @@ const tokenParser = require("../utils/token-parser.js");
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 //Get Noti for driver
-router.get("/driverNoti", checkAuth, (req, res) => {
+router.get("/notis/driverNoti", checkAuth, (req, res) => {
   const username = tokenParser(req.headers.authorization).username;
   db.getNoti(username, (err, data) => {
     if (err) {
@@ -23,9 +23,10 @@ router.get("/driverNoti", checkAuth, (req, res) => {
 });
 
 //Create Noti for driver
-router.post("/driverNoti", checkAuth, (req, res) => {
+router.post("/notis/driverNoti", checkAuth, (req, res) => {
   const username = tokenParser(req.headers.authorization).username;
   req.body.username = username;
+  req.body.date = new Date();
   db.createNoti(req.body, (err, data) => {
     if (err) {
       res.sendStatus(500);
@@ -36,7 +37,7 @@ router.post("/driverNoti", checkAuth, (req, res) => {
 });
 
 //Modify Noti for driver
-router.put("/driverNoti", checkAuth, (req, res) => {
+router.put("/notis/driverNoti", checkAuth, (req, res) => {
   const username = tokenParser(req.headers.authorization).username;
   db.updateNoti(username, (err, data) => {
     if (err) {

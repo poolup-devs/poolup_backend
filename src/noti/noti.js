@@ -8,7 +8,8 @@ const notiSchema = mongoose.Schema({
   viewed: {
     type: Boolean,
     default: false
-  }
+  },
+  date: Date
 });
 
 const Noti = mongoose.model("Noti", notiSchema);

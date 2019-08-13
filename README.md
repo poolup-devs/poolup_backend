@@ -86,11 +86,13 @@ There must be a white space between the string "Bearer" and the token string
 
 ## Models & API Endpoints Documentation
 
-1. [User-Model](#model:-user)
-2. [Ride-Model](#model:-ride)
-3. [Noti-Model](#model:-noti)
+1. [User-Model](#user-model)
+2. [Ride-Model](#ride-model)
+3. [Noti-Model](#noti-model)
 
-### Model: User
+---
+
+### User Model
 
 ### Schema
 
@@ -285,7 +287,7 @@ not functional yet
 
 ---
 
-### Model: Ride
+### Ride Model
 
 ### Schema
 
@@ -304,18 +306,18 @@ not functional yet
 
 ### API Endpoints
 
-| url                       | HTTP Method | description                                                                      |
-| ------------------------- | ----------- | -------------------------------------------------------------------------------- |
-| /rides/matching-rides     | GET         | [Get List of Available future Rides](#get-list-of-available-future-rides)        |
-| /rides/user-rides-history | GET         | [Get ANOTHER USER's ride history](#get-another-user's-ride-history)              |
-| /rides/my-rides-history   | GET         | [Get MY ride history](#get-my-ride-history)                                      |
-| /rides/my-rides-upcoming  | GET         | [Get MY ride upcoming](#get-my-ride-upcoming)                                    |
-| /rides/drives-history     | GET         | [Get a user's (OTHER'S AND MINE) drive history](#get-a-user's-drive-history)     |
-| /rides/drives-upcoming    | GET         | [Get a user's (OTHER'S AND MINE) upcoming drives](#get-a-user's-upcoming-drives) |
-| /rides/post-ride          | POST        | [Post a Ride](#post-a-ride)                                                      |
-| /rides/join-ride          | PUT         | [Join a Ride](#join-a-ride)                                                      |
-| /rides/cancel-ride        | PUT         | [Cancel a Ride](#cancel-a-ride)                                                  |
-| /rides/delete-ride        | DELETE      | [Delete a ride](#delete-a`-ride)                                                 |
+| url                       | HTTP Method | description                                                               |
+| ------------------------- | ----------- | ------------------------------------------------------------------------- |
+| /rides/matching-rides     | GET         | [Get List of Available future Rides](#get-list-of-available-future-rides) |
+| /rides/user-rides-history | GET         | [Get ANOTHER USER's ride history](#get-another-users-ride-history)        |
+| /rides/my-rides-history   | GET         | [Get MY ride history](#get-my-ride-history)                               |
+| /rides/my-rides-upcoming  | GET         | [Get MY ride upcoming](#get-my-ride-upcoming)                             |
+| /rides/drives-history     | GET         | [Get a user's (OTHER'S AND MINE) drive history](#get-drive-history)       |
+| /rides/drives-upcoming    | GET         | [Get a user's (OTHER'S AND MINE) upcoming drives](#get-upcoming-drives)   |
+| /rides/post-ride          | POST        | [Post a Ride](#post-a-ride)                                               |
+| /rides/join-ride          | PUT         | [Join a Ride](#join-a-ride)                                               |
+| /rides/cancel-ride        | PUT         | [Cancel a Ride](#cancel-a-ride)                                           |
+| /rides/delete-ride        | DELETE      | [Delete a ride](#delete-a`-ride)                                          |
 
 - Note: all get ride apis (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
 
@@ -341,7 +343,7 @@ localhost:3000/rides/matching-rides?filter={"from": "Irvine", "to" : "Los Angele
 
 ---
 
-### Get ANOTHER USER's ride history
+### Get ANOTHER USERs ride history
 
 GET request
 
@@ -397,7 +399,7 @@ localhost:3000/rides/my-rides-history?pageNum=0
 
 ---
 
-### Get a user's drive history
+### Get drive history
 
 GET request
 
@@ -415,7 +417,7 @@ localhost:3000/rides/my-rides-history?pageNum=0&username=bin315a1
 
 ---
 
-### Get a user's upcoming drives
+### Get upcoming drives
 
 GET request
 
@@ -576,7 +578,7 @@ The ride object that the user is trying to delete (The ride object's owner has t
 
 ---
 
-### Model: Noti
+### Noti Model
 
 ### Schema
 

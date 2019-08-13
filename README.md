@@ -257,220 +257,37 @@ not functional yet
 
 ### Schema
 
-| column           | type   |
-| ---------------- | ------ |
-| ownerEmail       | String |
-| ownerUsername    | String |
-| ownerPhoneNumber | String |
-| from             | String |
-| to               | String |
-| date             | Date   |
-| price            | String |
-| seats            | Number |
-| detail           | String |
-| passengers       | Array  |
+| column           | type   | required |
+| ---------------- | ------ | -------- |
+| ownerEmail       | String | Yes      |
+| ownerUsername    | String |          |
+| ownerPhoneNumber | String |          |
+| from             | String | Yes      |
+| to               | String | Yes      |
+| date             | Date   | Yes      |
+| price            | String | Yes      |
+| seats            | Number | Yes      |
+| detail           | String |          |
+| passengers       | Array  |          |
 
 ### API Endpoints
 
-| url       | HTTP Method | description           |
-| --------- | ----------- | --------------------- |
-| /rideList | GET         | Get list of rides     |
-| /rideList | POST        | Post a ride           |
-| /rideList | PUT         | Modify data of a ride |
-| /rideList | DELETE      | Delete a ride         |
+| url                       | HTTP Method | description                                                                         |
+| ------------------------- | ----------- | ----------------------------------------------------------------------------------- |
+| /rides/matching-rides     | GET         | [Get List of ANY Available/ future Rides](#Get-List-of-ANY-Available/-future-Rides) |
+| /rides/user-rides-history | GET         | Get ANOTHER USER's ride history                                                     |
+| /rides/my-rides-history   | GET         | Get MY ride history                                                                 |
+| /rides/my-rides-upcoming  | GET         | Get MY ride upcoming                                                                |
+| /rides/drives-history     | GET         | Get a user's (OTHER'S AND MINE) drive history                                       |
+| /rides/drives-upcoming    | GET         | Get a user's (OTHER'S AND MINE) upcoming drives                                     |
+| /rides/post-ride          | POST        | Post a Ride                                                                         |
+| /rides/join-ride          | PUT         | Join a Ride                                                                         |
+| /rides/cancel-ride        | PUT         | Cancel a Ride                                                                       |
+| /rides/delete-ride        | DELETE      | Delete a ride                                                                       |
 
 ---
 
-### Get list of rides
-
-GET request
-
-12 types of requests:
-
----
-
-1. "rideFeed"
-
-**parmas**
-type=rideFeed, pageNum, filter
-
-**example**
-
-localhost:3000/rideList?type=rideFeed&pageNum=1&filter={ "from" : "Irvine", "to":"Los Angeles" , "date":"2019-04-20 00:00:00.000Z"}
-
-**return value**
-
-List of 'top 10\*pageNum' available earliest rides according to the filter
-
----
-
-2. "rideFeedMore"
-
-If filter exists:
-
-same as "rideFeed", but skips the first '10\*pageNum' results
-
-If filter is undefined:
-
-returns all rides that are currently available, skips the first 10 results
-
----
-
-3. "driveHistory"
-
-**params**
-type=driveHistory, userInfo, pageNum
-
-**example**
-localhost:3000/rideList?userInfo={"username":"bin315a1"}&type=driveHistory
-
-**return value**
-list of (top 10\*pageNum) all the rides the specified user had driven (prior to the currnet date&time)
-
----
-
-4. "driveHistoryMyAccount"
-   -expected to be depricated as code is exaclty the same as "driveHistory"
-
----
-
-5. "driveHistoryMore"
-   same as "driveHistory", but skipping the first (10\*pageNum) results
-
----
-
-6. "driveUpcoming"
-
-**params**
-type=driveUpcoming, userInfo
-
-**example**
-localhost:3000/rideList?userInfo={"username":"bin315a1"}&type=driveUpcoming
-
-**return value**
-returns 3 earliest upcoming future drives that the specified user has
-
----
-
-7. "rideHistory"
-
-**params**
-type=rideHistory, userInfo
-
-- INCOMPLETE
-
----
-
-8. "rideHistoryMyAccount"
-
-- expected to be deprecated
-
----
-
-9. "rideUpcoming"
-
-**params**
-type=rideUpcoming, userInfo
-
-- INCOMPLETE
-
----
-
-10. "fetchHistoryTotal"
-
-- INCOMPLETE
-
----
-
-11. n/a
-
-**params/body**
-pageNum
-
-**return value**
-return list of all available rides without filtering
-
----
-
-### Post a ride
-
-POST request
-
-**body/example**
-
-```
-{
-	"rideInfo": {
-		"ownerEmail": "bin315a1@gmail.com",
-		"ownerUsername": "bin315a1",
-		"ownerPhoneNumber": "1231231234",
-		"from": "Irvine",
-		"to": "Los Angeles",
-		"date": "2019-07-30",
-		"price": "20",
-		"seats": 4,
-		"detail": "Third test for post",
-		"passengers": []
-	}
-}
-```
-
-**\*return value**
-created ride object
-
----
-
-### Modify data of a ride - NEEDS WORK
-
-PUT request
-
-**body**
-
-```
-{
-    "entry": <updated ride object>,
-    "userInfo":<user(owner of the ride) object>,
-    "status":<what has been changed>
-}
-```
-
-**example**
-
----
-
-### Delete a ride
-
-DELETE request
-
-**params**
-ride (ride object)
-
-**example**
-localhost:3000/rideList?ride={
-"passengers": [],
-"\_id": "5d3de5f718df732a7bcbccec",
-"ownerEmail": "bin315a1@gmail.com",
-"ownerUsername": "bin315a1",
-"ownerPhoneNumber": "1231231234",
-"from": "Irvine",
-"to": "Los Angeles",
-"date": "2019-04-20T00:00:00.000Z",
-"price": "20",
-"seats": 4,
-"detail": "Third test for post",
-"\_\_v": 0
-}
-
-**return value**
-200 OK status with number of deleted rides
-
-```
-{
-    "n": 1,
-    "ok": 1,
-    "deletedCount": 1
-}
-```
+### Get List of ANY Available/ future Rides
 
 ---
 

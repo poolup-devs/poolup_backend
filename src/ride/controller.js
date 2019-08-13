@@ -195,39 +195,6 @@ const cancelRide = (ownerUsername, ride_id, passengerUsername, callback) => {
   );
 };
 
-const rideUpdate = (upadatedRide, userInfo, status, callback) => {
-  const noti = {
-    email: upadatedRide.ownerEmail,
-    msg: `${userInfo.username} has ${status}ed a ride`,
-    passengerPhoneNumber: userInfo.phoneNumber,
-    passengerEmail: userInfo.email,
-    viewed: false
-  };
-
-  Ride.findOneAndUpdate(
-    { _id: upadatedRide._id, seats: { $gte: upadatedRide.passengers.length } },
-    upadatedRide,
-    { new: true },
-    (err1, result1) => {
-      if (err1) {
-        callback(err1, null);
-      } else {
-        if (!userInfo.username || !status) {
-          callback(null, result1);
-        } else {
-          Noti.create(noti, (err2, result2) => {
-            if (err2) {
-              callback(err2, null);
-            } else {
-              callback(null, result1);
-            }
-          });
-        }
-      }
-    }
-  );
-};
-
 const rideDelete = (_id, callback) => {
   Ride.deleteOne({ _id }, (err, result) => {
     if (err) {
@@ -245,7 +212,6 @@ module.exports = {
   getMyRideUpcoming,
   getDriveHistory,
   getDriveUpcoming,
-  rideUpdate,
   postRide,
   joinRide,
   cancelRide,

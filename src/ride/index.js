@@ -6,10 +6,6 @@ const db = require("./controller.js");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
 
-///////////////////////////////////////////////////////////////
-///////////GET RIDES///////////////////////////////////////////
-///////////////////////////////////////////////////////////////
-
 //Get List of Available/ future Rides
 router.get("/rides/matching-rides", checkAuth, (req, res) => {
   db.getMatchingRides(req.query.filter, req.query.pageNum, (err, data) => {
@@ -55,10 +51,6 @@ router.get("/rides/my-rides-upcoming", checkAuth, (req, res) => {
     }
   });
 });
-
-///////////////////////////////////////////////////////////////
-///////////GET Drives//////////////////////////////////////////
-///////////////////////////////////////////////////////////////
 
 //Get a user's (others & mine) drive history
 router.get("/rides/drives-history", checkAuth, (req, res) => {
@@ -112,8 +104,8 @@ router.put("/rides/join-ride", checkAuth, (req, res) => {
 
 //Cancel a Ride
 router.put("/rides/cancel-ride", checkAuth, (req, res) => {
-  const ride = req.body.ride; //need the _id and owner's username of the ride
-  const authUsername = tokenParser(req.headers.authorization).username; //my username
+  const ride = req.body.ride;
+  const authUsername = tokenParser(req.headers.authorization).username;
   db.cancelRide(ride.ownerUsername, ride._id, authUsername, (err, data) => {
     if (err) {
       res.sendStatus(500);
@@ -127,25 +119,13 @@ router.put("/rides/cancel-ride", checkAuth, (req, res) => {
   });
 });
 
-//Modify Data of a Ride
-router.put("/rides/rideList", checkAuth, (req, res) => {
-  db.rideUpdate(
-    req.body.entry,
-    req.body.userInfo,
-    req.body.status,
-    (err, data) => {
-      if (err) {
-        res.sendStatus(500);
-      } else {
-        res.status(200).send(data);
-      }
-    }
-  );
-});
-
 //Delete a ride
-router.delete("/rides/rideList", checkAuth, (req, res) => {
-  const ride = JSON.parse(req.body.ride);
+router.delete("/rides/delete-ride", checkAuth, (req, res) => {
+  const ride = req.body.ride;
+  const authUsername = tokenParser(req.headers.authorization).username;
+  if (ride.ownerUsername !== authUsername) {
+    res.sendStatus(401);
+  }
   db.rideDelete(ride._id, (err, data) => {
     if (err) {
       res.sendStatus(500);

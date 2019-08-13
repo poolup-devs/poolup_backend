@@ -5,6 +5,12 @@
 This is the backend code repository for Bruinpool: made with NodeJS, Express, and MongoDB w/ Mongoose.
 For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineering Manager.
 
+1. [Setup](#setup)
+2. [Documentation](#documentation)
+3. [Deployment](#deployment)
+
+# Setup
+
 ## Local Environment Setup
 
 1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
@@ -66,9 +72,11 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
     ├── package-lock.json
     └── package.json
 
+# Documentation
+
 ## Auth Tokens
 
-For all API requests after login, the bearer token must be included in headers for authorization.
+For all API requests after login, the bearer token must be included in headers for authorization/ username extraction.
 
 | Key           | Value               |
 | ------------- | ------------------- |
@@ -78,34 +86,40 @@ There must be a white space between the string "Bearer" and the token string
 
 ## Models & API Endpoints Documentation
 
+1. [User-Model](#model:-user)
+2. [Ride-Model](#model:-ride)
+3. [Noti-Model](#model:-noti)
+
 ### Model: User
 
 ### Schema
 
-| column      | type   |
-| ----------- | ------ |
-| email       | String |
-| username    | String |
-| password    | String |
-| phoneNumber | String |
-| driverList  | Array  |
-| riderList   | Array  |
-| picUrl      | String |
-| authToken   | String |
+| column      | type    | required |
+| ----------- | ------- | -------- |
+| name        | String  | Yes      |
+| email       | String  | Yes      |
+| username    | String  | Yes      |
+| password    | String  | Yes      |
+| phoneNumber | String  |          |
+| driverList  | Array   |          |
+| riderList   | Array   |          |
+| picUrl      | String  |          |
+| picType     | String  |          |
+| Verified    | Boolean | Yes      |
 
 ### API Endpoints
 
-| url                          | HTTP Method | description                                 |
-| ---------------------------- | ----------- | ------------------------------------------- |
-| /users/login                 | GET         | User Login                                  |
-| /users/signup                | POST        | User Signup                                 |
-| /users/verify                | GET         | Send a verification Email for signup        |
-| /users/emailValidation       | GET         | Validation/usability of Email               |
-| /users/usernameValidation    | GET         | Validation/usability of a username          |
-| /users/phoneNumberValidation | GET         | Validation/usability of a phone number      |
-| /users/upload-profile-pic    | POST        | upload a user profile image                 |
-| /users/usersPic              | GET         | Get a user's profile image                  |
-| /users/updateUser            | POST        | Update user data; NOT IMPLEMENTED IN DB YET |
+| url                          | HTTP Method | description                                                        |
+| ---------------------------- | ----------- | ------------------------------------------------------------------ |
+| /users/login                 | GET         | [User Login](#user-login)                                          |
+| /users/signup                | POST        | [User Signup](#user-signup)                                        |
+| /users/verify                | GET         | [Send a verification Email for signup](#email-verification)        |
+| /users/emailValidation       | GET         | [Validation/usability of Email](#email-validation)                 |
+| /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
+| /users/phoneNumberValidation | GET         | [Validation/usability of a phone number](#phone-number-validation) |
+| /users/upload-profile-pic    | POST        | [upload a user profile image](#upload-profile-image)               |
+| /users/usersPic              | GET         | [Get a user's profile image](#get-profile-image)                   |
+| /users/updateUser            | POST        | Update user data; NOT IMPLEMENTED IN DB YET                        |
 
 ---
 
@@ -127,6 +141,7 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
 ```
 
 **return value**
+
 200 status, returns auth token
 
 ### User Signup
@@ -147,6 +162,7 @@ ex) the username for bin315a1 would become bin315a1@g.ucla.edu
 ```
 
 **return value**
+
 201 status, Created
 
 A confirmation email is sent, which contains a link the link: https://bruinpool.io/users/verify?token=TOKENATTACHEDHERE , with a email verification token attached on the url as query
@@ -160,62 +176,74 @@ GET request
 This is different from an "Email VALIDATION", since this is "verifying" that the user has the email that it claims to have
 
 **params**
+
 token
 
 **example**
+
 localhost:3000/users/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImlhbWJyeWFuLmxlZUBnbWFpbC5jb20iLCJpYXQiOjE1NjU1ODIxMDUsImV4cCI6MTU2NTY0MjEwNX0.78CKxrCkfidoby-iYDKKe5_KQR4BKIV4D6LI4koHKEQ
 
 **return value**
+
 Returns a 401 on failure, if not it returns a redirection to https://bruinpool.io where the user can now login with the verified email & password
 
 ---
 
-### Validation/usability of Email
+### Email Validation
 
 Get request
 
 **params**
+
 email
 
 **example**
+
 localhost:3000/users/emailValidation?email=sampleEmail1@gmail.com
 
 **return value**
+
 array of user objects with that email
 
 ---
 
-### Validation/usability of a username
+### Username Validation
 
 GET request
 
 **params**
+
 username
 
 **example**
+
 localhost:3000/users/usernameValidation?username=sampleUser1
 
 **return value**
+
 array of user objects with that username
 
 ---
 
-### Validation/usability of a phone number
+### Phone Number Validation
 
 GET request
 
 **params**
+
 phoneNumber
 
 **example**
+
 localhost:3000/users/phoneNumberValidation?phoneNumber=1231231234
 
 **return value**
+
 array of user objects with that username
 
 ---
 
-### upload a user profile image
+### Upload Profile Image
 
 POST request
 
@@ -228,21 +256,25 @@ POST request
 ```
 
 **return value**
+
 200 OK status code if successfully uploaded to S3 bucket; if not, error
 
 ---
 
-### Get a user's profile image
+### Get Profile Image
 
 GET request
 
 **params**
+
 username (not id)
 
 **example**
+
 localhost:3000/users/usersPic?username=sampleUser1
 
 **return value**
+
 Accessible URL to the img file in S3 bucket
 
 ---
@@ -272,22 +304,275 @@ not functional yet
 
 ### API Endpoints
 
-| url                       | HTTP Method | description                                                                       |
-| ------------------------- | ----------- | --------------------------------------------------------------------------------- |
-| /rides/matching-rides     | GET         | [Get List of ANY Available future Rides](#get-list-of-any-available-future-rides) |
-| /rides/user-rides-history | GET         | Get ANOTHER USER's ride history                                                   |
-| /rides/my-rides-history   | GET         | Get MY ride history                                                               |
-| /rides/my-rides-upcoming  | GET         | Get MY ride upcoming                                                              |
-| /rides/drives-history     | GET         | Get a user's (OTHER'S AND MINE) drive history                                     |
-| /rides/drives-upcoming    | GET         | Get a user's (OTHER'S AND MINE) upcoming drives                                   |
-| /rides/post-ride          | POST        | Post a Ride                                                                       |
-| /rides/join-ride          | PUT         | Join a Ride                                                                       |
-| /rides/cancel-ride        | PUT         | Cancel a Ride                                                                     |
-| /rides/delete-ride        | DELETE      | Delete a ride                                                                     |
+| url                       | HTTP Method | description                                                                      |
+| ------------------------- | ----------- | -------------------------------------------------------------------------------- |
+| /rides/matching-rides     | GET         | [Get List of Available future Rides](#get-list-of-available-future-rides)        |
+| /rides/user-rides-history | GET         | [Get ANOTHER USER's ride history](#get-another-user's-ride-history)              |
+| /rides/my-rides-history   | GET         | [Get MY ride history](#get-my-ride-history)                                      |
+| /rides/my-rides-upcoming  | GET         | [Get MY ride upcoming](#get-my-ride-upcoming)                                    |
+| /rides/drives-history     | GET         | [Get a user's (OTHER'S AND MINE) drive history](#get-a-user's-drive-history)     |
+| /rides/drives-upcoming    | GET         | [Get a user's (OTHER'S AND MINE) upcoming drives](#get-a-user's-upcoming-drives) |
+| /rides/post-ride          | POST        | [Post a Ride](#post-a-ride)                                                      |
+| /rides/join-ride          | PUT         | [Join a Ride](#join-a-ride)                                                      |
+| /rides/cancel-ride        | PUT         | [Cancel a Ride](#cancel-a-ride)                                                  |
+| /rides/delete-ride        | DELETE      | [Delete a ride](#delete-a`-ride)                                                 |
+
+- Note: all get ride apis (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
 
 ---
 
-### Get List of ANY Available future Rides
+### Get List of Available future Rides
+
+GET request
+
+**params**
+
+filter(JSON object with fields: "from", "to", and "date"), pageNum
+
+if filter is undefined, returns ALL available drives sorted in date/time
+
+**example**
+
+localhost:3000/rides/matching-rides?filter={"from": "Irvine", "to" : "Los Angeles", "date" : "2019-09-11T00:00:00.000Z"}
+
+**return value**
+
+200 OK status with an array of ride objects according to the filter
+
+---
+
+### Get ANOTHER USER's ride history
+
+GET request
+
+- DOES NOT take a pageNum param
+
+**params**
+
+username
+
+**example**
+
+localhost:3000/rides/user-rides-history?username=bin315a1
+
+**return value**
+
+200 OK status with an array of rides that the user with the username had in the past (before current date&time)
+
+---
+
+### Get MY ride history
+
+GET request
+
+**params**
+
+pageNum
+
+**example**
+
+localhost:3000/rides/my-rides-history?pageNum=0
+
+**return value**
+
+200 OK status with an array of rides that the user had in the past (before current date&time)
+
+---
+
+### Get MY ride upcoming
+
+GET request
+
+**params**
+
+pageNum
+
+**example**
+
+localhost:3000/rides/my-rides-history?pageNum=0
+
+**return value**
+
+200 OK status with an array of rides that the user will have in the future (after current date&time)
+
+---
+
+### Get a user's drive history
+
+GET request
+
+**params**
+
+username, pageNum
+
+**example**
+
+localhost:3000/rides/my-rides-history?pageNum=0&username=bin315a1
+
+**return value**
+
+200 OK status with an array of rides that the user was the driver in the past (before current date&time)
+
+---
+
+### Get a user's upcoming drives
+
+GET request
+
+**params**
+
+username, pageNum
+
+**example**
+
+localhost:3000/rides/drives-upcoming?pageNum=0&username=bin315a1
+
+**return value**
+
+200 OK status with an array of rides that the user was the driver will drive in the future (after current date&time)
+
+---
+
+### Post a Ride
+
+POST request
+
+**body**
+
+a new ride object:
+
+```
+{
+	"rideInfo": {
+		"ownerEmail": "bin315a1@gmail.com",
+		"ownerUsername": "bin315a1",
+		"from": "Irvine",
+		"to": "Los Angeles",
+		"date": "2019-07-30",
+		"price": "20",
+		"seats": 4,
+		"detail": "Third test for post",
+		"passengers": []
+	}
+}
+```
+
+**return value**
+
+200 OK status with the ride object created
+
+---
+
+### Join a Ride
+
+PUT request
+
+**body**
+
+The ride object that the user is trying to join:
+
+```
+{
+	"ride" : {
+        "passengers": [
+            "bin315a1"
+        ],
+        "_id": "5d505f0d5482ec4e38597cdd",
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-08-30T00:00:00.000Z",
+        "price": "20",
+        "seats": 4,
+        "detail": "Second test for post",
+        "__v": 0
+    }
+}
+```
+
+**return value**
+
+200 status with the ride object joined
+
+---
+
+### Cancel a Ride
+
+PUT request
+
+**body**
+
+The ride object that the user is trying to cancel:
+
+```
+{
+	"ride" : {
+        "passengers": [
+            "bin315a1"
+        ],
+        "_id": "5d505f0d5482ec4e38597cdd",
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-08-30T00:00:00.000Z",
+        "price": "20",
+        "seats": 4,
+        "detail": "Second test for post",
+        "__v": 0
+    }
+}
+```
+
+**return value**
+
+200 status with the ride object cancelled
+
+---
+
+### Delete a ride
+
+DELETE request
+
+**body**
+
+The ride object that the user is trying to delete (The ride object's owner has to be the logged in user):
+
+```
+{
+	"ride" : {
+        "passengers": [
+            "bin315a1"
+        ],
+        "_id": "5d505f0d5482ec4e38597cdd",
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-08-30T00:00:00.000Z",
+        "price": "20",
+        "seats": 4,
+        "detail": "Second test for post",
+        "__v": 0
+    }
+}
+```
+
+**return value**
+
+200 status with a debrief of action:
+
+```
+    {
+        "n": 1,
+        "ok": 1,
+        "deletedCount": 1
+    }
+```
 
 ---
 
@@ -295,37 +580,40 @@ not functional yet
 
 ### Schema
 
-| column               | type    |
-| -------------------- | ------- |
-| email                | String  |
-| msg                  | String  |
-| passengerPhoneNumber | String  |
-| passengerEmail       | String  |
-| viewed               | Boolean |
+| column               | type    | required |
+| -------------------- | ------- | -------- |
+| username             | String  | Yes      |
+| email                | String  | Yes      |
+| msg                  | String  | Yes      |
+| passengerPhoneNumber | String  |          |
+| passengerEmail       | String  | Yes      |
+| viewed               | Boolean | Yes      |
 
 ### API Endpoints
 
-| url           | HTTP Method | description                          |
-| ------------- | ----------- | ------------------------------------ |
-| /notification | GET         | Get the notification for driver      |
-| /notification | POST        | Create a new notification for driver |
-| /notification | PUT         | Modify a notification for driver     |
+| url                      | HTTP Method | description                                                         |
+| ------------------------ | ----------- | ------------------------------------------------------------------- |
+| /notis/get-driverNotis   | GET         | [Get the notification for driver](#get-driver-notification)         |
+| /notis/create-driverNoti | POST        | [Create a new notification for driver](#create-driver-notification) |
+| /notis/view-driverNoti   | PUT         | [Modify a notification for driver](#view-driver-notification)       |
 
 ---
 
-### Get the notification for driver
+### Get Driver Notification
 
 GET request
 
 **params/body**
+
 none needed
 
 **return value**
+
 200 OK, 500 error if failure
 
 ---
 
-###Create a notification for driver
+### Create Driver Notification
 
 POST request
 
@@ -340,23 +628,28 @@ POST request
 ```
 
 **return value**
+
 201 created status with data of the notification created, 500 error if failure
 
 ---
 
-### Modify a notification
+### View Driver Notification
 
 PUT request
 
 **params/body**
+
 none needed
 
 **return value**
+
 modifies the "viewed"(set as false by default) field of all notificationsof the user as true
 
 200 OK, 500 error if failure
 
 ---
+
+# Deployment
 
 ## Deployment Instructions
 

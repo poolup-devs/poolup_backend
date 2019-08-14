@@ -55,13 +55,16 @@ router.post("/users/signup", (req, res) => {
             const token = jwt.sign({ email: ucla_email }, JWT_EMAIL_KEY, {
               expiresIn: 60000 //10 minutes
             });
-            const url = "bruinpool.io/verify?authorization=" + token;
+            var url = "bruinpool.io/verify?token=" + token;
+            if (process.env.MODE === "STAGING") {
+              url = "localhost:3000/verify?token=" + token;
+            }
             const email = {
               to: ucla_email,
               from: "bruinpool@gmail.com",
               subject: "Bruinpool: Email Verification Required",
               text: "Here's the link",
-              html: "Here's the link: " + url
+              html: "<p>Here's the link: " + url
             };
             sgMail
               .send(email)

@@ -55,9 +55,9 @@ router.post("/users/signup", (req, res) => {
             const token = jwt.sign({ email: ucla_email }, JWT_EMAIL_KEY, {
               expiresIn: 60000 //10 minutes
             });
-            var url = "bruinpool.io/verify?token=" + token;
+            var url = "bruinpool.io/users/verify?token=" + token;
             if (process.env.MODE === "STAGING") {
-              url = "localhost:3000/verify?token=" + token;
+              url = "localhost:3000/users/verify?token=" + token;
             }
             const email = {
               to: ucla_email,

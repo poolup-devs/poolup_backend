@@ -109,7 +109,7 @@ router.get("/users/emailValidation", (req, res) => {
     if (err) {
       res.sendStatus(500);
     } else {
-      res.status(201).send(data);
+      res.status(200).send(data);
     }
   });
 });
@@ -120,7 +120,7 @@ router.get("/users/usernameValidation", (req, res) => {
     if (err) {
       res.sendStatus(500);
     } else {
-      res.status(201).send(data);
+      res.status(200).send(data);
     }
   });
 });
@@ -131,7 +131,7 @@ router.get("/users/phoneNumberValidation", (req, res) => {
     if (err) {
       res.sendStatus(500);
     } else {
-      res.status(201).send(data);
+      res.status(200).send(data);
     }
   });
 });
@@ -194,7 +194,7 @@ router.get("/users/usersPic", checkAuth, (req, res) => {
     if (err) {
       res.status(500).send(err);
     } else {
-      res.status(201).send(data);
+      res.status(200).send(data);
     }
   });
 });

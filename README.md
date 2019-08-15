@@ -146,7 +146,13 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
 
 **return value**
 
-200 status, returns auth token
+200 status,
+
+```
+{
+    "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImJpbjMxNWExIiwiaWF0IjoxNTY1ODk2NzQzLCJleHAiOjE1NjU5MDAzNDN9.OLcXkfZWrTDo4r_VXK9sjOh7pa5--E1wRs7r0X-mK0I"
+}
+```
 
 ### User Signup
 
@@ -167,7 +173,11 @@ ex) the username for bin315a1 would become bin315a1@g.ucla.edu
 
 **return value**
 
-201 status, Created
+201 status,
+
+```
+Created
+```
 
 A confirmation email is sent, which contains a link the link: https://bruinpool.io/users/verify?token=TOKENATTACHEDHERE , with a email verification token attached on the url as query
 
@@ -189,7 +199,7 @@ localhost:3000/users/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpb
 
 **return value**
 
-Returns a 401 on failure, if not it returns a redirection to https://bruinpool.io where the user can now login with the verified email & password
+200 status, returns a redirection to https://bruinpool.io/login where the user can now login with the verified email & password
 
 ---
 
@@ -203,11 +213,27 @@ email
 
 **example**
 
-localhost:3000/users/emailValidation?email=sampleEmail1@gmail.com
+localhost:3000/users/emailValidation?email=bin315a1@g.ucla.edu
 
 **return value**
 
-array of user objects with that email
+200 status, array of user objects with that email
+
+```
+[
+    {
+        "driverList": [],
+        "riderList": [],
+        "verified": true,
+        "_id": "5d55af9f4c5458138f2efa85",
+        "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+        "username": "bin315a1",
+        "name": "Han",
+        "email": "bin315a1@g.ucla.edu",
+        "__v": 0
+    }
+]
+```
 
 ---
 
@@ -221,11 +247,27 @@ username
 
 **example**
 
-localhost:3000/users/usernameValidation?username=sampleUser1
+localhost:3000/users/usernameValidation?username=bin315a1
 
 **return value**
 
-array of user objects with that username
+200 status, array of user objects with that username
+
+```
+[
+    {
+        "driverList": [],
+        "riderList": [],
+        "verified": true,
+        "_id": "5d55af9f4c5458138f2efa85",
+        "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+        "username": "bin315a1",
+        "name": "Han",
+        "email": "bin315a1@g.ucla.edu",
+        "__v": 0
+    }
+]
+```
 
 ---
 
@@ -243,7 +285,7 @@ localhost:3000/users/phoneNumberValidation?phoneNumber=1231231234
 
 **return value**
 
-array of user objects with that username
+200 status, array of user objects with that phoneNumber
 
 ---
 
@@ -261,7 +303,23 @@ POST request
 
 **return value**
 
-200 OK status code if successfully uploaded to S3 bucket; if not, error
+200 status
+
+```
+{
+    "driverList": [],
+    "riderList": [],
+    "verified": true,
+    "_id": "5d55af9f4c5458138f2efa85",
+    "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    "username": "bin315a1",
+    "name": "Han",
+    "email": "bin315a1@g.ucla.edu",
+    "__v": 0,
+    "picType": "jpg",
+    "picUrl": "https://bruinpool-bucket-staging.s3.us-east-2.amazonaws.com/bucketFolder/bin315a1-pic.jpg"
+}
+```
 
 ---
 
@@ -279,7 +337,11 @@ localhost:3000/users/usersPic?username=sampleUser1
 
 **return value**
 
-Accessible URL to the img file in S3 bucket
+200 status
+
+```
+https://bruinpool-bucket-staging.s3.us-east-2.amazonaws.com/bucketFolder/bin315a1-pic.jpg
+```
 
 ---
 
@@ -463,7 +525,23 @@ a new ride object:
 
 **return value**
 
-200 OK status with the ride object created
+201 status 
+
+```
+{
+    "passengers": [],
+    "_id": "5d55b5721e78951430fdcc66",
+    "ownerEmail": "bin315a1@g.ucla.edu",
+    "ownerUsername": "bin315a1",
+    "from": "Irvine",
+    "to": "Los Angeles",
+    "date": "2019-07-30T00:00:00.000Z",
+    "price": "10",
+    "seats": 4,
+    "detail": "before today's date",
+    "__v": 0
+}
+```
 
 ---
 
@@ -657,7 +735,7 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 
 ## Deployment Instructions
 
-Currently the website uses Netlify for frontend's deployment and AWS for backend's deployment. Backend Node application uses systemd to maintain app's continuous execution with NGINX web server for reverse proxy with certbot SSL certification.
+Currently the website uses Netlify for frontend's deployment and AWS for backend's deployment. Backend Node application uses systemd to maintain app's continuous execution.
 
 **Only the current engineering manager/ specified deployment manager should be able to access deployment servers**
 
@@ -682,14 +760,10 @@ For root access, also ask your current engineering manager for root access prive
    and check that node-80.service is active and running
 
 - systemd service file's (for NodeJS app) location:
-  `/etc/systemd/system/node-80.service`
+  /etc/systemd/system/node-80.service
 - systemd's environment file's location:
-  `/root/sec/bruinPool_Backend_envFile`
-- NGINX web server configuration file's location:
-  `/etc/nginx/conf.d/server.conf`
-- Reverse Proxy Configuration:
-  NGINX is set to take inbound traffic at port 80 and connects it to port 3000 where the NodeJS application is running locally. Outbounding traffic is then reverse proxied to port 443 for https connection; this allows NGINX to apply SSL certificate between the proxy, allowing https connection
-- Express/NodeJS server is set to use the inbound port 3000
+  /root/sec/bruinPool_Backend_envFile
+- the application is set to use the port 8080 (http); environment variable for the service is set for port 80, but NGINX proxies it to port 8080
 - the .env file in the server doesn't have to be updated for the web server to work, but can be used with `npm run dev` if the server fails to run node-80.service and you need to check the error log
 
 Further Resources regarding systemctl:

@@ -56,16 +56,26 @@ router.post("/users/signup", (req, res) => {
               expiresIn: 60000 //10 minutes
             });
             var url = "bruinpool.io/users/verify?token=" + token;
-            if (process.env.MODE === "STAGING") {
-              url = "localhost:3000/users/verify?token=" + token;
-            }
-            const email = {
+            var email = {
               to: ucla_email,
               from: "bruinpool@gmail.com",
-              subject: "Bruinpool: Email Verification Required",
-              text: "Here's the link",
-              html: "<p>Here's the link: " + url
+              templateId: "d-0d8dff79ca8e4d0e8b4b9b1b12038a62",
+              dynamic_template_data: {
+                subject: "Bruinpool Email Verification",
+                name: req.body.username,
+                url: url
+              }
             };
+            if (process.env.MODE === "STAGING") {
+              url = "localhost:3000/users/verify?token=" + token;
+              var email = {
+                to: ucla_email,
+                from: "bruinpool@gmail.com",
+                subject: "Bruinpool: Email Verification Required",
+                text: "Here's the link",
+                html: "Token: <br>" + token
+              };
+            }
             sgMail
               .send(email)
               .then(() => {

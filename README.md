@@ -657,7 +657,7 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 
 ## Deployment Instructions
 
-Currently the website uses Netlify for frontend's deployment and AWS for backend's deployment. Backend Node application uses systemd to maintain app's continuous execution.
+Currently the website uses Netlify for frontend's deployment and AWS for backend's deployment. Backend Node application uses systemd to maintain app's continuous execution with NGINX web server for reverse proxy with certbot SSL certification.
 
 **Only the current engineering manager/ specified deployment manager should be able to access deployment servers**
 
@@ -682,10 +682,14 @@ For root access, also ask your current engineering manager for root access prive
    and check that node-80.service is active and running
 
 - systemd service file's (for NodeJS app) location:
-  /etc/systemd/system/node-80.service
+  `/etc/systemd/system/node-80.service`
 - systemd's environment file's location:
-  /root/sec/bruinPool_Backend_envFile
-- the application is set to use the port 8080 (http); environment variable for the service is set for port 80, but NGINX proxies it to port 8080
+  `/root/sec/bruinPool_Backend_envFile`
+- NGINX web server configuration file's location:
+  `/etc/nginx/conf.d/server.conf`
+- Reverse Proxy Configuration:
+  NGINX is set to take inbound traffic at port 80 and connects it to port 3000 where the NodeJS application is running locally. Outbounding traffic is then reverse proxied to port 443 for https connection; this allows NGINX to apply SSL certificate between the proxy, allowing https connection
+- Express/NodeJS server is set to use the inbound port 3000
 - the .env file in the server doesn't have to be updated for the web server to work, but can be used with `npm run dev` if the server fails to run node-80.service and you need to check the error log
 
 Further Resources regarding systemctl:

@@ -403,7 +403,40 @@ localhost:3000/rides/matching-rides?filter={"from": "Irvine", "to" : "Los Angele
 
 **return value**
 
-200 OK status with an array of ride objects according to the filter
+200 status
+
+```
+[
+    {
+        "passengers": [],
+        "_id": "5d505ed15482ec4e38597cdb",
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-09-11T00:00:00.000Z",
+        "price": "20",
+        "seats": 4,
+        "detail": "Third test for post",
+        "__v": 0
+    },
+    {
+        "passengers": [],
+        "_id": "5d505f005482ec4e38597cdc",
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-09-13T00:00:00.000Z",
+        "price": "20",
+        "seats": 4,
+        "detail": "First test for post",
+        "__v": 0
+    }
+]
+```
 
 ---
 
@@ -423,7 +456,7 @@ localhost:3000/rides/user-rides-history?username=bin315a1
 
 **return value**
 
-200 OK status with an array of rides that the user with the username had in the past (before current date&time)
+200 status with an array of rides that the user with the username had in the past (before current date&time)
 
 ---
 
@@ -525,7 +558,7 @@ a new ride object:
 
 **return value**
 
-201 status 
+201 status
 
 ```
 {
@@ -556,27 +589,45 @@ The ride object that the user is trying to join:
 ```
 {
 	"ride" : {
-        "passengers": [
-            "bin315a1"
-        ],
-        "_id": "5d505f0d5482ec4e38597cdd",
+        "passengers": [],
+        "_id": "5d505ed15482ec4e38597cdb",
         "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
         "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
-        "date": "2019-08-30T00:00:00.000Z",
+        "date": "2019-09-11T00:00:00.000Z",
         "price": "20",
         "seats": 4,
-        "detail": "Second test for post",
+        "detail": "Third test for post",
         "__v": 0
+
     }
 }
 ```
 
 **return value**
 
-200 status with the ride object joined
+200 status with the same ride object joined
+
+```
+{
+    "passengers": [
+        "bin315a1"
+    ],
+    "_id": "5d505ed15482ec4e38597cdb",
+    "ownerEmail": "bin315a1@gmail.com",
+    "ownerUsername": "bin315a1",
+    "ownerPhoneNumber": "1231231234",
+    "from": "Irvine",
+    "to": "Los Angeles",
+    "date": "2019-09-11T00:00:00.000Z",
+    "price": "20",
+    "seats": 3,
+    "detail": "Third test for post",
+    "__v": 0
+}
+```
 
 ---
 
@@ -611,7 +662,7 @@ The ride object that the user is trying to cancel:
 
 **return value**
 
-200 status with the ride object cancelled
+200 status with the same ride object cancelled
 
 ---
 
@@ -691,13 +742,38 @@ none needed
 
 **return value**
 
-200 OK, 500 error if failure
+200 status
+
+```
+[
+    {
+        "viewed": false,
+        "_id": "5d55bb66261da0092430c990",
+        "username": "bin315a1",
+        "msg": "bin315a1 has joined your ride",
+        "passengerEmail": "bin315a1@g.ucla.edu",
+        "date": "2019-08-15T20:07:02.242Z",
+        "__v": 0
+    },
+    {
+        "viewed": false,
+        "_id": "5d55bb485457802c949bb8f4",
+        "username": "bin315a1",
+        "msg": "bin315a1 has joined your ride",
+        "passengerEmail": "bin315a1@g.ucla.edu",
+        "date": "2019-08-15T20:06:32.716Z",
+        "__v": 0
+    }
+]
+```
 
 ---
 
 ### Create Driver Notification
 
 POST request
+
+- most likely not going to be used by frontend
 
 **body**
 
@@ -725,9 +801,17 @@ none needed
 
 **return value**
 
-modifies the "viewed"(set as false by default) field of all notificationsof the user as true
+modifies the "viewed"(set as false by default) field of all notificationsof the user as true, the "nModified" field shows how many noti objects have been set as seen
 
-200 OK, 500 error if failure
+200 status
+
+```
+{
+    "n": 9,
+    "nModified": 2,
+    "ok": 1
+}
+```
 
 ---
 

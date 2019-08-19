@@ -365,6 +365,22 @@ PUT request
 
 ---
 
+### Delete User
+
+DELETE request
+
+Deletes the user account object, all drives (not rides) that the user posted, and all noti object of user
+
+**params/body**
+
+none required
+
+**return value**
+
+200 status
+
+---
+
 ### Ride Model
 
 ### Schema
@@ -395,7 +411,7 @@ PUT request
 | /rides/post-ride          | POST        | [Post a Ride](#post-a-ride)                                               |
 | /rides/join-ride          | PUT         | [Join a Ride](#join-a-ride)                                               |
 | /rides/cancel-ride        | PUT         | [Cancel a Ride](#cancel-a-ride)                                           |
-| /rides/delete-ride        | DELETE      | [Delete a ride](#delete-a`-ride)                                          |
+| /rides/delete-ride        | DELETE      | [Delete a ride](#delete-a-ride)                                           |
 
 - Note: all get ride apis (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
 

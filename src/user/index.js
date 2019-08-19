@@ -209,21 +209,32 @@ router.get("/users/usersPic", checkAuth, (req, res) => {
   });
 });
 
-// //Update User Data - NOT IMPLEMENTED IN DB
-// router.post("/updateUser", checkAuth, (req, res) => {
-//   db.updateUser(
-//     req.body.email,
-//     req.body.username,
-//     req.body.vid_id,
-//     req.body.pull,
-//     (err, result) => {
-//       if (err) {
-//         res.sendStatus(500);
-//       } else {
-//         res.status(201).send(result);
-//       }
-//     }
-//   );
-// });
+//Update a User's info (name, phoneNumber)
+router.put("/users/updateUser", checkAuth, (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+  db.updateUser(
+    authUsername,
+    req.body.name,
+    req.body.phoneNumber,
+    (err, result) => {
+      if (err) {
+        res.sendStatus(500);
+      } else {
+        res.status(200).send(result); //reminder: fix this back to w/o result
+      }
+    }
+  );
+});
+
+router.delete("/users/deleteUser", checkAuth, (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+  db.deleteUser(authUsername, (err, result) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.sendStatus(200);
+    }
+  });
+});
 
 module.exports = router;

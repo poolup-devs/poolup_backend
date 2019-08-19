@@ -6,8 +6,6 @@ const userSchema = mongoose.Schema({
   username: String,
   password: String,
   phoneNumber: String,
-  driverList: Array,
-  riderList: Array,
   picUrl: String,
   picType: String,
   verified: {

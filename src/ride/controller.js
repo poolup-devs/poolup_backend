@@ -7,18 +7,32 @@ const Noti = require("../noti/noti.js").Noti;
 
 const getMatchingRides = (filter_, pageNum, callback) => {
   if (filter_) {
-    const filter = JSON.parse(filter_);
-    console.log(filter);
-    Ride.find(
-      { from: filter.from, to: filter.to, date: { $gte: filter.date } },
-      (err, result) => {
-        if (err) {
-          callback(err, null);
-        } else {
-          callback(null, result);
-        }
+    filter_ = JSON.parse(filter_);
+    let filter = {};
+    if (filter_.from) {
+      filter.from = filter_.from;
+    }
+    if (filter_.to) {
+      filter.to = filter_.to;
+    }
+    if (filter_.date_from && filter_.date_to) {
+      filter.date = {
+        $gte: filter_.date_from,
+        $lte: filter_.date_to
+      };
+    } else {
+      filter.date = {
+        $gte: new Date()
+      };
+    }
+
+    Ride.find(filter, (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, result);
       }
-    )
+    })
       .sort({ date: 1 })
       .skip(pageNum * 10)
       .limit(10);

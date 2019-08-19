@@ -1,4 +1,6 @@
 const User = require("./user").User;
+const Ride = require("../ride/ride.js").Ride;
+const Noti = require("../noti/noti.js").Noti;
 
 const login = (email, password, callback) => {
   User.findOne(
@@ -131,6 +133,43 @@ const getPicUrl = (username, callback) => {
   });
 };
 
+const updateUser = (authUsername, name, phoneNumber, callback) => {
+  User.findOneAndUpdate(
+    { username: authUsername },
+    { name, phoneNumber },
+    { new: true },
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, result);
+      }
+    }
+  );
+};
+
+const deleteUser = (authUsername, callback) => {
+  User.deleteOne({ username: authUsername }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      Ride.deleteMany({ ownerUsername: authUsername }, (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          Noti.deleteMany({ username: authUsername }, (err, result) => {
+            if (err) {
+              callback(err, null);
+            } else {
+              callback(null, null);
+            }
+          });
+        }
+      });
+    }
+  });
+};
+
 module.exports = {
   checkAvailability,
   login,
@@ -141,5 +180,7 @@ module.exports = {
   getPicType,
   uploadPicUrl,
   getPicUrl,
-  signup
+  signup,
+  updateUser,
+  deleteUser
 };

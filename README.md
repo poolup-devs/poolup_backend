@@ -123,7 +123,8 @@ Models:
 | /users/phoneNumberValidation | GET         | [Validation/usability of a phone number](#phone-number-validation) |
 | /users/upload-profile-pic    | POST        | [upload a user profile image](#upload-profile-image)               |
 | /users/usersPic              | GET         | [Get a user's profile image](#get-profile-image)                   |
-| /users/updateUser            | POST        | Update user data; NOT IMPLEMENTED IN DB YET                        |
+| /users/updateUser            | POST        | [Update a user's name or phonenumber](#update-user)                |
+| /users/deleteUser            | DELETE      | [Delete a user account](#delete-user)                              |
 
 ---
 
@@ -345,9 +346,22 @@ https://bruinpool-bucket-staging.s3.us-east-2.amazonaws.com/bucketFolder/bin315a
 
 ---
 
-### Update user data; NOT IMPLEMENTED IN DB YET
+### Update User
 
-not functional yet
+PUT request
+
+**body**
+
+```
+{
+    "name" : "NEWNAME",
+    "phoneNumber" : "1234567891"
+}
+```
+
+**return value**
+
+200 status
 
 ---
 
@@ -395,11 +409,62 @@ GET request
 
 filter(JSON object with fields: "from", "to", and "date"), pageNum
 
-if filter is undefined, returns ALL available drives sorted in date/time
+if FILTER IS UNDEFINED, returns ALL available drives sorted in date/time
 
-**example**
+filter Schema:
 
-localhost:3000/rides/matching-rides?filter={"from": "Irvine", "to" : "Los Angeles", "date" : "2019-09-11T00:00:00.000Z"}
+```
+    {
+        "from": "CITY",
+        "to": "CITY",
+        "date_from": "TIMERANGE_START",
+        "date_to": "TIMERANGE_END"
+    }
+```
+
+For both "from" and "to" fields, if the field is undefined it is ignored from the filter;
+for example, {"from": "Irvine", "to": undefined, ... } will return all rides with any destination that start off in Irvine.
+
+For "date_from" and "date_to" fields, if either is undefined the filter is set to return all available rides ("from" & "to" fields applied) AFTER THE CURRENT TIME (by new Date()).
+
+**exmaple**:
+
+URL syntax:
+
+```
+localhost:3000/rides/matching-rides?filter={"from": "Irvine",  "to" : "Los Angeles", "date_from": "2019-09-10T00:00:00.000Z", "date_to":"2019-09-12T00:00:00.000Z"}
+```
+
+Get all rides from Irvine to Los Angeles between 8:00 AM to 9:30 AM on 2019-09-13
+
+```
+    {
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date_from": "2019-09-13T08:00:00.000Z",
+        "date_to": "2019-09-13T09:30:00.000Z"
+    }
+```
+
+Get all rides from Irvine to anywhere between 8:00 AM to 9:30 AM on 2019-09-13
+
+```
+    {
+        "from": "Irvine",
+        "date_from": "2019-09-13T08:00:00.000Z",
+        "date_to": "2019-09-13T09:30:00.000Z"
+    }
+```
+
+Get all rides from Irvine to anywhere anytime (after the current timestamp, of course)
+
+```
+    {
+        "from": "Irvine"
+    }
+```
+
+localhost:3000/rides/matching-rides?filter=
 
 **return value**
 

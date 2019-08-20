@@ -149,6 +149,7 @@ const updateUser = (authUsername, name, phoneNumber, callback) => {
 };
 
 const deleteUser = (authUsername, callback) => {
+  //have to delete prof. pic in s3 TOO!!//
   User.deleteOne({ username: authUsername }, (err, result) => {
     if (err) {
       callback(err, null);

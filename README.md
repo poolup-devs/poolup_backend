@@ -11,6 +11,40 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 # Setup
 
+## NPM/ Mongo Scripts
+
+1. Starting the NodeJS app
+
+`npm start`
+
+runs `node src/server.js`; just starts the application
+
+2. Start Dev. mode of the NodeJS app
+
+`npm run dev`
+
+similar to npm start, but runs nodemon
+
+3. Setup .env variables
+
+`npm run setup`
+
+explained in [the next step](#local-environment-setup)
+
+4. Run test Scripts
+
+Not implemented
+
+5. Initialize database with default creations
+
+`mongo < ./init_db.js`
+
+Removes all documents in all the collections, and initializes the database with default objects
+
+(currently only removes & creates from User collection)
+
+---
+
 ## Local Environment Setup
 
 1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
@@ -30,17 +64,23 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
 For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
 
+---
+
 ## Local Development Setup
 
 1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
 2. Open another terminal and run `npm run dev` in the home directory; this starts the backend application with nodemon
 3. The local backend development port is set to 3000, now use Postman to test API endpoints.
 
+---
+
 ## Additional Tools
 
 1. Install Postman to test backend REST APIs
    Here's a link to a sample set of HTTP requests w/Postman: press the import button on upper left, and use the url https://www.getpostman.com/collections/bcd0df61c8abfc805865
 2. Install Robo 3T for mongoDB GUI and create a new connection to the DB using port 27017, the default mongoDB port
+
+---
 
 ## Directory Structure
 
@@ -71,6 +111,8 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
     ├── LICENSE
     ├── package-lock.json
     └── package.json
+
+---
 
 # Documentation
 
@@ -385,18 +427,18 @@ none required
 
 ### Schema
 
-| column           | type   | required |
-| ---------------- | ------ | -------- |
-| ownerEmail       | String | Yes      |
-| ownerUsername    | String |          |
-| ownerPhoneNumber | String |          |
-| from             | String | Yes      |
-| to               | String | Yes      |
-| date             | Date   | Yes      |
-| price            | String | Yes      |
-| seats            | Number | Yes      |
-| detail           | String |          |
-| passengers       | Array  |          |
+| column               | type   | required |
+| -------------------- | ------ | -------- |
+| ownerEmail           | String | Yes      |
+| ownerUsername        | String |          |
+| ownerPhoneNumber     | String |          |
+| from                 | String | Yes      |
+| to                   | String | Yes      |
+| date                 | Date   | Yes      |
+| price                | String | Yes      |
+| seats**(remaining)** | Number | Yes      |
+| detail               | String |          |
+| passengers           | Array  |          |
 
 ### API Endpoints
 

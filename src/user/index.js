@@ -226,9 +226,38 @@ router.put("/users/updateUser", checkAuth, (req, res) => {
   );
 });
 
+//Delete a User Account
 router.delete("/users/deleteUser", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
   db.deleteUser(authUsername, (err, result) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.sendStatus(200);
+    }
+  });
+});
+
+//confirm credentials
+router.post("/users/checkCredentials", checkAuth, (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+  req.body.password = sha256(req.body.password);
+  db.confirmCredentials(authUsername, req.body.password, (err, result) => {
+    if (err) {
+      res.sendStatus(500);
+    } else if (result) {
+      res.sendStatus(200);
+    } else {
+      res.sendStatus(401);
+    }
+  });
+});
+
+//Reset Password
+router.post("/users/changePassword", checkAuth, (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+  req.body.newPassword = sha256(req.body.newPassword);
+  db.passwordReset(authUsername, req.body.newPassword, (err, result) => {
     if (err) {
       res.sendStatus(500);
     } else {

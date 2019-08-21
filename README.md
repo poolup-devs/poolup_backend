@@ -37,6 +37,8 @@ Not implemented
 
 5. Initialize database with default creations
 
+If you're on windows, this command has to be run on a bash terminal b/c of the '<' operator
+
 `mongo < ./init_db.js`
 
 Removes all documents in all the collections, and initializes the database with default objects
@@ -167,6 +169,8 @@ Models:
 | /users/usersPic              | GET         | [Get a user's profile image](#get-profile-image)                   |
 | /users/updateUser            | POST        | [Update a user's name or phonenumber](#update-user)                |
 | /users/deleteUser            | DELETE      | [Delete a user account](#delete-user)                              |
+| /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
+| /users/changePassword        | Post        | [Change a user's password](#change-password)                       |
 
 ---
 
@@ -420,6 +424,50 @@ none required
 **return value**
 
 200 status
+
+---
+
+### Check Credential
+
+POST request
+
+**body**
+
+password
+
+```
+{
+	"password" : "password"
+}
+```
+
+**return value**
+
+200 status if successful ; 401 if password's incorrect
+
+no further return data
+
+---
+
+### Change Password
+
+POST request
+
+**body**
+
+newPassword
+
+```
+{
+	"newPassword" : "password"
+}
+```
+
+**return value**
+
+200 status if successful
+
+no further return data
 
 ---
 

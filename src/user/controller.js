@@ -171,6 +171,32 @@ const deleteUser = (authUsername, callback) => {
   });
 };
 
+const confirmCredentials = (authUsername, password, callback) => {
+  User.findOne({ username: authUsername, password }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else if (result.length === 0) {
+      callback(null, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
+const passwordReset = (authUsername, newPassword, callback) => {
+  User.findOneAndUpdate(
+    { username: authUsername },
+    { password: newPassword },
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, result);
+      }
+    }
+  );
+};
+
 module.exports = {
   checkAvailability,
   login,
@@ -183,5 +209,7 @@ module.exports = {
   getPicUrl,
   signup,
   updateUser,
-  deleteUser
+  deleteUser,
+  confirmCredentials,
+  passwordReset
 };

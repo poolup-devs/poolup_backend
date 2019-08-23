@@ -30,7 +30,7 @@ router.post("/users/login", (req, res) => {
       res.status(500).send(err);
     } else {
       const token = jwt.sign({ username: data.username }, JWT_SECRET_KEY, {
-        expiresIn: "1h"
+        expiresIn: "24h"
       });
       res.status(200).send({
         authToken: token
@@ -137,6 +137,18 @@ router.get("/users/usernameValidation", (req, res) => {
 //Validate User Phonenumber
 router.get("/users/phoneNumberValidation", (req, res) => {
   db.phoneNumberValidation(req.query.phoneNumber, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
+
+//Get User Info
+router.get("/users/my-info", checkAuth, (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+  db.getMyInfo(authUsername, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {

@@ -171,6 +171,7 @@ Models:
 | /users/deleteUser            | DELETE      | [Delete a user account](#delete-user)                              |
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
 | /users/changePassword        | Post        | [Change a user's password](#change-password)                       |
+| /users/my-info               | GET         | [Get my account's information](#my-info)                           |
 
 ---
 
@@ -471,6 +472,30 @@ newPassword
 200 status if successful
 
 no further return data
+
+---
+
+### My Info
+
+GET request
+
+**params/body**
+
+none required
+
+**return value**
+
+200 status if successful
+
+```
+{
+    "username": "bin315a1",
+    "name": "Han",
+    "email": "bin315a1@g.ucla.edu",
+    "createdAt": "2019-08-23T11:27:31.739Z",
+    "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png"
+}
+```
 
 ---
 

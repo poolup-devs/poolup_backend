@@ -96,6 +96,31 @@ const phoneNumberValidation = (phoneNumber, callback) => {
   });
 };
 
+const getMyInfo = (authUsername, callback) => {
+  User.findOne({ username: authUsername }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else if (result) {
+      const res_list = ["username", "name", "email", "createdAt", "picUrl"];
+      const result_ = {};
+
+      res_list.forEach(function(item) {
+        console.log(item);
+        result_[item] = result[item];
+      });
+
+      callback(null, result_);
+    } else {
+      callback(
+        {
+          message: "ERROR: username not found"
+        },
+        null
+      );
+    }
+  });
+};
+
 const getPicType = (username, callback) => {
   User.findOne({ username }, (err, result) => {
     if (err) {
@@ -213,6 +238,7 @@ module.exports = {
   checkAvailability,
   login,
   verifyEmail,
+  getMyInfo,
   emailValidation,
   usernameValidation,
   phoneNumberValidation,

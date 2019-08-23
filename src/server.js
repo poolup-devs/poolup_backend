@@ -18,7 +18,9 @@ console.log(
 
 //Mongoose config
 mongoose.connect("mongodb://localhost/bruinpool", {
-  useNewUrlParser: true
+  useNewUrlParser: true,
+  useCreateIndex: true,
+  useFindAndModify: true
 });
 const db = mongoose.connection;
 

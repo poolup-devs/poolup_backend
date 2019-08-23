@@ -39,6 +39,11 @@ const signup = (userInfo, ucla_email, callback) => {
     if (err) {
       callback(err, null);
     } else {
+      try {
+        User.setRandomBruinBear(newUser.username);
+      } catch (e) {
+        callback(e, null);
+      }
       callback(null, result);
     }
   });
@@ -48,8 +53,15 @@ const verifyEmail = (email, callback) => {
   User.findOneAndUpdate({ email }, { verified: true }, (err, result) => {
     if (err) {
       callback(err, null);
-    } else {
+    } else if (result) {
       callback(null, result);
+    } else {
+      callback(
+        {
+          message: "ERROR: verification token expired; try signing up again"
+        },
+        null
+      );
     }
   });
 };

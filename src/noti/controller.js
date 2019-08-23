@@ -23,13 +23,17 @@ const createNoti = (notiInfo, callback) => {
 };
 
 const updateNoti = (username, callback) => {
-  Noti.updateMany({ username }, { $set: { viewed: true } }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
+  Noti.updateMany(
+    { username },
+    { $set: { viewed: true, viewedAt: new Date() } },
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, result);
+      }
     }
-  })
+  )
     .sort({ _id: -1 })
     .limit(8);
 };

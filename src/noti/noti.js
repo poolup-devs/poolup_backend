@@ -9,10 +9,11 @@ const notiSchema = mongoose.Schema({
     type: Boolean,
     default: false
   },
+  viewedAt: Date,
   date: Date
 });
 
-//notiSchema.index({createdAt: 1}, {expiresAfterSeconds: 60*60*24*7, partialFilterExpression:{viewed: true}});
+notiSchema.index({ viewedAt: 1 }, { expireAfterSeconds: 7 * 24 * 60 * 60 });
 
 const Noti = mongoose.model("Noti", notiSchema);
 

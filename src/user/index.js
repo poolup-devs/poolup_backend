@@ -100,12 +100,11 @@ router.post("/users/signup", (req, res) => {
 router.get("/users/verify", (req, res) => {
   try {
     const userEmail = jwt.verify(req.query.token, JWT_EMAIL_KEY);
-    console.log(userEmail);
     db.verifyEmail(userEmail.email, (err, data) => {
       if (err) {
-        res.sendStatus(400);
+        res.status(400).send(err);
       } else {
-        res.redirect("https://bruinpool.io");
+        res.redirect("https://bruinpool.io/login");
       }
     });
   } catch (err) {
@@ -229,11 +228,23 @@ router.put("/users/updateUser", checkAuth, (req, res) => {
 //Delete a User Account
 router.delete("/users/deleteUser", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
-  db.deleteUser(authUsername, (err, result) => {
+  const fileName = `bucketFolder/${authUsername}-pic`;
+  db.getPicType(authUsername, async (err, result) => {
     if (err) {
       res.sendStatus(500);
     } else {
-      res.sendStatus(200);
+      try {
+        await deleteFile(fileName, result.picType);
+      } catch (err) {
+        return res.status(500);
+      }
+      db.deleteUser(authUsername, (err, result) => {
+        if (err) {
+          res.sendStatus(500);
+        } else {
+          res.sendStatus(200);
+        }
+      });
     }
   });
 });

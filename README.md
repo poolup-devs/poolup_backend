@@ -178,7 +178,7 @@ Models:
 
 ##### Initial Login:
 
-GET request
+POST request
 
 DOES NOT require a Bearer token; after this signup, the authToken contains information of the user & lifetime of the token
 
@@ -208,6 +208,9 @@ POST request
 Only requiremetn for user signup is password and username; the email username + "@g.ucla.edu"; the frontend code should substring-ize the email and pass only the username part for the API call
 
 ex) the username for bin315a1 would become bin315a1@g.ucla.edu
+
+- Verifying the email should be done within the **30** minutes after signup; else the user must signup again
+- A profile pic of Bruinbear with random color is assigned
 
 **Body**
 
@@ -966,6 +969,8 @@ POST request
 
 PUT request
 
+- After a notification is viewed, it is deleted after a **week**
+
 **params/body**
 
 none needed
@@ -1018,8 +1023,8 @@ For root access, also ask your current engineering manager for root access prive
   /etc/systemd/system/node-80.service
 - systemd's environment file's location:
   /root/sec/bruinPool_Backend_envFile
-- the application is set to use the port 8080 (http); environment variable for the service is set for port 80, but NGINX proxies it to port 8080
-- the .env file in the server doesn't have to be updated for the web server to work, but can be used with `npm run dev` if the server fails to run node-80.service and you need to check the error log
+- the application is set to use the port 8080 (http); environment variable for the service is set for port 3000, but NGINX proxies it to port 8080
+- the .env file in the server's repo doesn't have to be updated for the web server to work, but can be used with `npm run dev` if the server fails to run node-80.service and you need to check the error log
 
 Further Resources regarding systemctl:
 https://nodesource.com/blog/running-your-node-js-app-with-systemd-part-1/

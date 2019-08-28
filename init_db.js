@@ -10,6 +10,7 @@ user_list = [
         username: "bin315a1",
         name: "Han",
         email: "bin315a1@g.ucla.edu",
+        picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
         __v: 0
     }, {
         _id: ObjectId("5d5b367d03c06e4b9ca31077"),
@@ -18,6 +19,7 @@ user_list = [
         username: "justinSucks",
         name: "Justin",
         email: "justinSucks@g.ucla.edu",
+        picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_pink.png",
         __v: 0
     }, {
         _id: ObjectId("5d5b368d03c06e4b9ca31078"),
@@ -26,6 +28,7 @@ user_list = [
         username: "yunaChill",
         name: "Yuna",
         email: "yunaChill@g.ucla.edu",
+        picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_purple.png",
         __v: 0
     }, {
         _id: ObjectId("5d5b369a03c06e4b9ca31079"),
@@ -34,6 +37,7 @@ user_list = [
         username: "michaelSB",
         name: "Michael",
         email: "michaelSB@g.ucla.edu",
+        picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png",
         __v: 0
     }
 ]

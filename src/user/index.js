@@ -53,7 +53,7 @@ router.post("/users/signup", (req, res) => {
             res.sendStatus(500);
           } else {
             const token = jwt.sign({ email: ucla_email }, JWT_EMAIL_KEY, {
-              expiresIn: 60000 //10 minutes
+              expiresIn: "24h" //24 hours
             });
             var url = "api.bruinpool.io/users/verify?token=" + token;
             var email = {

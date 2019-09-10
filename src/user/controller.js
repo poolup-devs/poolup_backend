@@ -249,7 +249,7 @@ const addNewRating = async (userId, newRating) => {
           {_id: userId}, 
           {
             $inc: {'rating.totalValue': newRating, 'rating.totalCount': 1},
-            $set: {'rating.average': averageRating}             
+            $set: {'rating.averageRating': averageRating}             
           }, 
           {new: true, useFindAndModify: false}
       )
@@ -266,7 +266,7 @@ const getAverageRating = async (userId) => {
       if (rating.totalCount < MIN_TO_DISPLAY_AVERAGE_RATING) {
         return Promise.reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " ratings to display an average rating!")
       }
-      return Promise.resolve({averageRating: rating.average})
+      return Promise.resolve({averageRating: rating.averageRating})
   }
   catch(e) {
       return Promise.reject("Could not get average rating of user")

@@ -234,6 +234,33 @@ const passwordReset = (authUsername, newPassword, callback) => {
   );
 };
 
+const addNewRating = async (username, rating) => {
+  if (rating < 0 || rating > 5) {
+      return Promise.reject("The rating must be a value from 1 to 5!")
+  }
+  try {
+      const user = await User.findOneAndUpdate(
+          {username}, 
+          {$inc: {'rating.totalValue': rating, 'rating.totalCount': 1}}, 
+          {new: true}
+      )
+      return Promise.resolve(user)
+  }
+  catch(e) {
+      return Promise.reject("Could not add a new rating to the user with username ", username)
+  }
+}
+
+const getAverageRating = async (username) => {
+  try {
+      const {rating} = await User.findOne({username}) 
+      return Promise.resolve(rating.totalValue / rating.totalCount)
+  }
+  catch(e) {
+      return Promise.reject("Could not get average rating of user with username ", username)
+  }
+}
+
 module.exports = {
   checkAvailability,
   login,

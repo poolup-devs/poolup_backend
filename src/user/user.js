@@ -27,22 +27,9 @@ const userSchema = mongoose.Schema({
     totalValue: {
       type: Number, 
       default: 0 
-    }, 
-    average: Number
+    }
   }
 });
-
-userSchema.methods.addRating = function (newRating) {
-   return new Promise((resolve, reject) => {
-    if (newRating < 0 || newRating > 5) {
-      return reject("The rating must be a value from 1 to 5!")
-    }
-    const userRating = this.rating
-    userRating.totalValue += newRating 
-    userRating.average = userRating.totalValue / ++userRating.totalCount 
-    resolve(this.rating)
-   })
-}
 
 userSchema.statics.setRandomBruinBear = function(username) {
   const colors = ["blue", "orange", "pink", "purple", "white"];

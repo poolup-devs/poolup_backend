@@ -2,6 +2,9 @@ const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
 
+const MIN_TO_DISPLAY_AVERAGE_RATING = 3 
+
+
 const login = (email, password, callback) => {
   User.findOne(
     {
@@ -234,30 +237,39 @@ const passwordReset = (authUsername, newPassword, callback) => {
   );
 };
 
-const addNewRating = async (username, rating) => {
-  if (rating < 0 || rating > 5) {
-      return Promise.reject("The rating must be a value from 1 to 5!")
+const addNewRating = async (userId, newRating) => {
+  if (newRating < 0 || newRating > 5) {
+      return Promise.reject("The rating must be a value from 1 to 5.")
   }
   try {
-      const user = await User.findOneAndUpdate(
-          {username}, 
-          {$inc: {'rating.totalValue': rating, 'rating.totalCount': 1}}, 
-          {new: true}
+      const {rating} = await User.findById({_id: userId})
+      const averageRating = ((rating.totalValue + newRating) / (rating.totalCount + 1)).toFixed(2)
+
+      const user = await User.findByIdAndUpdate(
+          {_id: userId}, 
+          {
+            $inc: {'rating.totalValue': newRating, 'rating.totalCount': 1},
+            $set: {'rating.average': averageRating}             
+          }, 
+          {new: true, useFindAndModify: false}
       )
-      return Promise.resolve(user)
+      return Promise.resolve(user.rating)
   }
   catch(e) {
-      return Promise.reject("Could not add a new rating to the user with username ", username)
+      return Promise.reject(e, "Could not add a new rating to the user")
   }
 }
 
-const getAverageRating = async (username) => {
+const getAverageRating = async (userId) => {
   try {
-      const {rating} = await User.findOne({username}) 
-      return Promise.resolve(rating.totalValue / rating.totalCount)
+      const {rating} = await User.findById({_id: userId}) 
+      if (rating.totalCount < MIN_TO_DISPLAY_AVERAGE_RATING) {
+        return Promise.reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " ratings to display an average rating!")
+      }
+      return Promise.resolve({averageRating: rating.average})
   }
   catch(e) {
-      return Promise.reject("Could not get average rating of user with username ", username)
+      return Promise.reject("Could not get average rating of user")
   }
 }
 
@@ -276,5 +288,7 @@ module.exports = {
   updateUser,
   deleteUser,
   confirmCredentials,
-  passwordReset
+  passwordReset, 
+  addNewRating,
+  getAverageRating
 };

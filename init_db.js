@@ -1,5 +1,4 @@
 use bruinpool
-
 db.users.remove({});
 
 user_list = [

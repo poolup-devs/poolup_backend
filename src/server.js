@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+require('../src/db/mongoose')
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require("path");
@@ -17,17 +18,10 @@ console.log(
 );
 
 //Mongoose config
-mongoose.connect("mongodb://localhost/bruinpool", {
-  useNewUrlParser: true,
-  useCreateIndex: true,
-  useFindAndModify: true
-});
 const db = mongoose.connection;
-
 db.on("error", () => {
   console.log(chalk.red("[ERROR]: Mongoose / Database connection error"));
 });
-
 db.once("open", () => {
   console.log(chalk.green("[INIT]: ") + "Mongoose connected successfully");
 });
@@ -53,9 +47,9 @@ app.use(userRouter);
 app.use(rideRouter);
 app.use(notiRouter);
 
-////////////////////////////////////////
-//TESTER
-////////////////////////////////////////
+// ////////////////////////////////////////
+// //TESTER
+// ////////////////////////////////////////
 
 app.get("/test-connection", (req, res) => {
   res.send({

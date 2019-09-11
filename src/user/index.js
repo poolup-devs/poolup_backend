@@ -297,7 +297,7 @@ router.patch("/users/:id/rating", checkAuth, async (req, res) => {
     res.status(200).send(userRating) 
   }
   catch(e) {
-    res.status(500).send(e)
+    res.status(500).send({error: e})
   }
 }) 
 
@@ -308,7 +308,7 @@ router.get("/users/:id/rating", checkAuth, async (req, res) => {
     res.status(200).send(avgRating)
   }
   catch(e) {
-    res.status(500).send(e) 
+    res.status(500).send({error: e}) 
   }
 })
 

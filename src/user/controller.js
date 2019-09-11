@@ -2,6 +2,7 @@ const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
 
+// Users require a certain minimum amount of ratings to calculate an average rating 
 const MIN_TO_DISPLAY_AVERAGE_RATING = 3 
 
 
@@ -238,13 +239,12 @@ const passwordReset = (authUsername, newPassword, callback) => {
 };
 
 const addNewRating = async (userId, newRating) => {
-  if (newRating < 0 || newRating > 5) {
+  if (newRating < 1|| newRating > 5) {
       return Promise.reject("The rating must be a value from 1 to 5.")
   }
   try {
       const {rating} = await User.findById({_id: userId})
       const averageRating = ((rating.totalValue + newRating) / (rating.totalCount + 1)).toFixed(2)
-
       const user = await User.findByIdAndUpdate(
           {_id: userId}, 
           {

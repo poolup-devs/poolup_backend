@@ -1,15 +1,20 @@
 require("../../src/db/mongoose");
+const app = require('../../src/app')
 const request = require('supertest') 
 const db = require("../../src/user/controller.js");
 const User = require("../../src/user/user").User 
+const jwt = require("jsonwebtoken")
 
-const testUser1 = new User({
+const testUserOneAuthToken = jwt.sign({ username: "jsmith" }, process.env.JWT_SECRET_KEY)
+const testUserOne = new User({
     name: "John Smith", 
+    username: "jsmith",
     rating: {
         totalValue: 15, 
         totalCount: 3, 
         averageRating: 5
     }, 
+    verified: true, 
 })
 
 const testUser2 = new User({
@@ -18,26 +23,26 @@ const testUser2 = new User({
 
 beforeEach(async () => {
     await User.deleteMany() 
-    await new User(testUser1).save() 
+    await new User(testUserOne).save() 
     await new User(testUser2).save() 
 }) 
 
 test('Should error on rating less than 1', async () => {
     expect.assertions(1)
-    return db.addNewRating(testUser1._id, 0).catch((e) => {
+    return db.addNewRating(testUserOne._id, 0).catch((e) => {
         expect(e).toMatch("The rating must be a value from 1 to 5.")
     })
 })
 
 test('Should error on rating greater than 5', async () => {
     expect.assertions(1)
-    return db.addNewRating(testUser1._id, 6).catch((e) => {
+    return db.addNewRating(testUserOne._id, 6).catch((e) => {
         expect(e).toBe("The rating must be a value from 1 to 5.")
     })
 })
 
 test("Should correctly add a new rating", async () => {
-    return db.addNewRating(testUser1._id, 3).then((newRating) => {
+    return db.addNewRating(testUserOne._id, 3).then((newRating) => {
         expect(newRating.toObject()).toEqual({
             totalValue: 18, 
             totalCount: 4, 
@@ -47,7 +52,7 @@ test("Should correctly add a new rating", async () => {
 })
 
 test("Should correctly retrieve user's average rating", async () => {
-    return db.getAverageRating(testUser1._id).then((rating) => {
+    return db.getAverageRating(testUserOne._id).then((rating) => {
         expect(rating).toEqual({
             averageRating: 5
         })
@@ -61,3 +66,21 @@ test("Should error when retrieving average rating when user does not have enough
     })
 })
 
+test('Route should retrieve the average rating', async () => {
+    await request(app)
+        .get(`/users/${testUserOne._id}/rating`)
+        .set('Authorization', 'Bearer ' + testUserOneAuthToken)
+        .send({})
+        .expect(200)
+})
+
+
+test('Route should add a new rating', async () => {
+    await request(app)
+        .patch(`/users/${testUserOne._id}/rating`)
+        .set('Authorization', 'Bearer ' + testUserOneAuthToken)
+        .send({
+            rating: 5
+        })
+        .expect(200)
+})

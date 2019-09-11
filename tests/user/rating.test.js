@@ -1,4 +1,5 @@
 require("../../src/db/mongoose");
+const request = require('supertest') 
 const db = require("../../src/user/controller.js");
 const User = require("../../src/user/user").User 
 
@@ -59,3 +60,4 @@ test("Should error when retrieving average rating when user does not have enough
         expect(e).toBe("User must have at least 3 ratings to display an average rating!")
     })
 })
+

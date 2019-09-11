@@ -1,51 +1,19 @@
-const express = require("express");
-const mongoose = require("mongoose");
 require('../src/db/mongoose')
-const cors = require("cors");
-const bodyParser = require("body-parser");
+const app = require("./app") 
 const path = require("path");
 const chalk = require("chalk");
-
 const checkS3Connection = require("./db/awsS3_controller.js").checkS3Connection;
 const corsOriginContoller = require("./middleware/cors_origin_control.js");
-
 require("dotenv").config({ override: true });
+
+//Port config
+const port = process.env.PORT || 3000;
 
 console.log(
   chalk.green("[INIT]: Service is in ") +
     chalk.yellow(process.env.MODE) +
     " MODE"
 );
-
-//Mongoose config
-const db = mongoose.connection;
-db.on("error", () => {
-  console.log(chalk.red("[ERROR]: Mongoose / Database connection error"));
-});
-db.once("open", () => {
-  console.log(chalk.green("[INIT]: ") + "Mongoose connected successfully");
-});
-
-//Port config
-const port = process.env.PORT || 3000;
-
-//Express config
-const app = express();
-
-app.use(cors());
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(__dirname + "/../public"));
-
-//Routers
-const userRouter = require("./user/index");
-const rideRouter = require("./ride/index");
-const notiRouter = require("./noti/index");
-
-app.use(userRouter);
-app.use(rideRouter);
-app.use(notiRouter);
 
 // ////////////////////////////////////////
 // //TESTER

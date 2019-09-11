@@ -7,6 +7,7 @@
     "start": "env-cmd -f ./config/dev.env node src/server.js",
     "dev": "env-cmd -f ./config/dev.env nodemon src/server.js",
     "setup": "node setup.js",
+    "init_db": "env-cmd -f ./config/dev.env node init_db.js", 
     "test": "env-cmd -f ./config/test.env jest --watch"
   },
   "jest": {
@@ -34,6 +35,7 @@
     "mongoose": "^5.6.2",
     "multiparty": "^4.2.1",
     "nodemon": "^1.19.1",
-    "sha256": "^0.2.0"
+    "sha256": "^0.2.0",
+    "supertest": "^4.0.2"
   }
 }

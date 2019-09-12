@@ -243,14 +243,9 @@ const addNewRating = async (username, newRating) => {
       return Promise.reject("The rating must be a value from 1 to 5.")
   }
   try {
-      const {rating} = await User.findOne({username})
-      const averageRating = ((rating.totalValue + newRating) / (rating.totalCount + 1)).toFixed(2)
       const user = await User.findOneAndUpdate(
           {username}, 
-          {
-            $inc: {'rating.totalValue': newRating, 'rating.totalCount': 1},
-            $set: {'rating.averageRating': averageRating}             
-          }, 
+          {$inc: {'rating.totalValue': newRating, 'rating.totalCount': 1}}, 
           {new: true, useFindAndModify: false}
       )
       return Promise.resolve(user.rating)
@@ -266,7 +261,8 @@ const getAverageRating = async (username) => {
       if (rating.totalCount < MIN_TO_DISPLAY_AVERAGE_RATING) {
         return Promise.reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " ratings to display an average rating!")
       }
-      return Promise.resolve({averageRating: rating.averageRating})
+      const averageRating = (rating.totalValue / rating.totalCount).toFixed(2)
+      return Promise.resolve({averageRating})
   }
   catch(e) {
       return Promise.reject("Could not get average rating of user")

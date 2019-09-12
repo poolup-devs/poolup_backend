@@ -30,8 +30,7 @@ const userSchema = mongoose.Schema({
     totalValue: {
       type: Number, 
       default: 0 
-    }, 
-    averageRating: Number
+    }
   }
 });
 

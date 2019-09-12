@@ -238,15 +238,15 @@ const passwordReset = (authUsername, newPassword, callback) => {
   );
 };
 
-const addNewRating = async (userId, newRating) => {
+const addNewRating = async (username, newRating) => {
   if (newRating < 1|| newRating > 5) {
       return Promise.reject("The rating must be a value from 1 to 5.")
   }
   try {
-      const {rating} = await User.findById({_id: userId})
+      const {rating} = await User.findOne({username})
       const averageRating = ((rating.totalValue + newRating) / (rating.totalCount + 1)).toFixed(2)
-      const user = await User.findByIdAndUpdate(
-          {_id: userId}, 
+      const user = await User.findOneAndUpdate(
+          {username}, 
           {
             $inc: {'rating.totalValue': newRating, 'rating.totalCount': 1},
             $set: {'rating.averageRating': averageRating}             
@@ -260,9 +260,9 @@ const addNewRating = async (userId, newRating) => {
   }
 }
 
-const getAverageRating = async (userId) => {
+const getAverageRating = async (username) => {
   try {
-      const {rating} = await User.findById({_id: userId}) 
+      const {rating} = await User.findOne({username}) 
       if (rating.totalCount < MIN_TO_DISPLAY_AVERAGE_RATING) {
         return Promise.reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " ratings to display an average rating!")
       }

@@ -290,10 +290,10 @@ router.post("/users/changePassword", checkAuth, (req, res) => {
 });
 
 // Add a new rating 
-router.patch("/users/:id/rating", checkAuth, async (req, res) => {
+router.patch("/users/:username/rating", checkAuth, async (req, res) => {
   const {rating} = req.body 
   try {
-    const userRating = await db.addNewRating(req.params.id, rating)
+    const userRating = await db.addNewRating(req.params.username, rating)
     res.status(200).send(userRating) 
   }
   catch(e) {
@@ -302,9 +302,9 @@ router.patch("/users/:id/rating", checkAuth, async (req, res) => {
 }) 
 
 // Get average rating 
-router.get("/users/:id/rating", checkAuth, async (req, res) => {
+router.get("/users/:username/rating", checkAuth, async (req, res) => {
   try {
-    const avgRating = await db.getAverageRating(req.params.id)
+    const avgRating = await db.getAverageRating(req.params.username)
     res.status(200).send(avgRating)
   }
   catch(e) {

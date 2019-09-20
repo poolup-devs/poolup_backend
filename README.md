@@ -1,8 +1,8 @@
-# BruinPool Backend
+# PoolUp Backend
 
-### api.bruinpool.io
+### api.poolup.co
 
-This is the backend code repository for Bruinpool: made with NodeJS, Express, and MongoDB w/ Mongoose.
+This is the backend code repository for PoolUp: made with NodeJS, Express, and MongoDB w/ Mongoose.
 For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineering Manager.
 
 1. [Setup](#setup)
@@ -50,7 +50,7 @@ Removes all documents in all the collections, and initializes the database with 
 ## Local Environment Setup
 
 1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
-2. Clone the repository to your local environment using `git clone https://github.com/bruinpool-devs/bruinpool_backend.git`
+2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
 3. Install all used packages & dependencies using:
    `npm install`
 4. To connect to the development s3 bucket, run:

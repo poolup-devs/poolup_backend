@@ -68,7 +68,8 @@ test("Should error when retrieving average rating when user does not have enough
 
 test('Route should retrieve the average rating', async () => {
     await request(app)
-        .get(`/users/${testUserOne.username}/rating`)
+        .get(`/users/rating`)
+        .query({username: testUserOne.username})
         .set('Authorization', 'Bearer ' + testUserOneAuthToken)
         .send({})
         .expect(200)
@@ -77,7 +78,8 @@ test('Route should retrieve the average rating', async () => {
 
 test('Route should add a new rating', async () => {
     await request(app)
-        .patch(`/users/${testUserOne.username}/rating`)
+        .patch(`/users/rating`)
+        .query({username: testUserOne.username})
         .set('Authorization', 'Bearer ' + testUserOneAuthToken)
         .send({
             rating: 5.00

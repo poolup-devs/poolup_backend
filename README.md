@@ -1,8 +1,8 @@
-# BruinPool Backend
+# PoolUp Backend
 
-### api.bruinpool.io
+### api.poolup.co
 
-This is the backend code repository for Bruinpool: made with NodeJS, Express, and MongoDB w/ Mongoose.
+This is the backend code repository for PoolUp: made with NodeJS, Express, and MongoDB w/ Mongoose.
 For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineering Manager.
 
 1. [Setup](#setup)
@@ -11,60 +11,68 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 # Setup
 
-## NPM/ Mongo Scripts
+## NPM Scripts
 
 1. Starting the NodeJS app
 
-`npm start`
+	> npm start
 
-runs `node src/server.js`; just starts the application
+    Starts up the server by running `node src/server.js` with environment variables defined in dev.env. 
 
 2. Start Dev. mode of the NodeJS app
 
-`npm run dev`
+    > npm run dev
 
-similar to npm start, but runs nodemon
+    Similar to npm start, but runs nodemon to automatically restart the node application when file chnages in the directory are detected 
 
 3. Setup .env variables
 
-`npm run setup`
+    > npm run setup 
 
-explained in [the next step](#local-environment-setup)
+    Generates the config folder with env files. This is explained in [the next step](#local-environment-setup)
 
-4. Run test Scripts 
+4. Run Test Scripts
 
-`npm run test`
+    > npm run test  
 
-Runs all test suites in the tests directory using Jest. 
+    We are using [Jest](https://www.npmjs.com/package/jest) to test our JS code. 
+    Run tests related to changed files based on Git (uncommitted files). 
+    Uses the test.dev environment variables. 
 
 5. Initialize database with default creations
+    
+    > npm run init_db
 
-`npm run init_db` 
+    Removes all documents in all the collections, and initializes the database with default objects.
+    Currently only removes and creates from User collection. 
 
-Removes all documents in all the collections, and initializes the dev database with default objects
-
-(currently only removes & creates from User collection)
 
 ---
 
 ## Local Environment Setup
 
 1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
-2. Clone the repository to your local environment using `git clone https://github.com/bruinpool-devs/bruinpool_backend.git`
-3. Install all used packages & dependencies using:
-   `npm install`
+2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
+3. Install all used packages and dependencies using:
+   > npm install
 4. To connect to the development s3 bucket, run:
-   `npm run setup`
-   , which would create the files dev.env and test.env in the config directory. There, enter the bucket name, access key, and the secret access key assigned from the engineering manager and save.
+   > npm run setup
 
-   !!!Make sure NOT to remove the config directory in .gitignore; publishing access keys publically causes bigger problems!!!
+   This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
+
+   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
 
 5. Install mongoDB by following installation guides from:
    Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
    Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
 
-This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
-For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
+   This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
+   For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
+
+6. Optional: Initialize the database with default objects. 
+    > npm run init_db 
+
+    This REMOVES existing database collections and populates them with default objects. 
 
 ---
 
@@ -85,40 +93,55 @@ For choosing the inital db location, just use the default --dbpath=/data/db to p
 ---
 
 ## Directory Structure
-
-    .
-    ├── /node_modules
-    ├── /config (generated with `npm run setup`)
-    │   ├── dev.env
-    │   ├── test.env    
-    ├── /src
-    │   ├── /db
-    |   |   ├── awsS3_controller.js
-    |   |   ├── mongoose.js
-    │   ├── /middleware
-    |   |   ├── cors_origin_control.js
-    |   |   └── jwt_authenticator.js
-    │   ├── /noti
-    |   |   ├── controller.js
-    |   |   ├── noti.js
-    |   |   └── index.js
-    │   ├── /ride
-    |   |   ├── controller.js
-    |   |   ├── ride.js
-    |   |   └── index.js
-    │   ├── /user
-    |   |   ├── controller.js
-    |   |   ├── user.js
-    |   |   └── index.js
-    │   ├── app.js
-    |   └── server.js 
-    ├── /tests
-    ├── .sample_env
-    ├── README.md
-    ├── setup.js
-    ├── LICENSE
-    ├── package-lock.json
-    └── package.json
+```
+.   
+|   .gitignore
+|   .sample_env
+|   init_db.js
+|   LICENSE
+|   package-lock.json
+|   package.json
+|   README.md
+|   setup.js
+|
++---config
+|       dev.env
+|       test.env
+|                        
++---src
+|   |   app.js
+|   |   server.js
+|   |   
+|   +---db
+|   |       awsS3_controller.js
+|   |       mongoose.js
+|   |       
+|   +---middleware
+|   |       cors_origin_control.js
+|   |       jwt_authenticator.js
+|   |       
+|   +---noti
+|   |       controller.js
+|   |       index.js
+|   |       noti.js
+|   |       
+|   +---ride
+|   |       controller.js
+|   |       index.js
+|   |       ride.js
+|   |       
+|   +---user
+|   |       controller.js
+|   |       index.js
+|   |       user.js
+|   |       
+|   \---utils
+|           token-parser.js
+|           
+\---tests
+    \---user
+            rating.test.js
+```        
 
 ---
 
@@ -148,18 +171,19 @@ Models:
 
 ### Schema
 
-| column      | type    | required |
-| ----------- | ------- | -------- |
-| name        | String  | Yes      |
-| email       | String  | Yes      |
-| username    | String  | Yes      |
-| password    | String  | Yes      |
-| phoneNumber | String  |          |
-| driverList  | Array   |          |
-| riderList   | Array   |          |
-| picUrl      | String  |          |
-| picType     | String  |          |
-| Verified    | Boolean | Yes      |
+| column      | type    | required | properties             |
+| ----------- | ------- | -------- | ---------------------- |
+| name        | String  | Yes      |                        |
+| email       | String  | Yes      |                        |
+| username    | String  | Yes      |                        |
+| password    | String  | Yes      |                        |
+| phoneNumber | String  |          |                        |
+| driverList  | Array   |          |                        |
+| riderList   | Array   |          |                        |
+| picUrl      | String  |          |                        |
+| picType     | String  |          |                        |
+| Verified    | Boolean | Yes      |                        |
+| Rating      | Object  |          | totalCount, totalValue |           
 
 ### API Endpoints
 
@@ -178,7 +202,8 @@ Models:
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
 | /users/changePassword        | Post        | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
-
+| /users/rating                | GET         | [Get a user's rating](#get-user-rating)                            |
+| /users/rating                | PATCH       | [Add a new rating to a user](#add-user-rating)                     |
 ---
 
 ### User Login
@@ -500,6 +525,54 @@ none required
     "email": "bin315a1@g.ucla.edu",
     "createdAt": "2019-08-23T11:27:31.739Z",
     "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png"
+}
+```
+
+
+### Get User rating 
+
+GET Request 
+
+**params**
+
+username
+
+**example**
+
+localhost:3000/users/rating?username=elin4046
+
+**return value** 
+
+Returns 200 if successful. Returns 500 upon error, or if the user does not have at least 3 ratings yet. 
+
+```
+{
+    "averageRating": "2.00" 
+}
+```
+
+
+### Add User rating 
+
+PATCH Request 
+
+**params**
+
+username
+
+**example**
+
+localhost:3000/users/rating?username=elin4046
+
+**return value** 
+
+Returns 200 if successfully added a rating to the User's rating property. 
+Returns 500 upon database error, or if the rating is not between 1 and 5.  
+
+```
+{
+    "totalCount": 4, 
+    "totalValue": 8 
 }
 ```
 

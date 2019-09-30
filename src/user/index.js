@@ -55,13 +55,13 @@ router.post("/users/signup", (req, res) => {
             const token = jwt.sign({ email: ucla_email }, JWT_EMAIL_KEY, {
               expiresIn: "24h" //24 hours
             });
-            var url = "api.bruinpool.io/users/verify?token=" + token;
+            var url = "restapi.poolup.co/users/verify?token=" + token;
             var email = {
               to: ucla_email,
-              from: "bruinpool@gmail.com",
+              from: "pool-up@outlook.com",
               templateId: "d-0d8dff79ca8e4d0e8b4b9b1b12038a62",
               dynamic_template_data: {
-                subject: "Bruinpool Email Verification",
+                subject: "PoolUp Email Verification",
                 name: req.body.username,
                 url: url
               }
@@ -70,8 +70,8 @@ router.post("/users/signup", (req, res) => {
               url = "localhost:3006/users/verify?token=" + token;
               var email = {
                 to: ucla_email,
-                from: "bruinpool@gmail.com",
-                subject: "Bruinpool: Email Verification Required",
+                from: "pool-up@outlook.com",
+                subject: "PoolUp: Email Verification Required",
                 text: "Here's the link",
                 html: "Token: <br>" + token +"<br>Link for local dev: " + url
               };
@@ -104,7 +104,7 @@ router.get("/users/verify", (req, res) => {
       if (err) {
         res.status(400).send(err);
       } else {
-        res.redirect("https://bruinpool.io/login");
+        res.redirect("https://poolup.co/login");
       }
     });
   } catch (err) {

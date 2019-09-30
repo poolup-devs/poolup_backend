@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
 
 const userSchema = mongoose.Schema({
-  name: String,
+  name: String, 
   email: String,
-  username: String,
+  username: {
+    type: String,
+    index: true 
+  },
   password: String,
   phoneNumber: String,
   picUrl: String,
@@ -18,6 +21,16 @@ const userSchema = mongoose.Schema({
   createdAt: {
     type: Date,
     default: new Date()
+  }, 
+  rating: {
+    totalCount: {
+      type: Number,
+      default: 0 
+    }, 
+    totalValue: {
+      type: Number, 
+      default: 0 
+    }
   }
 });
 
@@ -28,7 +41,7 @@ userSchema.statics.setRandomBruinBear = function(username) {
     colors[Math.floor(Math.random() * colors.length)] +
     ".png";
   return this.findOneAndUpdate(
-    { username: username },
+    { username },
     { picUrl: default_picUrl },
     function(error, result) {
       if (error) {
@@ -45,4 +58,4 @@ userSchema.index(
 
 const User = mongoose.model("User", userSchema);
 
-module.exports = { User: User };
+module.exports = { User };

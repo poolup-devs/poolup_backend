@@ -54,7 +54,7 @@ const signup = (userInfo, ucla_email, callback) => {
 };
 
 const verifyEmail = (email, callback) => {
-  User.findOneAndUpdate({ email }, { verified: true }, (err, result) => {
+  User.findOneAndUpdate({ email }, { verified: true }, {new: true}, (err, result) => {
     if (err) {
       callback(err, null);
     } else if (result) {
@@ -70,7 +70,7 @@ const verifyEmail = (email, callback) => {
   });
 };
 
-const emailValidation = (email, callback) => {
+const findUserByEmail = (email, callback) => {
   User.find({ email }, (err, result) => {
     if (err) {
       callback(err, null);
@@ -80,7 +80,7 @@ const emailValidation = (email, callback) => {
   });
 };
 
-const usernameValidation = (username, callback) => {
+const findUserByUsername = (username, callback) => {
   User.find({ username }, (err, result) => {
     if (err) {
       callback(err, null);
@@ -90,7 +90,7 @@ const usernameValidation = (username, callback) => {
   });
 };
 
-const phoneNumberValidation = (phoneNumber, callback) => {
+const findUserByPhoneNumber = (phoneNumber, callback) => {
   User.find({ phoneNumber }, (err, result) => {
     if (err) {
       callback(err, null);
@@ -109,7 +109,6 @@ const getMyInfo = (authUsername, callback) => {
       const result_ = {};
 
       res_list.forEach(function(item) {
-        console.log(item);
         result_[item] = result[item];
       });
 
@@ -126,13 +125,13 @@ const getMyInfo = (authUsername, callback) => {
 };
 
 const getPicType = (username, callback) => {
-  User.findOne({ username }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
-  });
+    User.findOne({ username }, (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, result);
+      }
+    });
 };
 
 const uploadPicUrl = (username, picUrl, picType, callback) => {
@@ -151,7 +150,7 @@ const uploadPicUrl = (username, picUrl, picType, callback) => {
 };
 
 const getPicUrl = (username, callback) => {
-  User.find({ username }, (err, result) => {
+  findUserByUsername(username, (err, result) => {
     if (err) {
       callback(err, null);
     } else if (result.length === 0) {
@@ -174,10 +173,10 @@ const getPicUrl = (username, callback) => {
   });
 };
 
-const updateUser = (authUsername, name, phoneNumber, callback) => {
+const updateUser = (authUsername, updates, callback) => {
   User.findOneAndUpdate(
     { username: authUsername },
-    { name, phoneNumber },
+    updates,
     { new: true },
     (err, result) => {
       if (err) {
@@ -216,8 +215,6 @@ const confirmCredentials = (authUsername, password, callback) => {
   User.findOne({ username: authUsername, password }, (err, result) => {
     if (err) {
       callback(err, null);
-    } else if (result.length === 0) {
-      callback(null, null);
     } else {
       callback(null, result);
     }
@@ -227,7 +224,8 @@ const confirmCredentials = (authUsername, password, callback) => {
 const passwordReset = (authUsername, newPassword, callback) => {
   User.findOneAndUpdate(
     { username: authUsername },
-    { password: newPassword },
+    { password: newPassword }, 
+    {new: true}, 
     (err, result) => {
       if (err) {
         callback(err, null);
@@ -274,11 +272,11 @@ module.exports = {
   login,
   verifyEmail,
   getMyInfo,
-  emailValidation,
-  usernameValidation,
-  phoneNumberValidation,
-  getPicType,
+  findUserByEmail,
+  findUserByUsername,
+  findUserByPhoneNumber,
   uploadPicUrl,
+  getPicType, 
   getPicUrl,
   signup,
   updateUser,

@@ -27,7 +27,7 @@ router.post("/users/login", (req, res) => {
   }
   db.login(req.body.email, req.body.password, (err, data) => {
     if (err) {
-      res.status(500).send(err);
+      res.status(401).send(err);
     } else {
       const token = jwt.sign({ username: data.username }, JWT_SECRET_KEY, {
         expiresIn: "24h"
@@ -104,7 +104,7 @@ router.get("/users/verify", (req, res) => {
       if (err) {
         res.status(400).send(err);
       } else {
-        res.redirect("https://bruinpool.io/login");
+        res.redirect("https://poolup.co/login");
       }
     });
   } catch (err) {
@@ -114,32 +114,45 @@ router.get("/users/verify", (req, res) => {
 
 //Validate User Email
 router.get("/users/emailValidation", (req, res) => {
-  db.emailValidation(req.query.email, (err, data) => {
+  db.findUserByEmail(req.query.email, (err, data) => {
     if (err) {
       res.sendStatus(500);
-    } else {
+    }
+    else if (data.length === 0) {
+      res.sendStatus(404); 
+    }
+    else {
       res.status(200).send(data);
     }
   });
 });
 
-//Validate Username
+// Validate Username 
 router.get("/users/usernameValidation", (req, res) => {
-  db.usernameValidation(req.query.username, (err, data) => {
+  db.findUserByUsername(req.query.username, (err, data) => {
     if (err) {
       res.sendStatus(500);
-    } else {
+    }
+    else if (data.length === 0) {
+      res.sendStatus(404); 
+    }
+    else {
       res.status(200).send(data);
     }
   });
 });
+
 
 //Validate User Phonenumber
 router.get("/users/phoneNumberValidation", (req, res) => {
-  db.phoneNumberValidation(req.query.phoneNumber, (err, data) => {
+  db.findUserByPhoneNumber(req.query.phoneNumber, (err, data) => {
     if (err) {
       res.sendStatus(500);
-    } else {
+    } 
+    else if (data.length === 0) {
+      res.sendStatus(404); 
+    }
+    else {
       res.status(200).send(data);
     }
   });
@@ -158,7 +171,7 @@ router.get("/users/my-info", checkAuth, (req, res) => {
 });
 
 //Uploading User Profile Image
-router.post("/users/upload-profile-pic", checkAuth, (req, res) => {
+router.patch("/users/upload-profile-pic", checkAuth, (req, res) => {
   const form = new multiparty.Form();
   form.parse(req, async (error, fields, files) => {
     if (error) {
@@ -169,9 +182,10 @@ router.post("/users/upload-profile-pic", checkAuth, (req, res) => {
       const buffer = fs.readFileSync(path);
       const type = fileType(buffer);
 
+
       const allowedFileType = ["jpg", "jpeg", "heic", "png"];
-      if (!allowedFileType.includes(type.ext)) {
-        res.status(400).send({
+      if (!type || !allowedFileType.includes(type.ext)) {
+        return res.status(400).send({
           message: "ERROR: file type must be of: jpg, jpeg, heic, or png"
         });
       }
@@ -179,7 +193,7 @@ router.post("/users/upload-profile-pic", checkAuth, (req, res) => {
       const username = tokenParser(req.headers.authorization).username;
       const fileName = `bucketFolder/${username}-pic`;
 
-      db.getPicType(username, async (err, result) => {
+      db.findUserByUsername(username, async (err, result) => {
         if (err) return res.sendStatus(500);
         else {
           try {
@@ -220,13 +234,21 @@ router.get("/users/usersPic", checkAuth, (req, res) => {
   });
 });
 
-//Update a User's info (name, phoneNumber)
-router.put("/users/updateUser", checkAuth, (req, res) => {
+//Update a User's info (name or phoneNumber)
+router.patch("/users/updateUser", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
+  const updates = {} 
+  if (req.body.name) {
+    updates.name = req.body.name 
+  }
+
+  if (req.body.phoneNumber) {
+    updates.phoneNumber = req.body.phoneNumber
+  }
+  
   db.updateUser(
     authUsername,
-    req.body.name,
-    req.body.phoneNumber,
+    updates,
     (err, result) => {
       if (err) {
         res.sendStatus(500);
@@ -262,28 +284,33 @@ router.delete("/users/deleteUser", checkAuth, (req, res) => {
 });
 
 //confirm credentials
-router.post("/users/checkCredentials", checkAuth, (req, res) => {
+router.get("/users/checkCredentials", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
   req.body.password = sha256(req.body.password);
   db.confirmCredentials(authUsername, req.body.password, (err, result) => {
     if (err) {
       res.sendStatus(500);
-    } else if (result) {
-      res.sendStatus(200);
-    } else {
+    } else if (!result) {
       res.sendStatus(401);
+    }
+    else {
+      res.sendStatus(200);
     }
   });
 });
 
 //Reset Password
-router.post("/users/changePassword", checkAuth, (req, res) => {
+router.patch("/users/changePassword", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
   req.body.newPassword = sha256(req.body.newPassword);
   db.passwordReset(authUsername, req.body.newPassword, (err, result) => {
     if (err) {
       res.sendStatus(500);
-    } else {
+    }
+    else if (!result) {
+      res.sendStatus(401);
+    } 
+    else {
       res.sendStatus(200);
     }
   });

@@ -195,12 +195,12 @@ Models:
 | /users/emailValidation       | GET         | [Validation/usability of Email](#email-validation)                 |
 | /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
 | /users/phoneNumberValidation | GET         | [Validation/usability of a phone number](#phone-number-validation) |
-| /users/upload-profile-pic    | POST        | [upload a user profile image](#upload-profile-image)               |
+| /users/upload-profile-pic    | PATCH       | [upload a user profile image](#upload-profile-image)               |
 | /users/usersPic              | GET         | [Get a user's profile image](#get-profile-image)                   |
-| /users/updateUser            | POST        | [Update a user's name or phonenumber](#update-user)                |
+| /users/updateUser            | PATCH       | [Update a user's name or phonenumber](#update-user)                |
 | /users/deleteUser            | DELETE      | [Delete a user account](#delete-user)                              |
-| /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
-| /users/changePassword        | Post        | [Change a user's password](#change-password)                       |
+| /users/checkCredential       | GET         | [Check a user's password before changing it](#check-credential)    |
+| /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
 | /users/rating                | GET         | [Get a user's rating](#get-user-rating)                            |
 | /users/rating                | PATCH       | [Add a new rating to a user](#add-user-rating)                     |

@@ -210,7 +210,7 @@ Models:
 
 ##### Initial Login:
 
-POST request
+GET request
 
 DOES NOT require a Bearer token; after this signup, the authToken contains information of the user & lifetime of the token
 
@@ -373,7 +373,7 @@ localhost:3000/users/phoneNumberValidation?phoneNumber=1231231234
 
 ### Upload Profile Image
 
-POST request
+PATCH request
 
 **Body**
 
@@ -429,7 +429,7 @@ https://bruinpool-bucket-staging.s3.us-east-2.amazonaws.com/bucketFolder/bin315a
 
 ### Update User
 
-PUT request
+PATCH request
 
 **body**
 
@@ -464,7 +464,7 @@ none required
 
 ### Check Credential
 
-POST request
+GET request
 
 **body**
 
@@ -486,7 +486,7 @@ no further return data
 
 ### Change Password
 
-POST request
+PATCH request
 
 **body**
 

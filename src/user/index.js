@@ -284,7 +284,7 @@ router.delete("/users/deleteUser", checkAuth, (req, res) => {
 });
 
 //confirm credentials
-router.get("/users/checkCredentials", checkAuth, (req, res) => {
+router.post("/users/checkCredentials", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
   req.body.password = sha256(req.body.password);
   db.confirmCredentials(authUsername, req.body.password, (err, result) => {

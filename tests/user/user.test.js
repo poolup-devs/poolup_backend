@@ -406,7 +406,7 @@ describe('Testing users with verified accounts', () => {
 
         test("When successfully confirming password credentials using a valid password during a user session, should return 200 response code", async () => {
             await request(app)
-                .get('/users/checkCredentials')
+                .post('/users/checkCredentials')
                 .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
                 .send({
                     password: "password"
@@ -416,7 +416,7 @@ describe('Testing users with verified accounts', () => {
 
         test("When confirming password credentials using a valid password during a user session, should return 200 response code", async () => {
             await request(app)
-                .get('/users/checkCredentials')
+                .post('/users/checkCredentials')
                 .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
                 .send({
                     password: "password"
@@ -426,7 +426,7 @@ describe('Testing users with verified accounts', () => {
 
         test("When confirming password credentials using an invalid password during a user session, should return 401 response code", async () => {
             await request(app)
-                .get('/users/checkCredentials')
+                .post('/users/checkCredentials')
                 .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
                 .send({
                     password: "incorrectPassword"

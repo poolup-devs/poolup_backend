@@ -527,7 +527,33 @@ none required
     "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png"
 }
 ```
+---
 
+### Get User's Info
+
+GET request
+
+**params**
+
+username (not id)
+
+**example**
+
+localhost:3000/users/getInfo?username=sampleUser1
+
+**return value**
+
+200 status
+
+```
+{
+    "name": "Han",
+    "email": "bin315a1@g.ucla.edu",
+    "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png"
+}
+```
+
+---
 
 ### Get User rating 
 

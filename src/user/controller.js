@@ -125,6 +125,30 @@ const getMyInfo = (authUsername, callback) => {
   });
 };
 
+const getUserInfo = (userName, callback) => {
+  User.findOne({ username: userName }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else if (result) {
+      const res_list = ["name", "email", "picUrl"];
+      const result_ = {};
+
+      res_list.forEach(function(item) {
+        result_[item] = result[item];
+      });
+
+      callback(null, result_);
+    } else {
+      callback(
+        {
+          message: "ERROR: username not found"
+        },
+        null
+      );
+    }
+  });
+};
+
 const getPicType = (username, callback) => {
   User.findOne({ username }, (err, result) => {
     if (err) {
@@ -274,6 +298,7 @@ module.exports = {
   login,
   verifyEmail,
   getMyInfo,
+  getUserInfo,
   emailValidation,
   usernameValidation,
   phoneNumberValidation,

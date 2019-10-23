@@ -145,10 +145,22 @@ router.get("/users/phoneNumberValidation", (req, res) => {
   });
 });
 
-//Get User Info
+//Get Current User's Info
 router.get("/users/my-info", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
   db.getMyInfo(authUsername, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
+
+//Get a User's Info
+router.get("/users/getInfo", checkAuth, (req, res) => {
+  const userName = req.query.username
+  db.getUserInfo(userName, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {

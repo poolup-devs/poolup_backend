@@ -202,6 +202,7 @@ Models:
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
 | /users/changePassword        | Post        | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
+| /users/getInfo               | GET         | [Get a user's account information](#get-users-info)                |
 | /users/rating                | GET         | [Get a user's rating](#get-user-rating)                            |
 | /users/rating                | PATCH       | [Add a new rating to a user](#add-user-rating)                     |
 ---
@@ -529,7 +530,7 @@ none required
 ```
 ---
 
-### Get User's Info
+### Get Users Info
 
 GET request
 

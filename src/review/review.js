@@ -19,8 +19,7 @@ const reviewSchema = new mongoose.Schema({
     }, 
     body: String, 
     rideId: {
-        type: ObjectId, 
-        required: true 
+        type: mongoose.Types.ObjectId
     }
 }); 
 

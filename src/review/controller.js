@@ -24,6 +24,40 @@ const getAverageRating = (username) => {
     })
 }; 
 
+const getUserReviews = (username) => {
+    return new Promise(async (resolve, reject) => {
+        await Review.find({revieweeUsername : username}).then((reviews) => { 
+            if (reviews.length > 0) {
+                resolve(reviews)
+            }
+            else {
+                reject("Username '" + username + "' has not received any reviews")
+            }
+        })
+    })
+}
+
+const addNewReview = (reviewInfo) => {
+    return new Promise(async (resolve, reject) => {
+        // required properties of Review object 
+        const requiredProperties = ['reviewerUsername', 'revieweeUsername', 'rating', 'rideId']
+        try {
+            // simple field validation 
+            if (requiredProperties.every(property => reviewInfo.hasOwnProperty(property))) {
+                await Review.create(reviewInfo)
+                resolve('Success')
+            }
+            reject('Review must contain a reviewer username, reviewee username, rating, and associated ride ID') 
+        }
+        catch(e) {
+            reject('Could not add a new review to the database.') 
+        }
+        
+    })
+}
+
 module.exports = {
-    getAverageRating
+    getAverageRating, 
+    getUserReviews, 
+    addNewReview
 }; 

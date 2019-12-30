@@ -57,5 +57,3 @@ User.deleteMany({}).then(async () => {
 }).catch((e) => {
     console.log("Could not delete all existing documents in User")
 })
-
-

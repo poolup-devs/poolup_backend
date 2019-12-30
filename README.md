@@ -6,8 +6,9 @@ This is the backend code repository for PoolUp: made with NodeJS, Express, and M
 For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineering Manager.
 
 1. [Setup](#setup)
-2. [Documentation](#documentation)
-3. [Deployment](#deployment)
+2. [Dev-Rules](#dev-rules)
+3. [Documentation](#documentation)
+4. [Deployment](#deployment)
 
 # Setup
 
@@ -142,6 +143,40 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
     \---user
             rating.test.js
 ```        
+
+---
+
+# Dev-Rules
+
+## Creating a new branch
+
+**Naming Branches**
+
+<nameOfCreator>-<feature/issuename>-<creationdate(mmddyyyy)>
+
+ex) han-messagingFeature-12302019
+
+## Posting Git Issues
+
+**Formatting**
+
+Copy and use the following format:
+
+\**CURRENT ISSUE**
+
+Describe the reasoning of the new feature or the change in the current feature
+
+\**TODO**
+
+Descriptively list out required tasks
+
+\**POTENTIAL CONFLICTS/ ALTERNATIVES**
+
+Explain potential conflicts that may arise with the current code base, issues that should be discussed with the initial creator, and alternative solutions (if there exists)
+
+\**ADDITIONAL COMMENT**
+
+Additional Comment
 
 ---
 

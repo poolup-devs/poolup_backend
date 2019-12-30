@@ -1,8 +1,18 @@
 require("./src/db/mongoose");
+const chalk = require("chalk")
+
 const User = require('./src/user/user').User 
 
 User.deleteMany({}).then(async () => {
     user_list = [
+        {
+            verified: true,
+            password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+            username: "admin",
+            name: "admin",
+            email: "admin-noreply@g.ucla.edu",
+            picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
+        },
         {
             verified: true,
             password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
@@ -46,7 +56,7 @@ User.deleteMany({}).then(async () => {
     ]
     try {
         await User.insertMany(user_list)
-        console.log("Successfully initialized developement database!")
+        console.log(chalk.green("[DB_INIT]: ") + "Successfully initialized developement database!")
         process.exit(0)
     }
     catch(e) {
@@ -55,5 +65,5 @@ User.deleteMany({}).then(async () => {
     }
     
 }).catch((e) => {
-    console.log("Could not delete all existing documents in User")
+    console.log(chalk.red("[ERROR]: ")+"Could not delete all existing documents in User")
 })

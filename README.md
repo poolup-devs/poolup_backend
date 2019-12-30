@@ -178,6 +178,27 @@ Explain potential conflicts that may arise with the current code base, issues th
 
 Additional Comment
 
+## Using Postman
+
+Ask for Postman workspace authorization if you haven't been invited yet;
+
+**Creating a Postman Request**
+
+All the requests under the workspace collection inherits a authToken variable automatically via a pre-request script;
+
+When creating each requests:
+
+- If authToken is required, go to the Authorization tab of the request, and select "inherit auth from parent" under the TYPE tab; no further authToken has to be passed through Headers
+- The pre-request scripts are set to use the admin user (defined in init_db.js):
+```
+{
+    "username":"admin",
+    "email":"admin-noreply@g.ucla.edu",
+    "password":"password"
+}
+```
+- If you want to login as another user, use the login API to retrieve the authToken, set Authorization to "No Auth", and pass the authToken in the header file instead and follow the Auth Tokens syntax explained under Documentation below. **DO NOT** save the configuration into the Postman collection, as the default config should remain using the parent-inherited-variables
+
 ---
 
 # Documentation

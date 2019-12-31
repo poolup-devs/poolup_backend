@@ -6,6 +6,14 @@ User.deleteMany({}).then(async () => {
         {
             verified: true,
             password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+            username: "admin",
+            name: "admin",
+            email: "admin-noreply@g.ucla.edu",
+            picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
+        },
+        {
+            verified: true,
+            password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
             username: "bin315a1",
             name: "Han",
             email: "bin315a1@g.ucla.edu",

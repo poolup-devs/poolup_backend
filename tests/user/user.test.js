@@ -3,6 +3,7 @@ require("../../src/db/mongoose");
 const User = require("../../src/user/user").User 
 const Ride = require("../../src/ride/ride").Ride 
 const Noti = require("../../src/noti/noti").Noti 
+const Review = require("../../src/review/review").Review 
 
 const app = require('../../src/app')
 const request = require('supertest') 
@@ -457,101 +458,68 @@ describe('Testing users with verified accounts', () => {
 })
 
 describe("Testing rating system", () => {
-    const testUserOneAuthToken = jwt.sign({ username: "jsmith" }, process.env.JWT_SECRET_KEY)
-    const testUserOne = new User({
-        name: "John Smith", 
-        username: "jsmith",
-        rating: {
-            totalValue: 15, 
-            totalCount: 3, 
-            averageRating: 5
-        }, 
-        verified: true, 
+    const username = 'test_reviewee'
+    const testReview1 = new Review({
+        reviewerUsername: 'test_reviewer', 
+        revieweeUsername: 'test_reviewee', 
+        rating: 1, 
+    })
+    const testReview2 = new Review({
+        reviewerUsername: 'test_reviewer', 
+        revieweeUsername: 'test_reviewee', 
+        rating: 2, 
+    })
+    const testReview3 = new Review({
+        reviewerUsername: 'test_reviewer', 
+        revieweeUsername: 'test_reviewee', 
+        rating: 3, 
     })
 
-
     beforeEach(() => {
-        return new User(testUserOne).save() 
+        jest.setTimeout(30000);
+        new Review(testReview1).save()
+        new Review(testReview2).save()
+        return new Review(testReview3).save()
     }) 
 
     afterEach(() => {
-        return User.deleteMany() 
+        return Review.deleteMany() 
     })
 
-    test('When adding a rating that is less than 1, should produce an error response.', async () => {
-        expect.assertions(1)
-        try {
-            await db.addNewRating(testUserOne.username, 0)
-        } 
-        catch(e) {
-            expect(e).toMatch("The rating must be a value from 1 to 5.")
-        }
-    })
-
-    test('When adding a rating that is greater than 5, should produce an error response', async () => {
-        expect.assertions(1)
-        try {
-            await db.addNewRating(testUserOne.username, 6)
-        }
-        catch(e) {
-            expect(e).toBe("The rating must be a value from 1 to 5.")
-        }
-    })
-
-    test("When adding a valid rating, the user's rating property should have its fields totalValue and totalCount updated.", async () => {
-        const newRating = await db.addNewRating(testUserOne.username, 3)
-        expect(newRating.toObject()).toEqual({
-            totalValue: 18, 
-            totalCount: 4
-        })
-    })
-
-    test("When retrieving a user's rating, should correctly calculate their average rating.", async () => {
-        const averageRating =  await db.getAverageRating(testUserOne.username) 
-        expect(averageRating).toEqual({
-            averageRating: "5.00"
+    test("Calculate average rating of a user by aggregating all reviews made to them.", async () => {
+        expect.assertions(1);
+        const expectedRating = ((testReview1.rating + testReview2.rating + testReview3.rating) / 3).toFixed(2)
+        return db.getAverageRating(username).then((rating) => {
+            expect(rating).toBe(expectedRating);
         })
     })
 
     test("When retrieving the average rating of a user without at least 3 ratings, should result in an error message.", async () => {
-        const user = await User.create({
-            username: "John Smith"
-        })
         expect.assertions(1)
         try {
-            await db.getAverageRating(user.username) 
+            await db.getAverageRating('user_without_sufficient_reviews') 
         }
         catch(e) {
             expect(e).toBe("User must have at least 3 ratings to display an average rating!")
         }
     })
 
-    describe("Testing endpoints", () => {
-        test('When sending a valid request to the /users/rating endpoint, should expect a 200 response.', async (done) => {
-            await request(app)
-                .get(`/users/rating`)
-                .query({username: testUserOne.username})
-                .set('Authorization', 'Bearer ' + testUserOneAuthToken)
-                .send({})
-                .expect(200)
-            done() 
+    test("Get all of the reviews associated with a user.", async () => {
+        const expectedReviews = [testReview1._id, testReview2._id, testReview3._id]
+        return db.getUserReviews(username).then((reviews) => {
+            expect(reviews.map(a => a._id)).toStrictEqual(expectedReviews)
         })
-    
-        test('When sending a valid PATCH request to /users/rating, should expect a 200 response back.' , async (done) => {
-            await request(app)
-                .patch(`/users/rating`)
-                .query({username: testUserOne.username})
-                .set('Authorization', 'Bearer ' + testUserOneAuthToken)
-                .send({
-                    rating: 5.00
-                })
-                .expect(200)
-            done() 
-        })
+    })
 
-
-    }) 
-})
+    test("Should error when trying to retrieve all reviews from a user with no reviews.", async () => {
+        try {
+            await db.getUserReviews('user_that_does_not_exist') 
+        } 
+        catch(e) {
+            expect(e).toMatch("Username 'user_that_does_not_exist' has not received any reviews")
+        }
+    })
+}) 
 
 
 

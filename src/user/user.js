@@ -21,16 +21,6 @@ const userSchema = mongoose.Schema({
   createdAt: {
     type: Date,
     default: new Date()
-  }, 
-  rating: {
-    totalCount: {
-      type: Number,
-      default: 0 
-    }, 
-    totalValue: {
-      type: Number, 
-      default: 0 
-    }
   }
 });
 

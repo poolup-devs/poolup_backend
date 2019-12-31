@@ -1,10 +1,10 @@
 const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
+const Review = require('../review/review').Review; 
 
 // Users require a certain minimum amount of ratings to calculate an average rating 
-const MIN_TO_DISPLAY_AVERAGE_RATING = 3 
-
+const MIN_TO_DISPLAY_AVERAGE_RATING = 3
 
 const login = (email, password, callback) => {
   User.findOne(
@@ -236,35 +236,71 @@ const passwordReset = (authUsername, newPassword, callback) => {
   );
 };
 
-const addNewRating = async (username, newRating) => {
-  if (newRating < 1|| newRating > 5) {
-      return Promise.reject("The rating must be a value from 1 to 5.")
-  }
-  try {
-      const user = await User.findOneAndUpdate(
-          {username}, 
-          {$inc: {'rating.totalValue': newRating, 'rating.totalCount': 1}}, 
-          {new: true, useFindAndModify: false}
-      )
-      return Promise.resolve(user.rating)
-  }
-  catch(e) {
-      return Promise.reject(e, "Could not add a new rating to the user")
-  }
-}
+// const addNewRating = async (username, newRating) => {
+//   if (newRating < 1|| newRating > 5) {
+//       return Promise.reject("The rating must be a value from 1 to 5.")
+//   }
+//   try {
+//       const user = await User.findOneAndUpdate(
+//           {username}, 
+//           {$inc: {'rating.totalValue': newRating, 'rating.totalCount': 1}}, 
+//           {new: true, useFindAndModify: false}
+//       )
+//       return Promise.resolve(user.rating)
+//   }
+//   catch(e) {
+//       return Promise.reject(e, "Could not add a new rating to the user")
+//   }
+// }
 
-const getAverageRating = async (username) => {
-  try {
-      const {rating} = await User.findOne({username}) 
-      if (rating.totalCount < MIN_TO_DISPLAY_AVERAGE_RATING) {
-        return Promise.reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " ratings to display an average rating!")
+// const getAverageRating = async (username) => {
+//   try {
+//       const {rating} = await User.findOne({username}) 
+//       if (rating.totalCount < MIN_TO_DISPLAY_AVERAGE_RATING) {
+//         return Promise.reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " ratings to display an average rating!")
+//       }
+//       const averageRating = (rating.totalValue / rating.totalCount).toFixed(2)
+//       return Promise.resolve({averageRating})
+//   }
+//   catch(e) {
+//       return Promise.reject("Could not get average rating of user")
+//   }
+// }
+
+const getAverageRating = (username) => {
+  return new Promise(async (resolve, reject) => {
+      let totalRating = 0; 
+      try {
+          await Review.find({revieweeUsername : username}).then((reviews) => {  
+              if (reviews.length >= 1 && reviews.length >= MIN_TO_DISPLAY_AVERAGE_RATING) {
+                  reviews.forEach((review) => {
+                      totalRating = totalRating + review.rating; 
+                  }) 
+                  const averageRating = (totalRating / reviews.length).toFixed(2)
+                  return resolve(averageRating)
+              }
+              else {
+                  return reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " ratings to display an average rating!"); 
+              }   
+          })
       }
-      const averageRating = (rating.totalValue / rating.totalCount).toFixed(2)
-      return Promise.resolve({averageRating})
-  }
-  catch(e) {
-      return Promise.reject("Could not get average rating of user")
-  }
+      catch(err) {
+          return reject("Could not retrieve all reviews left for user.")
+      }
+  })
+}; 
+
+const getUserReviews = (username) => {
+  return new Promise(async (resolve, reject) => {
+      await Review.find({revieweeUsername : username}).then((reviews) => { 
+          if (reviews.length > 0) {
+              resolve(reviews)
+          }
+          else {
+              reject("Username '" + username + "' has not received any reviews")
+          }
+      })
+  })
 }
 
 module.exports = {
@@ -283,6 +319,6 @@ module.exports = {
   deleteUser,
   confirmCredentials,
   passwordReset, 
-  addNewRating,
+  getUserReviews, 
   getAverageRating
 };

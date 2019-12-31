@@ -317,16 +317,16 @@ router.patch("/users/changePassword", checkAuth, (req, res) => {
 });
 
 // Add a new rating 
-router.patch("/users/rating", checkAuth, async (req, res) => {
-  const {rating} = req.body 
-  try {
-    const userRating = await db.addNewRating(req.query.username, rating)
-    res.status(200).send(userRating) 
-  }
-  catch(e) {
-    res.status(500).send({error: e})
-  }
-}) 
+// router.patch("/users/rating", checkAuth, async (req, res) => {
+//   const {rating} = req.body 
+//   try {
+//     const userRating = await db.addNewRating(req.query.username, rating)
+//     res.status(200).send(userRating) 
+//   }
+//   catch(e) {
+//     res.status(500).send({error: e})
+//   }
+// }) 
 
 // Get average rating 
 router.get("/users/rating", checkAuth, async (req, res) => {

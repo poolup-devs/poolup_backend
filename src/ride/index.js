@@ -87,8 +87,42 @@ router.post("/rides/post-ride", checkAuth, (req, res) => {
 
 //Join a Ride
 router.put("/rides/join-ride", checkAuth, (req, res) => {
-  const ride = req.body.ride; //need the _id and owner's username of the ride
-  const authUsername = tokenParser(req.headers.authorization).username; //my username
+  const ride = req.body.ride;
+  const authUsername = tokenParser(req.headers.authorization).username;
+  const numOfSeats = req.body.numOfSeats;
+  const applicationFeeAmount = 0;
+
+  if (numOfSeats <= 0) {
+    console.log("Invalid number of seats requested");
+    res.sendStatus(500);
+  }
+
+  // Get customer's stripe id
+  userStripeID = "user.stripeID"
+
+  var stripe = require('stripe')(process.env.STRIPE_API_KEY);
+
+  stripe.paymentIntents.create(
+    {
+      amount: ride.price * numOfSeats,
+      currency: 'usd',
+      payment_method_types: ['card'],
+      application_fee_amount: applicationFeeAmount,
+      confirm: true,
+      off_session: true,
+      customer: userStripeID,
+    },
+    function(err, paymentIntent) {
+      if (err) {
+        res.sendStatus(500);
+        return;
+      }
+
+      // 
+    }
+  );
+
+  // Add user to ride
   db.joinRide(ride.ownerUsername, ride._id, authUsername, (err, data) => {
     if (err) {
       res.sendStatus(500);

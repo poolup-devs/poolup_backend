@@ -39,18 +39,37 @@ const checkAvailability = (email, username, callback) => {
 const signup = (userInfo, ucla_email, callback) => {
   const newUser = userInfo;
   newUser.email = ucla_email;
-  User.create(newUser, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      try {
-        User.setRandomBruinBear(newUser.username);
-      } catch (e) {
-        callback(e, null);
+
+  // Give the user a stripe id
+  var stripe = require('stripe')(process.env.STRIPE_API_KEY);
+
+  stripe.customers.create(
+    {
+      email: newUser.email,
+      name: newUser.name,
+    },
+    function(err, customer) {
+      // asynchronously called
+      if (err) {
+        console.log("Failed to create Stripe Customer: ", err);
+      } else {
+        newUser.stripeID = customer.id;
       }
-      callback(null, result);
+
+      User.create(newUser, (err, result) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          try {
+            User.setRandomBruinBear(newUser.username);
+          } catch (e) {
+            callback(e, null);
+          }
+          callback(null, result);
+        }
+      });
     }
-  });
+  );
 };
 
 const verifyEmail = (email, callback) => {

@@ -8,6 +8,7 @@ const userSchema = mongoose.Schema({
     index: true 
   },
   password: String,
+  stripeID: String,
   phoneNumber: String,
   picUrl: String,
   picType: {

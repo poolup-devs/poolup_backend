@@ -219,6 +219,16 @@ const rideDelete = (_id, callback) => {
   });
 };
 
+const rideDetails = (_id, callback) => {
+  Ride.findOne({ _id }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
 module.exports = {
   getMatchingRides,
   getRideHistory,
@@ -229,5 +239,6 @@ module.exports = {
   postRide,
   joinRide,
   cancelRide,
-  rideDelete
+  rideDelete,
+  rideDetails
 };

@@ -138,7 +138,7 @@ router.delete("/rides/delete-ride", checkAuth, (req, res) => {
 });
 
 //Get Ride Details
-router.get("/ride-details", checkAuth, (req, res) => {
+router.get("/rides/ride-details", checkAuth, (req, res) => {
   var rideID = req.query.ride_id;
 
   db.rideDetails(rideID, (err, data) => {

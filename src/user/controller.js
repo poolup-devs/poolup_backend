@@ -41,7 +41,7 @@ const signup = (userInfo, ucla_email, callback) => {
   newUser.email = ucla_email;
 
   // Give the user a stripe id
-  var stripe = require('stripe')(process.env.STRIPE_API_KEY);
+  var stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
   stripe.customers.create(
     {
@@ -128,7 +128,6 @@ const getMyInfo = (authUsername, callback) => {
       const result_ = {};
 
       res_list.forEach(function(item) {
-        console.log(item);
         result_[item] = result[item];
       });
 

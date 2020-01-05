@@ -476,7 +476,6 @@ describe("Testing rating system", () => {
     })
 
     beforeEach(() => {
-        jest.setTimeout(30000);
         new Review(testReview1).save()
         new Review(testReview2).save()
         return new Review(testReview3).save()
@@ -500,11 +499,11 @@ describe("Testing rating system", () => {
             await db.getAverageRating('user_without_sufficient_reviews') 
         }
         catch(e) {
-            expect(e).toBe("User must have at least 3 ratings to display an average rating!")
+            await expect(e).toBe("User must have at least 3 ratings to display an average rating!")
         }
     })
 
-    test("Get all of the reviews associated with a user.", async () => {
+    test("Get all of the reviews associated with a user.",  () => {
         const expectedReviews = [testReview1._id, testReview2._id, testReview3._id]
         return db.getUserReviews(username).then((reviews) => {
             expect(reviews.map(a => a._id)).toStrictEqual(expectedReviews)
@@ -512,6 +511,7 @@ describe("Testing rating system", () => {
     })
 
     test("Should error when trying to retrieve all reviews from a user with no reviews.", async () => {
+        expect.assertions(1)
         try {
             await db.getUserReviews('user_that_does_not_exist') 
         } 

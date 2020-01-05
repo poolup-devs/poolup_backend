@@ -1,4 +1,5 @@
 const Review = require('./review').Review; 
+const mongoose = require('mongoose')
 
 const addNewReview = (reviewInfo) => {
     return new Promise(async (resolve, reject) => {
@@ -19,22 +20,27 @@ const addNewReview = (reviewInfo) => {
     })
 }
 
-const hasBeenReviewed = (reviewer, reviewee, rideId) => {
+const getReview = (reviewer, reviewee, rideId) => {
     return new Promise(async (resolve, reject) => {
-        const review = await Review.findOne({
-            reviewerUsername : reviewer,
-            revieweeUsername : reviewee, 
-            rideId
-        })
-
-        if (!review) {
-            resolve(false) 
+        try {
+            const review = await Review.findOne({
+                reviewerUsername : reviewer,
+                revieweeUsername : reviewee, 
+                rideId : rideId
+            })
+            
+            if (!review) {
+                resolve(false) 
+            }
+            resolve(review) 
         }
-        resolve(true) 
+        catch(e) {
+            console.log(e)
+        }
     })
 }
 
 module.exports = {
     addNewReview, 
-    hasBeenReviewed
+    getReview
 }; 

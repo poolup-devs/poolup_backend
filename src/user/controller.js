@@ -236,37 +236,6 @@ const passwordReset = (authUsername, newPassword, callback) => {
   );
 };
 
-// const addNewRating = async (username, newRating) => {
-//   if (newRating < 1|| newRating > 5) {
-//       return Promise.reject("The rating must be a value from 1 to 5.")
-//   }
-//   try {
-//       const user = await User.findOneAndUpdate(
-//           {username}, 
-//           {$inc: {'rating.totalValue': newRating, 'rating.totalCount': 1}}, 
-//           {new: true, useFindAndModify: false}
-//       )
-//       return Promise.resolve(user.rating)
-//   }
-//   catch(e) {
-//       return Promise.reject(e, "Could not add a new rating to the user")
-//   }
-// }
-
-// const getAverageRating = async (username) => {
-//   try {
-//       const {rating} = await User.findOne({username}) 
-//       if (rating.totalCount < MIN_TO_DISPLAY_AVERAGE_RATING) {
-//         return Promise.reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " ratings to display an average rating!")
-//       }
-//       const averageRating = (rating.totalValue / rating.totalCount).toFixed(2)
-//       return Promise.resolve({averageRating})
-//   }
-//   catch(e) {
-//       return Promise.reject("Could not get average rating of user")
-//   }
-// }
-
 const getAverageRating = (username) => {
   return new Promise(async (resolve, reject) => {
       let totalRating = 0; 
@@ -274,7 +243,7 @@ const getAverageRating = (username) => {
           await Review.find({revieweeUsername : username}).then((reviews) => {  
               if (reviews.length >= 1 && reviews.length >= MIN_TO_DISPLAY_AVERAGE_RATING) {
                   reviews.forEach((review) => {
-                      totalRating = totalRating + review.rating; 
+                    totalRating = totalRating + review.rating; 
                   }) 
                   const averageRating = (totalRating / reviews.length).toFixed(2)
                   return resolve(averageRating)

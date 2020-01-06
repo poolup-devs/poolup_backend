@@ -18,16 +18,26 @@ router.post("/reviews", checkAuth, async (req, res) => {
     }
 }) 
 
-// Get a review, or return false if the review has not been made yet 
-router.get("/reviews", checkAuth, async (req, res) => {
+// Get all reviews received by a user 
+router.get("/reviews", async (req, res) => {
     try {
-        const {reviewer, reviewee, rideId} = req.body 
-        const review = await db.getReview(reviewer, reviewee, rideId)
-        res.status(200).send(review) 
+      const userReviews = await db.getUserReviews(req.query.username)
+      res.status(200).send(userReviews) 
     }
     catch(e) {
-        res.status(404).send('Review not found')
+      res.status(500).send({error: e}) 
     }
 }) 
+  
+// Get the average rating of a user 
+router.get("/reviews/rating", async (req, res) => {
+    try {
+        const avgRating = await db.getAverageRating(req.query.username)
+        res.status(200).send(avgRating)
+    }
+    catch(e) {
+        res.status(404).send({error: e}) 
+    }
+})
 
 module.exports = router;

@@ -316,26 +316,4 @@ router.patch("/users/changePassword", checkAuth, (req, res) => {
   });
 });
 
-// Get all of a user's reviews 
-router.get("/users/reviews", async (req, res) => {
-  try {
-    const userReviews = await db.getUserReviews(req.query.username)
-    res.status(200).send(userReviews) 
-  }
-  catch(e) {
-    res.status(500).send({error: e}) 
-  }
-}) 
-
-// Get average rating 
-router.get("/users/rating", async (req, res) => {
-  try {
-    const avgRating = await db.getAverageRating(req.query.username)
-    res.status(200).send(avgRating)
-  }
-  catch(e) {
-    res.status(404).send({error: e}) 
-  }
-})
-
 module.exports = router;

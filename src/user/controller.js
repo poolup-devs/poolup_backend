@@ -1,10 +1,6 @@
 const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
-const Review = require('../review/review').Review; 
-
-// Users require a certain minimum amount of ratings to calculate an average rating 
-const MIN_TO_DISPLAY_AVERAGE_RATING = 1
 
 const login = (email, password, callback) => {
   User.findOne(
@@ -236,38 +232,6 @@ const passwordReset = (authUsername, newPassword, callback) => {
   );
 };
 
-const getAverageRating = (username) => {
-  return new Promise(async (resolve, reject) => {
-      let totalRating = 0; 
-      try {
-          await Review.find({revieweeUsername : username}).then((reviews) => {  
-              if (reviews.length >= 1 && reviews.length >= MIN_TO_DISPLAY_AVERAGE_RATING) {
-                  reviews.forEach((review) => {
-                    totalRating = totalRating + review.rating; 
-                  }) 
-                  const averageRating = (totalRating / reviews.length).toFixed(2)
-                  return resolve(averageRating)
-              }
-              else {
-                  return reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " rating(s) to display an average rating!"); 
-              }   
-          })
-      }
-      catch(err) {
-          return reject("Could not retrieve all reviews left for user.")
-      }
-  })
-}; 
-
-const getUserReviews = (username) => {
-  return new Promise(async (resolve, reject) => {
-      await Review.find({revieweeUsername : username}).then((reviews) => { 
-        // if there are no reviews, return []
-        resolve(reviews) 
-      })
-  })
-}
-
 module.exports = {
   checkAvailability,
   login,
@@ -284,6 +248,4 @@ module.exports = {
   deleteUser,
   confirmCredentials,
   passwordReset, 
-  getUserReviews, 
-  getAverageRating
 };

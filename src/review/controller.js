@@ -1,6 +1,9 @@
 const Review = require('./review').Review; 
-const mongoose = require('mongoose')
 
+// Users require a certain minimum amount of ratings to calculate an average rating 
+const MIN_TO_DISPLAY_AVERAGE_RATING = 1
+
+// Create a new review with required properties: reviewer username, reviewee username, rating, and ride ID 
 const addNewReview = (reviewInfo) => {
     return new Promise(async (resolve, reject) => {
         // required properties of Review object 
@@ -19,7 +22,42 @@ const addNewReview = (reviewInfo) => {
         }
     })
 }
-// Determine whether a review exists 
+
+// Get the average rating of a user, aggregated from all reviews received by the user 
+const getAverageRating = (username) => {
+    return new Promise(async (resolve, reject) => {
+        let totalRating = 0; 
+        try {
+            await Review.find({revieweeUsername : username}).then((reviews) => {  
+                if (reviews.length >= 1 && reviews.length >= MIN_TO_DISPLAY_AVERAGE_RATING) {
+                    reviews.forEach((review) => {
+                      totalRating = totalRating + review.rating; 
+                    }) 
+                    const averageRating = (totalRating / reviews.length).toFixed(2)
+                    return resolve(averageRating)
+                }
+                else {
+                    return reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " rating(s) to display an average rating!"); 
+                }   
+            })
+        }
+        catch(err) {
+            return reject("Could not retrieve all reviews left for user.")
+        }
+    })
+}; 
+
+// Get all the reviews received by a user 
+const getUserReviews = (username) => {
+    return new Promise(async (resolve, reject) => {
+        await Review.find({revieweeUsername : username}).then((reviews) => { 
+          // if there are no reviews, return []
+          resolve(reviews) 
+        })
+    })
+}
+
+// Determine whether a review exists; used to determine whether a review needs to be made 
 const getReview = (reviewer, reviewee, rideId) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -42,5 +80,7 @@ const getReview = (reviewer, reviewee, rideId) => {
 
 module.exports = {
     addNewReview, 
-    getReview
+    getReview, 
+    getAverageRating, 
+    getUserReviews
 }; 

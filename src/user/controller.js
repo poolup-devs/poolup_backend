@@ -4,7 +4,7 @@ const Noti = require("../noti/noti.js").Noti;
 const Review = require('../review/review').Review; 
 
 // Users require a certain minimum amount of ratings to calculate an average rating 
-const MIN_TO_DISPLAY_AVERAGE_RATING = 3
+const MIN_TO_DISPLAY_AVERAGE_RATING = 1
 
 const login = (email, password, callback) => {
   User.findOne(
@@ -249,7 +249,7 @@ const getAverageRating = (username) => {
                   return resolve(averageRating)
               }
               else {
-                  return reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " ratings to display an average rating!"); 
+                  return reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " rating(s) to display an average rating!"); 
               }   
           })
       }
@@ -262,12 +262,8 @@ const getAverageRating = (username) => {
 const getUserReviews = (username) => {
   return new Promise(async (resolve, reject) => {
       await Review.find({revieweeUsername : username}).then((reviews) => { 
-          if (reviews.length > 0) {
-              resolve(reviews)
-          }
-          else {
-              reject("Username '" + username + "' has not received any reviews")
-          }
+        // if there are no reviews, return []
+        resolve(reviews) 
       })
   })
 }

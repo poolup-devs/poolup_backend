@@ -3,6 +3,12 @@ const mongoose = require('mongoose')
 require('../../src/db/mongoose'); 
 const db = require('../../src/review/controller'); 
 const Review = require('../../src/review/review').Review
+const User = require('../../src/user/user').User
+const sha256 = require("sha256");
+const jwt = require("jsonwebtoken");
+
+const app = require('../../src/app')
+const request = require('supertest') 
 
 describe("Testing rating system database operations", () => {
     afterEach(() => {
@@ -62,9 +68,41 @@ describe("Testing rating system database operations", () => {
             console.log(e)
         }
     }) 
+
+    test("Should successfully return false if no review exists.", async () => {
+        expect.assertions(1) 
+        try {
+            await db.getReview('non_existent_reviewer', 'non_existent_reviewee', mongoose.Types.ObjectId())
+        }
+        catch(e) {
+            expect(e).toEqual(false) 
+        }
+    })
 }) 
 
 describe("Testing rating system endpoints", () => {
+    const verifiedUser = new User({
+        name: "First Last", 
+        username: "verifiedUser", 
+        password: sha256("password"), 
+        email: "verifiedUser@g.ucla.edu", 
+        phoneNumber: '1231231234', 
+        verified: true 
+    })
+    const verifiedUserUsernameAuthToken = jwt.sign({ username: verifiedUser.username }, process.env.JWT_SECRET_KEY);
+    
+    test("Should correctly add a new review when properly authenticated.", async () => {
+        await request(app)
+            .post('/reviews')
+            .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
+            .send({
+                revieweeUsername: 'some_user', 
+                rideId: mongoose.Types.ObjectId(), 
+                rating: 3
+            })
+            .expect(200) 
+    })
+
     
 
 }) 

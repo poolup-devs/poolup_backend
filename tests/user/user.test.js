@@ -499,26 +499,52 @@ describe("Testing rating system", () => {
             await db.getAverageRating('user_without_sufficient_reviews') 
         }
         catch(e) {
-            await expect(e).toBe("User must have at least 3 ratings to display an average rating!")
+            await expect(e).toBe("User must have at least 1 rating(s) to display an average rating!")
         }
     })
 
-    test("Get all of the reviews associated with a user.",  () => {
+    test("Get all of the reviews associated with a user with at least 1 review.",  () => {
         const expectedReviews = [testReview1._id, testReview2._id, testReview3._id]
         return db.getUserReviews(username).then((reviews) => {
             expect(reviews.map(a => a._id)).toStrictEqual(expectedReviews)
         })
     })
 
-    test("Should error when trying to retrieve all reviews from a user with no reviews.", async () => {
-        expect.assertions(1)
-        try {
-            await db.getUserReviews('user_that_does_not_exist') 
-        } 
-        catch(e) {
-            expect(e).toMatch("Username 'user_that_does_not_exist' has not received any reviews")
-        }
+    test("Get all of the reviews associated with a user with 0 reviews.",  () => {
+        return db.getUserReviews('user_that_does_not_exist').then((reviews) => {
+            expect(reviews.length).toBe(0)
+        })
     })
+
+    describe("Testing API endpoints for rating system", () => {
+        test("When requesting the average rating of a user that is in the database, should return 200 response code", async () => {
+            await request(app)
+                .get("/users/rating")
+                .query({username})
+                .expect(200)
+        })
+
+        test("When requesting the average rating of a user that has no reviews, should return 404 response code", async () => {
+            await request(app)
+                .get("/users/rating")
+                .query({username: 'does_not_exist'})
+                .expect(404)
+        })
+
+        test("When requsting all the reviews left for a user, should expect 200 response code.", async () => {
+            await request(app)
+                .get('/users/reviews') 
+                .query({username})
+                .expect(200)
+        })
+        test("When requsting all the reviews left for a user with no reviews, should expect 200 response code still.", async () => {
+            await request(app)
+                .get('/users/reviews') 
+                .query({username: 'user_that_does_not_exist'})
+                .expect(200)
+        })
+
+    }) 
 }) 
 
 

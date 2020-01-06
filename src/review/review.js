@@ -17,7 +17,7 @@ const reviewSchema = new mongoose.Schema({
         type: Number, 
         required: true
     }, 
-    body: String, 
+    comment: String, 
     rideId: {
         type: mongoose.Types.ObjectId
     }

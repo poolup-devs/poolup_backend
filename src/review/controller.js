@@ -19,7 +19,7 @@ const addNewReview = (reviewInfo) => {
         }
     })
 }
-
+// Determine whether a review exists 
 const getReview = (reviewer, reviewee, rideId) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -30,7 +30,7 @@ const getReview = (reviewer, reviewee, rideId) => {
             })
             
             if (!review) {
-                resolve(false) 
+                reject(false) 
             }
             resolve(review) 
         }

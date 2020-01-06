@@ -2,10 +2,14 @@ const express = require('express')
 const router = new express.Router()
 const db = require('./controller')
 const checkAuth = require("../middleware/jwt_authenticator.js");
+const tokenParser = require("../utils/token-parser.js");
 
-// Add a new rating 
+
+// Add a new rating using currently logged in account 
 router.post("/reviews", checkAuth, async (req, res) => {
     try {
+        const loggedInUser = tokenParser(req.headers.authorization).username
+        req.body['reviewerUsername'] = loggedInUser 
         const review = await db.addNewReview(req.body)
         res.status(200).send(review) 
     }
@@ -22,7 +26,7 @@ router.get("/reviews", checkAuth, async (req, res) => {
         res.status(200).send(review) 
     }
     catch(e) {
-        res.status(401).send('No review can be found')
+        res.status(404).send('Review not found')
     }
 }) 
 

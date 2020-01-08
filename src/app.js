@@ -14,9 +14,11 @@ app.use(express.static(__dirname + "/../public"));
 const userRouter = require("./user/index");
 const rideRouter = require("./ride/index");
 const notiRouter = require("./noti/index");
+const requestRouter = require("./request/index");
 
 app.use(userRouter);
 app.use(rideRouter);
 app.use(notiRouter);
+app.use(requestRouter);
 
 module.exports = app 

@@ -1,5 +1,6 @@
 require('../src/db/mongoose')
-const app = require("./app") 
+const express = require("express")
+const app = require("./app").app;
 const path = require("path");
 const chalk = require("chalk");
 const checkS3Connection = require("./db/awsS3_controller.js").checkS3Connection;
@@ -15,6 +16,8 @@ console.log(
     " MODE"
 );
 
+process.env.iv = "hi"
+console.log(process.env.iv)
 // ////////////////////////////////////////
 // //TESTER
 // ////////////////////////////////////////
@@ -29,18 +32,25 @@ app.get("/test-connection", (req, res) => {
 //ERROR STATUS
 ////////////////////////////////////////
 
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "/../public/index.html"), err => {
-    if (err) {
-      res.status(500).send(err);
-    }
-  });
-});
+// TURNED OFF FOR Chat feature dev;
+// Instead, using the express.static() in app.js
+// TURN IT BACK ON to disable rendering
+
+// app.get("/*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "/./messaging/public/index.html"), err => {
+//     if (err) {
+//       res.status(500).send(err);
+//     }
+//   });
+// });
 
 checkS3Connection();
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(
     chalk.green("[INIT]: ") + "Server Listening on Port " + chalk.yellow(port)
   );
 });
+
+// Socket Config
+const socketConfig = require("./app").socketConfig(server);

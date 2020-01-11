@@ -1,4 +1,5 @@
 const Review = require('./review').Review; 
+const Ride = require('../ride/ride').Ride; 
 
 // Users require a certain minimum amount of ratings to calculate an average rating 
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1
@@ -48,17 +49,20 @@ const getAverageRating = (username) => {
 }; 
 
 // Get all the reviews received by a user 
-const getUserReviews = (username) => {
+const getUserReviews = (username, pageNumber) => {
     return new Promise(async (resolve, reject) => {
-        await Review.find({revieweeUsername : username}).then((reviews) => { 
+        await Review.find({revieweeUsername : username}, (err, reviews) => { 
           // if there are no reviews, return []
-          resolve(reviews) 
+          resolve(Array.from(reviews)) 
         })
+        .sort({date: 1})
+        .skip(pageNumber * 5)
+        .limit(5); 
     })
 }
 
-// Determine whether a review exists; used to determine whether a review needs to be made 
-const getReview = (reviewer, reviewee, rideId) => {
+// Helper method to determine whether a review exists; used to determine whether a review needs to be made 
+const isExistingReview = async (reviewer, reviewee, rideId) => {
     return new Promise(async (resolve, reject) => {
         try {
             const review = await Review.findOne({
@@ -66,11 +70,11 @@ const getReview = (reviewer, reviewee, rideId) => {
                 revieweeUsername : reviewee, 
                 rideId : rideId
             })
-            
+
             if (!review) {
-                reject(false) 
+                resolve(false)
             }
-            resolve(review) 
+            resolve(true)
         }
         catch(e) {
             console.log(e)
@@ -78,9 +82,49 @@ const getReview = (reviewer, reviewee, rideId) => {
     })
 }
 
+const getUsersToReviewFromLatestRide = (username) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Obtain latest ride details 
+            Ride.findOne({$or: [{passengers: username}, {ownerUsername: username}], date: { $lt: new Date() } }, async (err, latestRide) => {
+                if (!latestRide) {
+                    return resolve({usernamesToReview: []})
+                }
+                const {passengers} = latestRide
+                const rideId = latestRide._id
+                const driverUsername = latestRide.ownerUsername
+                // User was the driver for the ride 
+                if (driverUsername === username) {
+                    usernamesToReview = [] 
+                    for (var i = 0; i < passengers.length; i++) {
+                        //  Driver has not rated the passenger yet 
+                        if (!(await isExistingReview(username, passengers[i], rideId))) {
+                            usernamesToReview.push(passengers[i])
+                        }
+                    }
+                    resolve({usernamesToReview, rideId})
+                }
+                else {
+                    // User was a passenger for this ride and has not reviewed the driver yet 
+                    if (!(await isExistingReview(username, driverUsername, rideId))) {
+                        resolve({usernamesToReview: [driverUsername], rideId})
+                    }
+                    else {
+                        resolve({usernamesToReview: [], rideId})
+                    }
+                }
+            }).sort({date: -1}).limit(1); 
+        }
+        catch(e) {
+            console.log(e) 
+        }
+    })
+}
+
 module.exports = {
     addNewReview, 
-    getReview, 
+    isExistingReview, 
     getAverageRating, 
-    getUserReviews
+    getUserReviews, 
+    getUsersToReviewFromLatestRide
 }; 

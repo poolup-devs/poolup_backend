@@ -5,9 +5,9 @@ const getSenderRequests = (senderID, status, callback) => {
 
     let query = {};
 
-    if(status == "All") {
+    if(status == "all") {
       query = { senderID: senderID }
-    } else if(status == "Visible") {
+    } else if(status == "visible") {
       query = { $and: [
           {senderID: senderID}, { $or: [{status: "pending"}, {status: "denied"}, {status: "cancelled"}, {status: "approved"}]}
       ]};
@@ -32,19 +32,20 @@ const getRecepientRequests = (recepientID, status, callback) => {
 
     let query = {};
 
-    if(status == "All") {
+    if(status == "all") {
       query = { recepientID: recepientID }
-    } else if(status == "Visible") {
+    } else if(status == "visible") {
       query = { $and: [
           {recepientID: recepientID}, { $or: [{status: "pending"}, {status: "denied"}, {status: "cancelled"}, {status: "approved"}]}
       ]};
     } else {
       query = { recepientID: recepientID, status: status }
     }
-
+    console.log(query);
     Request.find(
         query,
         (err, result) => {
+            console.log(result);
             if(err) {
                 callback(err, null);
             } else {
@@ -76,77 +77,109 @@ const createRequest = (rideID, senderID, recepientID, msg, callback) => {
 
 // approveRequest sets a specified request's status to 'approved'
 const approveRequest = (requestID, callback) => {
+    
+    const filter = { _id : requestID };
+    const update = { $set: {status: "approved" }};
+    const options = { new: true };
 
-    Request.findOneAndUpdate(
-        { _id: requestID },
-        { $push: { status: "approved" } },
-        { new: true },
-        (err, result) => {
-            if(err) {
-                callback(err, null);
+    Request.findOne( filter, (findErr, findResult) => {
+        if(findErr) {
+            callback(findErr, null);
+        } else {
+            if(findResult.status == "archived") {
+                callback("Ride no longer available", null);
             } else {
-                callback(null, result);
+                Request.findOneAndUpdate( filter, update, options, (updateErr, updateResult) => {
+                    if(updateErr) {
+                        callback(updateErr, null);
+                    } else {
+                        callback(null, updateResult);
+                    }
+                });
             }
+        }
     });
 }
 
 // cancelRequest sets a specified request's status to 'cancelled'
 const cancelRequest = (requestID, callback) => {
+    
+    const filter = { _id : requestID };
+    const update = { $set: {status: "cancelled" }};
+    const options = { new: true };
 
-    Request.findOneAndUpdate(
-        { _id: requestID },
-        { $push: { status: "cancelled" } },
-        { new: true },
-        (err, result) => {
-            if(err) {
-                callback(err, null);
+    Request.findOne( filter, (findErr, findResult) => {
+        if(findErr) {
+            callback(findErr, null);
+        } else {
+            if(findResult.status == "archived" || findResult.status == "denied") {
+                callback("Ride no longer available", null);
             } else {
-                callback(null, result);
+                Request.findOneAndUpdate( filter, update, options, (updateErr, updateResult) => {
+                    if(updateErr) {
+                        callback(updateErr, null);
+                    } else {
+                        callback(null, updateResult);
+                    }
+                });
             }
+        }
     });
 }
 
 // denyRequest sets a specified request status to 'denied'
 const denyRequest = (requestID, callback) => {
 
-    Request.findOneAndUpdate(
-        { _id: requestID },
-        { $push: { status: "denied" } },
-        { new: true },
-        (err, result) => {
-            if(err) {
-                callback(err, null);
+    const filter = { _id : requestID };
+    const update = { $set: {status: "denied" }};
+    const options = { new: true };
+
+    Request.findOne( filter, (findErr, findResult) => {
+        if(findErr) {
+            callback(findErr, null);
+        } else {
+            if(findResult.status == "archived" || findResult.status == "cancelled") {
+                callback("Ride no longer available", null);
             } else {
-                callback(null, result);
+                Request.findOneAndUpdate( filter, update, options, (updateErr, updateResult) => {
+                    if(updateErr) {
+                        callback(updateErr, null);
+                    } else {
+                        callback(null, updateResult);
+                    }
+                });
             }
+        }
     });
+    
+
 }
 
 // archiveRequest sets a specified request status to 'archived'
 const archiveRequest = (requestID, callback) => {
 
-    Request.findOneAndUpdate(
-        { _id: requestID },
-        { $push: { status: "archived" } },
-        { new: true },
-        (err, result) => {
-            if(err) {
-                callback(err, null);
-            } else {
-                callback(null, result);
-            }
+    const filter = { _id : requestID };
+    const update = { $set: {status: "archived" }};
+    const options = { new: true };
+
+    Request.findOneAndUpdate( filter, update, options, (err, result) => {
+        console.log(result);
+        if(err) {
+            callback(err, null);
+        } else {
+            callback(null, result);
+        }
     });
 }
 
 // deleteRequest deletes a specified request from the database
 const deleteRequest = (requestID, callback) => {
-
-    Request.deleteOne({ requestID }, (err, result) => {
-            if(err) {
-                callback(err, null);
-            } else {
-                callback(null, result);
-            }
+    Request.deleteOne({ requestID }, (err, result) => {    
+        if(err) {
+            callback(err, null);
+        } else {
+            callback(null, result);
+        }
     });
 }
 

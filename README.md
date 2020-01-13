@@ -125,6 +125,10 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 |   |       controller.js
 |   |       index.js
 |   |       noti.js
+|   +---request
+|   |       controller.js
+|   |       index.js
+|   |       noti.js
 |   |       
 |   +---ride
 |   |       controller.js
@@ -220,6 +224,7 @@ Models:
 1. [User](#user-model)
 2. [Ride](#ride-model)
 3. [Noti](#noti-model)
+4. [Request](#request-model)
 
 ---
 
@@ -1148,6 +1153,208 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
     "ok": 1
 }
 ```
+
+---
+
+### Request Model
+
+### Schema
+
+| column      | type    | required | properties             |
+| ----------- | ------- | -------- | ---------------------- |
+| senderID    | String  | Yes      |                        |
+| recepientID | String  | Yes      |                        |
+| status      | String  | Yes      |                        |
+| msg         | String  | No       |                        |
+| date        | String  | No       |                        |     
+
+### API Endpoints
+
+| url                          | HTTP Method | description                                                        |
+| ---------------------------- | ----------- | ------------------------------------------------------------------ |
+| /request/sender              | GET         | [Sender Requests](#sender-requests)                                |
+| /request/recepient           | GET         | [Recepient Requests](#sender-requests)                             |
+| /request/new                 | POST        | [New Request](#new-requests)                                       |
+| /request/approve             | PUT         | [Approve Request](#approve-signup)                                 |
+| /request/cancel              | PUT         | [Cancel Request](#cancel-login)                                    |
+| /request/deny                | PUT         | [Deny Request](#deny-signup)                                       |
+| /request/archive             | PUT         | [Archive Request](#archive-login)                                  |
+| /request/delete              | DELETE      | [Delete Request](#delete-signup)                                   |
+
+### Statuses
+- Pending: This status reflects the state where a rider has requested a ride, and the driver has yet to respond
+- Approved: This status reflects the state where a driver has approved an already existing user's request
+- Denied: This status reflects the state where a driver has denied an already existing user's request
+- Cancelled: This status reflects the state where a rider has cancelled his initial request
+- Archived: This status reflects an archived state, used for data analytics later on, instead of deleting them completely.
+
+### Sender Requests
+
+GET request
+
+- Get a sender's requests with the given status
+
+**query params**
+
+```
+
+    sender_id: <String>,
+    status: <String>, 
+    // status value of "all" returns all status types, 
+    // "visible" displays everything but archived requests
+
+```
+
+**return value**
+
+201 created status with data of all matching requests, 500 error if failure
+
+---
+
+### Recepient Requests
+
+GET request
+
+- Get a recepient's requests with the given status
+
+**query params**
+
+```
+
+    sender_id: <String>,
+    status: <String>, 
+    // status value of "all" returns all status types, 
+    // "visible" displays everything but archived requests
+
+```
+
+**return value**
+
+201 created status with data of all matching requests, 500 error if failure
+
+---
+
+### Create Request
+
+POST request
+
+- Create a request
+
+**body**
+
+```
+{
+    ride_id: <String>,
+    recepient_id: <String>,
+    msg: <String>
+}
+```
+
+**return value**
+
+201 created status with data including the request id for later use, 500 error if failure
+
+---
+
+### Approve Request
+
+PUT request
+
+- Change the status of a request to "approved"
+
+**query params**
+
+```
+
+    request_id = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure such as if the ride is already "archived"
+
+---
+
+### Deny Request
+
+PUT request
+
+- Change the status of a request to "denied"
+
+**query params**
+
+```
+
+    request_id = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure such as if the ride is already "archived" or "cancelled"
+
+---
+
+### Cancel Request
+
+PUT request
+
+- Change the status of a request to "cancelled"
+
+**query params**
+
+```
+
+    request_id = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure such as if the ride is already "archived" or "denied"
+
+
+---
+
+
+### Archive Request
+
+PUT request
+
+- Change the status of a request to "archived"
+
+**query params**
+
+```
+
+    request_id = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure
+
+---
+
+### Delete Request
+
+Delete request
+
+- Deletes a request
+
+**body**
+
+```
+{
+    request_id = <String>
+}
+```
+
+**return value**
+
+201 status if successful, 500 error if failure, 404 if no matching request was found
 
 ---
 

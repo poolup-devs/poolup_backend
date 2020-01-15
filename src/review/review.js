@@ -1,26 +1,29 @@
 const mongoose = require('mongoose'); 
 const reviewSchema = new mongoose.Schema({
+    rideId: {
+        type: mongoose.Types.ObjectId, 
+        index: true 
+    },
+    reviewerUsername: {
+        type: String, 
+        index: true
+    },
+    revieweeUsername: {
+        type: String, 
+        index: true 
+    }, 
+    isDeclined: {
+        type: Boolean,
+        default: false 
+    }, 
+    rating: {
+        type: Number 
+    }, 
+    comment: String, 
     datePosted: {
         type: Date, 
         default: Date.now 
     }, 
-    reviewerUsername: {
-        type: String, 
-        required: true
-    },
-    revieweeUsername: {
-        type: String, 
-        required: true, 
-        index: true 
-    },  
-    rating: {
-        type: Number, 
-        required: true
-    }, 
-    comment: String, 
-    rideId: {
-        type: mongoose.Types.ObjectId
-    }
 }); 
 
 const Review = mongoose.model("Review", reviewSchema); 

@@ -12,8 +12,7 @@ const addNewReview = (reviewInfo) => {
         try {
             // simple field validation 
             if (requiredProperties.every(property => reviewInfo.hasOwnProperty(property))) {
-                const review = new Review(reviewInfo) 
-                await review.save()
+                const review = await new Review(reviewInfo).save() 
                 resolve(review)
             }
             reject('Review must contain a reviewer username, reviewee username, rating, and associated ride ID') 
@@ -24,12 +23,30 @@ const addNewReview = (reviewInfo) => {
     })
 }
 
+// Decline to review a user on a particular ride 
+const declineReview = (reviewer, reviewee, rideId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const declinedReview = await new Review({
+                revieweeUsername: reviewee, 
+                reviewerUsername: reviewer, 
+                rideId, 
+                isDeclined: true 
+            }).save()
+            resolve(declinedReview) 
+        }
+        catch(e) {
+            reject('Could not add the declined review to the database.') 
+        }
+    })
+}
+
 // Get the average rating of a user, aggregated from all reviews received by the user 
 const getAverageRating = (username) => {
     return new Promise(async (resolve, reject) => {
         let totalRating = 0; 
         try {
-            await Review.find({revieweeUsername : username}).then((reviews) => {  
+            await Review.find({revieweeUsername : username, isDeclined: false}).then((reviews) => {  
                 if (reviews.length >= 1 && reviews.length >= MIN_TO_DISPLAY_AVERAGE_RATING) {
                     reviews.forEach((review) => {
                       totalRating = totalRating + review.rating; 
@@ -51,7 +68,7 @@ const getAverageRating = (username) => {
 // Get all the reviews received by a user 
 const getUserReviews = (username, pageNumber) => {
     return new Promise(async (resolve, reject) => {
-        await Review.find({revieweeUsername : username}, (err, reviews) => { 
+        await Review.find({revieweeUsername : username, isDeclined: false}, (err, reviews) => { 
           // if there are no reviews, return []
           resolve(Array.from(reviews)) 
         })
@@ -61,19 +78,21 @@ const getUserReviews = (username, pageNumber) => {
     })
 }
 
-// Helper method to determine whether a review exists; used to determine whether a review needs to be made 
+// Helper method that determines whether a review exists in the database 
 const isExistingReview = async (reviewer, reviewee, rideId) => {
     return new Promise(async (resolve, reject) => {
         try {
             const review = await Review.findOne({
                 reviewerUsername : reviewer,
                 revieweeUsername : reviewee, 
-                rideId : rideId
+                rideId : rideId, 
             })
 
+            // the user has not made a decision on whether to review yet 
             if (!review) {
                 resolve(false)
             }
+            // some decision was made on whether or not to review a user  
             resolve(true)
         }
         catch(e) {
@@ -82,6 +101,7 @@ const isExistingReview = async (reviewer, reviewee, rideId) => {
     })
 }
 
+// Get a list of users that need to be reviewed (from last ride)
 const getUsersToReviewFromLatestRide = (username) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -97,7 +117,7 @@ const getUsersToReviewFromLatestRide = (username) => {
                 if (driverUsername === username) {
                     usernamesToReview = [] 
                     for (var i = 0; i < passengers.length; i++) {
-                        //  Driver has not rated the passenger yet 
+                        //  Driver has not rated the passenger yet and has not declined a notification to do so 
                         if (!(await isExistingReview(username, passengers[i], rideId))) {
                             usernamesToReview.push(passengers[i])
                         }
@@ -105,7 +125,7 @@ const getUsersToReviewFromLatestRide = (username) => {
                     resolve({usernamesToReview, rideId})
                 }
                 else {
-                    // User was a passenger for this ride and has not reviewed the driver yet 
+                    // User was a passenger for this ride and has not reviewed the driver 
                     if (!(await isExistingReview(username, driverUsername, rideId))) {
                         resolve({usernamesToReview: [driverUsername], rideId})
                     }
@@ -123,6 +143,7 @@ const getUsersToReviewFromLatestRide = (username) => {
 
 module.exports = {
     addNewReview, 
+    declineReview, 
     isExistingReview, 
     getAverageRating, 
     getUserReviews, 

@@ -164,6 +164,7 @@ Models:
 1. [User](#user-model)
 2. [Ride](#ride-model)
 3. [Noti](#noti-model)
+4. [Review](#review-model)
 
 ---
 
@@ -171,19 +172,18 @@ Models:
 
 ### Schema
 
-| column      | type    | required | properties             |
-| ----------- | ------- | -------- | ---------------------- |
-| name        | String  | Yes      |                        |
-| email       | String  | Yes      |                        |
-| username    | String  | Yes      |                        |
-| password    | String  | Yes      |                        |
-| phoneNumber | String  |          |                        |
-| driverList  | Array   |          |                        |
-| riderList   | Array   |          |                        |
-| picUrl      | String  |          |                        |
-| picType     | String  |          |                        |
-| Verified    | Boolean | Yes      |                        |
-| Rating      | Object  |          | totalCount, totalValue |           
+| column      | type    | required |              
+| ----------- | ------- | -------- | 
+| name        | String  | Yes      | 
+| email       | String  | Yes      |                        
+| username    | String  | Yes      |                        
+| password    | String  | Yes      |                        
+| phoneNumber | String  |          |                        
+| driverList  | Array   |          |                        
+| riderList   | Array   |          |                        
+| picUrl      | String  |          |                        
+| picType     | String  |          |                        
+| Verified    | Boolean | Yes      |                                  
 
 ### API Endpoints
 
@@ -203,7 +203,7 @@ Models:
 | /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
 | /users/rating                | GET         | [Get a user's rating](#get-user-rating)                            |
-| /users/rating                | PATCH       | [Add a new rating to a user](#add-user-rating)                     |
+| /users/reviews               | GET         | [Get all of a user's reviews](#add-user-rating)                    |
 ---
 
 ### User Login
@@ -1092,9 +1092,172 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
     "ok": 1
 }
 ```
+--- 
+### Review Model
+
+### Schema
+
+| property               | type     | required | description
+| --------------------   | -------- | -------- |------------
+| *reviewerUsername*     | String   | Yes      | username of who writes the review 
+| *revieweeUsername*     | String   | Yes      | username of who receives the review 
+| *rideId*               | ObjectId | Yes      | ride associated with review
+| datePosted             | Date     |          | timestamp of when the review is made; defaults to current time  
+| rating                 | Number   |          | 1-5 star rating 
+| comment                | String   |          | review comments 
+| isDeclined             | Boolean  |          | whether reviewer has declined the opportunity to review reviewee, defaults to false    
+
+* Italicized properties uniquely identify a Review document
+* A Review document describes whether a reviewer chooses to review a reviewee, and if so, provides the details of the review
+* Details on whether the users are drivers or riders in a carpooling session are abstracted 
+
+### API Endpoints
+
+| url                                    | HTTP Method | description                                                         
+| -------------------------------------- | ----------- | ------------
+| /reviews                               | POST        | [Add a review ](#add-review)         
+| /reviews                               | GET         | [Get all of a user's reviews](#get-all-reviews)
+| /reviews/decline-review                | POST        | [Decline to review a user](#decline-to-review)
+| /reviews/rating                        | GET         | [Get a user's rating](#get-rating) 
+| /reviews/get-eligible-users-to-review  | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review)       
+
+### Add Review
+POST request
+- Add a review using the currently logged in account as the reviewer
+
+**params/body** 
+- Required fields: revieweeUsername, rideId, and rating 
+
+	```
+		{
+			"revieweeUsername": "elin4046", 
+			"rideId": "507f1f77bcf86cd799439011", 
+			"rating": 1, 
+			"comment": "Driver arrived really late and was super rude!"
+		}
+	```
+
+
+**return value**
+
+- 200 status code w/ data on the newly created document
+- 500 status code w/ database errors or in the case of duplicate reviews
+
+	```
+{
+	"isDeclined": false,
+	"_id": "5e1e997e67eae745e865a233",
+	"reviewerUsername": "admin", 
+	"revieweeUsername": "elin4046",
+	"rideId": "507f1f77bcf86cd799439011",
+	"rating": 1,
+	"comment": "Driver arrived really late and was super rude!",
+	"datePosted": "2020-01-15T04:47:58.738Z",
+	"__v": 0
+}
+```
+
+### Get all reviews
+GET request 
+- Get all reviews received by a user 
+
+**params/body** 
+
+username 
+
+**example**
+
+localhost:3000/reviews?username=elin4046
+
+**return value** 
+
+- 200 status code - A list of review documents made to the user, empty [] if none exist.  
+
+```
+[
+    {
+        "isDeclined": false,
+        "_id": "5e1ea29e94b3263a60b162da",
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439012",
+        "rating": 1,
+        "comment": "Driver arrived really late and was super rude!",
+        "reviewerUsername": "admin",
+        "datePosted": "2020-01-15T05:26:54.837Z",
+        "__v": 0
+    },
+    {
+        "isDeclined": false,
+        "_id": "5e1ea2e494b3263a60b162db",
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439013",
+        "rating": 4,
+        "comment": "A super laid back guy. We had a great conversation the whole time.",
+        "reviewerUsername": "admin",
+        "datePosted": "2020-01-15T05:28:04.757Z",
+        "__v": 0
+    }
+]
+```
+
+### Decline to review 
+POST request
+- Indicate the currently logged in user's decision to not review another user after being prompted to do so 
+- This is important to prevent any further notifications 
+
+**params/body** 
+- revieweeUsername and the ride's rideId 
+
+**example**
+
+```
+{
+	"revieweeUsername": "john_smith",  
+	"rideId": "507f191e810c19729de860ea"
+}
+```
+
+**return value** 
+- 200 status code w/ data on the newly created Review document
+- 500 status code w/ database errors or in the case of duplicate declines 
+
+### Get rating 
+GET request 
+- Get the rating of a user
+
+**params/body**
+- username 
+
+**example** 
+- localhost:3000/reviews/rating?username=elin4046
+
+**return value** 
+- A floating point, truncated value to two decimal points value, eg. 2.50 
+
+
+### Get list of usernames to review
+GET request 
+- Get a list of usernames that may be reviewed using the currently logged in account
+- For example: 
+	- If a user was a driver in their latest carpooling session, the request will return the usernames of each of his/her passengers 
+	- If a user was a passenger in their latest carpooling session, the request will return the username of the driver 
+	- If a user has previously **declined** an opportunity to review a passenger, that passenger's username will not be returned 
+
+**params/body**
+- none required 
+
+**return value** 
+- An object containing a list of eligible usernames and the latest carpooling session's rideId, if there exists one.
+	- rideId is a necessary property to uniquely identify a Review document 
+
+```
+{
+    "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"], 
+	"rideId": "507f191e810c19729de860ea"
+}
+```
 
 ---
-
 # Deployment
 
 ## Deployment Instructions

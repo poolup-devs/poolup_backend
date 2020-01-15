@@ -20,7 +20,7 @@ const addNewReview = (reviewInfo) => {
                     resolve(review)
                 }
                 else {
-                    reject('A review has already been made for this ride.')
+                    reject('A review has already been made to ' + reviewInfo.revieweeUsername + ' for this ride.')
                 }
             }
             reject('Review must contain a reviewer username, reviewee username, rating, and associated ride ID') 
@@ -35,13 +35,16 @@ const addNewReview = (reviewInfo) => {
 const declineReview = (reviewer, reviewee, rideId) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const declinedReview = await new Review({
-                revieweeUsername: reviewee, 
-                reviewerUsername: reviewer, 
-                rideId, 
-                isDeclined: true 
-            }).save()
-            resolve(declinedReview) 
+            if (!(await Review.findOne({reviewerUsername: reviewer, revieweeUsername:reviewee, rideId}))) {
+                const declinedReview = await new Review({
+                    revieweeUsername: reviewee, 
+                    reviewerUsername: reviewer, 
+                    rideId, 
+                    isDeclined: true 
+                }).save()
+                resolve(declinedReview) 
+            }
+            reject('User has already declined to review ' + reviewee + ' for ride: ' + rideId)
         }
         catch(e) {
             reject('Could not add the declined review to the database.') 

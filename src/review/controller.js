@@ -12,8 +12,16 @@ const addNewReview = (reviewInfo) => {
         try {
             // simple field validation 
             if (requiredProperties.every(property => reviewInfo.hasOwnProperty(property))) {
-                const review = await new Review(reviewInfo).save() 
-                resolve(review)
+                const {reviewerUsername, revieweeUsername, rideId} = reviewInfo
+                
+                // prevent duplicate insertion if document already exists 
+                if (!(await Review.findOne({reviewerUsername, revieweeUsername, rideId}))) {
+                    const review = await new Review(reviewInfo).save() 
+                    resolve(review)
+                }
+                else {
+                    reject('A review has already been made for this ride.')
+                }
             }
             reject('Review must contain a reviewer username, reviewee username, rating, and associated ride ID') 
         }

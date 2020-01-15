@@ -5,7 +5,7 @@ const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js"); 
 
 
-// Add a new rating using currently logged in account 
+// Add a new review using currently logged in account 
 router.post("/reviews", checkAuth, async (req, res) => {
     try {
         const loggedInUser = tokenParser(req.headers.authorization).username

@@ -203,8 +203,6 @@ Models:
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
 | /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
-| /users/rating                | GET         | [Get a user's rating](#get-user-rating)                            |
-| /users/reviews               | GET         | [Get all of a user's reviews](#add-user-rating)                    |
 ---
 
 ### User Login
@@ -526,54 +524,6 @@ none required
     "email": "bin315a1@g.ucla.edu",
     "createdAt": "2019-08-23T11:27:31.739Z",
     "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png"
-}
-```
-
-
-### Get User rating 
-
-GET Request 
-
-**params**
-
-username
-
-**example**
-
-localhost:3000/users/rating?username=elin4046
-
-**return value** 
-
-Returns 200 if successful. Returns 500 upon error, or if the user does not have at least 3 ratings yet. 
-
-```
-{
-    "averageRating": "2.00" 
-}
-```
-
-
-### Add User rating 
-
-PATCH Request 
-
-**params**
-
-username
-
-**example**
-
-localhost:3000/users/rating?username=elin4046
-
-**return value** 
-
-Returns 200 if successfully added a rating to the User's rating property. 
-Returns 500 upon database error, or if the rating is not between 1 and 5.  
-
-```
-{
-    "totalCount": 4, 
-    "totalValue": 8 
 }
 ```
 
@@ -1098,20 +1048,21 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 
 ### Schema
 
-| property               | type     | required | description
-| --------------------   | -------- | -------- |------------
-| *reviewerUsername*     | String   | Yes      | username of who writes the review 
-| *revieweeUsername*     | String   | Yes      | username of who receives the review 
-| *rideId*               | ObjectId | Yes      | ride associated with review
-| datePosted             | Date     |          | timestamp of when the review is made; defaults to current time  
-| rating                 | Number   |          | 1-5 star rating 
-| comment                | String   |          | review comments 
-| isDeclined             | Boolean  |          | whether reviewer has declined the opportunity to review reviewee, defaults to false    
+| property               | type     | required | 
+| --------------------   | -------- | -------- |
+| *reviewerUsername*     | String   | Yes      | 
+| *revieweeUsername*     | String   | Yes      |  
+| *rideId*               | ObjectId | Yes      | 
+| datePosted             | Date     |          | 
+| rating                 | Number   |          | 
+| comment                | String   |          | 
+| isDeclined             | Boolean  |          | 
 
 * Italicized properties uniquely identify a Review document
 * A Review document describes whether a reviewer chooses to review a reviewee, and if so, provides the details of the review
 * Details on whether the users are drivers or riders in a carpooling session are abstracted 
 
+---
 ### API Endpoints
 
 | url                                    | HTTP Method | description                                                         
@@ -1122,21 +1073,21 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 | /reviews/rating                        | GET         | [Get a user's rating](#get-rating) 
 | /reviews/get-eligible-users-to-review  | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review)       
 
+---
 ### Add Review
 POST request
 - Add a review using the currently logged in account as the reviewer
 
 **params/body** 
 - Required fields: revieweeUsername, rideId, and rating 
-
-	```
-		{
-			"revieweeUsername": "elin4046", 
-			"rideId": "507f1f77bcf86cd799439011", 
-			"rating": 1, 
-			"comment": "Driver arrived really late and was super rude!"
-		}
-	```
+```
+    {
+        "revieweeUsername": "elin4046", 
+        "rideId": "507f1f77bcf86cd799439011", 
+        "rating": 1, 
+        "comment": "Driver arrived really late and was super rude!"
+    }
+```
 
 
 **return value**
@@ -1144,7 +1095,7 @@ POST request
 - 200 status code w/ data on the newly created document
 - 500 status code w/ database errors or in the case of duplicate reviews
 
-	```
+```
 {
 	"isDeclined": false,
 	"_id": "5e1e997e67eae745e865a233",
@@ -1158,6 +1109,7 @@ POST request
 }
 ```
 
+---
 ### Get all reviews
 GET request 
 - Get all reviews received by a user 
@@ -1201,6 +1153,7 @@ localhost:3000/reviews?username=elin4046
 ]
 ```
 
+---
 ### Decline to review 
 POST request
 - Indicate the currently logged in user's decision to not review another user after being prompted to do so 
@@ -1222,6 +1175,7 @@ POST request
 - 200 status code w/ data on the newly created Review document
 - 500 status code w/ database errors or in the case of duplicate declines 
 
+---
 ### Get rating 
 GET request 
 - Get the rating of a user
@@ -1235,7 +1189,7 @@ GET request
 **return value** 
 - A floating point, truncated value to two decimal points value, eg. 2.50 
 
-
+---
 ### Get list of usernames to review
 GET request 
 - Get a list of usernames that may be reviewed using the currently logged in account
@@ -1253,7 +1207,7 @@ GET request
 
 ```
 {
-    "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"], 
+    "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"],
 	"rideId": "507f191e810c19729de860ea"
 }
 ```

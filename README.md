@@ -55,6 +55,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
 3. Install all used packages and dependencies using:
    > npm install
+
 4. To connect to the development s3 bucket, run:
    > npm run setup
 

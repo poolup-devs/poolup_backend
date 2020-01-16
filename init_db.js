@@ -1,4 +1,6 @@
 require("./src/db/mongoose");
+const chalk = require("chalk")
+
 const User = require('./src/user/user').User 
 
 User.deleteMany({}).then(async () => {
@@ -54,7 +56,7 @@ User.deleteMany({}).then(async () => {
     ]
     try {
         await User.insertMany(user_list)
-        console.log("Successfully initialized developement database!")
+        console.log(chalk.green("[DB_INIT]: ") + "Successfully initialized developement database!")
         process.exit(0)
     }
     catch(e) {
@@ -63,7 +65,5 @@ User.deleteMany({}).then(async () => {
     }
     
 }).catch((e) => {
-    console.log("Could not delete all existing documents in User")
+    console.log(chalk.red("[ERROR]: ")+"Could not delete all existing documents in User")
 })
-
-

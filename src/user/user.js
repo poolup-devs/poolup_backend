@@ -27,7 +27,7 @@ const userSchema = mongoose.Schema({
 userSchema.statics.setRandomBruinBear = function(username) {
   const colors = ["blue", "orange", "pink", "purple", "white"];
   const default_picUrl =
-    "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_" +
+    "https://poolup-bucket-deployment.s3.us-east-2.amazonaws.com/DefaultProfilePic/PoolUpLogo_" +
     colors[Math.floor(Math.random() * colors.length)] +
     ".png";
   return this.findOneAndUpdate(

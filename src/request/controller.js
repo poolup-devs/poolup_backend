@@ -1,4 +1,5 @@
 const Request = require("./request").Request;
+const mongoose = require("mongoose");
 
 // getSenderRequests gets a sender's requests based on status
 const getSenderRequests = (senderID, status, callback) => {
@@ -71,7 +72,7 @@ const getRecepientRequests = (recepientID, status, callback) => {
 // regards about the specified ride
 const createRequest = (rideID, senderID, recepientID, msg, callback) => {
   newRequest = {
-    rideID: mongoose.Types.ObjectId(rideID),
+    rideID: rideID,
     senderID: senderID,
     recepientID: recepientID,
     msg: msg,

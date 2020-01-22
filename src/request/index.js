@@ -83,7 +83,7 @@ router.put("/request/deny", checkAuth, (req, res) => {
       res.status(500).json({ errorMsg: err });
     } else {
       res.sendStatus(200);
-      //TODO: Send denied notification
+      //TODO: Send denied notification including msg from driver
     }
   });
 });

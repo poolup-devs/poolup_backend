@@ -44,8 +44,8 @@ router.get("/reviews", async (req, res) => {
 // Get the average rating of a user 
 router.get("/reviews/rating", async (req, res) => {
     try {
-        const avgRating = await db.getAverageRating(req.query.username)
-        res.status(200).send(avgRating)
+        const averageRating = await db.getAverageRating(req.query.username)
+        res.status(200).send({averageRating})
     }
     catch(e) {
         res.status(404).send({error: e}) 

@@ -219,6 +219,19 @@ const rideDelete = (_id, callback) => {
   });
 };
 
+
+// Get user's number of rides completed 
+const getRidesCompleted = (username) => {
+  return new Promise(async (resolve, reject) => {
+    Ride.find({$or: [{passengers: username}, {ownerUsername: username}], "passengers.0": {"$exists": true}, date: { $lt: new Date() } }, async (err, ridesCompleted) => {
+      if (err) {
+        return reject("Error while querying a user's number of completed rides")
+      }
+      resolve(ridesCompleted.length) 
+    }) 
+  })
+}
+
 module.exports = {
   getMatchingRides,
   getRideHistory,
@@ -229,5 +242,6 @@ module.exports = {
   postRide,
   joinRide,
   cancelRide,
-  rideDelete
+  rideDelete, 
+  getRidesCompleted,
 };

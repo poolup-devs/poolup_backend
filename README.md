@@ -615,6 +615,7 @@ none required
 | /rides/join-ride          | PUT         | [Join a Ride](#join-a-ride)                                               |
 | /rides/cancel-ride        | PUT         | [Cancel a Ride](#cancel-a-ride)                                           |
 | /rides/delete-ride        | DELETE      | [Delete a ride](#delete-a-ride)                                           |
+| /rides/get-rides-completed| GET         | [Get number of completed rides](#get-number-of-completed-rides)           |
 
 - Note: all get ride apis (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
 
@@ -993,6 +994,26 @@ The ride object that the user is trying to delete (The ride object's owner has t
 
 ---
 
+### Get number of completed rides 
+
+GET request 
+
+**params** 
+
+username
+
+**example** 
+
+localhost:3000/rides/get-rides-completed?username=elin4046
+
+**return value** 
+
+200 status with number of completed rides returned 
+
+
+---
+
+
 ### Noti Model
 
 ### Schema
@@ -1242,7 +1263,12 @@ GET request
 - localhost:3000/reviews/rating?username=elin4046
 
 **return value** 
-- A floating point, truncated value to two decimal points value, eg. 2.50 
+- An object containing the property averageRating, which is a floating point that is truncated to two decimal points, eg. 2.50 
+```
+{
+    "averageRating": 2.50
+}
+```
 
 ---
 ### Get list of usernames to review

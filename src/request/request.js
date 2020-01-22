@@ -1,15 +1,15 @@
 const mongoose = require("mongoose");
 
 const requestSchema = mongoose.Schema({
-  rideID: String,
+  rideID: mongoose.Types.ObjectId,
   senderID: String,
   recepientID: String,
   status: {
-      type: String,
-      default: "pending"
+    type: String,
+    default: "pending"
   },
   msg: String,
-  date: Date,
+  date: Date
 });
 
 const Request = mongoose.model("Request", requestSchema);

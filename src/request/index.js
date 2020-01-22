@@ -21,7 +21,7 @@ router.get("/request/sender", checkAuth, (req, res) => {
 
 // Get a recepient's requests
 router.get("/request/recepient", checkAuth, (req, res) => {
-  const recepientID = req.query.recepient_id;
+  const recepientID = req.query.recepientID;
   const status = req.query.status;
 
   db.getRecepientRequests(recepientID, status, (err, data) => {
@@ -36,14 +36,14 @@ router.get("/request/recepient", checkAuth, (req, res) => {
 // Create a new request
 router.post("/request/new", checkAuth, (req, res) => {
   const senderID = tokenParser(req.headers.authorization).username; //my username
-  const rideID = req.body.ride_id;
-  const recepientID = req.body.recepient_id;
+  const rideID = req.body.rideID;
+  const recepientID = req.body.recepientID;
   const msg = req.body.msg;
   db.createRequest(rideID, senderID, recepientID, msg, (err, data) => {
     if (err) {
       res.status(500).json({ errorMsg: err });
     } else {
-      res.status(200).json({ request_id: data._id });
+      res.status(200).json({ requestID: data._id });
       //TODO: Send new request notification
     }
   });
@@ -51,7 +51,7 @@ router.post("/request/new", checkAuth, (req, res) => {
 
 // Approve a request
 router.put("/request/approve", checkAuth, (req, res) => {
-  const requestID = req.query.request_id;
+  const requestID = req.query.requestID;
   db.approveRequest(requestID, (err, data) => {
     if (err) {
       res.status(500).json({ errorMsg: err });
@@ -64,7 +64,7 @@ router.put("/request/approve", checkAuth, (req, res) => {
 
 // Cancel a specified request
 router.put("/request/cancel", checkAuth, (req, res) => {
-  const requestID = req.query.request_id;
+  const requestID = req.query.requestID;
   db.cancelRequest(requestID, (err, data) => {
     if (err) {
       res.status(500).json({ errorMsg: err });
@@ -77,7 +77,7 @@ router.put("/request/cancel", checkAuth, (req, res) => {
 
 // Deny a specified request
 router.put("/request/deny", checkAuth, (req, res) => {
-  const requestID = req.query.request_id;
+  const requestID = req.query.requestID;
   db.denyRequest(requestID, (err, data) => {
     if (err) {
       res.status(500).json({ errorMsg: err });
@@ -90,7 +90,7 @@ router.put("/request/deny", checkAuth, (req, res) => {
 
 // Archive a specified request
 router.put("/request/archive", checkAuth, (req, res) => {
-  const requestID = req.query.request_id;
+  const requestID = req.query.requestID;
   db.archiveRequest(requestID, (err, data) => {
     if (err) {
       res.status(500).json({ errorMsg: err });
@@ -103,7 +103,7 @@ router.put("/request/archive", checkAuth, (req, res) => {
 
 // Delete a specified request
 router.delete("/request/delete", checkAuth, (req, res) => {
-  const requestID = req.body.request_id;
+  const requestID = req.body.requestID;
 
   db.deleteRequest(requestID, (err, data) => {
     if (err) {

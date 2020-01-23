@@ -92,12 +92,8 @@ const approveRequest = (requestID, callback) => {
     if (findErr) {
       callback(findErr, null);
     } else {
-      if (findResult.status == "archived") {
-        callback("Ride no longer available", null);
-      } else if (findResult.status == "cancelled") {
-        callback("Request has already been cancelled", null);
-      } else if (findResult.status == "denied") {
-        callback("Request has already been denied", null);
+      if (findResult.status != "pending") {
+        callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(
           filter,
@@ -126,8 +122,8 @@ const cancelRequest = (requestID, callback) => {
     if (findErr) {
       callback(findErr, null);
     } else {
-      if (findResult.status == "archived" || findResult.status == "denied") {
-        callback("Ride no longer available", null);
+      if (findResult.status != "pending") {
+        callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(
           filter,
@@ -156,8 +152,8 @@ const denyRequest = (requestID, callback) => {
     if (findErr) {
       callback(findErr, null);
     } else {
-      if (findResult.status == "archived" || findResult.status == "cancelled") {
-        callback("Ride no longer available", null);
+      if (findResult.status != "pending") {
+        callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(
           filter,

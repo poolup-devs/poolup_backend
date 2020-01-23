@@ -83,7 +83,7 @@ const getUserReviews = (username, pageNumber) => {
           // if there are no reviews, return []
           resolve(Array.from(reviews)) 
         })
-        .sort({date: 1})
+        .sort({datePosted: -1})
         .skip(pageNumber * 5)
         .limit(5); 
     })

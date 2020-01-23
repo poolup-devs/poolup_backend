@@ -12,12 +12,7 @@ const getSenderRequests = (senderID, status, callback) => {
       $and: [
         { senderID: senderID },
         {
-          $or: [
-            { status: "pending" },
-            { status: "denied" },
-            { status: "cancelled" },
-            { status: "approved" }
-          ]
+          $nor: [{ status: "archived" }]
         }
       ]
     };
@@ -57,9 +52,8 @@ const getRecepientRequests = (recepientID, status, callback) => {
   } else {
     query = { recepientID: recepientID, status: status };
   }
-  console.log(query);
+
   Request.find(query, (err, result) => {
-    console.log(result);
     if (err) {
       callback(err, null);
     } else {
@@ -100,6 +94,10 @@ const approveRequest = (requestID, callback) => {
     } else {
       if (findResult.status == "archived") {
         callback("Ride no longer available", null);
+      } else if (findResult.status == "cancelled") {
+        callback("Request has already been cancelled", null);
+      } else if (findResult.status == "denied") {
+        callback("Request has already been denied", null);
       } else {
         Request.findOneAndUpdate(
           filter,
@@ -185,7 +183,6 @@ const archiveRequest = (requestID, callback) => {
   const options = { new: true };
 
   Request.findOneAndUpdate(filter, update, options, (err, result) => {
-    console.log(result);
     if (err) {
       callback(err, null);
     } else {

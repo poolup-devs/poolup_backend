@@ -18,6 +18,6 @@ const handlePaymentIntentSucceeded = (paymentIntent) => {
     // TODO: Update Session object using paymentIntent.metadata["checkout_session_id"]
   }
 
-const triggerPaymentBeta = (beta) => {
-    
+const triggerIntentBeta = (intentBetas) => {
+    // Whatever you want here Mr.Suarezzzz
 }

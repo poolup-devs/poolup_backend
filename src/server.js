@@ -4,7 +4,7 @@ const path = require("path");
 const chalk = require("chalk");
 const checkS3Connection = require("./db/awsS3_controller.js").checkS3Connection;
 const corsOriginContoller = require("./middleware/cors_origin_control.js");
-const checkIntentBeta = require("./stripe/tool/check-transaction-beta").checkIntentBeta;
+const checkIntentBeta = require("./stripe/tool/check-intentBeta.js").checkIntentBeta;
 require("dotenv").config({ override: true });
 
 //Port config

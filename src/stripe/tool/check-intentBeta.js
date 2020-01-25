@@ -7,7 +7,7 @@ const checkIntentBeta = async () => {
     const expiredIntentBetas = await intentBetaDB.checkExpired();
     if(expiredIntentBetas.length>0) {
       // If objects exist, then return the res to the corresponding handler under /tool/payment-handler.js
-      triggerPaymentBeta(expiredIntentBetas);
+      triggerIntentBeta(expiredIntentBetas);
     }
     setTimeout(checkIntentBeta, 50000); // set to check every 5 mins
   }

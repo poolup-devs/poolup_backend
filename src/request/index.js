@@ -38,8 +38,9 @@ router.post("/request/new", checkAuth, (req, res) => {
   const senderID = tokenParser(req.headers.authorization).username; //my username
   const rideID = req.body.rideID;
   const recepientID = req.body.recepientID;
+  const luggage = req.body.luggage;
   const msg = req.body.msg;
-  db.createRequest(rideID, senderID, recepientID, msg, (err, data) => {
+  db.createRequest(rideID, senderID, recepientID, luggage, msg, (err, data) => {
     if (err) {
       res.status(500).json({ errorMsg: err });
     } else {

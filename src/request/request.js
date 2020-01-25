@@ -8,6 +8,7 @@ const requestSchema = mongoose.Schema({
     type: String,
     default: "pending"
   },
+  luggage: Number,
   msg: String,
   date: Date
 });

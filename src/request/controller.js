@@ -64,11 +64,19 @@ const getRecepientRequests = (recepientID, status, callback) => {
 
 // createRequest creates a new request from the specified user with
 // regards about the specified ride
-const createRequest = (rideID, senderID, recepientID, msg, callback) => {
+const createRequest = (
+  rideID,
+  senderID,
+  recepientID,
+  luggage,
+  msg,
+  callback
+) => {
   newRequest = {
     rideID: rideID,
     senderID: senderID,
     recepientID: recepientID,
+    luggage: luggage,
     msg: msg,
     date: new Date()
   };

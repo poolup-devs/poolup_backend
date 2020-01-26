@@ -1,10 +1,10 @@
-require('../src/db/mongoose')
-const app = require("./app") 
+require("../src/db/mongoose");
+const app = require("./app");
 const path = require("path");
 const chalk = require("chalk");
 const checkS3Connection = require("./db/awsS3_controller.js").checkS3Connection;
 const corsOriginContoller = require("./middleware/cors_origin_control.js");
-const checkIntentBeta = require("./stripe/tool/check-intentBeta.js").checkIntentBeta;
+const checkTransfer = require("./stripe/tool/check-transfer.js").checkTransfer;
 require("dotenv").config({ override: true });
 
 //Port config
@@ -29,7 +29,7 @@ app.get("/test-connection", (req, res) => {
 ////////////////////////////////////////
 //ERROR STATUS
 ////////////////////////////////////////
-checkIntentBeta();
+checkTransfer();
 
 app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "/../public/index.html"), err => {

@@ -16,8 +16,8 @@ const TransferSchema = mongoose.Schema({
     type: String,
     default: "usd"
   },
-  rideID: String,
-  destination: String,
+  rideID: String, // Change to mongo object id
+  destination: String, // Stripe Connected Account ID
   customerUsername: String,
   expired: {
     type: Boolean,

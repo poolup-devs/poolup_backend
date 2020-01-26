@@ -1,14 +1,23 @@
 const mongoose = require("mongoose");
 
 const userSchema = mongoose.Schema({
-  name: String, 
+  name: String,
   email: String,
   username: {
     type: String,
-    index: true 
+    index: true
   },
   password: String,
-  stripeID: String,
+  stripe: {
+    customerID: {
+      type: String,
+      default: ""
+    },
+    accountID: {
+      type: String,
+      default: ""
+    }
+  },
   phoneNumber: String,
   picUrl: String,
   picType: {
@@ -22,15 +31,15 @@ const userSchema = mongoose.Schema({
   createdAt: {
     type: Date,
     default: new Date()
-  }, 
+  },
   rating: {
     totalCount: {
       type: Number,
-      default: 0 
-    }, 
+      default: 0
+    },
     totalValue: {
-      type: Number, 
-      default: 0 
+      type: Number,
+      default: 0
     }
   }
 });

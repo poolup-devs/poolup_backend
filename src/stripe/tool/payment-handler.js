@@ -1,40 +1,58 @@
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
-const TransferDB = require("../transfer/controller.js");
+const transferDB = require("../transfer/controller.js");
+const rideDB = require("../../ride/controller.js");
 
 const handlePaymentIntentSucceeded = paymentIntent => {
   console.log("💰 Payment received!");
 
-  // Add User to ride
-  db.joinRide(W, (err, data) => {
+  const rideID = paymentIntent.meta["rideID"];
+  const riderUsername = paymentIntent.meta["riderUsername"];
+  const driverStripeAcct = paymentIntent.meta["driverStripeAcct"];
+
+  // Grab Ride Information
+  rideDB.rideDetails(rideID, (err, ride) => {
     if (err) {
-      res.sendStatus(500);
-
-      // TODO: refund the amount back to the user
-    } else if (data.length === 0) {
-      res.status(404).send({
-        message: "ERROR: The ride is full"
-      });
-
-      // TODO: refund the amount back to the user
-    } else {
-      TransferDB.createTransfer(
-        {
-          paymentIntentID: paymentIntent.id,
-          targetDate: targetDate,
-          rideID: rideID
-        },
-        (err, data) => {
-          if (err) {
-            // Better Error handling, what do we do if it fails
-            // Currently its just gonna keep retrying and print
-            // out on console. Maybe we could send out notification
-            console.log(err);
-          } else {
-            res.status(200).send(data);
-          }
-        }
-      );
+      // TODO: Better Error Handling
+      console.log(err);
+      return;
     }
+
+    // Add User to ride
+    rideDB.joinRide(ride.ownerUsername, riderUsername, (err, data) => {
+      if (err) {
+        // TODO: Better Error Handling
+        // TODO: refund the amount back to the user
+        console.log(err);
+        return;
+      } else if (data.length === 0) {
+        // TODO: Better Error Handling
+        // TODO: refund the amount back to the user
+        console.log("Ride is Full");
+        return;
+      } else {
+        var targetDate = new Date(ride.Date.getDate() + 1); // 24 hours after creation
+
+        transferDB.createTransfer(
+          {
+            paymentIntentID: paymentIntent.id,
+            targetDate: targetDate,
+            amount: paymentIntent.amount,
+            currency: paymentIntent.currency,
+            rideID: rideID,
+            destination: driverStripeAcct
+          },
+          (err, transfer) => {
+            if (err) {
+              // TODO: Better Error Handling
+              console.log(err);
+              return;
+            } else {
+              console.log("Transfer Scheduled: ", transfer);
+            }
+          }
+        );
+      }
+    });
   });
 };
 
@@ -42,20 +60,18 @@ const triggerTransfer = transfer => {
   stripe.transfers.create(
     {
       amount: transfer.amount,
-      currency: transfer.amount,
+      currency: transfer.currency,
       destination: transfer.destination
     },
-    function(err, transfer) {
-      // asynchronously called
+    function(err, res) {
       if (err) {
-        // Better Error handling, what do we do if it fails
-        // Currently its just gonna keep retrying and print
-        // out on console. Maybe we could send out notification
+        // TODO: Better Error Handling
         console.log(err);
       } else {
-        //TODO: Send Transfer Success Notification
-        // Update Transfer Object
-        // TransferDB.transferSuccessUpdate(
+        // TODO: Send Transfer Success Notification
+
+        // TODO: Update Transfer Object
+        // transferDB.transferSuccessUpdate(
         //   { transferID: transfer.id },
         //   (err, data) => {
         //     if (err) {
@@ -65,6 +81,7 @@ const triggerTransfer = transfer => {
         //     }
         //   }
         // );
+        console.log(res);
       }
     }
   );

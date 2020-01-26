@@ -17,76 +17,99 @@ router.get("/stripe/public-key", (req, res) => {
   res.status(200).send({ publicKey: process.env.STRIPE_PUBLIC_KEY });
 });
 
-// Tester Endpoint
-router.get("/stripe/test", async (req, res) => {
-  try {
-    // const test = await intenetBetaDB.checkExpired(new Date());
-    const testDate = new Date();
-    testDate.setDate(testDate.getDate() - 1);
-    const testID = "1";
-    const testoUsername = "oef";
-    const testcUsername = "asdf";
-    const test = await TransferDB.createTransfer(
-      testDate,
-      testID,
-      testoUsername,
-      testcUsername
-    );
-    // const test = await TransferDB.checkExpired();
-    res.send(test).status(200);
-  } catch (e) {
-    res.send(e).status(400);
-  }
+// Create Account
+router.post("/stripe/account", (req, res) => {
+  const country = req.body.country;
+  const email = req.body.email;
+
+  stripe.accounts.create(
+    {
+      type: "custom",
+      country: country,
+      email: email,
+      requested_capabilities: ["card_payments", "transfers"]
+    },
+    function(err, customer) {
+      if (err) {
+        res.status(500).json({ error: err });
+      } else {
+        res.status(200).json({ account: customer });
+      }
+    }
+  );
+});
+
+// Create Customer
+router.post("/stripe/customer", (req, res) => {
+  stripe.customer.create(
+    {
+      description: "Some Customer"
+    },
+    function(err, customer) {
+      if (err) {
+        res.status(500).json({ error: err });
+      } else {
+        res.status(200).json({ customer: customer });
+      }
+    }
+  );
 });
 
 // Create a Payment Intent
 router.post("/stripe/create-payment-intent", (req, res) => {
   const rideID = req.body.ride_id;
   const spotsToBePurchased = req.body.spots_to_be_purchased;
-  const authUsername = req.query.username;
+  const riderUsername = req.query.username;
   const currency = "usd";
 
   // Get Ride Details
   rideDB.rideDetails(rideID, (err, ride) => {
     if (err) {
-      res.sendStatus(500);
+      res.status(500).json({ error: err });
       return;
     }
 
-    // Get User Information
-    userDB.getMyInfo(authUsername, (err, user) => {
+    // Get Rider Details
+    userDB.getMyInfo(authUsername, (err, rider) => {
       if (err) {
-        console.log("Unable to get user information");
-        res.sendStatus(500);
+        res.status(500).json({ error: err });
         return;
       }
 
-      // Create Payment Intent
-      stripe.paymentIntents.create(
-        {
-          amount: ride.price * spotsToBePurchased * 100,
-          currency: currency,
-          payment_method_types: ["card"],
-          //customer: customer.stripeID,
-          metadata: {
-            ride_id: rideID,
-            customer_username: authUsername,
-            checkout_session_id: "test"
-          },
-          receipt_email: "erick_suarez@ucsb.edu" // customer.email,
-        },
-        function(err, paymentIntent) {
-          if (err) {
-            res.sendStatus(500);
-            return;
-          } else {
-            res
-              .status(200)
-              .json({ client_secret: paymentIntent.client_secret });
-            return;
-          }
+      // Get Driver Details
+      userDB.getMyInfo(ride.ownerUsername, (err, driver) => {
+        if (err) {
+          res.status(500).json({ error: err });
+          return;
         }
-      );
+
+        // Create Payment Intent
+        stripe.paymentIntents.create(
+          {
+            amount: ride.price * spotsToBePurchased * 100,
+            currency: currency,
+            payment_method_types: ["card"],
+            customer: rider.stripe.customerID,
+            metadata: {
+              rideID: rideID,
+              riderUsername: riderUsername,
+              driverStripeAcct: driver.stripe.accountID
+            },
+            receipt_email: rider.email
+          },
+          function(err, paymentIntent) {
+            if (err) {
+              res.status(500).json({ error: err });
+              return;
+            } else {
+              res
+                .status(200)
+                .json({ client_secret: paymentIntent.client_secret });
+              return;
+            }
+          }
+        );
+      });
     });
   });
 });
@@ -135,4 +158,27 @@ router.post("/stripe/webhook", async (req, res) => {
   res.sendStatus(200);
 });
 
+// Tester Endpoint
+router.get("/stripe/test", async (req, res) => {
+  try {
+    const testDate = new Date();
+    testDate.setDate(testDate.getDate() - 1);
+    const testID = "1";
+    const testoUsername = "oef";
+    const testcUsername = "asdf";
+
+    const test = await TransferDB.createTransfer({
+      paymentIntentID: "1234",
+      targetDate: testDate,
+      amount: 100,
+      rideID: "",
+      destination: "cus_GcWwbWaTlAojQS",
+      customerUsername: "adf"
+    });
+    // const test = await TransferDB.checkExpired();
+    res.send(test).status(200);
+  } catch (e) {
+    res.send(e).status(400);
+  }
+});
 module.exports = router;

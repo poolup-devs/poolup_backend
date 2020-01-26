@@ -67,13 +67,13 @@ router.post("/users/signup", (req, res) => {
               }
             };
             if (process.env.MODE === "STAGING") {
-              url = "localhost:3006/users/verify?token=" + token;
+              url = "localhost:3000/users/verify?token=" + token;
               var email = {
                 to: ucla_email,
                 from: "pool-up@outlook.com",
                 subject: "PoolUp: Email Verification Required",
                 text: "Here's the link",
-                html: "Token: <br>" + token +"<br>Link for local dev: " + url
+                html: "<br>Link for local dev: <br>" + url
               };
             }
             sgMail

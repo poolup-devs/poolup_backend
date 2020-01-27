@@ -1,5 +1,6 @@
 const express = require("express");
 const router = new express.Router();
+const mongoose = require("mongoose");
 
 //const Ride = require("./ride");
 const db = require("./controller.js");
@@ -7,7 +8,7 @@ const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
 
 //Get List of Available/ future Rides
-router.get("/rides/matching-rides", checkAuth, (req, res) => {
+router.get("/rides/matching-rides", (req, res) => {
   db.getMatchingRides(req.query.filter, req.query.pageNum, (err, data) => {
     if (err) {
       res.sendStatus(500);
@@ -89,7 +90,7 @@ router.post("/rides/post-ride", checkAuth, (req, res) => {
 router.put("/rides/join-ride", checkAuth, (req, res) => {
   const ride = req.body.ride;
   const authUsername = tokenParser(req.headers.authorization).username;
-  
+
   // Add User to ride
   db.joinRide(ride.ownerUsername, ride._id, authUsername, (err, data) => {
     if (err) {
@@ -101,7 +102,7 @@ router.put("/rides/join-ride", checkAuth, (req, res) => {
     } else {
       res.status(200).send(data);
     }
-  });  
+  });
 });
 
 //Cancel a Ride
@@ -138,12 +139,12 @@ router.delete("/rides/delete-ride", checkAuth, (req, res) => {
 });
 
 //Get Ride Details
-router.get("/rides/ride-details", checkAuth, (req, res) => {
-  var rideID = req.query.ride_id;
+router.get("/rides/ride-details", (req, res) => {
+  var rideID = req.query.rideID;
 
-  db.rideDetails(rideID, (err, data) => {
+  db.rideDetails(mongoose.Types.ObjectId(rideID), (err, data) => {
     if (err) {
-      res.sendStatus(500);
+      res.status(500).json({ error: err });
     } else {
       res.status(200).send(data);
     }

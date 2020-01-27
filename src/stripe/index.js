@@ -57,9 +57,9 @@ router.post("/stripe/customer", (req, res) => {
 
 // Create a Payment Intent
 router.post("/stripe/create-payment-intent", (req, res) => {
-  const rideID = req.body.ride_id;
-  const spotsToBePurchased = req.body.spots_to_be_purchased;
-  const riderUsername = req.query.username;
+  const rideID = req.body.rideID;
+  const spotsToBePurchased = req.body.spotsToBePurchased;
+  const riderUsername = req.body.username;
   const currency = "usd";
 
   // Get Ride Details
@@ -67,10 +67,13 @@ router.post("/stripe/create-payment-intent", (req, res) => {
     if (err) {
       res.status(500).json({ error: err });
       return;
+    } else if (!ride) {
+      res.status(404).json({ error: "Ride not found: " + rideID });
+      return;
     }
 
     // Get Rider Details
-    userDB.getMyInfo(authUsername, (err, rider) => {
+    userDB.getMyInfo(riderUsername, (err, rider) => {
       if (err) {
         res.status(500).json({ error: err });
         return;
@@ -83,10 +86,12 @@ router.post("/stripe/create-payment-intent", (req, res) => {
           return;
         }
 
+        var amount = ride.price * spotsToBePurchased * 100;
+
         // Create Payment Intent
         stripe.paymentIntents.create(
           {
-            amount: ride.price * spotsToBePurchased * 100,
+            amount: amount,
             currency: currency,
             payment_method_types: ["card"],
             customer: rider.stripe.customerID,
@@ -99,12 +104,13 @@ router.post("/stripe/create-payment-intent", (req, res) => {
           },
           function(err, paymentIntent) {
             if (err) {
+              console.log(err);
               res.status(500).json({ error: err });
               return;
             } else {
               res
                 .status(200)
-                .json({ client_secret: paymentIntent.client_secret });
+                .json({ clientSecret: paymentIntent.client_secret });
               return;
             }
           }

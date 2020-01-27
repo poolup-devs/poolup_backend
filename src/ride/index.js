@@ -139,7 +139,7 @@ router.delete("/rides/delete-ride", checkAuth, (req, res) => {
 });
 
 //Get Ride Details
-router.get("/rides/ride-details", (req, res) => {
+router.get("/rides/ride-details", checkAuth, (req, res) => {
   var rideID = req.query.rideID;
 
   db.rideDetails(mongoose.Types.ObjectId(rideID), (err, data) => {

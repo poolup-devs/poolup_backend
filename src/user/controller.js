@@ -122,7 +122,7 @@ const phoneNumberValidation = (phoneNumber, callback) => {
   });
 };
 
-const getMyInfo = (authUsername, callback) => {
+const getUserInfo = (authUsername, callback) => {
   User.findOne({ username: authUsername }, (err, result) => {
     if (err) {
       callback(err, null);
@@ -303,7 +303,7 @@ module.exports = {
   checkAvailability,
   login,
   verifyEmail,
-  getMyInfo,
+  getUserInfo,
   emailValidation,
   usernameValidation,
   phoneNumberValidation,

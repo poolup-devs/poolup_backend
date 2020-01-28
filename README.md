@@ -272,6 +272,7 @@ Models:
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
 | /users/changePassword        | Post        | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
+| /users/getInfo               | GET         | [Get a user's account information](#get-users-info)                |
 | /users/rating                | GET         | [Get a user's rating](#get-user-rating)                            |
 | /users/rating                | PATCH       | [Add a new rating to a user](#add-user-rating)                     |
 
@@ -598,6 +599,34 @@ none required
     "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png"
 }
 ```
+
+---
+
+### Get Users Info
+
+GET request
+
+**params**
+
+username (not id)
+
+**example**
+
+localhost:3000/users/getInfo?username=bin315a1
+
+**return value**
+
+200 status
+
+```
+{
+    "name": "Han",
+    "email": "bin315a1@g.ucla.edu",
+    "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png"
+}
+```
+
+---
 
 ### Get User rating
 

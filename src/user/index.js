@@ -43,7 +43,8 @@ router.post("/users/login", (req, res) => {
 //User Signup
 router.post("/users/signup", (req, res) => {
   req.body.password = sha256(req.body.password);
-  const accepted_email = req.body.username.toLowerCase() + process.env.ACCEPTED_EMAIL;
+  const accepted_email =
+    req.body.username.toLowerCase() + "@" + process.env.ACCEPTED_EMAIL;
   db.checkAvailability(accepted_email, req.body.username, (err, result) => {
     if (err) {
       res.sendStatus(500);
@@ -68,7 +69,11 @@ router.post("/users/signup", (req, res) => {
               }
             };
             if (process.env.MODE === "STAGING") {
-              url = "localhost:"+process.env.PORT+"/users/verify?token=" + token;
+              url =
+                "localhost:" +
+                process.env.PORT +
+                "/users/verify?token=" +
+                token;
               var email = {
                 to: accepted_email,
                 from: "pool-up@outlook.com",
@@ -146,10 +151,22 @@ router.get("/users/phoneNumberValidation", (req, res) => {
   });
 });
 
-//Get User Info
+//Get Current User Info
 router.get("/users/my-info", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
-  db.getMyInfo(authUsername, (err, data) => {
+  db.getUserInfo(authUsername, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
+
+//Get a User's Info
+router.get("/users/info", checkAuth, (req, res) => {
+  const userName = req.query.username;
+  db.getUserInfo(userName, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {
@@ -290,27 +307,25 @@ router.post("/users/changePassword", checkAuth, (req, res) => {
   });
 });
 
-// Add a new rating 
+// Add a new rating
 router.patch("/users/rating", checkAuth, async (req, res) => {
-  const {rating} = req.body 
+  const { rating } = req.body;
   try {
-    const userRating = await db.addNewRating(req.query.username, rating)
-    res.status(200).send(userRating) 
+    const userRating = await db.addNewRating(req.query.username, rating);
+    res.status(200).send(userRating);
+  } catch (e) {
+    res.status(500).send({ error: e });
   }
-  catch(e) {
-    res.status(500).send({error: e})
-  }
-}) 
+});
 
-// Get average rating 
+// Get average rating
 router.get("/users/rating", checkAuth, async (req, res) => {
   try {
-    const avgRating = await db.getAverageRating(req.query.username)
-    res.status(200).send(avgRating)
+    const avgRating = await db.getAverageRating(req.query.username);
+    res.status(200).send(avgRating);
+  } catch (e) {
+    res.status(500).send({ error: e });
   }
-  catch(e) {
-    res.status(500).send({error: e}) 
-  }
-})
+});
 
 module.exports = router;

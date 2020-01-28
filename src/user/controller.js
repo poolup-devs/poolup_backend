@@ -109,7 +109,6 @@ const getMyInfo = (authUsername, callback) => {
       const result_ = {};
 
       res_list.forEach(function(item) {
-        console.log(item);
         result_[item] = result[item];
       });
 

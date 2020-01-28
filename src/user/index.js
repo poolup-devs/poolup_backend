@@ -43,7 +43,7 @@ router.post("/users/login", (req, res) => {
 //User Signup
 router.post("/users/signup", (req, res) => {
   req.body.password = sha256(req.body.password);
-  const accepted_email = req.body.username + process.env.ACCEPTED_EMAIL;
+  const accepted_email = req.body.username.toLowerCase() + process.env.ACCEPTED_EMAIL;
   db.checkAvailability(accepted_email, req.body.username, (err, result) => {
     if (err) {
       res.sendStatus(500);

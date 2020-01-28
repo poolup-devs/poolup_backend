@@ -32,6 +32,8 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
    Generates the config folder with env files. This is explained in [the next step](#local-environment-setup)
 
+   Do NOT run this script twice; the second run will overwrite the env files, erasing the entered credentials
+
 4. Run Test Scripts
 
    > npm run test
@@ -186,7 +188,9 @@ Additional Comment
 
 ## Using Postman
 
-Ask for Postman workspace authorization if you haven't been invited yet;
+## Using POSTMAN
+
+We use a single account that is shared by everyone. Ask for PoolUp's dev gmail credential, login, and use the collection located in it.
 
 **Creating a Postman Request**
 
@@ -195,7 +199,8 @@ All the requests under the workspace collection inherits a authToken variable au
 When creating each requests:
 
 - If authToken is required, go to the Authorization tab of the request, and select "inherit auth from parent" under the TYPE tab; no further authToken has to be passed through Headers
-- The pre-request scripts are set to use the admin user (defined in init_db.js):
+- The pre-request scripts are set to use "user1" (defined in init_db.js):
+- Since it's a shared account, be wise when overwriting/saving a request
 
 ```
 {

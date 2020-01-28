@@ -17,6 +17,7 @@ const tokenParser = require("../utils/token-parser.js");
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const ACCEPTED_EMAIL = process.env.ACCEPTED_EMAIL;
 
 sgMail.setApiKey(SENDGRID_API_KEY);
 
@@ -42,22 +43,22 @@ router.post("/users/login", (req, res) => {
 //User Signup
 router.post("/users/signup", (req, res) => {
   req.body.password = sha256(req.body.password);
-  const ucla_email = req.body.username + "@g.ucla.edu";
-  db.checkAvailability(ucla_email, req.body.username, (err, result) => {
+  const accepted_email = req.body.username.toLowerCase() + process.env.ACCEPTED_EMAIL;
+  db.checkAvailability(accepted_email, req.body.username, (err, result) => {
     if (err) {
       res.sendStatus(500);
     } else {
       if (result.length === 0) {
-        db.signup(req.body, ucla_email, (err, result) => {
+        db.signup(req.body, accepted_email, (err, result) => {
           if (err) {
             res.sendStatus(500);
           } else {
-            const token = jwt.sign({ email: ucla_email }, JWT_EMAIL_KEY, {
+            const token = jwt.sign({ email: accepted_email }, JWT_EMAIL_KEY, {
               expiresIn: "24h" //24 hours
             });
             var url = "restapi.poolup.co/users/verify?token=" + token;
             var email = {
-              to: ucla_email,
+              to: accepted_email,
               from: "pool-up@outlook.com",
               templateId: "d-0d8dff79ca8e4d0e8b4b9b1b12038a62",
               dynamic_template_data: {
@@ -67,9 +68,9 @@ router.post("/users/signup", (req, res) => {
               }
             };
             if (process.env.MODE === "STAGING") {
-              url = "localhost:3000/users/verify?token=" + token;
+              url = "localhost:"+process.env.PORT+"/users/verify?token=" + token;
               var email = {
-                to: ucla_email,
+                to: accepted_email,
                 from: "pool-up@outlook.com",
                 subject: "PoolUp: Email Verification Required",
                 text: "Here's the link",

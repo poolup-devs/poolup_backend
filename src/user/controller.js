@@ -35,12 +35,12 @@ const checkAvailability = (email, username, callback) => {
   });
 };
 
-const signup = (userInfo, ucla_email, callback) => {
+const signup = (userInfo, acceptedEmail, callback) => {
   const newUser = new User({
     username: userInfo.username,
     password: userInfo.password,
     name: userInfo.name,
-    email: ucla_email
+    email: acceptedEmail
   });
 
   // Give the user a stripe id

@@ -50,11 +50,11 @@ describe('Testing users with unverified accounts', () => {
         email: "unverifiedUser@g.ucla.edu"
     }) 
 
-    beforeEach(() => {
-        return new User(unverifiedUser).save() 
+    beforeEach(async () => {
+        await new User(unverifiedUser).save() 
     })
-    afterEach(() => {
-        return User.deleteMany() 
+    afterEach(async () => {
+        await User.deleteMany() 
     })
 
     test("When logging in on an account that has not been verified, should return an unverified email error.", done => {
@@ -105,15 +105,16 @@ describe('Testing users with verified accounts', () => {
         phoneNumber: '1231231234', 
         verified: true 
     })
+
     const verifiedUserEmailAuthToken = jwt.sign({ email: verifiedUser.email }, process.env.JWT_EMAIL_KEY, { expiresIn: "24h"});
     const verifiedUserUsernameAuthToken = jwt.sign({ username: verifiedUser.username }, process.env.JWT_SECRET_KEY);
 
-    beforeEach(() => {
-        return new User(verifiedUser).save() 
+    beforeEach(async () => {
+        await new User(verifiedUser).save()
     })
 
-    afterEach(() => {
-        return User.deleteMany() 
+    afterEach(async () => {
+        await User.deleteMany() 
     })
 
     test("When logging in with an invalid password, should return an error.", done => {
@@ -233,6 +234,44 @@ describe('Testing users with verified accounts', () => {
             done() 
         })
     }) 
+
+    describe("Test the retrieval of a user's average rating", () => {
+        const testRevieweeUsername = "test_username"
+        const test_reviewee = new User({username: testRevieweeUsername, rating: {sumOfAllRatings: 5, totalRatings: 2}})
+        
+        beforeEach(async () => {
+            await new User(test_reviewee).save() 
+        })
+        afterEach(async () => {
+            await User.deleteMany({})
+        })
+    
+        describe("Test the retrieval of a user's average rating", () => {
+            test("Correctly calculates the average rating of a user with 3 reviews.", async () => {
+                const {sumOfAllRatings, totalRatings} = test_reviewee.rating 
+                const expectedRating = (sumOfAllRatings / totalRatings).toFixed(2)
+                return db.getAverageRating(testRevieweeUsername).then((rating) => {
+                    expect(rating).toBe(expectedRating);
+                })
+            })
+
+            test("When requesting the average rating of a user that is in the database, should return 200 response code", async () => {
+                await request(app)
+                    .get("/users/get-rating")
+                    .query({username: testRevieweeUsername})
+                    .expect(200)
+            })
+        
+            test("When requesting the average rating of a user that has no reviews, should return 404 response code", async () => {
+                await request(app)
+                    .get("/users/get-rating")
+                    .query({username: 'does_not_exist'})
+                    .expect(404)
+            })
+        })
+    })
+
+
 
     describe("Testing endpoints", () => {
         test("When sending an POST request to /users/login for a user with invalid password, should expect a 401 authentication error response back.", async () => {
@@ -456,6 +495,8 @@ describe('Testing users with verified accounts', () => {
         })
     }) 
 })
+
+
 
 
 

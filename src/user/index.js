@@ -316,4 +316,16 @@ router.patch("/users/changePassword", checkAuth, (req, res) => {
   });
 });
 
+// Get the average rating of a user 
+router.get("/users/get-rating", async (req, res) => {
+  try {
+      const averageRating = await db.getAverageRating(req.query.username)
+      res.status(200).send({averageRating})
+  }
+  catch(e) {
+    res.status(404).send({error: e}) 
+  }
+})
+
+
 module.exports = router;

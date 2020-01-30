@@ -258,6 +258,8 @@ Models:
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
 | /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
+| /users/get-rating            | GET         | [Get a user's rating](#get-rating) 
+
 ---
 
 ### User Login
@@ -579,6 +581,26 @@ none required
     "email": "bin315a1@g.ucla.edu",
     "createdAt": "2019-08-23T11:27:31.739Z",
     "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png"
+}
+```
+
+---
+
+### Get rating 
+GET request 
+- Get the rating of a user
+
+**params/body**
+- username 
+
+**example** 
+- localhost:3000/users/get-rating?username=elin4046
+
+**return value** 
+- An object containing the property averageRating, which is a floating point that is truncated to two decimal points, eg. 2.50 
+```
+{
+    "averageRating": 2.50
 }
 ```
 
@@ -1125,7 +1147,6 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 | /reviews                               | POST        | [Add a review ](#add-review)         
 | /reviews                               | GET         | [Get all of a user's reviews](#get-all-reviews)
 | /reviews/decline-review                | POST        | [Decline to review a user](#decline-to-review)
-| /reviews/rating                        | GET         | [Get a user's rating](#get-rating) 
 | /reviews/get-eligible-users-to-review  | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review)       
 
 ---
@@ -1230,19 +1251,6 @@ POST request
 - 200 status code w/ data on the newly created Review document
 - 500 status code w/ database errors or in the case of duplicate declines 
 
----
-### Get rating 
-GET request 
-- Get the rating of a user
-
-**params/body**
-- username 
-
-**example** 
-- localhost:3000/reviews/rating?username=elin4046
-
-**return value** 
-- A floating point, truncated value to two decimal points value, eg. 2.50 
 
 ---
 ### Get list of usernames to review

@@ -19,6 +19,7 @@ const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const ACCEPTED_EMAIL = process.env.ACCEPTED_EMAIL;
 
+
 sgMail.setApiKey(SENDGRID_API_KEY);
 
 //User Login
@@ -56,7 +57,7 @@ router.post("/users/signup", (req, res) => {
             const token = jwt.sign({ email: accepted_email }, JWT_EMAIL_KEY, {
               expiresIn: "24h" //24 hours
             });
-            var url = "restapi.poolup.co/users/verify?token=" + token;
+            var url = "restapi." + process.env.PRODUCTION_DOMAIN_URL + "/users/verify?token=" + token;
             var email = {
               to: accepted_email,
               from: "pool-up@outlook.com",
@@ -105,7 +106,7 @@ router.get("/users/verify", (req, res) => {
       if (err) {
         res.status(400).send(err);
       } else {
-        res.redirect("https://poolup.co/login");
+        res.redirect("https://"+ process.env.PRODUCTION_DOMAIN_URL+ "/login");
       }
     });
   } catch (err) {

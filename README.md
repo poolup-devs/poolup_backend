@@ -16,37 +16,36 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 1. Starting the NodeJS app
 
-	> npm start
+   > npm start
 
-    Starts up the server by running `node src/server.js` with environment variables defined in dev.env. 
+   Starts up the server by running `node src/server.js` with environment variables defined in dev.env.
 
 2. Start Dev. mode of the NodeJS app
 
-    > npm run dev
+   > npm run dev
 
-    Similar to npm start, but runs nodemon to automatically restart the node application when file chnages in the directory are detected 
+   Similar to npm start, but runs nodemon to automatically restart the node application when file chnages in the directory are detected
 
 3. Setup .env variables
 
-    > npm run setup 
+   > npm run setup
 
-    Generates the config folder with env files. This is explained in [the next step](#local-environment-setup)
+   Generates the config folder with env files. This is explained in [the next step](#local-environment-setup)
 
 4. Run Test Scripts
 
-    > npm run test  
+   > npm run test
 
-    We are using [Jest](https://www.npmjs.com/package/jest) to test our JS code. 
-    Run tests related to changed files based on Git (uncommitted files). 
-    Uses the test.dev environment variables. 
+   We are using [Jest](https://www.npmjs.com/package/jest) to test our JS code.
+   Run tests related to changed files based on Git (uncommitted files).
+   Uses the test.dev environment variables.
 
 5. Initialize database with default creations
-    
-    > npm run init_db
 
-    Removes all documents in all the collections, and initializes the database with default objects.
-    Currently only removes and creates from User collection. 
+   > npm run init_db
 
+   Removes all documents in all the collections, and initializes the database with default objects.
+   Currently only removes and creates from User collection.
 
 ---
 
@@ -57,6 +56,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 3. Install all used packages and dependencies using:
    > npm install
 4. To connect to the development s3 bucket, run:
+
    > npm run setup
 
    This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
@@ -70,10 +70,11 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
    This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
    For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
 
-6. Optional: Initialize the database with default objects. 
-    > npm run init_db 
+6. Optional: Initialize the database with default objects.
 
-    This REMOVES existing database collections and populates them with default objects. 
+   > npm run init_db
+
+   This REMOVES existing database collections and populates them with default objects.
 
 ---
 
@@ -94,8 +95,9 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 ---
 
 ## Directory Structure
+
 ```
-.   
+.
 |   .gitignore
 |   .sample_env
 |   init_db.js
@@ -108,41 +110,41 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 +---config
 |       dev.env
 |       test.env
-|                        
+|
 +---src
 |   |   app.js
 |   |   server.js
-|   |   
+|   |
 |   +---db
 |   |       awsS3_controller.js
 |   |       mongoose.js
-|   |       
+|   |
 |   +---middleware
 |   |       cors_origin_control.js
 |   |       jwt_authenticator.js
-|   |       
+|   |
 |   +---noti
 |   |       controller.js
 |   |       index.js
 |   |       noti.js
-|   |       
+|   |
 |   +---ride
 |   |       controller.js
 |   |       index.js
 |   |       ride.js
-|   |       
+|   |
 |   +---user
 |   |       controller.js
 |   |       index.js
 |   |       user.js
-|   |       
+|   |
 |   \---utils
 |           token-parser.js
-|           
+|
 \---tests
     \---user
             rating.test.js
-```        
+```
 
 ---
 
@@ -162,19 +164,19 @@ ex) han-messagingFeature-12302019
 
 Copy and use the following format:
 
-\**CURRENT ISSUE**
+\*\*CURRENT ISSUE\*\*
 
 Describe the reasoning of the new feature or the change in the current feature
 
-\**TODO**
+\*\*TODO\*\*
 
 Descriptively list out required tasks
 
-\**POTENTIAL CONFLICTS/ ALTERNATIVES**
+\*\*POTENTIAL CONFLICTS/ ALTERNATIVES\*\*
 
 Explain potential conflicts that may arise with the current code base, issues that should be discussed with the initial creator, and alternative solutions (if there exists)
 
-\**ADDITIONAL COMMENT**
+\*\*ADDITIONAL COMMENT\*\*
 
 Additional Comment
 
@@ -190,6 +192,7 @@ When creating each requests:
 
 - If authToken is required, go to the Authorization tab of the request, and select "inherit auth from parent" under the TYPE tab; no further authToken has to be passed through Headers
 - The pre-request scripts are set to use the admin user (defined in init_db.js):
+
 ```
 {
     "username":"admin",
@@ -197,6 +200,7 @@ When creating each requests:
     "password":"password"
 }
 ```
+
 - If you want to login as another user, use the login API to retrieve the authToken, set Authorization to "No Auth", and pass the authToken in the header file instead and follow the Auth Tokens syntax explained under Documentation below. **DO NOT** save the configuration into the Postman collection, as the default config should remain using the parent-inherited-variables
 
 ---
@@ -227,19 +231,20 @@ Models:
 
 ### Schema
 
-| column      | type    | required | properties             |
-| ----------- | ------- | -------- | ---------------------- |
-| name        | String  | Yes      |                        |
-| email       | String  | Yes      |                        |
-| username    | String  | Yes      |                        |
-| password    | String  | Yes      |                        |
-| phoneNumber | String  |          |                        |
-| driverList  | Array   |          |                        |
-| riderList   | Array   |          |                        |
-| picUrl      | String  |          |                        |
-| picType     | String  |          |                        |
-| Verified    | Boolean | Yes      |                        |
-| Rating      | Object  |          | totalCount, totalValue |           
+| column          | type    | required | properties             |
+| --------------- | ------- | -------- | ---------------------- |
+| name            | String  | Yes      |                        |
+| email           | String  | Yes      |                        |
+| username        | String  | Yes      |                        |
+| password        | String  | Yes      |                        |
+| phoneNumber     | String  |          |                        |
+| driverList      | Array   |          |                        |
+| riderList       | Array   |          |                        |
+| picUrl          | String  |          |                        |
+| picType         | String  |          |                        |
+| Verified        | Boolean | Yes      |                        |
+| Rating          | Object  |          | totalCount, totalValue |
+| stripeAccountID | Object  |          |                        |
 
 ### API Endpoints
 
@@ -260,6 +265,7 @@ Models:
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
 | /users/rating                | GET         | [Get a user's rating](#get-user-rating)                            |
 | /users/rating                | PATCH       | [Add a new rating to a user](#add-user-rating)                     |
+
 ---
 
 ### User Login
@@ -584,10 +590,9 @@ none required
 }
 ```
 
+### Get User rating
 
-### Get User rating 
-
-GET Request 
+GET Request
 
 **params**
 
@@ -597,20 +602,19 @@ username
 
 localhost:3000/users/rating?username=elin4046
 
-**return value** 
+**return value**
 
-Returns 200 if successful. Returns 500 upon error, or if the user does not have at least 3 ratings yet. 
+Returns 200 if successful. Returns 500 upon error, or if the user does not have at least 3 ratings yet.
 
 ```
 {
-    "averageRating": "2.00" 
+    "averageRating": "2.00"
 }
 ```
 
+### Add User rating
 
-### Add User rating 
-
-PATCH Request 
+PATCH Request
 
 **params**
 
@@ -620,15 +624,15 @@ username
 
 localhost:3000/users/rating?username=elin4046
 
-**return value** 
+**return value**
 
-Returns 200 if successfully added a rating to the User's rating property. 
-Returns 500 upon database error, or if the rating is not between 1 and 5.  
+Returns 200 if successfully added a rating to the User's rating property.
+Returns 500 upon database error, or if the rating is not between 1 and 5.
 
 ```
 {
-    "totalCount": 4, 
-    "totalValue": 8 
+    "totalCount": 4,
+    "totalValue": 8
 }
 ```
 

@@ -2,9 +2,8 @@ const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
 
-// Users require a certain minimum amount of ratings to calculate an average rating 
-const MIN_TO_DISPLAY_AVERAGE_RATING = 3 
-
+// Users require a certain minimum amount of ratings to calculate an average rating
+const MIN_TO_DISPLAY_AVERAGE_RATING = 3;
 
 const login = (email, password, callback) => {
   User.findOne(
@@ -174,6 +173,41 @@ const getPicUrl = (username, callback) => {
   });
 };
 
+const getUserStripeAccountID = (authUsername, callback) => {
+  User.findOne({ username: authUsername }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else if (result) {
+      const result_ = {};
+      result_["stripeAccountID"] = result["stripeAccountID"];
+
+      callback(null, result_);
+    } else {
+      callback(
+        {
+          message: "ERROR: username not found"
+        },
+        null
+      );
+    }
+  });
+};
+
+const updateUserStripeAccountID = (authUsername, stripeAccountID, callback) => {
+  User.findOneAndUpdate(
+    { username: authUsername },
+    { stripeAccountID },
+    { new: true },
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, result);
+      }
+    }
+  );
+};
+
 const updateUser = (authUsername, name, phoneNumber, callback) => {
   User.findOneAndUpdate(
     { username: authUsername },
@@ -239,35 +273,37 @@ const passwordReset = (authUsername, newPassword, callback) => {
 };
 
 const addNewRating = async (username, newRating) => {
-  if (newRating < 1|| newRating > 5) {
-      return Promise.reject("The rating must be a value from 1 to 5.")
+  if (newRating < 1 || newRating > 5) {
+    return Promise.reject("The rating must be a value from 1 to 5.");
   }
   try {
-      const user = await User.findOneAndUpdate(
-          {username}, 
-          {$inc: {'rating.totalValue': newRating, 'rating.totalCount': 1}}, 
-          {new: true, useFindAndModify: false}
-      )
-      return Promise.resolve(user.rating)
+    const user = await User.findOneAndUpdate(
+      { username },
+      { $inc: { "rating.totalValue": newRating, "rating.totalCount": 1 } },
+      { new: true, useFindAndModify: false }
+    );
+    return Promise.resolve(user.rating);
+  } catch (e) {
+    return Promise.reject(e, "Could not add a new rating to the user");
   }
-  catch(e) {
-      return Promise.reject(e, "Could not add a new rating to the user")
-  }
-}
+};
 
-const getAverageRating = async (username) => {
+const getAverageRating = async username => {
   try {
-      const {rating} = await User.findOne({username}) 
-      if (rating.totalCount < MIN_TO_DISPLAY_AVERAGE_RATING) {
-        return Promise.reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " ratings to display an average rating!")
-      }
-      const averageRating = (rating.totalValue / rating.totalCount).toFixed(2)
-      return Promise.resolve({averageRating})
+    const { rating } = await User.findOne({ username });
+    if (rating.totalCount < MIN_TO_DISPLAY_AVERAGE_RATING) {
+      return Promise.reject(
+        "User must have at least " +
+          MIN_TO_DISPLAY_AVERAGE_RATING +
+          " ratings to display an average rating!"
+      );
+    }
+    const averageRating = (rating.totalValue / rating.totalCount).toFixed(2);
+    return Promise.resolve({ averageRating });
+  } catch (e) {
+    return Promise.reject("Could not get average rating of user");
   }
-  catch(e) {
-      return Promise.reject("Could not get average rating of user")
-  }
-}
+};
 
 module.exports = {
   checkAvailability,
@@ -284,7 +320,7 @@ module.exports = {
   updateUser,
   deleteUser,
   confirmCredentials,
-  passwordReset, 
+  passwordReset,
   addNewRating,
   getAverageRating
 };

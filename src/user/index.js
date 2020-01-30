@@ -17,6 +17,7 @@ const tokenParser = require("../utils/token-parser.js");
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const STRIPE_CLIENT_ID = process.env.STRIPE_CLIENT_ID;
 
 sgMail.setApiKey(SENDGRID_API_KEY);
 
@@ -73,7 +74,7 @@ router.post("/users/signup", (req, res) => {
                 from: "pool-up@outlook.com",
                 subject: "PoolUp: Email Verification Required",
                 text: "Here's the link",
-                html: "Token: <br>" + token +"<br>Link for local dev: " + url
+                html: "Token: <br>" + token + "<br>Link for local dev: " + url
               };
             }
             sgMail
@@ -220,6 +221,22 @@ router.get("/users/usersPic", checkAuth, (req, res) => {
   });
 });
 
+// Updates a User's stripe account id
+router.put("/users/updateStripeAccountID", checkAuth, (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+  db.updateUserStripeAccountID(
+    authUsername,
+    req.body.stripeAccountID,
+    (err, result) => {
+      if (err) {
+        res.sendStatus(500);
+      } else {
+        res.status(200).send(result);
+      }
+    }
+  );
+});
+
 //Update a User's info (name, phoneNumber)
 router.put("/users/updateUser", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
@@ -289,27 +306,25 @@ router.post("/users/changePassword", checkAuth, (req, res) => {
   });
 });
 
-// Add a new rating 
+// Add a new rating
 router.patch("/users/rating", checkAuth, async (req, res) => {
-  const {rating} = req.body 
+  const { rating } = req.body;
   try {
-    const userRating = await db.addNewRating(req.query.username, rating)
-    res.status(200).send(userRating) 
+    const userRating = await db.addNewRating(req.query.username, rating);
+    res.status(200).send(userRating);
+  } catch (e) {
+    res.status(500).send({ error: e });
   }
-  catch(e) {
-    res.status(500).send({error: e})
-  }
-}) 
+});
 
-// Get average rating 
+// Get average rating
 router.get("/users/rating", checkAuth, async (req, res) => {
   try {
-    const avgRating = await db.getAverageRating(req.query.username)
-    res.status(200).send(avgRating)
+    const avgRating = await db.getAverageRating(req.query.username);
+    res.status(200).send(avgRating);
+  } catch (e) {
+    res.status(500).send({ error: e });
   }
-  catch(e) {
-    res.status(500).send({error: e}) 
-  }
-})
+});
 
 module.exports = router;

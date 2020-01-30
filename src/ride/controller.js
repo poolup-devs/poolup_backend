@@ -159,7 +159,7 @@ const joinRide = (ownerUsername, ride_id, passengerUsername, callback) => {
   const noti = {
     username: ownerUsername,
     msg: `${passengerUsername} has joined your ride`,
-    passengerEmail: passengerUsername + "@g.ucla.edu",
+    passengerEmail: passengerUsername + process.env.ACCEPTED_EMAIL,
     date: new Date()
   };
   Ride.findOneAndUpdate(
@@ -186,7 +186,7 @@ const cancelRide = (ownerUsername, ride_id, passengerUsername, callback) => {
   const noti = {
     username: ownerUsername,
     msg: `${passengerUsername} has cancelled your ride`,
-    passengerEmail: passengerUsername + "@g.ucla.edu",
+    passengerEmail: passengerUsername + process.env.ACCEPTED_EMAIL,
     date: new Date()
   };
   Ride.findOneAndUpdate(

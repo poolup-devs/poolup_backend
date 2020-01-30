@@ -36,9 +36,9 @@ const checkAvailability = (email, username, callback) => {
   });
 };
 
-const signup = (userInfo, ucla_email, callback) => {
+const signup = (userInfo, accepted_email, callback) => {
   const newUser = userInfo;
-  newUser.email = ucla_email;
+  newUser.email = accepted_email;
   User.create(newUser, (err, result) => {
     if (err) {
       callback(err, null);

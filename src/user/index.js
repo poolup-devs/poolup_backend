@@ -18,6 +18,7 @@ const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const ACCEPTED_EMAIL = process.env.ACCEPTED_EMAIL;
+const STRIPE_CLIENT_ID = process.env.STRIPE_CLIENT_ID;
 
 sgMail.setApiKey(SENDGRID_API_KEY);
 
@@ -79,7 +80,7 @@ router.post("/users/signup", (req, res) => {
                 from: "pool-up@outlook.com",
                 subject: "PoolUp: Email Verification Required",
                 text: "Here's the link",
-                html: "<br>Link for local dev: <br>" + url
+                html: "Token: <br>" + token + "<br>Link for local dev: " + url
               };
             }
             sgMail
@@ -236,6 +237,22 @@ router.get("/users/usersPic", checkAuth, (req, res) => {
       res.status(200).send(data);
     }
   });
+});
+
+// Updates a User's stripe account id
+router.put("/users/updateStripeAccountID", checkAuth, (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+  db.updateUserStripeAccountID(
+    authUsername,
+    req.body.stripeAccountID,
+    (err, result) => {
+      if (err) {
+        res.sendStatus(500);
+      } else {
+        res.status(200).send(result);
+      }
+    }
+  );
 });
 
 //Update a User's info (name, phoneNumber)

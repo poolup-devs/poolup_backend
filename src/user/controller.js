@@ -202,6 +202,21 @@ const getPicUrl = (username, callback) => {
   });
 };
 
+const updateUserStripeAccountID = (authUsername, stripeAccountID, callback) => {
+  User.findOneAndUpdate(
+    { username: authUsername },
+    { stripe: { accountID: stripeAccountID } },
+    { new: true },
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, result);
+      }
+    }
+  );
+};
+
 const updateUser = (authUsername, name, phoneNumber, callback) => {
   User.findOneAndUpdate(
     { username: authUsername },

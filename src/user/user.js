@@ -23,15 +23,15 @@ const userSchema = mongoose.Schema({
     default: new Date()
   }, 
   rating: {
-    totalCount: {
-      type: Number,
-      default: 0 
-    }, 
-    totalValue: {
+    sumOfAllRatings: {
       type: Number, 
       default: 0 
-    }
-  }
+    }, 
+    totalRatings: {
+      type: Number, 
+      default: 0 
+    }, 
+  } 
 });
 
 userSchema.statics.setRandomBruinBear = function(username) {

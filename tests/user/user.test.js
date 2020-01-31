@@ -116,125 +116,25 @@ describe('Testing users with verified accounts', () => {
         return User.deleteMany() 
     })
 
-    test("When logging in with an invalid password, should return an error.", done => {
-        db.login(verifiedUser.email, sha256('invalid_password'), (err, result) => {
-            expect(result).toEqual(null)
-            expect(err).toEqual({ message: "user with email and password not found" }) 
-            done()
+    describe("Testing signup/login/authentication functionality", () => {
+        test("When logging in with an invalid password, should return an error.", done => {
+            db.login(verifiedUser.email, sha256('invalid_password'), (err, result) => {
+                expect(result).toEqual(null)
+                expect(err).toEqual({ message: "user with email and password not found" }) 
+                done()
+            }) 
+        })
+    
+        test("When logging in with correct email and password credentials, should return the user's account information.", done => {
+            db.login(verifiedUser.email, sha256('password'), (err, result) => {
+                expect(err).toEqual(null)
+                const {name, username, email, verified} = verifiedUser 
+                expect(result).toEqual(expect.objectContaining({
+                    name, username, password: sha256("password"), email, verified
+                })) 
+                done()
+            }) 
         }) 
-    })
-
-    test("When logging in with correct email and password credentials, should return the user's account information.", done => {
-        db.login(verifiedUser.email, sha256('password'), (err, result) => {
-            expect(err).toEqual(null)
-            const {name, username, email, verified} = verifiedUser 
-            expect(result).toEqual(expect.objectContaining({
-                name, username, password: sha256("password"), email, verified
-            })) 
-            done()
-        }) 
-    }) 
-
-    test("When requesting account information using a valid username, response should return an object with properties: username, name, email, createdAt, and picUrl", done => {
-        db.getMyInfo(verifiedUser.username, (err, result) => {
-            expect(err).toEqual(null) 
-            const {username, name, email, picUrl, createdAt} = verifiedUser 
-            expect(result).toEqual(expect.objectContaining({
-                username, name, email, picUrl, createdAt
-            }))
-            done() 
-        })
-    })
-
-    test("When requesting account information using an invalid username, the response should be an error", done => {
-        db.getMyInfo('invalidUsername', (err, result) => {
-            expect(err).toEqual({message: "ERROR: username not found"}) 
-            expect(result).toEqual(null) 
-            done() 
-        })
-    })
-
-    test("When updating a user's profile pic, should set user's picUrl and picType", done => {
-        db.uploadPicUrl('verifiedUser', 'somePicUrl', 'somePicType', (err, result) => {
-            expect(result).toEqual(expect.objectContaining({
-                picUrl: 'somePicUrl', 
-                picType: 'somePicType' 
-            }))
-            done() 
-        })
-    })
-
-    test("When retrieving a user's profile pic url using an invalid username, the response should be an error", done => {
-        db.getPicUrl('invalidUsername', (err, result) => {
-            expect(err).toEqual({message: "ERROR: no result; potentially wrong username"})
-            done() 
-        })
-    }) 
-
-    test("When retrieving a user's profile pic url that has not been set, the response should be an error", done => {
-        db.getPicUrl(verifiedUser.username, (err, result) => {
-            expect(err).toEqual({message: "ERROR: user's profile picture undefined"})
-            done() 
-        })
-    }) 
-
-    test("When retrieving a user's profile pic url using a valid username, should receive it.", done => {
-        const {name, password, email, verified} = verifiedUser 
-        const verifiedUserWithProfilePic = new User({
-            name, username: 'verifiedUserWithPicUrl', password, email, verified, picUrl: 'testUrl'
-        }) 
-        verifiedUserWithProfilePic.save((err) => {
-            db.getPicUrl(verifiedUserWithProfilePic.username, (err, result) => {
-                expect(result).toEqual('testUrl')
-                done() 
-            })
-        })
-    }) 
-
-    test("When updating a user's name or phone number, should set the corresponding user's name and phone number fields", done => {
-        const updates = {
-            phoneNumber: '1231231234', name: 'New Name'
-        } 
-        db.updateUser(verifiedUser.username, updates, (err, result) => {
-            expect(result).toEqual(expect.objectContaining({
-                phoneNumber: updates.phoneNumber,
-                name: updates.name 
-            }))
-            done() 
-        }) 
-    })
-
-    test("When deleting a user, should delete all instances of that user in User, Ride, and Noti", done => {
-        const {username} = verifiedUser 
-        Ride.create({ownerUsername: username}).then(
-            Noti.create({username}).then(
-                db.deleteUser(username, (err, result) => {
-                    Ride.findOne({ownerUsername: username}, (err, result) => {
-                        expect(result).toEqual(null) 
-                        Noti.findOne({username}, (err, result) => {
-                            expect(result).toEqual(null)
-                            User.findOne({username}, (err, result) => {
-                                expect(result).toEqual(null) 
-                                done()
-                            })
-                        })
-                    }) 
-                }) 
-            )
-        )
-    })
-
-    test("When reseting a user's password, should update the user's password field to the new password.", done => {
-        const newPassword = sha256('newPassword') 
-        db.passwordReset(verifiedUser.username, newPassword, (err, result) => {
-            expect(result).toEqual(expect.objectContaining({
-                password: newPassword
-            }))
-            done() 
-        })
-    }) 
-
-    describe("Testing endpoints", () => {
         test("When sending an POST request to /users/login for a user with invalid password, should expect a 401 authentication error response back.", async () => {
             await request(app)
                 .post('/users/login')
@@ -279,7 +179,106 @@ describe('Testing users with verified accounts', () => {
                 .query({token: 'wrongTokenValue'})
                 .expect(401) 
         })
+    }) 
 
+    describe("Testing the retrieval of user account information", () => {
+        test("When requesting account information using a valid username, response should return an object with properties: username, name, email, createdAt, and picUrl", done => {
+            db.getMyInfo(verifiedUser.username, (err, result) => {
+                expect(err).toEqual(null) 
+                const {username, name, email, picUrl, createdAt} = verifiedUser 
+                expect(result).toEqual(expect.objectContaining({
+                    username, name, email, picUrl, createdAt
+                }))
+                done() 
+            })
+        })
+    
+        test("When requesting account information using an invalid username, the response should be an error", done => {
+            db.getMyInfo('invalidUsername', (err, result) => {
+                expect(err).toEqual({message: "ERROR: username not found"}) 
+                expect(result).toEqual(null) 
+                done() 
+            })
+        })
+        test("When sending an GET request to /users/my-info in an authorized session, should expect 200 response.", async () => {
+            await request(app)
+                .get('/users/my-info')
+                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
+                .expect(200) 
+        })
+
+    })
+
+    describe("Testing uploading/retrieval of a user's profile picture", () => {
+        test("When updating a user's profile pic, should set user's picUrl and picType", done => {
+            db.uploadPicUrl('verifiedUser', 'somePicUrl', 'somePicType', (err, result) => {
+                expect(result).toEqual(expect.objectContaining({
+                    picUrl: 'somePicUrl', 
+                    picType: 'somePicType' 
+                }))
+                done() 
+            })
+        })
+    
+        test("When retrieving a user's profile pic url using an invalid username, the response should be an error", done => {
+            db.getPicUrl('invalidUsername', (err, result) => {
+                expect(err).toEqual({message: "ERROR: no result; potentially wrong username"})
+                done() 
+            })
+        }) 
+    
+        test("When retrieving a user's profile pic url that has not been set, the response should be an error", done => {
+            db.getPicUrl(verifiedUser.username, (err, result) => {
+                expect(err).toEqual({message: "ERROR: user's profile picture undefined"})
+                done() 
+            })
+        }) 
+
+        test("When retrieving a user's profile pic url using a valid username, should receive it.", done => {
+            const {name, password, email, verified} = verifiedUser 
+            const verifiedUserWithProfilePic = new User({
+                name, username: 'verifiedUserWithPicUrl', password, email, verified, picUrl: 'testUrl'
+            }) 
+            verifiedUserWithProfilePic.save((err) => {
+                db.getPicUrl(verifiedUserWithProfilePic.username, (err, result) => {
+                    expect(result).toEqual('testUrl')
+                    done() 
+                })
+            })
+        })
+
+        test("When sending a PATCH request to /users/upload-profile-pic with a valid PNG image, should expect 200 response.", async () => {
+            await request(app)
+                .patch('/users/upload-profile-pic')
+                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
+                .attach('file', './tests/user/test_profile.png')
+                .expect(200) 
+        })
+
+        test("When sending a PATCH request to /users/upload-profile-pic with a non-image file, should expect 400 error response.", async () => {
+            await request(app)
+                .patch('/users/upload-profile-pic')
+                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
+                .attach('file', './tests/user/user.test.js') // improper image file 
+                .expect(400) 
+                .then((res) => {
+                    expect(res.body.message).toEqual("ERROR: file type must be of: jpg, jpeg, heic, or png")
+                })
+        })
+
+        test("When sending a GET request to /users/usersPic, should receive a 200 response with a url to the user's profile pic.", async () => {
+            await User.deleteMany()
+            verifiedUser.picUrl = 'https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png'
+            await new User(verifiedUser).save() 
+            await request(app)
+                .get('/users/usersPic')
+                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
+                .query({username: verifiedUser.username})
+                .expect(200) 
+        })
+    })
+
+    describe("Testing validation of user properties, such as username or email", () => {
         test("When sending an GET request to /users/usernameValidation with a valid username associated with an account, should expect 200 response.", async () => {
             await request(app)
                 .get('/users/usernameValidation')
@@ -322,41 +321,99 @@ describe('Testing users with verified accounts', () => {
                 .expect(404) 
         })
 
-        test("When sending an GET request to /users/my-info in an authorized session, should expect 200 response.", async () => {
+        test("When successfully confirming password credentials using a valid password during a user session, should return 200 response code", async () => {
             await request(app)
-                .get('/users/my-info')
+                .post('/users/checkCredentials')
                 .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
-                .expect(200) 
-        })
-
-        test("When sending a PATCH request to /users/upload-profile-pic with a valid PNG image, should expect 200 response.", async () => {
-            await request(app)
-                .patch('/users/upload-profile-pic')
-                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
-                .attach('file', './tests/user/test_profile.png')
-                .expect(200) 
-        })
-
-        test("When sending a PATCH request to /users/upload-profile-pic with a non-image file, should expect 400 error response.", async () => {
-            await request(app)
-                .patch('/users/upload-profile-pic')
-                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
-                .attach('file', './tests/user/user.test.js') // improper image file 
-                .expect(400) 
-                .then((res) => {
-                    expect(res.body.message).toEqual("ERROR: file type must be of: jpg, jpeg, heic, or png")
+                .send({
+                    password: "password"
                 })
+                .expect(200) 
         })
 
-        test("When sending a GET request to /users/usersPic, should receive a 200 response with a url to the user's profile pic.", async () => {
-            await User.deleteMany()
-            verifiedUser.picUrl = 'https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png'
-            await new User(verifiedUser).save() 
+        test("When confirming password credentials using a valid password during a user session, should return 200 response code", async () => {
             await request(app)
-                .get('/users/usersPic')
+                .post('/users/checkCredentials')
                 .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
-                .query({username: verifiedUser.username})
+                .send({
+                    password: "password"
+                })
                 .expect(200) 
+        })
+
+        test("When confirming password credentials using an invalid password during a user session, should return 401 response code", async () => {
+            await request(app)
+                .post('/users/checkCredentials')
+                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
+                .send({
+                    password: "incorrectPassword"
+                })
+                .expect(401) 
+        })
+    })
+
+    describe("Testing update and deletion related operations", () => {
+        test("When updating a user's name or phone number, should set the corresponding user's name and phone number fields", done => {
+            const updates = {
+                phoneNumber: '1231231234', name: 'New Name'
+            } 
+            db.updateUser(verifiedUser.username, updates, (err, result) => {
+                expect(result).toEqual(expect.objectContaining({
+                    phoneNumber: updates.phoneNumber,
+                    name: updates.name 
+                }))
+                done() 
+            }) 
+        })
+    
+        test("When deleting a user, should delete all instances of that user in User, Ride, and Noti", done => {
+            const {username} = verifiedUser 
+            Ride.create({ownerUsername: username}).then(
+                Noti.create({username}).then(
+                    db.deleteUser(username, (err, result) => {
+                        Ride.findOne({ownerUsername: username}, (err, result) => {
+                            expect(result).toEqual(null) 
+                            Noti.findOne({username}, (err, result) => {
+                                expect(result).toEqual(null)
+                                User.findOne({username}, (err, result) => {
+                                    expect(result).toEqual(null) 
+                                    done()
+                                })
+                            })
+                        }) 
+                    }) 
+                )
+            )
+        })
+    
+        test("When reseting a user's password, should update the user's password field to the new password.", done => {
+            const newPassword = sha256('newPassword') 
+            db.passwordReset(verifiedUser.username, newPassword, (err, result) => {
+                expect(result).toEqual(expect.objectContaining({
+                    password: newPassword
+                }))
+                done() 
+            })
+        }) 
+
+        test("When changing a user's password in an authorized session, should return 200 response code", async () => {
+            await request(app)
+                .patch('/users/changePassword')
+                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
+                .send({
+                    newPassword: "newPassword" 
+                })
+                .expect(200) 
+        })
+
+        test("When changing a user's password in an unauthorized session, should return 200 response code", async () => {
+            await request(app)
+                .patch('/users/changePassword')
+                .set('Authorization', 'Bearer WRONG_AUTHORIZATION_TOKEN')
+                .send({
+                    newPassword: "newPassword" 
+                })
+                .expect(401) 
         })
 
         test("When sending a PATCH request to /users/updateUser with a new name, should receive a 200 response with the newly updated information", async () => {
@@ -404,57 +461,7 @@ describe('Testing users with verified accounts', () => {
                 .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
                 .expect(200) 
         })
-
-        test("When successfully confirming password credentials using a valid password during a user session, should return 200 response code", async () => {
-            await request(app)
-                .post('/users/checkCredentials')
-                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
-                .send({
-                    password: "password"
-                })
-                .expect(200) 
-        })
-
-        test("When confirming password credentials using a valid password during a user session, should return 200 response code", async () => {
-            await request(app)
-                .post('/users/checkCredentials')
-                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
-                .send({
-                    password: "password"
-                })
-                .expect(200) 
-        })
-
-        test("When confirming password credentials using an invalid password during a user session, should return 401 response code", async () => {
-            await request(app)
-                .post('/users/checkCredentials')
-                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
-                .send({
-                    password: "incorrectPassword"
-                })
-                .expect(401) 
-        })
-
-        test("When changing a user's password in an authorized session, should return 200 response code", async () => {
-            await request(app)
-                .patch('/users/changePassword')
-                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
-                .send({
-                    newPassword: "newPassword" 
-                })
-                .expect(200) 
-        })
-
-        test("When changing a user's password in an unauthorized session, should return 200 response code", async () => {
-            await request(app)
-                .patch('/users/changePassword')
-                .set('Authorization', 'Bearer WRONG_AUTHORIZATION_TOKEN')
-                .send({
-                    newPassword: "newPassword" 
-                })
-                .expect(401) 
-        })
-    }) 
+    })
 })
 
 

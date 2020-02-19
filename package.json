@@ -4,15 +4,16 @@
   "description": "#Local Environment Setup 1. Install nodeJS by following installation guides from https://nodejs.org/en/download/ 2. Install all used packages & dependencies using:     `npm install` 3. Install mongoDB by following installation guides from: Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/  - this is different form the npm package listed in package.json, which is the driver that connects the DB to the nodeJS app.",
   "main": "index.js",
   "scripts": {
-    "start": "env-cmd -f ./config/dev.env node src/server.js",
-    "dev": "env-cmd -f ./config/dev.env nodemon src/server.js",
+    "start": "env-cmd -r ./config/.env-cmdrc -e development node src/server.js",
+    "dev": "env-cmd -r ./config/.env-cmdrc -e development nodemon src/server.js",
+    "docker-dev": "env-cmd -r ./config/.env-cmdrc -e development,development-docker nodemon src/server.js",
     "setup": "node setup.js",
     "init_db": "env-cmd -f ./config/dev.env node init_db.js",
     "test": "env-cmd -f ./config/test.env jest --watch --runInBand"
   },
   "jest": {
-    "testEnvironment": "node", 
-    "setupFilesAfterEnv": [  
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
       "./tests/jestDefaultTimeout.js"
     ]
   },

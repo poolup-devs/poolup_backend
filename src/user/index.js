@@ -158,7 +158,7 @@ router.get("/users/phoneNumberValidation", (req, res) => {
   });
 });
 
-//Get User Info
+//Get My Info
 router.get("/users/my-info", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
   db.getMyInfo(authUsername, (err, data) => {
@@ -315,5 +315,17 @@ router.patch("/users/changePassword", checkAuth, (req, res) => {
     }
   });
 });
+
+// Update About Me 
+router.patch("/users/updateAboutMe", checkAuth, async (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+  try {
+    const updatedUser = await db.updateAboutMe(authUsername, req.body.aboutMe)
+    res.status(200).send(updatedUser)
+  }
+  catch(e) {
+    res.status(500).send(e)
+  }
+})
 
 module.exports = router;

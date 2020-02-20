@@ -232,6 +232,24 @@ const passwordReset = (authUsername, newPassword, callback) => {
   );
 };
 
+const updateAboutMe = (authUsername, updatedAboutMe) => {
+  return new Promise(async (resolve, reject) => {
+    await User.findOneAndUpdate({username: authUsername}, {aboutMe:updatedAboutMe}, {new: true}).then((updatedUser) => {
+      if (!updatedUser) {
+        reject('Could not find user in database when updating about me.') 
+      }
+      resolve(updatedUser)
+    }).catch((e) => {
+      reject(e)
+    })
+  })
+}
+
+// Get publically available user profile information 
+const getPublicUserProfile = (username) => {
+
+}
+
 module.exports = {
   checkAvailability,
   login,
@@ -248,4 +266,6 @@ module.exports = {
   deleteUser,
   confirmCredentials,
   passwordReset, 
+  updateAboutMe,
+  getPublicUserProfile, 
 };

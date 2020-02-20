@@ -103,6 +103,7 @@ describe('Testing users with verified accounts', () => {
         password: sha256("password"), 
         email: "verifiedUser@g.ucla.edu", 
         phoneNumber: '1231231234', 
+        aboutMe: "This was my old about me.",
         verified: true 
     })
     const verifiedUserEmailAuthToken = jwt.sign({ email: verifiedUser.email }, process.env.JWT_EMAIL_KEY, { expiresIn: "24h"});
@@ -353,6 +354,21 @@ describe('Testing users with verified accounts', () => {
     })
 
     describe("Testing update and deletion related operations", () => {
+        test("When updating a user's about me, should properly update the aboutMe field", async () => {
+            const updatedAboutMe = "This is a new about me description!" 
+            const userWithUpdatedAboutMe = await db.updateAboutMe(verifiedUser.username, updatedAboutMe) 
+            expect(userWithUpdatedAboutMe.aboutMe).toBe(updatedAboutMe) 
+        }) 
+
+        test.only("When updating the about me of a user who does not exist, should return an error message", async () => {
+            try {
+                await db.updateAboutMe('nonexistent_user', 'Test about me description')
+            }
+            catch(e) {
+                console.log('Could not find user in database when updating about me.')
+            }
+        })
+
         test("When updating a user's name or phone number, should set the corresponding user's name and phone number fields", done => {
             const updates = {
                 phoneNumber: '1231231234', name: 'New Name'

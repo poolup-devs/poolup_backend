@@ -11,8 +11,8 @@
     "test": "env-cmd -f ./config/test.env jest --watch --runInBand"
   },
   "jest": {
-    "testEnvironment": "node", 
-    "setupFilesAfterEnv": [  
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
       "./tests/jestDefaultTimeout.js"
     ]
   },
@@ -38,6 +38,7 @@
     "mongoose": "^5.7.5",
     "multiparty": "^4.2.1",
     "nodemon": "^1.19.1",
+    "parse-domain": "^2.3.4",
     "sha256": "^0.2.0",
     "supertest": "^4.0.2"
   }

@@ -22,7 +22,8 @@ const userSchema = mongoose.Schema({
     type: Date,
     default: new Date()
   }, 
-  aboutMe: String
+  aboutMe: String, 
+  school: String,
 });
 
 userSchema.statics.setRandomBruinBear = function(username) {

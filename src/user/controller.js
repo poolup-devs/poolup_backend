@@ -2,6 +2,13 @@ const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
 
+// For email parsing 
+const mongoose = require('mongoose')
+const dataSchema = new mongoose.Schema({});
+const Schools = mongoose.model('Schools', dataSchema, 'schools');
+const parseDomain = require("parse-domain");
+
+
 const login = (email, password, callback) => {
   User.findOne(
     {
@@ -32,9 +39,14 @@ const checkAvailability = (email, username, callback) => {
   });
 };
 
-const signup = (userInfo, ucla_email, callback) => {
+const signup = async (userInfo, schoolEmail, callback) => {
   const newUser = userInfo;
-  newUser.email = ucla_email;
+  newUser.email = schoolEmail;
+  newUser.school = await parseEmailForSchool(schoolEmail)
+  if (!newUser.school) {
+    callback('School is not supported yet!', null)
+  }
+
   User.create(newUser, (err, result) => {
     if (err) {
       callback(err, null);
@@ -233,8 +245,8 @@ const passwordReset = (authUsername, newPassword, callback) => {
 };
 
 const updateAboutMe = (authUsername, updatedAboutMe) => {
-  return new Promise(async (resolve, reject) => {
-    await User.findOneAndUpdate({username: authUsername}, {aboutMe:updatedAboutMe}, {new: true}).then((updatedUser) => {
+  return new Promise((resolve, reject) => {
+    User.findOneAndUpdate({username: authUsername}, {aboutMe:updatedAboutMe}, {new: true}).then((updatedUser) => {
       if (!updatedUser) {
         reject('Could not find user in database when updating about me.') 
       }
@@ -245,9 +257,21 @@ const updateAboutMe = (authUsername, updatedAboutMe) => {
   })
 }
 
-// Get publically available user profile information 
-const getPublicUserProfile = (username) => {
-
+// Helper function that parses school emails to identify the school the user attends 
+const parseEmailForSchool = (schoolEmail) => {
+  return new Promise((resolve, reject) => {
+    emailDomain = parseDomain(schoolEmail)
+    if (!emailDomain) {
+      reject("Could not parse email for school") 
+    }
+    
+    Schools.findOne({emailDomain: emailDomain.domain}, (err, result) => {
+      if (!result) {
+        return reject("School is not yet approved") 
+      }
+      resolve(result._doc.school)
+    }) 
+  })
 }
 
 module.exports = {
@@ -267,5 +291,5 @@ module.exports = {
   confirmCredentials,
   passwordReset, 
   updateAboutMe,
-  getPublicUserProfile, 
+  parseEmailForSchool, 
 };

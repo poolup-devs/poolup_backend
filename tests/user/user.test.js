@@ -183,6 +183,25 @@ describe('Testing users with verified accounts', () => {
     }) 
 
     describe("Testing the retrieval of user account information", () => {
+        test("When parsing an edu email, should return the school if it is in the database", async () => {
+            const ucla1 = await db.parseEmailForSchool('bruin@g.ucla.edu')
+            const ucla2 = await db.parseEmailForSchool('bruin@ucla.edu')
+            const ucsb = await db.parseEmailForSchool('gaucho@ucsb.edu')
+            expect(ucla1).toBe('UCLA')
+            expect(ucla2).toBe('UCLA')
+            expect(ucsb).toBe('UCSB')
+        })
+
+        test("When parsing an edu email not found in the database, should return an error", async () => {
+            try {
+                expect.assertions(1)
+                const invalidSchool = await db.parseEmailForSchool('someStudent@usc.edu')
+            }
+            catch(e) {
+                expect(e).toBe('School is not yet approved')
+            }
+        })
+
         test("When requesting account information using a valid username, response should return an object with properties: username, name, email, createdAt, and picUrl", done => {
             db.getMyInfo(verifiedUser.username, (err, result) => {
                 expect(err).toEqual(null) 
@@ -360,12 +379,12 @@ describe('Testing users with verified accounts', () => {
             expect(userWithUpdatedAboutMe.aboutMe).toBe(updatedAboutMe) 
         }) 
 
-        test.only("When updating the about me of a user who does not exist, should return an error message", async () => {
+        test("When updating the about me of a user who does not exist, should return an error message", async () => {
             try {
                 await db.updateAboutMe('nonexistent_user', 'Test about me description')
             }
             catch(e) {
-                console.log('Could not find user in database when updating about me.')
+                expect(e).toBe('Could not find user in database when updating about me.')
             }
         })
 

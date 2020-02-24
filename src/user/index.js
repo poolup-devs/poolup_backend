@@ -119,11 +119,7 @@ router.get("/users/emailValidation", (req, res) => {
   db.findUserByEmail(req.query.email, (err, data) => {
     if (err) {
       res.sendStatus(500);
-    }
-    else if (data.length === 0) {
-      res.sendStatus(404); 
-    }
-    else {
+    } else {
       res.status(200).send(data);
     }
   });
@@ -134,11 +130,7 @@ router.get("/users/usernameValidation", (req, res) => {
   db.findUserByUsername(req.query.username, (err, data) => {
     if (err) {
       res.sendStatus(500);
-    }
-    else if (data.length === 0) {
-      res.sendStatus(404); 
-    }
-    else {
+    } else {
       res.status(200).send(data);
     }
   });
@@ -150,11 +142,7 @@ router.get("/users/phoneNumberValidation", (req, res) => {
   db.findUserByPhoneNumber(req.query.phoneNumber, (err, data) => {
     if (err) {
       res.sendStatus(500);
-    } 
-    else if (data.length === 0) {
-      res.sendStatus(404); 
-    }
-    else {
+    } else {
       res.status(200).send(data);
     }
   });

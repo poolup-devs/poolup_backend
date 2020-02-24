@@ -12,7 +12,7 @@ const getSenderRequests = (senderID, status, callback) => {
       $and: [
         { senderID: senderID },
         {
-          $nor: [{ status: "archived" }]
+          $nor: [{ archived: true }]
         }
       ]
     };
@@ -40,12 +40,7 @@ const getRecepientRequests = (recepientID, status, callback) => {
       $and: [
         { recepientID: recepientID },
         {
-          $or: [
-            { status: "pending" },
-            { status: "denied" },
-            { status: "cancelled" },
-            { status: "approved" }
-          ]
+          $nor: [{ archived: true }]
         }
       ]
     };
@@ -100,7 +95,9 @@ const approveRequest = (requestID, callback) => {
     if (findErr) {
       callback(findErr, null);
     } else {
-      if (findResult.status != "pending") {
+      if (findResult.archived) {
+        callback("Ride has already been archived");
+      } else if (findResult.status != "pending") {
         callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(
@@ -130,7 +127,9 @@ const cancelRequest = (requestID, callback) => {
     if (findErr) {
       callback(findErr, null);
     } else {
-      if (findResult.status != "pending") {
+      if (findResult.archived) {
+        callback("Ride has already been archived");
+      } else if (findResult.status != "pending") {
         callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(
@@ -160,7 +159,9 @@ const denyRequest = (requestID, callback) => {
     if (findErr) {
       callback(findErr, null);
     } else {
-      if (findResult.status != "pending") {
+      if (findResult.archived) {
+        callback("Ride has already been archived");
+      } else if (findResult.status != "pending") {
         callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(
@@ -180,10 +181,25 @@ const denyRequest = (requestID, callback) => {
   });
 };
 
-// archiveRequest sets a specified request status to 'archived'
+// archiveRequest sets a specified request archived field to true
 const archiveRequest = (requestID, callback) => {
   const filter = { _id: requestID };
-  const update = { $set: { status: "archived" } };
+  const update = { $set: { archived: true } };
+  const options = { new: true };
+
+  Request.findOneAndUpdate(filter, update, options, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
+// archiveRequest sets a specified request archived field to false
+const unarchiveRequest = (requestID, callback) => {
+  const filter = { _id: requestID };
+  const update = { $set: { archived: false } };
   const options = { new: true };
 
   Request.findOneAndUpdate(filter, update, options, (err, result) => {
@@ -214,5 +230,6 @@ module.exports = {
   cancelRequest,
   denyRequest,
   archiveRequest,
+  unarchiveRequest,
   deleteRequest
 };

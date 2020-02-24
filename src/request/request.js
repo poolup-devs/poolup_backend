@@ -8,6 +8,10 @@ const requestSchema = mongoose.Schema({
     type: String,
     default: "pending"
   },
+  archived: {
+    type: Boolean,
+    default: false
+  },
   luggage: Number,
   msg: String,
   date: Date

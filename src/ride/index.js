@@ -119,20 +119,29 @@ router.put("/rides/cancel-ride", checkAuth, (req, res) => {
   });
 });
 
-//Delete a ride
-router.delete("/rides/delete-ride", checkAuth, (req, res) => {
-  const ride = req.body.ride;
-  const authUsername = tokenParser(req.headers.authorization).username;
-  if (ride.ownerUsername !== authUsername) {
-    res.sendStatus(401);
-  }
-  db.rideDelete(ride._id, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(200).send(data);
-    }
-  });
+// Cancel a ride, whether the user is a rider or a driver 
+router.delete("/rides/cancel-ride", checkAuth, (req, res) => {
+  // should only be able to cancel a ride if a user is a passenger of the ride or a driver in the ride 
+  
+  // if passenger: 
+    // remove the passenger from the ride
+    // increment their # of cancelled rides 
+  // else (if driver)
+    // notify all the passengers that the rider has cancelled 
+    // delete the ride entirely 
+
+  // const ride = req.body.ride;
+  // const authUsername = tokenParser(req.headers.authorization).username;
+  // if (ride.ownerUsername !== authUsername) {
+  //   res.sendStatus(401);
+  // }
+  // db.deleteRide(ride._id, (err, data) => {
+  //   if (err) {
+  //     res.sendStatus(500);
+  //   } else {
+  //     res.status(200).send(data);
+  //   }
+  // });
 })
 
 router.get("/rides/get-rides-completed", async (req, res) => {

@@ -1,8 +1,7 @@
+const User = require('../user/user').User; 
 const Review = require('./review').Review; 
 const Ride = require('../ride/ride').Ride; 
 
-// Users require a certain minimum amount of ratings to calculate an average rating 
-const MIN_TO_DISPLAY_AVERAGE_RATING = 1
 
 // Create a new review with required properties: reviewer username, reviewee username, rating, and ride ID 
 const addNewReview = (reviewInfo) => {
@@ -16,7 +15,10 @@ const addNewReview = (reviewInfo) => {
                 
                 // prevent duplicate insertion if document already exists 
                 if (!(await Review.findOne({reviewerUsername, revieweeUsername, rideId}))) {
-                    const review = await new Review(reviewInfo).save() 
+                    const review = await new Review(reviewInfo).save()
+                    
+                    // Update the reviewee's rating 
+                    await User.findOneAndUpdate({username: review.revieweeUsername}, {$inc: {"rating.sumOfAllRatings": reviewInfo.rating, "rating.totalRatings": 1}}) 
                     resolve(review)
                 }
                 else {
@@ -26,7 +28,7 @@ const addNewReview = (reviewInfo) => {
             reject('Review must contain a reviewer username, reviewee username, rating, and associated ride ID') 
         }
         catch(e) {
-            reject('Could not add a new review to the database.') 
+            reject(e) 
         }
     })
 }
@@ -52,29 +54,6 @@ const declineReview = (reviewer, reviewee, rideId) => {
     })
 }
 
-// Get the average rating of a user, aggregated from all reviews received by the user 
-const getAverageRating = (username) => {
-    return new Promise(async (resolve, reject) => {
-        let totalRating = 0; 
-        try {
-            await Review.find({revieweeUsername : username, isDeclined: false}).then((reviews) => {  
-                if (reviews.length >= 1 && reviews.length >= MIN_TO_DISPLAY_AVERAGE_RATING) {
-                    reviews.forEach((review) => {
-                      totalRating = totalRating + review.rating; 
-                    }) 
-                    const averageRating = (totalRating / reviews.length).toFixed(2)
-                    return resolve(averageRating)
-                }
-                else {
-                    return reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " rating(s) to display an average rating!"); 
-                }   
-            })
-        }
-        catch(err) {
-            return reject("Could not retrieve all reviews left for user.")
-        }
-    })
-}; 
 
 // Get all the reviews received by a user 
 const getUserReviews = (username, pageNumber) => {
@@ -156,7 +135,6 @@ module.exports = {
     addNewReview, 
     declineReview, 
     isExistingReview, 
-    getAverageRating, 
     getUserReviews, 
     getUsersToReviewFromLatestRide
 }; 

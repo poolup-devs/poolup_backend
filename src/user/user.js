@@ -24,6 +24,16 @@ const userSchema = mongoose.Schema({
   }, 
   aboutMe: String, 
   school: String,
+  rating: {
+    sumOfAllRatings: {
+      type: Number, 
+      default: 0 
+    }, 
+    totalRatings: {
+      type: Number, 
+      default: 0 
+    }, 
+  } 
 });
 
 userSchema.statics.setRandomBruinBear = function(username) {

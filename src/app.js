@@ -15,10 +15,12 @@ const userRouter = require("./user/index");
 const rideRouter = require("./ride/index");
 const notiRouter = require("./noti/index");
 const reviewRouter = require("./review/index"); 
+const requestRouter = require("./request/index");
 
 app.use(userRouter);
 app.use(rideRouter);
 app.use(notiRouter);
 app.use(reviewRouter);
+app.use(requestRouter);
 
 module.exports = app 

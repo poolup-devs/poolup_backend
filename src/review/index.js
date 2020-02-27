@@ -41,17 +41,6 @@ router.get("/reviews", async (req, res) => {
     }
 }) 
   
-// Get the average rating of a user 
-router.get("/reviews/rating", async (req, res) => {
-    try {
-        const averageRating = await db.getAverageRating(req.query.username)
-        res.status(200).send({averageRating})
-    }
-    catch(e) {
-        res.status(404).send({error: e}) 
-    }
-})
-
 // Get a list of users that need to be reviewed using the currently logged in account 
 router.get("/reviews/get-eligible-users-to-review", checkAuth, async (req, res) => {
     try {

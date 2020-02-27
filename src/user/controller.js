@@ -1,6 +1,10 @@
 const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
+const Review = require('../review/review').Review; 
+
+// Users require a certain minimum amount of ratings to calculate an average rating 
+const MIN_TO_DISPLAY_AVERAGE_RATING = 1
 
 // For email parsing 
 const mongoose = require('mongoose')
@@ -273,6 +277,31 @@ const parseEmailForSchool = (schoolEmail) => {
     }) 
   })
 }
+// Get the average rating of a user, aggregated from all reviews received by the user 
+const getAverageRating = (username) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await User.findOne({username}, (err, user) => {
+        if (!user) {
+          return reject("User does not exist in the database") 
+        }
+        const {sumOfAllRatings, totalRatings} = user.rating 
+
+        // minimum is set to 1 (at least for now)
+        if (totalRatings >= MIN_TO_DISPLAY_AVERAGE_RATING) {
+          const averageRating = (sumOfAllRatings/totalRatings).toFixed(2)
+          resolve(averageRating)
+        }
+        else {
+          return reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " rating(s) to display an average rating!"); 
+        }  
+      }) 
+    }
+    catch(e) {
+      return reject("Could not retrieve all reviews left for user.")
+    }
+  })
+}; 
 
 module.exports = {
   checkAvailability,
@@ -292,4 +321,5 @@ module.exports = {
   passwordReset, 
   updateAboutMe,
   parseEmailForSchool, 
+  getAverageRating, 
 };

@@ -4,6 +4,7 @@ require('../../src/db/mongoose');
 const db = require('../../src/review/controller'); 
 const Review = require('../../src/review/review').Review
 const Ride = require('../../src/ride/ride').Ride
+const User = require('../../src/user/user').User
 const jwt = require("jsonwebtoken");
 
 const app = require('../../src/app')
@@ -42,34 +43,6 @@ describe("Testing rating system operations", () => {
 
     afterEach(() => {
         return Review.deleteMany() 
-    })
-
-    describe("Test the retrieval of a user's average rating", () => {
-        test("Correctly calculates the average rating of a user with 3 reviews.", async () => {
-            expect.assertions(1);
-            const expectedRating = ((testReview1.rating + testReview2.rating + testReview3.rating) / 3).toFixed(2)
-            return db.getAverageRating(testRevieweeUsername).then((rating) => {
-                expect(rating).toBe(expectedRating);
-            })
-        }, 30000)
-
-        test("Correctly does not include any reviews without any ratings (those that declined to review).", async () => {
-            const expectedRating = ((testReview1.rating + testReview2.rating + testReview3.rating) / 3).toFixed(2)
-            const declinedReview = await Review.create({reviewerUsername: 'user_who_declined_to_review', revieweeUsername: testRevieweeUsername, isDeclined: true, rating: 999})
-            return db.getAverageRating(testRevieweeUsername).then((rating) => {
-                expect(rating).toBe(expectedRating);
-            })
-        })
-
-        test("When retrieving the average rating of a user without at least 1 rating, should result in a rejected promise.", async () => {
-            expect.assertions(1)
-            try {
-                await db.getAverageRating('user_without_sufficient_reviews') 
-            }
-            catch(e) {
-                await expect(e).toBe("User must have at least 1 rating(s) to display an average rating!")
-            }
-        })
     })
         
     describe("Test the retrieval of all of a user's reviews", () => {
@@ -111,6 +84,9 @@ describe("Testing rating system operations", () => {
     })
 
     describe("Test operation to add a review to the database", () => {
+        afterEach(async () => {
+            await User.deleteMany({}) 
+        }) 
         test("A review without a required field, such as rideId, should error instead of creating the review.", async () => {
             try {
                 expect.assertions(1)
@@ -121,23 +97,33 @@ describe("Testing rating system operations", () => {
                 }) 
             } 
             catch(e) {
-                await expect(e).toMatch('Review must contain a reviewer username, reviewee username, rating, and associated ride ID') 
+                expect(e).toMatch('Review must contain a reviewer username, reviewee username, rating, and associated ride ID') 
             }
         })
 
-        test("Adding a review with all the required fields should create a new review document in the database.", async () => {
+        test("Adding a review with all the required fields should create a new review document in the database and update the rating field in User.", async () => {
             try {
+                const revieweeUsername = 'reviewee' 
+
+                // create a dummy user who receives the new review 
+                const userWhoReceivesReview = await User.create({username: revieweeUsername}); 
                 const reviewInfo = {
                     reviewerUsername: 'reviewer', 
-                    revieweeUsername: 'reviewee', 
+                    revieweeUsername, 
                     rating: 2, 
                     rideId: mongoose.Types.ObjectId() 
                 }
                 const newReview = await db.addNewReview(reviewInfo)
-                const {reviewerUsername, revieweeUsername, rating, rideId} = reviewInfo
-                await expect(newReview).toEqual(expect.objectContaining({
+                const {reviewerUsername, rating, rideId} = reviewInfo
+                expect(newReview).toEqual(expect.objectContaining({
                     reviewerUsername, revieweeUsername, rating, rideId
                 })) 
+
+                // check that the rating field is updated in the User model 
+                User.findOne({username: revieweeUsername}, (err, user) => {
+                    expect(user.rating.totalRatings).toBe(1)
+                    expect(user.rating.sumOfAllRatings).toBe(reviewInfo.rating) 
+                })
             } 
             catch(e) {
                 console.log(e)
@@ -269,20 +255,6 @@ describe("Testing rating system operations", () => {
                     rating: 3
                 })
                 .expect(200) 
-        })
-    
-        test("When requesting the average rating of a user that is in the database, should return 200 response code", async () => {
-            await request(app)
-                .get("/reviews/rating")
-                .query({username: testRevieweeUsername})
-                .expect(200)
-        })
-    
-        test("When requesting the average rating of a user that has no reviews, should return 404 response code", async () => {
-            await request(app)
-                .get("/reviews/rating")
-                .query({username: 'does_not_exist'})
-                .expect(404)
         })
     
         test("When requsting all the reviews left for a user, should expect 200 response code.", async () => {

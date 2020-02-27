@@ -50,11 +50,11 @@ describe('Testing users with unverified accounts', () => {
         email: "unverifiedUser@g.ucla.edu"
     }) 
 
-    beforeEach(() => {
-        return new User(unverifiedUser).save() 
+    beforeEach(async () => {
+        await new User(unverifiedUser).save() 
     })
-    afterEach(() => {
-        return User.deleteMany() 
+    afterEach(async () => {
+        await User.deleteMany() 
     })
 
     test("When logging in on an account that has not been verified, should return an unverified email error.", done => {
@@ -106,15 +106,16 @@ describe('Testing users with verified accounts', () => {
         aboutMe: "This was my old about me.",
         verified: true 
     })
+
     const verifiedUserEmailAuthToken = jwt.sign({ email: verifiedUser.email }, process.env.JWT_EMAIL_KEY, { expiresIn: "24h"});
     const verifiedUserUsernameAuthToken = jwt.sign({ username: verifiedUser.username }, process.env.JWT_SECRET_KEY);
 
-    beforeEach(() => {
-        return new User(verifiedUser).save() 
+    beforeEach(async () => {
+        await new User(verifiedUser).save()
     })
 
-    afterEach(() => {
-        return User.deleteMany() 
+    afterEach(async () => {
+        await User.deleteMany() 
     })
 
     describe("Testing signup/login/authentication functionality", () => {
@@ -136,6 +137,146 @@ describe('Testing users with verified accounts', () => {
                 done()
             }) 
         }) 
+    }) 
+
+    test("When requesting account information using a valid username, response should return an object with properties: username, name, email, createdAt, and picUrl", done => {
+        db.getMyInfo(verifiedUser.username, (err, result) => {
+            expect(err).toEqual(null) 
+            const {username, name, email, picUrl, createdAt} = verifiedUser 
+            expect(result).toEqual(expect.objectContaining({
+                username, name, email, picUrl, createdAt
+            }))
+            done() 
+        })
+    })
+
+    test("When requesting account information using an invalid username, the response should be an error", done => {
+        db.getMyInfo('invalidUsername', (err, result) => {
+            expect(err).toEqual({message: "ERROR: username not found"}) 
+            expect(result).toEqual(null) 
+            done() 
+        })
+    })
+
+    test("When updating a user's profile pic, should set user's picUrl and picType", done => {
+        db.uploadPicUrl('verifiedUser', 'somePicUrl', 'somePicType', (err, result) => {
+            expect(result).toEqual(expect.objectContaining({
+                picUrl: 'somePicUrl', 
+                picType: 'somePicType' 
+            }))
+            done() 
+        })
+    })
+
+    test("When retrieving a user's profile pic url using an invalid username, the response should be an error", done => {
+        db.getPicUrl('invalidUsername', (err, result) => {
+            expect(err).toEqual({message: "ERROR: no result; potentially wrong username"})
+            done() 
+        })
+    }) 
+
+    test("When retrieving a user's profile pic url that has not been set, the response should be an error", done => {
+        db.getPicUrl(verifiedUser.username, (err, result) => {
+            expect(err).toEqual({message: "ERROR: user's profile picture undefined"})
+            done() 
+        })
+    }) 
+
+    test("When retrieving a user's profile pic url using a valid username, should receive it.", done => {
+        const {name, password, email, verified} = verifiedUser 
+        const verifiedUserWithProfilePic = new User({
+            name, username: 'verifiedUserWithPicUrl', password, email, verified, picUrl: 'testUrl'
+        }) 
+        verifiedUserWithProfilePic.save((err) => {
+            db.getPicUrl(verifiedUserWithProfilePic.username, (err, result) => {
+                expect(result).toEqual('testUrl')
+                done() 
+            })
+        })
+    }) 
+
+    test("When updating a user's name or phone number, should set the corresponding user's name and phone number fields", done => {
+        const updates = {
+            phoneNumber: '1231231234', name: 'New Name'
+        } 
+        db.updateUser(verifiedUser.username, updates, (err, result) => {
+            expect(result).toEqual(expect.objectContaining({
+                phoneNumber: updates.phoneNumber,
+                name: updates.name 
+            }))
+            done() 
+        }) 
+    })
+
+    test("When deleting a user, should delete all instances of that user in User, Ride, and Noti", done => {
+        const {username} = verifiedUser 
+        Ride.create({ownerUsername: username}).then(
+            Noti.create({username}).then(
+                db.deleteUser(username, (err, result) => {
+                    Ride.findOne({ownerUsername: username}, (err, result) => {
+                        expect(result).toEqual(null) 
+                        Noti.findOne({username}, (err, result) => {
+                            expect(result).toEqual(null)
+                            User.findOne({username}, (err, result) => {
+                                expect(result).toEqual(null) 
+                                done()
+                            })
+                        })
+                    }) 
+                }) 
+            )
+        )
+    })
+
+    test("When reseting a user's password, should update the user's password field to the new password.", done => {
+        const newPassword = sha256('newPassword') 
+        db.passwordReset(verifiedUser.username, newPassword, (err, result) => {
+            expect(result).toEqual(expect.objectContaining({
+                password: newPassword
+            }))
+            done() 
+        })
+    }) 
+
+    describe("Test the retrieval of a user's average rating", () => {
+        const testRevieweeUsername = "test_username"
+        const test_reviewee = new User({username: testRevieweeUsername, rating: {sumOfAllRatings: 5, totalRatings: 2}})
+        
+        beforeEach(async () => {
+            await new User(test_reviewee).save() 
+        })
+        afterEach(async () => {
+            await User.deleteMany({})
+        })
+    
+        describe("Test the retrieval of a user's average rating", () => {
+            test("Correctly calculates the average rating of a user with 3 reviews.", async () => {
+                const {sumOfAllRatings, totalRatings} = test_reviewee.rating 
+                const expectedRating = (sumOfAllRatings / totalRatings).toFixed(2)
+                return db.getAverageRating(testRevieweeUsername).then((rating) => {
+                    expect(rating).toBe(expectedRating);
+                })
+            })
+
+            test("When requesting the average rating of a user that is in the database, should return 200 response code", async () => {
+                await request(app)
+                    .get("/users/get-rating")
+                    .query({username: testRevieweeUsername})
+                    .expect(200)
+            })
+        
+            test("When requesting the average rating of a user that has no reviews, should return 404 response code", async () => {
+                await request(app)
+                    .get("/users/get-rating")
+                    .query({username: 'does_not_exist'})
+                    .expect(404)
+            })
+        })
+    })
+
+
+
+    describe("Testing endpoints", () => {
         test("When sending an POST request to /users/login for a user with invalid password, should expect a 401 authentication error response back.", async () => {
             await request(app)
                 .post('/users/login')
@@ -498,6 +639,8 @@ describe('Testing users with verified accounts', () => {
         })
     })
 })
+
+
 
 
 

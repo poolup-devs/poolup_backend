@@ -17,6 +17,8 @@ const tokenParser = require("../utils/token-parser.js");
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const ACCEPTED_EMAIL = process.env.ACCEPTED_EMAIL;
+
 
 sgMail.setApiKey(SENDGRID_API_KEY);
 
@@ -42,22 +44,22 @@ router.post("/users/login", (req, res) => {
 //User Signup
 router.post("/users/signup", (req, res) => {
   req.body.password = sha256(req.body.password);
-  const ucla_email = req.body.username + "@g.ucla.edu";
-  db.checkAvailability(ucla_email, req.body.username, (err, result) => {
+  const accepted_email = req.body.username.toLowerCase() + process.env.ACCEPTED_EMAIL;
+  db.checkAvailability(accepted_email, req.body.username, (err, result) => {
     if (err) {
       res.sendStatus(500);
     } else {
       if (result.length === 0) {
-        db.signup(req.body, ucla_email, (err, result) => {
+        db.signup(req.body, accepted_email, (err, result) => {
           if (err) {
             res.sendStatus(500);
           } else {
-            const token = jwt.sign({ email: ucla_email }, JWT_EMAIL_KEY, {
+            const token = jwt.sign({ email: accepted_email }, JWT_EMAIL_KEY, {
               expiresIn: "24h" //24 hours
             });
-            var url = "restapi.poolup.co/users/verify?token=" + token;
+            var url = "restapi." + process.env.PRODUCTION_DOMAIN_URL + "/users/verify?token=" + token;
             var email = {
-              to: ucla_email,
+              to: accepted_email,
               from: "pool-up@outlook.com",
               templateId: "d-0d8dff79ca8e4d0e8b4b9b1b12038a62",
               dynamic_template_data: {
@@ -67,13 +69,13 @@ router.post("/users/signup", (req, res) => {
               }
             };
             if (process.env.MODE === "STAGING") {
-              url = "localhost:3006/users/verify?token=" + token;
+              url = "localhost:"+process.env.PORT+"/users/verify?token=" + token;
               var email = {
-                to: ucla_email,
+                to: accepted_email,
                 from: "pool-up@outlook.com",
                 subject: "PoolUp: Email Verification Required",
                 text: "Here's the link",
-                html: "Token: <br>" + token +"<br>Link for local dev: " + url
+                html: "<br>Link for local dev: <br>" + url
               };
             }
             sgMail
@@ -104,7 +106,7 @@ router.get("/users/verify", (req, res) => {
       if (err) {
         res.status(400).send(err);
       } else {
-        res.redirect("https://poolup.co/login");
+        res.redirect("https://"+ process.env.PRODUCTION_DOMAIN_URL+ "/login");
       }
     });
   } catch (err) {
@@ -117,11 +119,7 @@ router.get("/users/emailValidation", (req, res) => {
   db.findUserByEmail(req.query.email, (err, data) => {
     if (err) {
       res.sendStatus(500);
-    }
-    else if (data.length === 0) {
-      res.sendStatus(404); 
-    }
-    else {
+    } else {
       res.status(200).send(data);
     }
   });
@@ -132,11 +130,7 @@ router.get("/users/usernameValidation", (req, res) => {
   db.findUserByUsername(req.query.username, (err, data) => {
     if (err) {
       res.sendStatus(500);
-    }
-    else if (data.length === 0) {
-      res.sendStatus(404); 
-    }
-    else {
+    } else {
       res.status(200).send(data);
     }
   });
@@ -148,11 +142,7 @@ router.get("/users/phoneNumberValidation", (req, res) => {
   db.findUserByPhoneNumber(req.query.phoneNumber, (err, data) => {
     if (err) {
       res.sendStatus(500);
-    } 
-    else if (data.length === 0) {
-      res.sendStatus(404); 
-    }
-    else {
+    } else {
       res.status(200).send(data);
     }
   });
@@ -327,5 +317,17 @@ router.patch("/users/updateAboutMe", checkAuth, async (req, res) => {
     res.status(500).send(e)
   }
 })
+
+// Get the average rating of a user 
+router.get("/users/get-rating", async (req, res) => {
+  try {
+      const averageRating = await db.getAverageRating(req.query.username)
+      res.status(200).send({averageRating})
+  }
+  catch(e) {
+    res.status(404).send({error: e}) 
+  }
+})
+
 
 module.exports = router;

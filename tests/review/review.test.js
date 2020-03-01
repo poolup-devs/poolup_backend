@@ -260,14 +260,14 @@ describe("Testing rating system operations", () => {
         test("When requsting all the reviews left for a user, should expect 200 response code.", async () => {
             await request(app)
                 .get('/reviews') 
-                .query({username: testRevieweeUsername})
+                .query({username: testRevieweeUsername, pageNum: 0})
                 .expect(200)
         })
 
         test("When requsting all the reviews left for a user with no reviews, should expect 200 response code still.", async () => {
             await request(app)
                 .get('/reviews') 
-                .query({username: 'user_that_does_not_exist'})
+                .query({username: 'user_that_does_not_exist', pageNum: 0})
                 .expect(200)
         })
 

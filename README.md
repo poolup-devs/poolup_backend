@@ -1225,11 +1225,11 @@ POST request
 ---
 ### Get all reviews
 GET request 
-- Get all reviews received by a user 
+- Get all reviews received by a user with pagination beginning with 0  
 
 **params/body** 
 
-username 
+username, pageNum 
 
 **example**
 
@@ -1237,7 +1237,7 @@ localhost:3000/reviews?username=elin4046
 
 **return value** 
 
-- 200 status code - A list of review documents made to the user, empty [] if none exist.  
+- 200 status code - A list of review documents made to the user, empty [] if none exist. 
 
 ```
 [

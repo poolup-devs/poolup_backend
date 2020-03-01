@@ -1,6 +1,8 @@
 const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
+var schedule = require('node-schedule');
+
 
 
 ///////////////////////////////////////////////////////////////
@@ -139,10 +141,32 @@ const postRide = (rideInfo, callback) => {
     if (err) {
       callback(err, null);
     } else {
+      // Schedule a job that updates the number of completed rides for each user in the carpool 
+      // Scheduled job will occur two hours after the carpool begins 
+      var scheduledDate = new Date(rideInfo.date)
+      scheduledDate.setHours(scheduledDate.getHours() + 2)      
+
+      var job = schedule.scheduleJob(scheduledDate, updateCompletedRidesTask(result._id)) 
       callback(null, result);
     }
   });
 };
+
+const updateCompletedRidesTask = (rideId) => {
+  return async function(){
+    const completedRide = await Ride.findById(rideId)
+    // At least a single passenger on the completed ride  
+    if (completedRide.passengers.length > 0) {
+      // Update the driver's number of completed rides based on the number of passengers dropped off 
+      await User.findOneAndUpdate({username: completedRide.ownerUsername},  {$inc: {ridesCompleted: completedRide.passengers.length}})
+
+      // Update each passenger's number of completed rides by 1 
+      completedRide.passengers.forEach(async (passenger) => {
+        await User.findOneAndUpdate({username: passenger}, {$inc: {ridesCompleted: 1}})
+      })
+    }
+  }
+}
 
 // const fetchMore = (multiplier, callback) => {
 //   Ride.find({}, (err, result) => {
@@ -200,17 +224,15 @@ const cancelRide = (rideId, username, messageToDriver) => {
           date: new Date() 
         })
       })
-
       // Delete the ride 
       await Ride.deleteOne({_id: rideId})
-
       // There are no passengers in the ride, so the driver can freely cancel without penalties 
       if (cancelledRideDoc.passengers.length === 0) {
         return resolve("Driver cancelled ride without penalty because there were no passengers.") 
       }
       else {
         // Increment the user's number of cancelled rides 
-        await User.updateOne({username}, {$inc: {cancelledRides: 1}})
+        await User.updateOne({username}, {$inc: {ridesCancelled: 1}})
         return resolve("Driver cancelled ride and received a penalty because there were passengers.")
       }
     }
@@ -231,7 +253,7 @@ const cancelRide = (rideId, username, messageToDriver) => {
       await cancelledRideDoc.save() 
       
       // Increment the user's number of cancelled rides 
-      await User.updateOne({username}, {$inc: {cancelledRides: 1}}) 
+      await User.updateOne({username}, {$inc: {ridesCancelled: 1}}) 
       return resolve("Passenger cancelled ride and received a penalty.")
     }
 
@@ -249,19 +271,6 @@ const rideDelete = (_id, callback) => {
   });
 };
 
-
-// Get user's number of rides completed 
-const getRidesCompleted = (username) => {
-  return new Promise(async (resolve, reject) => {
-    Ride.find({$or: [{passengers: username}, {ownerUsername: username}], "passengers.0": {"$exists": true}, date: { $lt: new Date() } }, async (err, ridesCompleted) => {
-      if (err) {
-        return reject("Error while querying a user's number of completed rides")
-      }
-      resolve(ridesCompleted.length) 
-    }) 
-  })
-}
-
 module.exports = {
   getMatchingRides,
   getRideHistory,
@@ -273,5 +282,6 @@ module.exports = {
   joinRide,
   cancelRide,
   rideDelete, 
-  getRidesCompleted,
+  // Testing purposes
+  updateCompletedRidesTask, 
 };

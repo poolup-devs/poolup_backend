@@ -303,6 +303,22 @@ const getAverageRating = (username) => {
   })
 }; 
 
+// Get number of completed rides 
+const getCompletedRides = (username) => {
+  return new Promise(async (resolve, reject) => {
+    const user = await User.findOne({username})
+    resolve(user.ridesCompleted)
+  })
+}
+
+// Get number of cancelled rides 
+const getCancelledRides = (username) => {
+  return new Promise(async (resolve, reject) => {
+    const user = await User.findOne({username})
+    resolve(user.ridesCancelled)
+  })
+}
+
 module.exports = {
   checkAvailability,
   login,
@@ -322,4 +338,6 @@ module.exports = {
   updateAboutMe,
   parseEmailForSchool, 
   getAverageRating, 
+  getCompletedRides,
+  getCancelledRides,
 };

@@ -15,7 +15,8 @@ const userSchema = mongoose.Schema({
   // Personal information  
   aboutMe: String, 
   school: String,
-  cancelledRides: { type: Number, default: 0 }, 
+  ridesCancelled: { type: Number, default: 0 }, 
+  ridesCompleted: {type: Number, default: 0},
   rating: {
     sumOfAllRatings: { type: Number, default: 0 }, 
     totalRatings: { type: Number, default: 0 }, 

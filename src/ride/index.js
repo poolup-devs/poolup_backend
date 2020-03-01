@@ -117,16 +117,5 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
   }
 });
 
-router.get("/rides/get-rides-completed", async (req, res) => {
-  const username = req.query.username 
-  try {
-    const ridesCompleted = await db.getRidesCompleted(username)
-    res.status(200).send({ridesCompleted})
-  }
-  catch(e) {
-    console.log(e) 
-    res.status(500).send({error: e})
-  }
-})
 
 module.exports = router;

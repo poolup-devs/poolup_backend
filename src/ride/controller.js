@@ -1,5 +1,7 @@
 const Ride = require("./ride").Ride;
-const Noti = require("../noti/noti.js").Noti;
+const Noti = require("../noti/noti").Noti;
+const User = require("../user/user").User;
+
 
 ///////////////////////////////////////////////////////////////
 ///////////GET RIDES///////////////////////////////////////////
@@ -182,32 +184,60 @@ const joinRide = (ownerUsername, ride_id, passengerUsername, callback) => {
   );
 };
 
-const cancelRide = (ownerUsername, ride_id, passengerUsername, callback) => {
-  const noti = {
-    username: ownerUsername,
-    msg: `${passengerUsername} has cancelled your ride`,
-    passengerEmail: passengerUsername + process.env.ACCEPTED_EMAIL,
-    date: new Date()
-  };
-  Ride.findOneAndUpdate(
-    { _id: ride_id },
-    { $pull: { passengers: passengerUsername }, $inc: { seats: 1 } },
-    { new: true },
-    (err1, result1) => {
-      if (err1) {
-        callback(err1, null);
-      } else {
-        Noti.create(noti, (err2, result2) => {
-          if (err2) {
-            callback(err2, null);
-          } else {
-            callback(null, result1);
-          }
-        });
+// Cancel a ride, whether the user was a driver or passenger
+const cancelRide = (rideId, username, messageToDriver) => {
+  return new Promise(async (resolve, reject) => {
+    const cancelledRideDoc = await Ride.findOne({_id: rideId}) 
+
+    // Driver cancellation 
+    if (username === cancelledRideDoc.ownerUsername) {
+      // Notify all passengers that the ride has been cancelled 
+      cancelledRideDoc.passengers.forEach(async passengerUsername => {
+        await Noti.create({
+          username: passengerUsername, 
+          msg: `${username} has cancelled your ride`, 
+          senderEmail: username + "@" + process.env.ACCEPTED_EMAIL, 
+          date: new Date() 
+        })
+      })
+
+      // Delete the ride 
+      await Ride.deleteOne({_id: rideId})
+
+      // There are no passengers in the ride, so the driver can freely cancel without penalties 
+      if (cancelledRideDoc.passengers.length === 0) {
+        return resolve("Driver cancelled ride without penalty because there were no passengers.") 
+      }
+      else {
+        // Increment the user's number of cancelled rides 
+        await User.updateOne({username}, {$inc: {cancelledRides: 1}})
+        return resolve("Driver cancelled ride and received a penalty because there were passengers.")
       }
     }
-  );
-};
+
+    // Passenger cancellation 
+    if (cancelledRideDoc.passengers.includes(username)) {
+      // Notify driver of passenger cancellation 
+      await Noti.create({
+        username: cancelledRideDoc.ownerUsername,
+        msg: `${username} has cancelled your ride\nReason for cancellation: ${messageToDriver}`,
+        senderEmail: username + "@" + process.env.ACCEPTED_EMAIL,
+        date: new Date()
+      })
+      
+      // Remove the passenger from the list of passengers and free up a spot 
+      cancelledRideDoc.passengers.splice(cancelledRideDoc.passengers.indexOf(username))
+      cancelledRideDoc.seats++; 
+      await cancelledRideDoc.save() 
+      
+      // Increment the user's number of cancelled rides 
+      await User.updateOne({username}, {$inc: {cancelledRides: 1}}) 
+      return resolve("Passenger cancelled ride and received a penalty.")
+    }
+
+    return reject("User is not a driver or passenger of this ride.")
+  })
+}
 
 const rideDelete = (_id, callback) => {
   Ride.deleteOne({ _id }, (err, result) => {

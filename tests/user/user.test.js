@@ -332,7 +332,6 @@ describe('Testing users with verified accounts', () => {
             expect(ucla2).toBe('UCLA')
             expect(ucsb).toBe('UCSB')
         })
-
         test("When parsing an edu email not found in the database, should return an error", async () => {
             try {
                 expect.assertions(1)
@@ -342,6 +341,7 @@ describe('Testing users with verified accounts', () => {
                 expect(e).toBe('School is not yet approved')
             }
         })
+
 
         test("When requesting account information using a valid username, response should return an object with properties: username, name, email, createdAt, and picUrl", done => {
             db.getMyInfo(verifiedUser.username, (err, result) => {
@@ -353,7 +353,6 @@ describe('Testing users with verified accounts', () => {
                 done() 
             })
         })
-    
         test("When requesting account information using an invalid username, the response should be an error", done => {
             db.getMyInfo('invalidUsername', (err, result) => {
                 expect(err).toEqual({message: "ERROR: username not found"}) 
@@ -367,7 +366,6 @@ describe('Testing users with verified accounts', () => {
                 .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
                 .expect(200) 
         })
-
     })
 
     describe("Testing uploading/retrieval of a user's profile picture", () => {
@@ -638,6 +636,7 @@ describe('Testing users with verified accounts', () => {
                 .expect(200) 
         })
     })
+
 })
 
 

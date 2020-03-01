@@ -1,7 +1,6 @@
 const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
-const Review = require('../review/review').Review; 
 
 // Users require a certain minimum amount of ratings to calculate an average rating 
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1
@@ -303,19 +302,23 @@ const getAverageRating = (username) => {
   })
 }; 
 
-// Get number of completed rides 
-const getCompletedRides = (username) => {
+// Get public profile information 
+const getPublicProfileInfo = (username) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({username})
-    resolve(user.ridesCompleted)
-  })
-}
-
-// Get number of cancelled rides 
-const getCancelledRides = (username) => {
-  return new Promise(async (resolve, reject) => {
-    const user = await User.findOne({username})
-    resolve(user.ridesCancelled)
+    if (!user) {
+      reject("User could not be found!")
+    }
+    const {name, picUrl, picType, aboutMe, school, ridesCancelled, ridesCompleted} = user 
+    const pageZeroOfReviews = await require('../review/controller').getUserReviews(username, 0)
+    try {
+      var rating = await getAverageRating(username)
+    }
+    catch(e) {
+      // Ommit rating if it cannot be calculated due to not having any reviews 
+      resolve({picUrl, picType, name, school, ridesCompleted, ridesCancelled, aboutMe, reviews: pageZeroOfReviews}) 
+    }
+    resolve({picUrl, picType, name, school, rating, ridesCompleted, ridesCancelled, aboutMe, reviews: pageZeroOfReviews}) 
   })
 }
 
@@ -338,6 +341,5 @@ module.exports = {
   updateAboutMe,
   parseEmailForSchool, 
   getAverageRating, 
-  getCompletedRides,
-  getCancelledRides,
+  getPublicProfileInfo,
 };

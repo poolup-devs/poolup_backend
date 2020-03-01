@@ -329,5 +329,16 @@ router.get("/users/get-rating", async (req, res) => {
   }
 })
 
+// Get public user profile info
+router.get("/users/get-public-user-profile", async (req, res) => {
+  try {
+    const publicProfileInfo = await db.getPublicProfileInfo(req.query.username)
+    res.status(200).send(publicProfileInfo)
+  }
+  catch(e) {
+    res.status(404).send({error: e})
+  }
+})
+
 
 module.exports = router;

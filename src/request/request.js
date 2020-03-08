@@ -12,6 +12,10 @@ const requestSchema = mongoose.Schema({
     type: Boolean,
     default: false
   },
+  reminders: {
+    type: Number,
+    default: 1
+  },
   luggage: Number,
   msg: String,
   date: Date

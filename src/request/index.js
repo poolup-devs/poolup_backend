@@ -141,4 +141,17 @@ router.delete("/request/delete", (req, res) => {
   });
 });
 
+// Remind a Receiver
+router.delete("/request/remind", (req, res) => {
+  const requestID = req.body.requestID;
+
+  // Grab request details
+
+  // send notification
+
+  // reduce request value by 1
+
+  res.sendStatus(200);
+});
+
 module.exports = router;

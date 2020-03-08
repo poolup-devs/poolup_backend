@@ -340,6 +340,7 @@ POST request
 	"email": "user@ucla.edu"
 	"username":"exampleUsername",
 	"password": "examplePassword",
+    "name": "First Last"
 }
 ```
 **return value**
@@ -961,6 +962,9 @@ localhost:3000/rides/drives-upcoming?pageNum=0&username=bin315a1
 ### Post a Ride
 
 POST request
+
+- Creates a new ride document. 
+- Schedules a task to occur two hours after the start of a ride that updates the driver and passenger's ``ridesCompleted`` property. 
 
 **body**
 

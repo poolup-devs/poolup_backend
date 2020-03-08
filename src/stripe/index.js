@@ -2,6 +2,7 @@ const express = require("express");
 const router = new express.Router();
 
 const checkAuth = require("../middleware/jwt_authenticator.js");
+const querystring = require("querystring");
 const tokenParser = require("../utils/token-parser.js");
 const bodyParser = require("body-parser");
 const handlePaymentIntentSucceeded = require("./tool/payment-handler.js")
@@ -11,6 +12,28 @@ const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
 const rideDB = require("../ride/controller.js");
 const userDB = require("../user/controller.js");
 const TransferDB = require("./transfer/controller.js");
+
+router.get("/stripe/driver/auth", (req, res) => {
+  //Generate a random string as `state` to protect from CSRF and include it in the session
+  // req.session.state = Math.random()
+  //   .toString(36)
+  //   .slice(2);
+
+  let parameters = {
+    client_id: process.env.STRIPE_CLIENT_ID
+    // state: req.session.state
+  };
+
+  parameters = Object.assign(parameters, {
+    redirect_uri: "localhost:3006/driver"
+  });
+
+  res.send({
+    redirectUrl:
+      "https://connect.stripe.com/express/oauth/authorize?" +
+      querystring.stringify(parameters)
+  });
+});
 
 // Send back Stripe Public Key
 router.get("/stripe/public-key", (req, res) => {

@@ -105,15 +105,22 @@ router.put("/rides/join-ride", checkAuth, (req, res) => {
 //Cancel a Ride
 router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
   const ride = req.body.ride;
-  const messageToDriver = req.body.message
+  const cancellationReason = req.body.cancellationReason
+  if (req.body.messageToDriver) {
+    var messageToDriver = req.body.messageToDriver
+  }
+  else {
+    var messageToDriver = null
+  }
+
   const authUsername = tokenParser(req.headers.authorization).username;
 
   try {
-    const msg = await db.cancelRide(ride._id, authUsername, messageToDriver)
+    const msg = await db.cancelRide(ride._id, authUsername, cancellationReason, messageToDriver)
     res.status(200).send(msg)
   }
   catch(e) {
-    res.status(500).send({err: e})
+    res.status(500).send({error: e})
   }
 });
 

@@ -210,7 +210,7 @@ const joinRide = async (ownerUsername, ride_id, passengerUsername, callback) => 
 };
 
 // Cancel a ride, whether the user was a driver or passenger
-const cancelRide = (rideId, username, messageToDriver) => {
+const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
   return new Promise(async (resolve, reject) => {
     const cancelledRideDoc = await Ride.findOne({_id: rideId}) 
     if (!cancelledRideDoc) {
@@ -222,13 +222,18 @@ const cancelRide = (rideId, username, messageToDriver) => {
     if (username === cancelledRideDoc.ownerUsername) {
       // Notify all passengers that the ride has been cancelled 
       cancelledRideDoc.passengers.forEach(async passengerUsername => {
-        await Noti.create({
+        let noti = await Noti.create({
           username: passengerUsername, 
           msg: `${username} has cancelled your ride`, 
           senderEmail: user.email, 
           date: new Date() 
         })
+        // Update schema-less property: additionalProperties
+        noti.additionalProperties = {cancellationReason: cancellationReason}
+        noti.markModified('additionalProperties')
+        await noti.save() 
       })
+
       // Delete the ride 
       await Ride.deleteOne({_id: rideId})
       // There are no passengers in the ride, so the driver can freely cancel without penalties 
@@ -245,12 +250,18 @@ const cancelRide = (rideId, username, messageToDriver) => {
     // Passenger cancellation 
     if (cancelledRideDoc.passengers.includes(username)) {
       // Notify driver of passenger cancellation 
-      await Noti.create({
+      let noti = await Noti.create({
         username: cancelledRideDoc.ownerUsername,
-        msg: `${username} has cancelled your ride\nReason for cancellation: ${messageToDriver}`,
+        msg: `${username} has cancelled your ride`,
         senderEmail: user.email,
         date: new Date()
       })
+      // Update schema-less property: additionalProperties
+      // If messageToDriver was not specified, the field will be set to null 
+      noti.additionalProperties = {cancellationReason: cancellationReason, messageToDriver: messageToDriver}
+      noti.markModified('additionalProperties')
+      await noti.save() 
+
       
       // Remove the passenger from the list of passengers and free up a spot 
       cancelledRideDoc.passengers.splice(cancelledRideDoc.passengers.indexOf(username), 1)
@@ -287,6 +298,6 @@ module.exports = {
   joinRide,
   cancelRide,
   rideDelete, 
-  // Testing purposes
+  // Only for the testing suite
   updateCompletedRidesTask, 
 };

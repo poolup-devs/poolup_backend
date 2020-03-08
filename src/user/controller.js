@@ -6,9 +6,6 @@ const Review = require('../review/review').Review;
 // Users require a certain minimum amount of ratings to calculate an average rating 
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1
 
-// Users require a certain minimum amount of ratings to calculate an average rating 
-const MIN_TO_DISPLAY_AVERAGE_RATING = 1
-
 const mongoose = require('mongoose')
 const dataSchema = new mongoose.Schema({});
 const Schools = mongoose.model('Schools', dataSchema, 'schools');

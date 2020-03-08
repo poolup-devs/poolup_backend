@@ -18,33 +18,36 @@ describe("Testing Ride endpoints", () => {
         }) 
 
         test("Test cancellation of a ride with passengers as a driver", async () => {
-            const driver = await User.create({username: "driverUsername"})
+            const driver = await User.create({username: "driverUsername", email: "driverUsername@ucla.edu"})
             const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ["passenger1", "passenger2"]})
-            try {
-                await db.cancelRide(ride._id, "driverUsername")
+            
+            await db.cancelRide(ride._id, "driverUsername", "No longer traveling")
 
-                // Check whether ride was deleted 
-                const cancelledRide = await Ride.findById(ride._id) 
-                expect(cancelledRide).toBe(null)
+            // Check whether ride was deleted 
+            const cancelledRide = await Ride.findById(ride._id) 
+            expect(cancelledRide).toBe(null)
 
-                // Check incrementation of cancelled rides 
-                const user = await User.findById(driver._id)
-                expect(user.ridesCancelled).toBe(1)
+            // Check incrementation of cancelled rides 
+            const user = await User.findById(driver._id)
+            expect(user.ridesCancelled).toBe(1)
 
-                // Check creation of notification to each passenger
-                const noti1 = await Noti.findOne({username: "passenger1"})
-                expect(noti1).toBeTruthy()
+            // Check creation of notification to each passenger with expected properties 
+            const noti1 = await Noti.findOne({username: "passenger1"})
+            expect(noti1).toEqual(expect.objectContaining({
+                username: 'passenger1', msg: 'driverUsername has cancelled your ride' 
+            }))
+            expect(noti1.additionalProperties).toEqual({cancellationReason: 'No longer traveling'})
 
-                const noti2 = await Noti.findOne({username: "passenger2"})
-                expect(noti2).toBeTruthy()
-            }
-            catch(e) {
-                console.log(e)
-            }
+            const noti2 = await Noti.findOne({username: "passenger2"})
+            expect(noti2).toEqual(expect.objectContaining({
+                username: 'passenger2', msg: 'driverUsername has cancelled your ride' 
+            }))
+            expect(noti1.additionalProperties).toEqual({cancellationReason: 'No longer traveling'})
+
         })
 
         test("Test cancellation of a ride without passengers as a driver", async () => {
-            const driver = await User.create({username: "driverUsername"})
+            const driver = await User.create({username: "driverUsername", email: "driverUsername@ucla.edu"})
             const ride = await Ride.create({ownerUsername: "driverUsername"})
             try {
                 await db.cancelRide(ride._id, "driverUsername")
@@ -59,27 +62,25 @@ describe("Testing Ride endpoints", () => {
         })
 
         test("Test cancellation of a ride as a passenger", async () => {
-            const passenger = await User.create({username: "passenger1"})
+            const passenger = await User.create({username: "passenger1", email: 'passenger1@ucla.edu'})
             const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1', 'passenger2'], seats: 0})
-            try {
-                await db.cancelRide(ride._id, "passenger1", "Sorry I can't make it!!!")
+            await db.cancelRide(ride._id, "passenger1", "Other", "Sorry I can't make it!!!")
 
-                // Check whether a notification was sent to the driver 
-                const driverNoti = await Noti.findOne({username: 'driverUsername'})
-                expect(driverNoti).toBeTruthy()
+            // Check whether a notification was sent to the driver 
+            const driverNoti = await Noti.findOne({username: 'driverUsername'})
+            expect(driverNoti).toEqual(expect.objectContaining({
+                username: 'driverUsername', 'msg': 'passenger1 has cancelled your ride', senderEmail: 'passenger1@ucla.edu'
+            }))
+            expect(driverNoti.additionalProperties).toEqual({cancellationReason: 'Other', messageToDriver: "Sorry I can't make it!!!"})
 
-                // Check whether passenger was removed from ride 
-                const cancelledRide = await Ride.findById(ride._id) 
-                expect(cancelledRide.seats).toBe(1)
-                expect(Array.from(cancelledRide.passengers)).toEqual(['passenger2'])
-                
-                // Check incrementation of cancelled rides 
-                const user = await User.findById(passenger._id)
-                expect(user.ridesCancelled).toBe(1)
-            }
-            catch(e) {
-                console.log(e)
-            }
+            // Check whether passenger was removed from ride 
+            const cancelledRide = await Ride.findById(ride._id) 
+            expect(cancelledRide.seats).toBe(1)
+            expect(Array.from(cancelledRide.passengers)).toEqual(['passenger2'])
+            
+            // Check incrementation of cancelled rides 
+            const user = await User.findById(passenger._id)
+            expect(user.ridesCancelled).toBe(1)
         })
 
         test("Test error when trying to cancel a ride that the user does not belong to", async () => {
@@ -93,21 +94,38 @@ describe("Testing Ride endpoints", () => {
             }
         })
 
-        test("Expect a response code of 200 when cancelling a ride as a driver.", async () => {
+        test("Expect a response code of 200 when cancelling a ride as a passenger.", async () => {
+            const passenger = await User.create({username: "passenger1", email: 'passenger1@ucla.edu'})
             const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1'], seats: 1})
             const authToken = jwt.sign({ username: 'passenger1' }, process.env.JWT_SECRET_KEY);
 
             await request(app)
                 .put('/rides/cancel-ride')
                 .set('Authorization', 'Bearer ' + authToken)
-                .send({message: "I'm so sorry for cancelling on you! :(", ride})
+                .send({cancellationReason: "Change of travel plans", messageToDriver: "I'm so sorry for cancelling on you! :(", ride})
+                .expect(200) 
+        })
+
+        test("Expect a response code of 200 when cancelling a ride as a passenger.", async () => {
+            const driver = await User.create({username: "driverUsername", email: 'driver@ucla.edu'})
+            const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1'], seats: 1})
+            const authToken = jwt.sign({ username: 'driverUsername' }, process.env.JWT_SECRET_KEY);
+
+            await request(app)
+                .put('/rides/cancel-ride')
+                .set('Authorization', 'Bearer ' + authToken)
+                .send({cancellationReason: "Change of travel plans", ride})
                 .expect(200) 
         })
     }) 
 
     describe("Testing the update completed rides scheduled task", () => {
+        afterEach(async () => {
+            await Ride.deleteMany({})
+            await User.deleteMany({})
+        }) 
         test("Expect no updates to completed rides if there are no passengers in the ride", async () => {
-            const driver = await User.create({username: 'driverUsername'})
+            let driver = await User.create({username: 'driverUsername'})
             const ride = await Ride.create({ownerUsername: "driverUsername", passengers: [], seats: 0})
 
             await db.updateCompletedRidesTask(ride._id)()

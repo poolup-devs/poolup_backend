@@ -328,7 +328,7 @@ router.get("/users/get-rating", async (req, res) => {
 })
 
 // Get public user profile info
-router.get("/users/get-public-user-profile", async (req, res) => {
+router.get("/users/get-public-profile", async (req, res) => {
   try {
     const publicProfileInfo = await db.getPublicProfileInfo(req.query.username)
     res.status(200).send(publicProfileInfo)

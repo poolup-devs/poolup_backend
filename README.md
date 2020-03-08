@@ -278,8 +278,9 @@ Models:
 | /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
 | /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
+| /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
 | /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
-| /users/get-public-profile    | GET         | [Get user's public profile](#get-public-profile)
+| /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |
 
 ---
 
@@ -325,10 +326,11 @@ POST request
 		6. **Password too short** -> "Password must be at least 8 characters long!"  
 
 - Sends a confirmation email containing the following link: https://bruinpool.io/users/verify?token=TOKENATTACHEDHERE. The user must activate within **30 minutes** after signing up, or they must signup again.
-- The email is parsed to determine the school the user attends, and the `school` property is updated. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. 
-	- Reads from a Schools collection in the database that contains the two properties: emailDomain and school 
-		- eg. {"emailDomain": "ucla", "school": "UCLA"} will correctly identify the school for both example@g.ucla.edu and example@ucla.edu 
-	- Store the associations via a JSON file and import to the database via the mongoexport command 
+- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. 
+	- To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school 
+        - The associations can be stored in a JSON file and imported periodically to the database via the mongoexport command 
+		- Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"} 
+            - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu" 
 - A default profile pic of Bruinbear with random color is assigned
   
 
@@ -636,6 +638,26 @@ GET request
     "averageRating": 2.50
 }
 ```
+---
+
+### Get school 
+GET request 
+- Get the user's school
+- The user's school is parsed during sign-up by referencing the Schools collection. For more details, reference the sign-up endpoint. 
+
+**params/body**
+- username 
+
+**example** 
+- localhost:3000/users/get-rating?username=elin4046
+
+**return value** 
+- An object containing the field ``school``. If the school cannot be determined from the email, the ``school`` field will be set to null. 
+```
+{
+    "school": "UCLA"
+}
+```
 
 ---
 
@@ -649,7 +671,7 @@ PATCH request
 
 ```
 {
-	"aboutMe" : "This is my new about me description!"
+    "aboutMe": "This is my new about me description!"
 }
 ```
 
@@ -665,7 +687,7 @@ Returns the user document containing the updated aboutMe property
 
 ---
 
-### Get public profile
+### Get public profile info
 
 GET request
 

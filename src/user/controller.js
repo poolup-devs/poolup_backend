@@ -361,6 +361,17 @@ const getPublicProfileInfo = (username) => {
   })
 }
 
+// Get school name 
+const getSchool = (username) => {
+  return new Promise(async (resolve, reject) => {
+    const user = await User.findOne({username})
+    if (!user) {
+      reject("User could not be found!")
+    }
+    resolve(user.school)
+  })
+}
+
 module.exports = {
   checkAvailability,
   login,
@@ -382,4 +393,5 @@ module.exports = {
   getPublicProfileInfo,
   parseSchoolFromEmail, 
   confirmCredentials,
+  getSchool,
 };

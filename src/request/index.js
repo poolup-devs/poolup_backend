@@ -7,8 +7,10 @@ const tokenParser = require("../utils/token-parser.js");
 
 // Get a sender's requests
 router.get("/request/sender", (req, res) => {
-  console.log(req.headers);
-  var senderID = tokenParser(req.headers.authorization).username; //my username
+  var senderID = ""; //tokenParser(req.headers.authorization).username;
+  if (req.query.senderID != "") {
+    senderID = req.query.senderID;
+  }
   const status = req.query.status;
 
   db.getSenderRequests(senderID, status, (err, data) => {

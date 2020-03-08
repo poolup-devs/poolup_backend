@@ -29,15 +29,10 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 3. Setup .env variables
 
    > npm run setup
-<<<<<<< HEAD
 
    Generates the config folder with env files. This is explained in [the next step](#local-environment-setup)
 
    Do NOT run this script twice; the second run will overwrite the env files, erasing the entered credentials
-=======
-
-   Generates the config folder with env files. This is explained in [the next step](#local-environment-setup)
->>>>>>> feat/stripe-integration
 
 4. Run Test Scripts
 
@@ -134,13 +129,10 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 |   |       controller.js
 |   |       index.js
 |   |       noti.js
-<<<<<<< HEAD
 |   +---request
 |   |       controller.js
 |   |       index.js
 |   |       noti.js
-=======
->>>>>>> feat/stripe-integration
 |   |
 |   +---ride
 |   |       controller.js
@@ -207,12 +199,8 @@ All the requests under the workspace collection inherits a authToken variable au
 When creating each requests:
 
 - If authToken is required, go to the Authorization tab of the request, and select "inherit auth from parent" under the TYPE tab; no further authToken has to be passed through Headers
-<<<<<<< HEAD
 - The pre-request scripts are set to use "user1" (defined in init_db.js):
 - Since it's a shared account, be wise when overwriting/saving a request
-=======
-- The pre-request scripts are set to use the admin user (defined in init_db.js):
->>>>>>> feat/stripe-integration
 
 ```
 {
@@ -253,7 +241,6 @@ Models:
 
 ### Schema
 
-<<<<<<< HEAD
 | column      | type    | required | properties             |
 | ----------- | ------- | -------- | ---------------------- |
 | name        | String  | Yes      |                        |
@@ -267,22 +254,7 @@ Models:
 | picType     | String  |          |                        |
 | Verified    | Boolean | Yes      |                        |
 | Rating      | Object  |          | totalCount, totalValue |
-=======
-| column          | type    | required | properties             |
-| --------------- | ------- | -------- | ---------------------- |
-| name            | String  | Yes      |                        |
-| email           | String  | Yes      |                        |
-| username        | String  | Yes      |                        |
-| password        | String  | Yes      |                        |
-| phoneNumber     | String  |          |                        |
-| driverList      | Array   |          |                        |
-| riderList       | Array   |          |                        |
-| picUrl          | String  |          |                        |
-| picType         | String  |          |                        |
-| Verified        | Boolean | Yes      |                        |
-| Rating          | Object  |          | totalCount, totalValue |
-| stripeAccountID | Object  |          |                        |
->>>>>>> feat/stripe-integration
+| stripe      | Object  |          | accountID, customerID  |
 
 ### API Endpoints
 
@@ -629,7 +601,6 @@ none required
 }
 ```
 
-<<<<<<< HEAD
 ---
 
 ### Get Users Info
@@ -660,10 +631,6 @@ localhost:3000/users/getInfo?username=bin315a1
 
 ### Get User rating
 
-=======
-### Get User rating
-
->>>>>>> feat/stripe-integration
 GET Request
 
 **params**
@@ -1231,13 +1198,17 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 
 ### Schema
 
-| column      | type   | required | properties |
-| ----------- | ------ | -------- | ---------- |
-| senderID    | String | Yes      |            |
-| recepientID | String | Yes      |            |
-| status      | String | Yes      |            |
-| msg         | String | No       |            |
-| date        | String | No       |            |
+| column      | type     | required | properties |
+| ----------- | -------- | -------- | ---------- |
+| rideID      | ObjectID | Yes      |            |
+| senderID    | String   | Yes      |            |
+| recepientID | String   | Yes      |            |
+| status      | String   | Yes      |            |
+| archived    | Boolean  | Yes      |            |
+| reminders   | Number   | No       |            |
+| luggage     | Number   | No       |            |
+| msg         | String   | No       |            |
+| date        | Date     | No       |            |
 
 ### API Endpoints
 
@@ -1258,7 +1229,6 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 - Approved: This status reflects the state where a driver has approved an already existing user's request
 - Denied: This status reflects the state where a driver has denied an already existing user's request
 - Cancelled: This status reflects the state where a rider has cancelled his initial request
-- Archived: This status reflects an archived state, used for data analytics later on, instead of deleting them completely.
 
 ### Sender Requests
 
@@ -1279,7 +1249,7 @@ GET request
 
 **return value**
 
-201 created status with data of all matching requests, 500 error if failure
+200 ok status with data of all matching requests, 500 error if failure
 
 ---
 
@@ -1302,7 +1272,7 @@ GET request
 
 **return value**
 
-201 created status with data of all matching requests, 500 error if failure
+200 ok status with data of all matching requests, 500 error if failure
 
 ---
 
@@ -1316,15 +1286,17 @@ POST request
 
 ```
 {
+    senderID: <String>,
     rideID: <String>,
     recepientID: <String>,
+    luggage: <Number>
     msg: <String>
 }
 ```
 
 **return value**
 
-201 created status with data including the request id for later use, 500 error if failure
+200 created status with the request id for later use, 500 error if failure
 
 ---
 
@@ -1334,7 +1306,7 @@ PUT request
 
 - Change the status of a request to "approved"
 
-**query params**
+**query params (req.body.params.<field>)**
 
 ```
 
@@ -1344,7 +1316,7 @@ PUT request
 
 **return value**
 
-201 status if successful, 500 error if failure such as if the ride is already "archived"
+201 status if successful, 500 error if failure such as if unsuccessful
 
 ---
 
@@ -1354,7 +1326,7 @@ PUT request
 
 - Change the status of a request to "denied"
 
-**query params**
+**query params (req.body.params.<field>)**
 
 ```
 
@@ -1374,7 +1346,7 @@ PUT request
 
 - Change the status of a request to "cancelled"
 
-**query params**
+**query params (req.body.params.<field>)**
 
 ```
 
@@ -1394,7 +1366,7 @@ PUT request
 
 - Change the status of a request to "archived"
 
-**query params**
+**query params (req.body.params.<field>)**
 
 ```
 

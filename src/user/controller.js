@@ -1,6 +1,10 @@
 const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
+const Review = require('../review/review').Review; 
+
+// Users require a certain minimum amount of ratings to calculate an average rating 
+const MIN_TO_DISPLAY_AVERAGE_RATING = 1
 
 // Users require a certain minimum amount of ratings to calculate an average rating 
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1

@@ -58,7 +58,7 @@ describe("Testing Ride endpoints", () => {
             }
         })
 
-        test.only("Test cancellation of a ride as a passenger", async () => {
+        test("Test cancellation of a ride as a passenger", async () => {
             const passenger = await User.create({username: "passenger1"})
             const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1', 'passenger2'], seats: 0})
             try {

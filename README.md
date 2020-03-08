@@ -249,8 +249,6 @@ Models:
 | username    | String  | Yes      |                               |                        
 | password    | String  | Yes      |                               |                       
 | phoneNumber | String  |          |                               |                        
-| driverList  | Array   |          |                               |                        
-| riderList   | Array   |          |                               |                        
 | picUrl      | String  |          |                               |                        
 | picType     | String  |          |                               |                        
 | Verified    | Boolean | Yes      |                               |      

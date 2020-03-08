@@ -260,7 +260,7 @@ describe('Testing users with verified accounts', () => {
         })
     }) 
 
-    describe("Test the retrieval of a user's average rating", () => {
+    describe("Testing the retrieval of a user's average rating", () => {
         const testRevieweeUsername = "test_username"
         const test_reviewee = new User({username: testRevieweeUsername, rating: {sumOfAllRatings: 5, totalRatings: 2}})
         

@@ -1061,8 +1061,8 @@ localhost:3000/rides/get-rides-completed?username=elin4046
 | username             | String  | Yes      |
 | email                | String  | Yes      |
 | msg                  | String  | Yes      |
-| passengerPhoneNumber | String  |          |
-| passengerEmail       | String  | Yes      |
+| senderPhoneNumber    | String  |          |
+| senderEmail          | String  | Yes      |
 | viewed               | Boolean | Yes      |
 
 ### API Endpoints
@@ -1094,7 +1094,7 @@ none needed
         "_id": "5d55bb66261da0092430c990",
         "username": "bin315a1",
         "msg": "bin315a1 has joined your ride",
-        "passengerEmail": "bin315a1@g.ucla.edu",
+        "senderEmail": "bin315a1@g.ucla.edu",
         "date": "2019-08-15T20:07:02.242Z",
         "__v": 0
     },
@@ -1103,7 +1103,7 @@ none needed
         "_id": "5d55bb485457802c949bb8f4",
         "username": "bin315a1",
         "msg": "bin315a1 has joined your ride",
-        "passengerEmail": "bin315a1@g.ucla.edu",
+        "senderEmail": "bin315a1@g.ucla.edu",
         "date": "2019-08-15T20:06:32.716Z",
         "__v": 0
     }
@@ -1123,8 +1123,8 @@ POST request
 ```
 {
     msg: <message>,
-    passengerPhoneNumber: <String>,
-    passengerEmail: <String>
+    senderPhoneNumber: <String>,
+    senderEmail: <String>
 }
 ```
 

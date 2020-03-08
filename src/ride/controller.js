@@ -181,11 +181,12 @@ const updateCompletedRidesTask = (rideId) => {
 //     .limit(18);
 // };
 
-const joinRide = (ownerUsername, ride_id, passengerUsername, callback) => {
+const joinRide = async (ownerUsername, ride_id, passengerUsername, callback) => {
+  const passenger = await User.findOne({username: passengerUsername})
   const noti = {
     username: ownerUsername,
     msg: `${passengerUsername} has joined your ride`,
-    passengerEmail: passengerUsername + process.env.ACCEPTED_EMAIL,
+    senderEmail: passenger.email,
     date: new Date()
   };
   Ride.findOneAndUpdate(
@@ -212,7 +213,11 @@ const joinRide = (ownerUsername, ride_id, passengerUsername, callback) => {
 const cancelRide = (rideId, username, messageToDriver) => {
   return new Promise(async (resolve, reject) => {
     const cancelledRideDoc = await Ride.findOne({_id: rideId}) 
-
+    if (!cancelledRideDoc) {
+      return reject("Ride does not exist in database!")
+    }
+    
+    const user = await User.findOne({username})
     // Driver cancellation 
     if (username === cancelledRideDoc.ownerUsername) {
       // Notify all passengers that the ride has been cancelled 
@@ -220,7 +225,7 @@ const cancelRide = (rideId, username, messageToDriver) => {
         await Noti.create({
           username: passengerUsername, 
           msg: `${username} has cancelled your ride`, 
-          senderEmail: username + "@" + process.env.ACCEPTED_EMAIL, 
+          senderEmail: user.email, 
           date: new Date() 
         })
       })
@@ -243,12 +248,12 @@ const cancelRide = (rideId, username, messageToDriver) => {
       await Noti.create({
         username: cancelledRideDoc.ownerUsername,
         msg: `${username} has cancelled your ride\nReason for cancellation: ${messageToDriver}`,
-        senderEmail: username + "@" + process.env.ACCEPTED_EMAIL,
+        senderEmail: user.email,
         date: new Date()
       })
       
       // Remove the passenger from the list of passengers and free up a spot 
-      cancelledRideDoc.passengers.splice(cancelledRideDoc.passengers.indexOf(username))
+      cancelledRideDoc.passengers.splice(cancelledRideDoc.passengers.indexOf(username), 1)
       cancelledRideDoc.seats++; 
       await cancelledRideDoc.save() 
       

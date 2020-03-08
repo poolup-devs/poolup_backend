@@ -58,9 +58,9 @@ describe("Testing Ride endpoints", () => {
             }
         })
 
-        test("Test cancellation of a ride as a passenger", async () => {
+        test.only("Test cancellation of a ride as a passenger", async () => {
             const passenger = await User.create({username: "passenger1"})
-            const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1'], seats: 0})
+            const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1', 'passenger2'], seats: 0})
             try {
                 await db.cancelRide(ride._id, "passenger1", "Sorry I can't make it!!!")
 
@@ -71,7 +71,7 @@ describe("Testing Ride endpoints", () => {
                 // Check whether passenger was removed from ride 
                 const cancelledRide = await Ride.findById(ride._id) 
                 expect(cancelledRide.seats).toBe(1)
-                expect(cancelledRide.passengers.length).toBe(0)
+                expect(Array.from(cancelledRide.passengers)).toEqual(['passenger2'])
                 
                 // Check incrementation of cancelled rides 
                 const user = await User.findById(passenger._id)
@@ -129,14 +129,5 @@ describe("Testing Ride endpoints", () => {
             expect(passenger1.ridesCompleted).toBe(1)
             expect(passenger2.ridesCompleted).toBe(1)
         })
-    })
-})
-
-describe("Testing Ride API endpoints", () => {
-    test("Expect a response code of 200 when querying for a user's number of rides completed", async () => {
-        await request(app)
-            .get('/rides/get-rides-completed')
-            .query({username: 'test_username'})
-            .expect(200) 
     })
 })

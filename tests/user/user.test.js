@@ -12,22 +12,25 @@ const sha256 = require("sha256");
 const jwt = require("jsonwebtoken");
 
 
+const parseDomain = require('parse-domain')
+
+
 describe("Testing users without existing accounts", () => {
-    test("When signing up a new user, a new user should be added to the database with a name, username, password, email, and an unverified status.", (done) => {
-        db.signup({
+    test("When signing up a new user, a new user should be added to the database with a name, username, password, email, and an unverified status.", async () => {
+        const newUser = await db.signup({
             name: "John Smith", 
             username: "jsmith", 
-            password: sha256("password")
-        }, "jsmith@g.ucla.edu", (err, result) => {
-            expect(result).toEqual(expect.objectContaining({
-                name: "John Smith", 
-                username: "jsmith", 
-                password: sha256("password"), 
-                email: "jsmith@g.ucla.edu", 
-                verified: false
-            })) 
-            done()
-        }) 
+            password: "password", 
+            email: "jsmith@g.ucla.edu"
+        })
+
+        expect(newUser).toEqual(expect.objectContaining({
+            name: "John Smith", 
+            username: "jsmith", 
+            password: sha256("password"), 
+            email: "jsmith@g.ucla.edu", 
+            verified: false
+        })) 
     })
 
     test("When sending an POST request with an unused username to /users/signup to create a new account, should expect 201 Created response.", async () => {
@@ -36,7 +39,7 @@ describe("Testing users without existing accounts", () => {
             .send({
                 username: 'testUser', 
                 password: 'password', 
-                name: "First Last"
+                email: "test@ucla.edu"
             })
             .expect(201) 
     })
@@ -46,7 +49,7 @@ describe('Testing users with unverified accounts', () => {
     const unverifiedUser = new User({
         name: "First Last", 
         username: "unverifiedUser", 
-        password: sha256("password"), 
+        password: "password", 
         email: "unverifiedUser@g.ucla.edu"
     }) 
 
@@ -60,7 +63,7 @@ describe('Testing users with unverified accounts', () => {
     test("When logging in on an account that has not been verified, should return an unverified email error.", done => {
         db.login('unverifiedUser@g.ucla.edu', sha256('password'), (err, result) => {
             expect(result).toEqual(null)
-            expect(err).toEqual({ message: "email not verified" }) 
+            expect(err).toEqual({ message: "user with email and password not found" }) 
             done()
         }) 
     }) 
@@ -83,7 +86,7 @@ describe('Testing users with unverified accounts', () => {
                 .expect(401) 
         })
 
-        test("When sending an POST request to /users/signup with a username that is associated with an existing account that is NOT verified yet, should expect 409 Conflict response.", async () => {
+        test("When sending an POST request to /users/signup with a username that is associated with an existing account that is NOT verified yet, should expect 500 error response.", async () => {
             await request(app)
                 .post('/users/signup')
                 .send({
@@ -91,7 +94,7 @@ describe('Testing users with unverified accounts', () => {
                     password: 'password', 
                     name: "First Last"
                 })
-                .expect(409) 
+                .expect(500) 
         })
     }) 
 })
@@ -137,104 +140,123 @@ describe('Testing users with verified accounts', () => {
                 done()
             }) 
         }) 
-    }) 
 
-    test("When requesting account information using a valid username, response should return an object with properties: username, name, email, createdAt, and picUrl", done => {
-        db.getMyInfo(verifiedUser.username, (err, result) => {
-            expect(err).toEqual(null) 
-            const {username, name, email, picUrl, createdAt} = verifiedUser 
-            expect(result).toEqual(expect.objectContaining({
-                username, name, email, picUrl, createdAt
-            }))
-            done() 
+        test("When sending an POST request to /users/login for a user with invalid password, should expect a 401 authentication error response back.", async () => {
+            await request(app)
+                .post('/users/login')
+                .send({
+                    email: verifiedUser.email, 
+                    password: 'invalidPassword'
+                })
+                .expect(401) 
         })
-    })
 
-    test("When requesting account information using an invalid username, the response should be an error", done => {
-        db.getMyInfo('invalidUsername', (err, result) => {
-            expect(err).toEqual({message: "ERROR: username not found"}) 
-            expect(result).toEqual(null) 
-            done() 
+        test("When sending an POST request to /users/login for a user with a valid password, should expect 200 response with authentication token.", async () => {
+            await request(app)
+                .post('/users/login')
+                .send({
+                    email: verifiedUser.email, 
+                    password: 'password'
+                })
+                .expect(200) 
         })
-    })
 
-    test("When updating a user's profile pic, should set user's picUrl and picType", done => {
-        db.uploadPicUrl('verifiedUser', 'somePicUrl', 'somePicType', (err, result) => {
-            expect(result).toEqual(expect.objectContaining({
-                picUrl: 'somePicUrl', 
-                picType: 'somePicType' 
-            }))
-            done() 
+        test("When sending an POST request to /users/signup with a username that has been taken to create a new account, should expect 500 error response.", async () => {
+            await request(app)
+                .post('/users/signup')
+                .send({
+                    username: verifiedUser.username, 
+                    password: 'password', 
+                    name: "First Last"
+                })
+                .expect(500) 
         })
-    })
 
-    test("When retrieving a user's profile pic url using an invalid username, the response should be an error", done => {
-        db.getPicUrl('invalidUsername', (err, result) => {
-            expect(err).toEqual({message: "ERROR: no result; potentially wrong username"})
-            done() 
+        test("When sending an GET request to /users/verify with a valid email authentication token, should expect 302 redirect response.", async () => {
+            await request(app)
+                .get('/users/verify')
+                .query({token: verifiedUserEmailAuthToken})
+                .expect(302) 
         })
-    }) 
 
-    test("When retrieving a user's profile pic url that has not been set, the response should be an error", done => {
-        db.getPicUrl(verifiedUser.username, (err, result) => {
-            expect(err).toEqual({message: "ERROR: user's profile picture undefined"})
-            done() 
+        test("When sending an GET request to /users/verify with an invalid email authentication token, should expect 401 response.", async () => {
+            await request(app)
+                .get('/users/verify')
+                .query({token: 'wrongTokenValue'})
+                .expect(401) 
         })
-    }) 
 
-    test("When retrieving a user's profile pic url using a valid username, should receive it.", done => {
-        const {name, password, email, verified} = verifiedUser 
-        const verifiedUserWithProfilePic = new User({
-            name, username: 'verifiedUserWithPicUrl', password, email, verified, picUrl: 'testUrl'
-        }) 
-        verifiedUserWithProfilePic.save((err) => {
-            db.getPicUrl(verifiedUserWithProfilePic.username, (err, result) => {
-                expect(result).toEqual('testUrl')
-                done() 
+        describe("Testing the validation of new account information during signup", () => {
+            test("When a user tries to sign-up for an account that needs to be verified via email, should result in an error", async () => {
+                const unverifiedUser = await User.create({email: "test@ucla.edu", username: "testUsername", password: "password123", verified: false})
+                try {
+                    expect.assertions(1)
+                    await db.isValidAccount(unverifiedUser.email, unverifiedUser.username, unverifiedUser.password)
+                }
+                catch(e) {
+                    expect(e).toBe("You must verify this account by checking your email!")
+                }
             })
-        })
-    }) 
+            
+            test("When a verified account already exists with the exact same username, should result in an error", async () => {
+                try {
+                    expect.assertions(1)
+                    await db.isValidAccount("uniqueEmail@ucla.edu", verifiedUser.username, "validPassword123")
+                }
+                catch(e) {
+                    expect(e).toBe("A verified account already exists with this username!")
+                }
+            })
+    
+            test("When a non-school email is used to sign-up, should result in an error", async () => {
+                try {
+                    expect.assertions(1)
+                    await db.isValidAccount("uniqueEmail@ucla.com", "uniqueUsername", "validPassword123")
+                }
+                catch(e) {
+                    expect(e).toBe("Not an .edu email address!")
+                }
+            })
+    
+            test("When signing up using an email that already exists, should result in an error", async () => {
+                try {
+                    expect.assertions(1)
+                    await db.isValidAccount(verifiedUser.email, "uniqueUsername", "validPassword123")
+                }
+                catch(e) {
+                    expect(e).toBe("An account already exists with this email!")
+                }
+            })
 
-    test("When updating a user's name or phone number, should set the corresponding user's name and phone number fields", done => {
-        const updates = {
-            phoneNumber: '1231231234', name: 'New Name'
-        } 
-        db.updateUser(verifiedUser.username, updates, (err, result) => {
-            expect(result).toEqual(expect.objectContaining({
-                phoneNumber: updates.phoneNumber,
-                name: updates.name 
-            }))
-            done() 
-        }) 
-    })
-
-    test("When deleting a user, should delete all instances of that user in User, Ride, and Noti", done => {
-        const {username} = verifiedUser 
-        Ride.create({ownerUsername: username}).then(
-            Noti.create({username}).then(
-                db.deleteUser(username, (err, result) => {
-                    Ride.findOne({ownerUsername: username}, (err, result) => {
-                        expect(result).toEqual(null) 
-                        Noti.findOne({username}, (err, result) => {
-                            expect(result).toEqual(null)
-                            User.findOne({username}, (err, result) => {
-                                expect(result).toEqual(null) 
-                                done()
-                            })
-                        })
-                    }) 
-                }) 
-            )
-        )
-    })
-
-    test("When reseting a user's password, should update the user's password field to the new password.", done => {
-        const newPassword = sha256('newPassword') 
-        db.passwordReset(verifiedUser.username, newPassword, (err, result) => {
-            expect(result).toEqual(expect.objectContaining({
-                password: newPassword
-            }))
-            done() 
+            test("When signing up using an improperly formatted email, should result in an error", async () => {
+                try {
+                    expect.assertions(1)
+                    await db.isValidAccount("notAValidEmail@", "uniqueUsername", "validPassword123")
+                }
+                catch(e) {
+                    expect(e).toBe("Not a valid email address!")
+                }
+            })
+    
+            test("When signing up using a password that is less than eight characters long, should result in an error", async () => {
+                try {
+                    expect.assertions(1)
+                    await db.isValidAccount("email@ucla.edu", "uniqueUsername", "1234567")
+                }
+                catch(e) {
+                    expect(e).toBe("Password must be at least 8 characters long!")
+                }
+            })
+    
+            test("isValidAccount should resolve to true if sign-up information meets all requirements.", async () => {
+                try {
+                    const result = await db.isValidAccount("uniqueEmail@ucla.edu", "uniqueUsername", "12345678")
+                    expect(result).toBe(true) 
+                }
+                catch(e) {
+                    console.log(e)
+                }
+            })
         })
     }) 
 
@@ -274,74 +296,30 @@ describe('Testing users with verified accounts', () => {
         })
     })
 
-
-
-    describe("Testing endpoints", () => {
-        test("When sending an POST request to /users/login for a user with invalid password, should expect a 401 authentication error response back.", async () => {
-            await request(app)
-                .post('/users/login')
-                .send({
-                    email: verifiedUser.email, 
-                    password: 'invalidPassword'
-                })
-                .expect(401) 
-        })
-
-        test("When sending an POST request to /users/login for a user with a valid password, should expect 200 response with authentication token.", async () => {
-            await request(app)
-                .post('/users/login')
-                .send({
-                    email: verifiedUser.email, 
-                    password: 'password'
-                })
-                .expect(200) 
-        })
-
-        test("When sending an POST request to /users/signup with a username that has been taken to create a new account, should expect 409 Conflict response.", async () => {
-            await request(app)
-                .post('/users/signup')
-                .send({
-                    username: verifiedUser.username, 
-                    password: 'password', 
-                    name: "First Last"
-                })
-                .expect(409) 
-        })
-
-        test("When sending an GET request to /users/verify with a valid email authentication token, should expect 302 redirect response.", async () => {
-            await request(app)
-                .get('/users/verify')
-                .query({token: verifiedUserEmailAuthToken})
-                .expect(302) 
-        })
-
-        test("When sending an GET request to /users/verify with an invalid email authentication token, should expect 401 response.", async () => {
-            await request(app)
-                .get('/users/verify')
-                .query({token: 'wrongTokenValue'})
-                .expect(401) 
-        })
-    }) 
-
     describe("Testing the retrieval of user account information", () => {
         test("When parsing an edu email, should return the school if it is in the database", async () => {
-            const ucla1 = await db.parseEmailForSchool('bruin@g.ucla.edu')
-            const ucla2 = await db.parseEmailForSchool('bruin@ucla.edu')
-            const ucsb = await db.parseEmailForSchool('gaucho@ucsb.edu')
+            const ucla1 = await db.parseSchoolFromEmail('bruin@g.ucla.edu')
+            const ucla2 = await db.parseSchoolFromEmail('bruin@ucla.edu')
+            const ucsb = await db.parseSchoolFromEmail('gaucho@ucsb.edu')
             expect(ucla1).toBe('UCLA')
             expect(ucla2).toBe('UCLA')
             expect(ucsb).toBe('UCSB')
         })
-        test("When parsing an edu email not found in the database, should return an error", async () => {
-            try {
-                expect.assertions(1)
-                const invalidSchool = await db.parseEmailForSchool('someStudent@usc.edu')
-            }
-            catch(e) {
-                expect(e).toBe('School is not yet approved')
-            }
+
+        test("When parsing an edu email not found in the database, should return null", async () => {
+            const invalidSchool = await db.parseSchoolFromEmail('someStudent@fakeschool.edu')
+            expect(invalidSchool).toEqual(null)
         })
 
+        test("When parsing an invalid email domain, should return an error", async () => {
+            try {
+                expect.assertions(1)
+                const invalidDomain = await db.parseSchoolFromEmail('someStudent@')
+            }
+            catch(e) {
+                expect(e).toEqual("Could not parse email to identify school")
+            }
+        })
 
         test("When requesting account information using a valid username, response should return an object with properties: username, name, email, createdAt, and picUrl", done => {
             db.getMyInfo(verifiedUser.username, (err, result) => {
@@ -360,6 +338,20 @@ describe('Testing users with verified accounts', () => {
                 done() 
             })
         })
+
+        test("When updating a user's name or phone number, should set the corresponding user's name and phone number fields", done => {
+            const updates = {
+                phoneNumber: '1231231234', name: 'New Name'
+            } 
+            db.updateUser(verifiedUser.username, updates, (err, result) => {
+                expect(result).toEqual(expect.objectContaining({
+                    phoneNumber: updates.phoneNumber,
+                    name: updates.name 
+                }))
+                done() 
+            }) 
+        })
+
         test("When sending an GET request to /users/my-info in an authorized session, should expect 200 response.", async () => {
             await request(app)
                 .get('/users/my-info')
@@ -445,13 +437,6 @@ describe('Testing users with verified accounts', () => {
                 .expect(200) 
         })
 
-        test("When sending an GET request to /users/usernameValidation with a username that is not associated with an account, should expect 404 response.", async () => {
-            await request(app)
-                .get('/users/usernameValidation')
-                .query({username: 'invalidUsername'})
-                .expect(404) 
-        })
-
         test("When sending an GET request to /users/emailValidation with a valid email associated with an account, should expect 200 response.", async () => {
             await request(app)
                 .get('/users/emailValidation')
@@ -459,25 +444,11 @@ describe('Testing users with verified accounts', () => {
                 .expect(200) 
         })
 
-        test("When sending an GET request to /users/emailValidation with an invalid email that is not associated with an account, should expect 404 response.", async () => {
-            await request(app)
-                .get('/users/emailValidation')
-                .query({email: 'invalidEmail@g.ucla.edu'})
-                .expect(404) 
-        })
-
         test("When sending an GET request to /users/phoneNumberValidation with a valid phone number associated with an account, should expect 200 response.", async () => {
             await request(app)
                 .get('/users/phoneNumberValidation')
                 .query({phoneNumber: verifiedUser.phoneNumber})
                 .expect(200) 
-        })
-
-        test("When sending an GET request to /users/phoneNumberValidation with an invalid phone number that is not associated with an account, should expect 404 response.", async () => {
-            await request(app)
-                .get('/users/phoneNumberValidation')
-                .query({phoneNumber: 'wrongPhoneNumber'})
-                .expect(404) 
         })
 
         test("When successfully confirming password credentials using a valid password during a user session, should return 200 response code", async () => {

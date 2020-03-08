@@ -93,7 +93,7 @@ describe("Testing Ride endpoints", () => {
             }
         })
 
-        test.only("Expect a response code of 200 when cancelling a ride as a driver.", async () => {
+        test("Expect a response code of 200 when cancelling a ride as a driver.", async () => {
             const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1'], seats: 1})
             const authToken = jwt.sign({ username: 'passenger1' }, process.env.JWT_SECRET_KEY);
 

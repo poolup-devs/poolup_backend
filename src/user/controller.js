@@ -5,11 +5,12 @@ const Noti = require("../noti/noti.js").Noti;
 // Users require a certain minimum amount of ratings to calculate an average rating 
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1
 
-// For email parsing 
 const mongoose = require('mongoose')
 const dataSchema = new mongoose.Schema({});
 const Schools = mongoose.model('Schools', dataSchema, 'schools');
 const parseDomain = require("parse-domain");
+const isEmail = require('isemail')
+const sha256 = require("sha256");
 
 
 const login = (email, password, callback) => {
@@ -42,26 +43,21 @@ const checkAvailability = (email, username, callback) => {
   });
 };
 
-const signup = async (userInfo, schoolEmail, callback) => {
-  const newUser = userInfo;
-  newUser.email = schoolEmail;
-  newUser.school = await parseEmailForSchool(schoolEmail)
-  if (!newUser.school) {
-    callback('School is not supported yet!', null)
-  }
-
-  User.create(newUser, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      try {
-        User.setRandomBruinBear(newUser.username);
-      } catch (e) {
-        callback(e, null);
-      }
-      callback(null, result);
+const signup = async (userInfo) => {
+  return new Promise(async (resolve, reject) => {
+    userInfo.password = sha256(userInfo.password);
+    try {
+      userInfo.school = await parseSchoolFromEmail(userInfo.email)
+      const newUser = await User.create(userInfo)
+      User.setRandomBruinBear(newUser.username);
+      resolve(newUser)
     }
-  });
+    catch(e) {
+      User.deleteOne({username: userInfo.username}, () => {
+        reject(e)
+      })
+    }
+  })
 };
 
 const verifyEmail = (email, callback) => {
@@ -222,15 +218,56 @@ const deleteUser = (authUsername, callback) => {
   });
 };
 
-const confirmCredentials = (authUsername, password, callback) => {
-  User.findOne({ username: authUsername, password }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
+const isValidAccount = (email, username, password) => {
+  return new Promise(async (resolve, reject) => {
+    // Determine whether an account already exists 
+    const user = await User.findOne({username: username.trim()})
+    if (user) {
+      if (!user.verified) {
+        return reject("You must verify this account by checking your email!")
+      }
+      return reject("A verified account already exists with this username!")
     }
-  });
-};
+
+    // Validate email address 
+    if (isEmail.validate(email)) {
+      // Must be student email 
+      const emailDomain = parseDomain(email)
+
+      if (!emailDomain || emailDomain.tld !== 'edu') {
+        return reject("Not an .edu email address!")
+      }
+      // Must be unique email 
+      if (await User.findOne({email: email.trim()})) {
+        return reject("An account already exists with this email!")
+      }
+    }
+    else {
+      return reject("Not a valid email address!")
+    }
+
+    // Password must be a minimum of 8 characters long 
+    if (password.length < 8) {
+      return reject("Password must be at least 8 characters long!")
+    }
+    return resolve(true)
+  })
+}
+
+const confirmCredentials = (authUsername, password) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const user = await User.findOne({username: authUsername, password})
+      if (!user) {
+        return resolve(null)
+      }
+      return resolve(user)
+    }
+    catch(e) {
+      reject(e) 
+    }
+  })
+}
 
 const passwordReset = (authUsername, newPassword, callback) => {
   User.findOneAndUpdate(
@@ -261,21 +298,23 @@ const updateAboutMe = (authUsername, updatedAboutMe) => {
 }
 
 // Helper function that parses school emails to identify the school the user attends 
-const parseEmailForSchool = (schoolEmail) => {
+const parseSchoolFromEmail = (schoolEmail) => {
   return new Promise((resolve, reject) => {
     emailDomain = parseDomain(schoolEmail)
     if (!emailDomain) {
-      reject("Could not parse email for school") 
+      reject("Could not parse email to identify school")     
     }
     
     Schools.findOne({emailDomain: emailDomain.domain}, (err, result) => {
       if (!result) {
-        return reject("School is not yet approved") 
+        // Domain -> School not found in database, so set to null until we can add it later 
+        return resolve(null) 
       }
       resolve(result._doc.school)
     }) 
   })
 }
+
 // Get the average rating of a user, aggregated from all reviews received by the user 
 const getAverageRating = (username) => {
   return new Promise(async (resolve, reject) => {
@@ -310,15 +349,14 @@ const getPublicProfileInfo = (username) => {
       reject("User could not be found!")
     }
     const {name, picUrl, picType, aboutMe, school, ridesCancelled, ridesCompleted} = user 
-    const pageZeroOfReviews = await require('../review/controller').getUserReviews(username, 0)
     try {
       var rating = await getAverageRating(username)
     }
     catch(e) {
       // Ommit rating if it cannot be calculated due to not having any reviews 
-      resolve({picUrl, picType, name, school, ridesCompleted, ridesCancelled, aboutMe, reviews: pageZeroOfReviews}) 
+      resolve({picUrl, picType, name, school, ridesCompleted, ridesCancelled, aboutMe}) 
     }
-    resolve({picUrl, picType, name, school, rating, ridesCompleted, ridesCancelled, aboutMe, reviews: pageZeroOfReviews}) 
+    resolve({picUrl, picType, name, school, rating, ridesCompleted, ridesCancelled, aboutMe}) 
   })
 }
 
@@ -336,10 +374,11 @@ module.exports = {
   signup,
   updateUser,
   deleteUser,
-  confirmCredentials,
+  isValidAccount,
   passwordReset, 
   updateAboutMe,
-  parseEmailForSchool, 
   getAverageRating, 
   getPublicProfileInfo,
+  parseSchoolFromEmail, 
+  confirmCredentials,
 };

@@ -1,6 +1,19 @@
 const Request = require("./request").Request;
 const mongoose = require("mongoose");
 
+// getRequestInfo gets the information of a specified request
+const getRequestInfo = (requestID, callback) => {
+  let query = { _id: requestID };
+
+  Request.find(query, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
 // getSenderRequests gets a sender's requests based on status
 const getSenderRequests = (senderID, status, callback) => {
   let query = {};
@@ -59,20 +72,14 @@ const getRecepientRequests = (recepientID, status, callback) => {
 
 // createRequest creates a new request from the specified user with
 // regards about the specified ride
-const createRequest = (
-  rideID,
-  senderID,
-  recepientID,
-  luggage,
-  msg,
-  callback
-) => {
+const createRequest = (requestInfo, callback) => {
   newRequest = {
-    rideID: rideID,
-    senderID: senderID,
-    recepientID: recepientID,
-    luggage: luggage,
-    msg: msg,
+    rideID: requestInfo.rideID,
+    senderID: requestInfo.senderID,
+    recepientID: requestInfo.recepientID,
+    carryon: requestInfo.carryon,
+    luggage: requestInfo.luggage,
+    msg: requestInfo.msg,
     date: new Date()
   };
 
@@ -223,6 +230,7 @@ const deleteRequest = (requestID, callback) => {
 };
 
 module.exports = {
+  getRequestInfo,
   getRecepientRequests,
   getSenderRequests,
   createRequest,

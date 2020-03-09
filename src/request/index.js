@@ -5,12 +5,22 @@ const db = require("./controller.js");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
 
+// Get request information
+router.get("/request/info", (req, res) => {
+  var requestID = req.query.requestID;
+
+  db.getRequestInfo(requestID, (err, data) => {
+    if (err) {
+      res.status(500).json({ errorMsg: err });
+    } else {
+      res.status(200).json({ requests: data });
+    }
+  });
+});
+
 // Get a sender's requests
 router.get("/request/sender", (req, res) => {
-  var senderID = ""; //tokenParser(req.headers.authorization).username;
-  if (req.query.senderID != "") {
-    senderID = req.query.senderID;
-  }
+  const senderID = req.query.senderID;
   const status = req.query.status;
 
   db.getSenderRequests(senderID, status, (err, data) => {
@@ -24,10 +34,7 @@ router.get("/request/sender", (req, res) => {
 
 // Get a recepient's requests
 router.get("/request/recepient", (req, res) => {
-  var recepientID = ""; //tokenParser(req.headers.authorization).username;
-  if (req.query.recepientID != "") {
-    recepientID = req.query.recepientID;
-  }
+  const recepientID = req.query.recepientID;
   const status = req.query.status;
 
   db.getRecepientRequests(recepientID, status, (err, data) => {
@@ -40,13 +47,8 @@ router.get("/request/recepient", (req, res) => {
 });
 
 // Create a new request
-router.post("/request/new", checkAuth, (req, res) => {
-  const senderID = req.body.senderID; //my username
-  const rideID = req.body.rideID;
-  const recepientID = req.body.recepientID;
-  const luggage = req.body.luggage;
-  const msg = req.body.msg;
-  db.createRequest(rideID, senderID, recepientID, luggage, msg, (err, data) => {
+router.post("/request/new", (req, res) => {
+  db.createRequest(req.body.requestInfo, (err, data) => {
     if (err) {
       res.status(500).json({ errorMsg: err });
     } else {
@@ -84,7 +86,6 @@ router.put("/request/cancel", (req, res) => {
 
 // Deny a specified request
 router.put("/request/deny", (req, res) => {
-  console.log(req.body);
   const requestID = req.body.params.requestID;
   const msg = req.body.msg;
   db.denyRequest(requestID, (err, data) => {
@@ -110,7 +111,7 @@ router.put("/request/archive", (req, res) => {
   });
 });
 
-// Archive a specified request
+// Unarchive a specified request
 router.put("/request/unarchive", (req, res) => {
   const requestID = req.body.params.requestID;
   db.unarchiveRequest(requestID, (err, data) => {

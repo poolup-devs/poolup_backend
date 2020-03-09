@@ -16,7 +16,14 @@ const requestSchema = mongoose.Schema({
     type: Number,
     default: 1
   },
-  luggage: Number,
+  carryon: {
+    type: Number,
+    default: 0
+  },
+  luggage: {
+    type: Number,
+    default: 0
+  },
   msg: String,
   date: Date
 });

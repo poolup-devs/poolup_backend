@@ -303,7 +303,6 @@ module.exports = {
   checkAvailability,
   login,
   verifyEmail,
-  getMyInfo,
   findUserByEmail,
   findUserByUsername,
   findUserByPhoneNumber,

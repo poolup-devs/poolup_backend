@@ -1,15 +1,10 @@
 const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
-const Review = require('../review/review').Review; 
+const Review = require("../review/review").Review;
 
-<<<<<<< HEAD
 // Users require a certain minimum amount of ratings to calculate an average rating
-const MIN_TO_DISPLAY_AVERAGE_RATING = 3;
-=======
-// Users require a certain minimum amount of ratings to calculate an average rating 
-const MIN_TO_DISPLAY_AVERAGE_RATING = 1
->>>>>>> b2cdee3767e3c5ff132f2fc17600ea21e0d8a169
+const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
 
 const login = (email, password, callback) => {
   User.findOne(
@@ -82,20 +77,25 @@ const signup = (userInfo, acceptedEmail, callback) => {
 };
 
 const verifyEmail = (email, callback) => {
-  User.findOneAndUpdate({ email }, { verified: true }, {new: true}, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else if (result) {
-      callback(null, result);
-    } else {
-      callback(
-        {
-          message: "ERROR: verification token expired; try signing up again"
-        },
-        null
-      );
+  User.findOneAndUpdate(
+    { email },
+    { verified: true },
+    { new: true },
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else if (result) {
+        callback(null, result);
+      } else {
+        callback(
+          {
+            message: "ERROR: verification token expired; try signing up again"
+          },
+          null
+        );
+      }
     }
-  });
+  );
 };
 
 const findUserByEmail = (email, callback) => {
@@ -160,13 +160,13 @@ const getUserInfo = (authUsername, callback) => {
 };
 
 const getPicType = (username, callback) => {
-    User.findOne({ username }, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
-      }
-    });
+  User.findOne({ username }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
 };
 
 const uploadPicUrl = (username, picUrl, picType, callback) => {
@@ -208,26 +208,7 @@ const getPicUrl = (username, callback) => {
   });
 };
 
-<<<<<<< HEAD
-const updateUserStripeAccountID = (authUsername, stripeAccountID, callback) => {
-  User.findOneAndUpdate(
-    { username: authUsername },
-    { stripe: { accountID: stripeAccountID } },
-    { new: true },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
-      }
-    }
-  );
-};
-
-const updateUser = (authUsername, name, phoneNumber, callback) => {
-=======
 const updateUser = (authUsername, updates, callback) => {
->>>>>>> b2cdee3767e3c5ff132f2fc17600ea21e0d8a169
   User.findOneAndUpdate(
     { username: authUsername },
     updates,
@@ -278,8 +259,8 @@ const confirmCredentials = (authUsername, password, callback) => {
 const passwordReset = (authUsername, newPassword, callback) => {
   User.findOneAndUpdate(
     { username: authUsername },
-    { password: newPassword }, 
-    {new: true}, 
+    { password: newPassword },
+    { new: true },
     (err, result) => {
       if (err) {
         callback(err, null);
@@ -290,31 +271,33 @@ const passwordReset = (authUsername, newPassword, callback) => {
   );
 };
 
-// Get the average rating of a user, aggregated from all reviews received by the user 
-const getAverageRating = (username) => {
+// Get the average rating of a user, aggregated from all reviews received by the user
+const getAverageRating = username => {
   return new Promise(async (resolve, reject) => {
     try {
-      await User.findOne({username}, (err, user) => {
+      await User.findOne({ username }, (err, user) => {
         if (!user) {
-          return reject("User does not exist in the database") 
+          return reject("User does not exist in the database");
         }
-        const {sumOfAllRatings, totalRatings} = user.rating 
+        const { sumOfAllRatings, totalRatings } = user.rating;
 
         // minimum is set to 1 (at least for now)
         if (totalRatings >= MIN_TO_DISPLAY_AVERAGE_RATING) {
-          const averageRating = (sumOfAllRatings/totalRatings).toFixed(2)
-          resolve(averageRating)
+          const averageRating = (sumOfAllRatings / totalRatings).toFixed(2);
+          resolve(averageRating);
+        } else {
+          return reject(
+            "User must have at least " +
+              MIN_TO_DISPLAY_AVERAGE_RATING +
+              " rating(s) to display an average rating!"
+          );
         }
-        else {
-          return reject("User must have at least " + MIN_TO_DISPLAY_AVERAGE_RATING + " rating(s) to display an average rating!"); 
-        }  
-      }) 
+      });
+    } catch (e) {
+      return reject("Could not retrieve all reviews left for user.");
     }
-    catch(e) {
-      return reject("Could not retrieve all reviews left for user.")
-    }
-  })
-}; 
+  });
+};
 
 module.exports = {
   checkAvailability,
@@ -325,12 +308,12 @@ module.exports = {
   findUserByUsername,
   findUserByPhoneNumber,
   uploadPicUrl,
-  getPicType, 
+  getPicType,
   getPicUrl,
   signup,
   updateUser,
   deleteUser,
   confirmCredentials,
-  passwordReset, 
-  getAverageRating, 
+  passwordReset,
+  getAverageRating
 };

@@ -1,9 +1,10 @@
 const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
+const Review = require("../review/review").Review;
 
 // Users require a certain minimum amount of ratings to calculate an average rating
-const MIN_TO_DISPLAY_AVERAGE_RATING = 3;
+const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
 
 const login = (email, password, callback) => {
   User.findOne(
@@ -76,23 +77,28 @@ const signup = (userInfo, acceptedEmail, callback) => {
 };
 
 const verifyEmail = (email, callback) => {
-  User.findOneAndUpdate({ email }, { verified: true }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else if (result) {
-      callback(null, result);
-    } else {
-      callback(
-        {
-          message: "ERROR: verification token expired; try signing up again"
-        },
-        null
-      );
+  User.findOneAndUpdate(
+    { email },
+    { verified: true },
+    { new: true },
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else if (result) {
+        callback(null, result);
+      } else {
+        callback(
+          {
+            message: "ERROR: verification token expired; try signing up again"
+          },
+          null
+        );
+      }
     }
-  });
+  );
 };
 
-const emailValidation = (email, callback) => {
+const findUserByEmail = (email, callback) => {
   User.find({ email }, (err, result) => {
     if (err) {
       callback(err, null);
@@ -102,7 +108,7 @@ const emailValidation = (email, callback) => {
   });
 };
 
-const usernameValidation = (username, callback) => {
+const findUserByUsername = (username, callback) => {
   User.find({ username }, (err, result) => {
     if (err) {
       callback(err, null);
@@ -112,7 +118,7 @@ const usernameValidation = (username, callback) => {
   });
 };
 
-const phoneNumberValidation = (phoneNumber, callback) => {
+const findUserByPhoneNumber = (phoneNumber, callback) => {
   User.find({ phoneNumber }, (err, result) => {
     if (err) {
       callback(err, null);
@@ -122,19 +128,12 @@ const phoneNumberValidation = (phoneNumber, callback) => {
   });
 };
 
-const getUserInfo = (authUsername, callback) => {
+const getMyInfo = (authUsername, callback) => {
   User.findOne({ username: authUsername }, (err, result) => {
     if (err) {
       callback(err, null);
     } else if (result) {
-      const res_list = [
-        "username",
-        "name",
-        "email",
-        "createdAt",
-        "picUrl",
-        "stripe"
-      ];
+      const res_list = ["username", "name", "email", "createdAt", "picUrl"];
       const result_ = {};
 
       res_list.forEach(function(item) {
@@ -179,7 +178,7 @@ const uploadPicUrl = (username, picUrl, picType, callback) => {
 };
 
 const getPicUrl = (username, callback) => {
-  User.find({ username }, (err, result) => {
+  findUserByUsername(username, (err, result) => {
     if (err) {
       callback(err, null);
     } else if (result.length === 0) {
@@ -220,7 +219,7 @@ const updateUserStripeAccountID = (authUsername, stripeAccountID, callback) => {
 const updateUser = (authUsername, name, phoneNumber, callback) => {
   User.findOneAndUpdate(
     { username: authUsername },
-    { name, phoneNumber },
+    updates,
     { new: true },
     (err, result) => {
       if (err) {
@@ -259,8 +258,6 @@ const confirmCredentials = (authUsername, password, callback) => {
   User.findOne({ username: authUsername, password }, (err, result) => {
     if (err) {
       callback(err, null);
-    } else if (result.length === 0) {
-      callback(null, null);
     } else {
       callback(null, result);
     }
@@ -271,6 +268,7 @@ const passwordReset = (authUsername, newPassword, callback) => {
   User.findOneAndUpdate(
     { username: authUsername },
     { password: newPassword },
+    { new: true },
     (err, result) => {
       if (err) {
         callback(err, null);
@@ -281,55 +279,50 @@ const passwordReset = (authUsername, newPassword, callback) => {
   );
 };
 
-const addNewRating = async (username, newRating) => {
-  if (newRating < 1 || newRating > 5) {
-    return Promise.reject("The rating must be a value from 1 to 5.");
-  }
-  try {
-    const user = await User.findOneAndUpdate(
-      { username },
-      { $inc: { "rating.totalValue": newRating, "rating.totalCount": 1 } },
-      { new: true, useFindAndModify: false }
-    );
-    return Promise.resolve(user.rating);
-  } catch (e) {
-    return Promise.reject(e, "Could not add a new rating to the user");
-  }
-};
+// Get the average rating of a user, aggregated from all reviews received by the user
+const getAverageRating = username => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await User.findOne({ username }, (err, user) => {
+        if (!user) {
+          return reject("User does not exist in the database");
+        }
+        const { sumOfAllRatings, totalRatings } = user.rating;
 
-const getAverageRating = async username => {
-  try {
-    const { rating } = await User.findOne({ username });
-    if (rating.totalCount < MIN_TO_DISPLAY_AVERAGE_RATING) {
-      return Promise.reject(
-        "User must have at least " +
-          MIN_TO_DISPLAY_AVERAGE_RATING +
-          " ratings to display an average rating!"
-      );
+        // minimum is set to 1 (at least for now)
+        if (totalRatings >= MIN_TO_DISPLAY_AVERAGE_RATING) {
+          const averageRating = (sumOfAllRatings / totalRatings).toFixed(2);
+          resolve(averageRating);
+        } else {
+          return reject(
+            "User must have at least " +
+              MIN_TO_DISPLAY_AVERAGE_RATING +
+              " rating(s) to display an average rating!"
+          );
+        }
+      });
+    } catch (e) {
+      return reject("Could not retrieve all reviews left for user.");
     }
-    const averageRating = (rating.totalValue / rating.totalCount).toFixed(2);
-    return Promise.resolve({ averageRating });
-  } catch (e) {
-    return Promise.reject("Could not get average rating of user");
-  }
+  });
 };
 
 module.exports = {
   checkAvailability,
   login,
   verifyEmail,
-  getUserInfo,
-  emailValidation,
-  usernameValidation,
-  phoneNumberValidation,
-  getPicType,
+  getMyInfo,
+  findUserByEmail,
+  findUserByUsername,
+  findUserByPhoneNumber,
   uploadPicUrl,
+  getPicType,
   getPicUrl,
   signup,
+  updateUserStripeAccountID,
   updateUser,
   deleteUser,
   confirmCredentials,
   passwordReset,
-  addNewRating,
   getAverageRating
 };

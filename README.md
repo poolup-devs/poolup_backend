@@ -233,7 +233,8 @@ Models:
 1. [User](#user-model)
 2. [Ride](#ride-model)
 3. [Noti](#noti-model)
-4. [Request](#request-model)
+4. [Review](#review-model)
+5. [Request](#request-model)
 
 ---
 
@@ -241,41 +242,64 @@ Models:
 
 ### Schema
 
-| column          | type    | required | properties             |
+<<<<<<< HEAD
+| column | type | required | properties |
 | --------------- | ------- | -------- | ---------------------- |
-| name            | String  | Yes      |                        |
-| email           | String  | Yes      |                        |
-| username        | String  | Yes      |                        |
-| password        | String  | Yes      |                        |
-| phoneNumber     | String  |          |                        |
-| driverList      | Array   |          |                        |
-| riderList       | Array   |          |                        |
-| picUrl          | String  |          |                        |
-| picType         | String  |          |                        |
-| Verified        | Boolean | Yes      |                        |
-| Rating          | Object  |          | totalCount, totalValue |
-| stripeAccountID | Object  |          |                        |
+| name | String | Yes | |
+| email | String | Yes | |
+| username | String | Yes | |
+| password | String | Yes | |
+| phoneNumber | String | | |
+| driverList | Array | | |
+| riderList | Array | | |
+| picUrl | String | | |
+| picType | String | | |
+| Verified | Boolean | Yes | |
+| Rating | Object | | totalCount, totalValue |
+| stripeAccountID | Object | | |
+=======
+| column | type | required | properties |  
+| ----------- | ------- | -------- | ----------------------------- |
+| name | String | Yes | |
+| email | String | Yes | |  
+| username | String | Yes | |  
+| password | String | Yes | |  
+| phoneNumber | String | | |  
+| driverList | Array | | |  
+| riderList | Array | | |  
+| picUrl | String | | |  
+| picType | String | | |  
+| Verified | Boolean | Yes | |  
+| rating | Object | | sumOfAllRatings, totalRatings |
+
+> > > > > > > master
 
 ### API Endpoints
 
 | url                          | HTTP Method | description                                                        |
 | ---------------------------- | ----------- | ------------------------------------------------------------------ |
-| /users/login                 | GET         | [User Login](#user-login)                                          |
+| /users/login                 | POST        | [User Login](#user-login)                                          |
 | /users/signup                | POST        | [User Signup](#user-signup)                                        |
 | /users/verify                | GET         | [Send a verification Email for signup](#email-verification)        |
 | /users/emailValidation       | GET         | [Validation/usability of Email](#email-validation)                 |
 | /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
 | /users/phoneNumberValidation | GET         | [Validation/usability of a phone number](#phone-number-validation) |
-| /users/upload-profile-pic    | POST        | [upload a user profile image](#upload-profile-image)               |
+| /users/upload-profile-pic    | PATCH       | [upload a user profile image](#upload-profile-image)               |
 | /users/usersPic              | GET         | [Get a user's profile image](#get-profile-image)                   |
-| /users/updateUser            | POST        | [Update a user's name or phonenumber](#update-user)                |
+| /users/updateUser            | PATCH       | [Update a user's name or phonenumber](#update-user)                |
 | /users/deleteUser            | DELETE      | [Delete a user account](#delete-user)                              |
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
-| /users/changePassword        | Post        | [Change a user's password](#change-password)                       |
+| /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
-| /users/getInfo               | GET         | [Get a user's account information](#get-users-info)                |
-| /users/rating                | GET         | [Get a user's rating](#get-user-rating)                            |
-| /users/rating                | PATCH       | [Add a new rating to a user](#add-user-rating)                     |
+
+<<<<<<< HEAD
+| /users/getInfo | GET | [Get a user's account information](#get-users-info) |
+| /users/rating | GET | [Get a user's rating](#get-user-rating) |
+| /users/rating | PATCH | [Add a new rating to a user](#add-user-rating) |
+=======
+| /users/get-rating | GET | [Get a user's rating](#get-rating)
+
+> > > > > > > master
 
 ---
 
@@ -446,7 +470,7 @@ localhost:3000/users/phoneNumberValidation?phoneNumber=1231231234
 
 ### Upload Profile Image
 
-POST request
+PATCH request
 
 **Body**
 
@@ -502,7 +526,7 @@ https://bruinpool-bucket-staging.s3.us-east-2.amazonaws.com/bucketFolder/bin315a
 
 ### Update User
 
-PUT request
+PATCH request
 
 **body**
 
@@ -559,7 +583,7 @@ no further return data
 
 ### Change Password
 
-POST request
+PATCH request
 
 **body**
 
@@ -661,17 +685,27 @@ username
 
 **example**
 
-localhost:3000/users/rating?username=elin4046
+### Get rating
+
+GET request
+
+- Get the rating of a user
+
+**params/body**
+
+- username
+
+**example**
+
+- localhost:3000/users/get-rating?username=elin4046
 
 **return value**
 
-Returns 200 if successfully added a rating to the User's rating property.
-Returns 500 upon database error, or if the rating is not between 1 and 5.
+- An object containing the property averageRating, which is a floating point that is truncated to two decimal points, eg. 2.50
 
 ```
 {
-    "totalCount": 4,
-    "totalValue": 8
+    "averageRating": 2.50
 }
 ```
 
@@ -1194,204 +1228,172 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 
 ---
 
-### Request Model
+### Review Model
 
 ### Schema
 
-| column      | type   | required | properties |
-| ----------- | ------ | -------- | ---------- |
-| senderID    | String | Yes      |            |
-| recepientID | String | Yes      |            |
-| status      | String | Yes      |            |
-| msg         | String | No       |            |
-| date        | String | No       |            |
+| property           | type     | required |
+| ------------------ | -------- | -------- |
+| _reviewerUsername_ | String   | Yes      |
+| _revieweeUsername_ | String   | Yes      |
+| _rideId_           | ObjectId | Yes      |
+| datePosted         | Date     |          |
+| rating             | Number   |          |
+| comment            | String   |          |
+| isDeclined         | Boolean  |          |
+
+- Italicized properties uniquely identify a Review document
+- A Review document describes whether a reviewer chooses to review a reviewee, and if so, provides the details of the review
+- Details on whether the users are drivers or riders in a carpooling session are abstracted
+
+---
 
 ### API Endpoints
 
-| url                | HTTP Method | description                            |
-| ------------------ | ----------- | -------------------------------------- |
-| /request/sender    | GET         | [Sender Requests](#sender-requests)    |
-| /request/recepient | GET         | [Recepient Requests](#sender-requests) |
-| /request/new       | POST        | [New Request](#new-requests)           |
-| /request/approve   | PUT         | [Approve Request](#approve-signup)     |
-| /request/cancel    | PUT         | [Cancel Request](#cancel-login)        |
-| /request/deny      | PUT         | [Deny Request](#deny-signup)           |
-| /request/archive   | PUT         | [Archive Request](#archive-login)      |
-| /request/delete    | DELETE      | [Delete Request](#delete-signup)       |
-
-### Statuses
-
-- Pending: This status reflects the state where a rider has requested a ride, and the driver has yet to respond
-- Approved: This status reflects the state where a driver has approved an already existing user's request
-- Denied: This status reflects the state where a driver has denied an already existing user's request
-- Cancelled: This status reflects the state where a rider has cancelled his initial request
-- Archived: This status reflects an archived state, used for data analytics later on, instead of deleting them completely.
-
-### Sender Requests
-
-GET request
-
-- Get a sender's requests with the given status
-
-**query params**
-
-```
-
-    senderID: <String>,
-    status: <String>,
-    // status value of "all" returns all status types,
-    // "visible" displays everything but archived requests
-
-```
-
-**return value**
-
-201 created status with data of all matching requests, 500 error if failure
+| url                                   | HTTP Method | description                                                         |
+| ------------------------------------- | ----------- | ------------------------------------------------------------------- |
+| /reviews                              | POST        | [Add a review ](#add-review)                                        |
+| /reviews                              | GET         | [Get all of a user's reviews](#get-all-reviews)                     |
+| /reviews/decline-review               | POST        | [Decline to review a user](#decline-to-review)                      |
+| /reviews/get-eligible-users-to-review | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review) |
 
 ---
 
-### Recepient Requests
-
-GET request
-
-- Get a recepient's requests with the given status
-
-**query params**
-
-```
-
-    recepientID: <String>,
-    status: <String>,
-    // status value of "all" returns all status types,
-    // "visible" displays everything but archived requests
-
-```
-
-**return value**
-
-201 created status with data of all matching requests, 500 error if failure
-
----
-
-### Create Request
+### Add Review
 
 POST request
 
-- Create a request
+- Add a review using the currently logged in account as the reviewer
 
-**body**
+**params/body**
+
+- Required fields: revieweeUsername, rideId, and rating
+
+```
+    {
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439011",
+        "rating": 1,
+        "comment": "Driver arrived really late and was super rude!"
+    }
+```
+
+**return value**
+
+- 200 status code w/ data on the newly created document
+- 500 status code w/ database errors or in the case of duplicate reviews
 
 ```
 {
-    rideID: <String>,
-    recepientID: <String>,
-    msg: <String>
+	"isDeclined": false,
+	"_id": "5e1e997e67eae745e865a233",
+	"reviewerUsername": "admin",
+	"revieweeUsername": "elin4046",
+	"rideId": "507f1f77bcf86cd799439011",
+	"rating": 1,
+	"comment": "Driver arrived really late and was super rude!",
+	"datePosted": "2020-01-15T04:47:58.738Z",
+	"__v": 0
+}
+```
+
+---
+
+### Get all reviews
+
+GET request
+
+- Get all reviews received by a user
+
+**params/body**
+
+username
+
+**example**
+
+localhost:3000/reviews?username=elin4046
+
+**return value**
+
+- 200 status code - A list of review documents made to the user, empty [] if none exist.
+
+```
+[
+    {
+        "isDeclined": false,
+        "_id": "5e1ea29e94b3263a60b162da",
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439012",
+        "rating": 1,
+        "comment": "Driver arrived really late and was super rude!",
+        "reviewerUsername": "admin",
+        "datePosted": "2020-01-15T05:26:54.837Z",
+        "__v": 0
+    },
+    {
+        "isDeclined": false,
+        "_id": "5e1ea2e494b3263a60b162db",
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439013",
+        "rating": 4,
+        "comment": "A super laid back guy. We had a great conversation the whole time.",
+        "reviewerUsername": "admin",
+        "datePosted": "2020-01-15T05:28:04.757Z",
+        "__v": 0
+    }
+]
+```
+
+---
+
+### Decline to review
+
+POST request
+
+- Indicate the currently logged in user's decision to not review another user after being prompted to do so
+- This is important to prevent any further notifications
+
+**params/body**
+
+- revieweeUsername and the ride's rideId
+
+**example**
+
+```
+{
+	"revieweeUsername": "john_smith",
+	"rideId": "507f191e810c19729de860ea"
 }
 ```
 
 **return value**
 
-201 created status with data including the request id for later use, 500 error if failure
+- 200 status code w/ data on the newly created Review document
+- 500 status code w/ database errors or in the case of duplicate declines
 
 ---
 
-### Approve Request
+### Get list of usernames to review
 
-PUT request
+GET request
 
-- Change the status of a request to "approved"
+- Get a list of usernames that may be reviewed using the currently logged in account
+- For example: - If a user was a driver in their latest carpooling session, the request will return the usernames of each of his/her passengers - If a user was a passenger in their latest carpooling session, the request will return the username of the driver - If a user has previously **declined** an opportunity to review a passenger, that passenger's username will not be returned
 
-**query params**
+**params/body**
 
-```
-
-    requestID = <String>
-
-```
+- none required
 
 **return value**
 
-201 status if successful, 500 error if failure such as if the ride is already "archived"
-
----
-
-### Deny Request
-
-PUT request
-
-- Change the status of a request to "denied"
-
-**query params**
-
-```
-
-    requestID = <String>
-
-```
-
-**return value**
-
-201 status if successful, 500 error if failure such as if the ride is already "archived" or "cancelled"
-
----
-
-### Cancel Request
-
-PUT request
-
-- Change the status of a request to "cancelled"
-
-**query params**
-
-```
-
-    requestID = <String>
-
-```
-
-**return value**
-
-201 status if successful, 500 error if failure such as if the ride is already "archived" or "denied"
-
----
-
-### Archive Request
-
-PUT request
-
-- Change the status of a request to "archived"
-
-**query params**
-
-```
-
-    requestID = <String>
-
-```
-
-**return value**
-
-201 status if successful, 500 error if failure
-
----
-
-### Delete Request
-
-Delete request
-
-- Deletes a request
-
-**body**
+- An object containing a list of eligible usernames and the latest carpooling session's rideId, if there exists one. - rideId is a necessary property to uniquely identify a Review document
 
 ```
 {
-    requestID = <String>
+    "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"],
+	"rideId": "507f191e810c19729de860ea"
 }
 ```
-
-**return value**
-
-201 status if successful, 500 error if failure, 404 if no matching request was found
 
 ---
 

@@ -233,7 +233,8 @@ Models:
 1. [User](#user-model)
 2. [Ride](#ride-model)
 3. [Noti](#noti-model)
-4. [Request](#request-model)
+4. [Review](#review-model)
+5. [Request](#request-model)
 
 ---
 
@@ -241,41 +242,39 @@ Models:
 
 ### Schema
 
-| column      | type    | required | properties             |
-| ----------- | ------- | -------- | ---------------------- |
-| name        | String  | Yes      |                        |
-| email       | String  | Yes      |                        |
-| username    | String  | Yes      |                        |
-| password    | String  | Yes      |                        |
-| phoneNumber | String  |          |                        |
-| driverList  | Array   |          |                        |
-| riderList   | Array   |          |                        |
-| picUrl      | String  |          |                        |
-| picType     | String  |          |                        |
-| Verified    | Boolean | Yes      |                        |
-| Rating      | Object  |          | totalCount, totalValue |
-| stripe      | Object  |          | accountID, customerID  |
+| column      | type    | required | properties                    |
+| ----------- | ------- | -------- | ----------------------------- |
+| name        | String  | Yes      |                               |
+| email       | String  | Yes      |                               |
+| username    | String  | Yes      |                               |
+| password    | String  | Yes      |                               |
+| phoneNumber | String  |          |                               |
+| driverList  | Array   |          |                               |
+| riderList   | Array   |          |                               |
+| picUrl      | String  |          |                               |
+| picType     | String  |          |                               |
+| Verified    | Boolean | Yes      |                               |
+| rating      | Object  |          | sumOfAllRatings, totalRatings |
+| stripe      | Object  |          | accountID, customerID         |
 
 ### API Endpoints
 
 | url                          | HTTP Method | description                                                        |
 | ---------------------------- | ----------- | ------------------------------------------------------------------ |
-| /users/login                 | GET         | [User Login](#user-login)                                          |
+| /users/login                 | POST        | [User Login](#user-login)                                          |
 | /users/signup                | POST        | [User Signup](#user-signup)                                        |
 | /users/verify                | GET         | [Send a verification Email for signup](#email-verification)        |
 | /users/emailValidation       | GET         | [Validation/usability of Email](#email-validation)                 |
 | /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
 | /users/phoneNumberValidation | GET         | [Validation/usability of a phone number](#phone-number-validation) |
-| /users/upload-profile-pic    | POST        | [upload a user profile image](#upload-profile-image)               |
+| /users/upload-profile-pic    | PATCH       | [upload a user profile image](#upload-profile-image)               |
 | /users/usersPic              | GET         | [Get a user's profile image](#get-profile-image)                   |
-| /users/updateUser            | POST        | [Update a user's name or phonenumber](#update-user)                |
+| /users/updateUser            | PATCH       | [Update a user's name or phonenumber](#update-user)                |
 | /users/deleteUser            | DELETE      | [Delete a user account](#delete-user)                              |
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
-| /users/changePassword        | Post        | [Change a user's password](#change-password)                       |
+| /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
-| /users/getInfo               | GET         | [Get a user's account information](#get-users-info)                |
-| /users/rating                | GET         | [Get a user's rating](#get-user-rating)                            |
-| /users/rating                | PATCH       | [Add a new rating to a user](#add-user-rating)                     |
+| /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
 
 ---
 
@@ -446,7 +445,7 @@ localhost:3000/users/phoneNumberValidation?phoneNumber=1231231234
 
 ### Upload Profile Image
 
-POST request
+PATCH request
 
 **Body**
 
@@ -502,7 +501,7 @@ https://bruinpool-bucket-staging.s3.us-east-2.amazonaws.com/bucketFolder/bin315a
 
 ### Update User
 
-PUT request
+PATCH request
 
 **body**
 
@@ -559,7 +558,7 @@ no further return data
 
 ### Change Password
 
-POST request
+PATCH request
 
 **body**
 
@@ -629,49 +628,27 @@ localhost:3000/users/getInfo?username=bin315a1
 
 ---
 
-### Get User rating
+### Get rating
 
-GET Request
+GET request
 
-**params**
+- Get the rating of a user
 
-username
+**params/body**
 
-**example**
-
-localhost:3000/users/rating?username=elin4046
-
-**return value**
-
-Returns 200 if successful. Returns 500 upon error, or if the user does not have at least 3 ratings yet.
-
-```
-{
-    "averageRating": "2.00"
-}
-```
-
-### Add User rating
-
-PATCH Request
-
-**params**
-
-username
+- username
 
 **example**
 
-localhost:3000/users/rating?username=elin4046
+- localhost:3000/users/get-rating?username=elin4046
 
 **return value**
 
-Returns 200 if successfully added a rating to the User's rating property.
-Returns 500 upon database error, or if the rating is not between 1 and 5.
+- An object containing the property averageRating, which is a floating point that is truncated to two decimal points, eg. 2.50
 
 ```
 {
-    "totalCount": 4,
-    "totalValue": 8
+    "averageRating": 2.50
 }
 ```
 
@@ -1189,6 +1166,175 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
     "n": 9,
     "nModified": 2,
     "ok": 1
+}
+```
+
+---
+
+### Review Model
+
+### Schema
+
+| property           | type     | required |
+| ------------------ | -------- | -------- |
+| _reviewerUsername_ | String   | Yes      |
+| _revieweeUsername_ | String   | Yes      |
+| _rideId_           | ObjectId | Yes      |
+| datePosted         | Date     |          |
+| rating             | Number   |          |
+| comment            | String   |          |
+| isDeclined         | Boolean  |          |
+
+- Italicized properties uniquely identify a Review document
+- A Review document describes whether a reviewer chooses to review a reviewee, and if so, provides the details of the review
+- Details on whether the users are drivers or riders in a carpooling session are abstracted
+
+---
+
+### API Endpoints
+
+| url                                   | HTTP Method | description                                                         |
+| ------------------------------------- | ----------- | ------------------------------------------------------------------- |
+| /reviews                              | POST        | [Add a review ](#add-review)                                        |
+| /reviews                              | GET         | [Get all of a user's reviews](#get-all-reviews)                     |
+| /reviews/decline-review               | POST        | [Decline to review a user](#decline-to-review)                      |
+| /reviews/get-eligible-users-to-review | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review) |
+
+---
+
+### Add Review
+
+POST request
+
+- Add a review using the currently logged in account as the reviewer
+
+**params/body**
+
+- Required fields: revieweeUsername, rideId, and rating
+
+```
+    {
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439011",
+        "rating": 1,
+        "comment": "Driver arrived really late and was super rude!"
+    }
+```
+
+**return value**
+
+- 200 status code w/ data on the newly created document
+- 500 status code w/ database errors or in the case of duplicate reviews
+
+```
+{
+	"isDeclined": false,
+	"_id": "5e1e997e67eae745e865a233",
+	"reviewerUsername": "admin",
+	"revieweeUsername": "elin4046",
+	"rideId": "507f1f77bcf86cd799439011",
+	"rating": 1,
+	"comment": "Driver arrived really late and was super rude!",
+	"datePosted": "2020-01-15T04:47:58.738Z",
+	"__v": 0
+}
+```
+
+---
+
+### Get all reviews
+
+GET request
+
+- Get all reviews received by a user
+
+**params/body**
+
+username
+
+**example**
+
+localhost:3000/reviews?username=elin4046
+
+**return value**
+
+- 200 status code - A list of review documents made to the user, empty [] if none exist.
+
+```
+[
+    {
+        "isDeclined": false,
+        "_id": "5e1ea29e94b3263a60b162da",
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439012",
+        "rating": 1,
+        "comment": "Driver arrived really late and was super rude!",
+        "reviewerUsername": "admin",
+        "datePosted": "2020-01-15T05:26:54.837Z",
+        "__v": 0
+    },
+    {
+        "isDeclined": false,
+        "_id": "5e1ea2e494b3263a60b162db",
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439013",
+        "rating": 4,
+        "comment": "A super laid back guy. We had a great conversation the whole time.",
+        "reviewerUsername": "admin",
+        "datePosted": "2020-01-15T05:28:04.757Z",
+        "__v": 0
+    }
+]
+```
+
+---
+
+### Decline to review
+
+POST request
+
+- Indicate the currently logged in user's decision to not review another user after being prompted to do so
+- This is important to prevent any further notifications
+
+**params/body**
+
+- revieweeUsername and the ride's rideId
+
+**example**
+
+```
+{
+	"revieweeUsername": "john_smith",
+	"rideId": "507f191e810c19729de860ea"
+}
+```
+
+**return value**
+
+- 200 status code w/ data on the newly created Review document
+- 500 status code w/ database errors or in the case of duplicate declines
+
+---
+
+### Get list of usernames to review
+
+GET request
+
+- Get a list of usernames that may be reviewed using the currently logged in account
+- For example: - If a user was a driver in their latest carpooling session, the request will return the usernames of each of his/her passengers - If a user was a passenger in their latest carpooling session, the request will return the username of the driver - If a user has previously **declined** an opportunity to review a passenger, that passenger's username will not be returned
+
+**params/body**
+
+- none required
+
+**return value**
+
+- An object containing a list of eligible usernames and the latest carpooling session's rideId, if there exists one. - rideId is a necessary property to uniquely identify a Review document
+
+```
+{
+    "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"],
+	"rideId": "507f191e810c19729de860ea"
 }
 ```
 

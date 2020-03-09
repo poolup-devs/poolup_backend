@@ -33,11 +33,11 @@ const userSchema = mongoose.Schema({
     default: new Date()
   },
   rating: {
-    totalCount: {
+    sumOfAllRatings: {
       type: Number,
       default: 0
     },
-    totalValue: {
+    totalRatings: {
       type: Number,
       default: 0
     }

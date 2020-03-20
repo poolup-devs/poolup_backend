@@ -13,7 +13,53 @@ const rideDB = require("../ride/controller.js");
 const userDB = require("../user/controller.js");
 const TransferDB = require("./transfer/controller.js");
 
-router.get("/stripe/driver/auth", (req, res) => {
+router.get("/stripe/token", (req, res) => {
+  //Check state value in cookie to make sure it matches previous state
+  // if (req.session.state != req.query.state) {
+  //   return res.redirect('/pilots/signup');
+  // }
+
+  console.log("Stripe ID: " + process.env.STRIPE_PRIVATE_KEY);
+  console.log(req);
+
+  try {
+    // Post the authorization code to Stripe to complete the Express onboarding flow
+    stripe.oauth
+      .token({
+        grant_type: "authorization_code",
+        code: req.query.code
+      })
+      .then(function(response) {
+        console.log("Success");
+        console.log(response.stripe_user_id);
+
+        if (response.error) {
+          throw response.error;
+        }
+
+        // Update the model and store the Stripe account ID in the datastore:
+        // this Stripe account ID will be used to issue payouts to the driver
+        // userDB.updateUserStripeAccountID()
+
+        // req.user.stripeAccountId = expressAuthorized.stripe_user_id;
+        // await req.user.save();
+
+        //   // Redirect to the Rocket Rides dashboard
+        //   req.flash('showBanner', 'true');
+        //   res.redirect('/pilots/dashboard');
+      })
+      .catch(error => {
+        console.error(error);
+        //Redirect back with error
+      });
+  } catch (err) {
+    console.log("The Stripe onboarding process has not succeeded.");
+    console.log(err);
+    next(err);
+  }
+});
+
+router.get("/stripe/driver/auth", checkAuth, (req, res) => {
   //Generate a random string as `state` to protect from CSRF and include it in the session
   // req.session.state = Math.random()
   //   .toString(36)
@@ -24,14 +70,27 @@ router.get("/stripe/driver/auth", (req, res) => {
     // state: req.session.state
   };
 
-  parameters = Object.assign(parameters, {
-    redirect_uri: "localhost:3006/driver"
-  });
+  const authUsername = tokenParser(req.headers.authorization).username;
 
-  res.send({
-    redirectUrl:
-      "https://connect.stripe.com/express/oauth/authorize?" +
-      querystring.stringify(parameters)
+  userDB.findUserByUsername(authUsername, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+      return;
+    }
+
+    const userInfo = data[0];
+
+    parameters = Object.assign(parameters, {
+      "stripe_user[business_type]": "individual",
+      "stripe_user[email]": userInfo.email,
+      "stripe_user[phone_number]": req.query.phoneNumber
+    });
+
+    res.send({
+      redirectUrl:
+        "https://connect.stripe.com/express/oauth/authorize?" +
+        querystring.stringify(parameters)
+    });
   });
 });
 

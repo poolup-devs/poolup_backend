@@ -11,8 +11,8 @@
     "test": "env-cmd -f ./config/test.env jest --watch --runInBand"
   },
   "jest": {
-    "testEnvironment": "node", 
-    "setupFilesAfterEnv": [  
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
       "./tests/jestDefaultTimeout.js"
     ]
   },

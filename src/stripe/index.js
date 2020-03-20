@@ -12,15 +12,15 @@ const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
 const rideDB = require("../ride/controller.js");
 const userDB = require("../user/controller.js");
 const TransferDB = require("./transfer/controller.js");
+const stripeDB = require("./controller.js");
 
+// Called when Stripe redirects from the account setup
 router.get("/stripe/token", (req, res) => {
-  //Check state value in cookie to make sure it matches previous state
-  // if (req.session.state != req.query.state) {
-  //   return res.redirect('/pilots/signup');
-  // }
-
-  console.log("Stripe ID: " + process.env.STRIPE_PRIVATE_KEY);
-  console.log(req);
+  // Check state value in cookie to make sure it matches previous state
+  if (req.session.state != req.query.state) {
+    res.sendStatus(500);
+    return;
+  }
 
   try {
     // Post the authorization code to Stripe to complete the Express onboarding flow
@@ -30,45 +30,50 @@ router.get("/stripe/token", (req, res) => {
         code: req.query.code
       })
       .then(function(response) {
-        console.log("Success");
-        console.log(response.stripe_user_id);
-
         if (response.error) {
           throw response.error;
         }
 
+        const driverInfo = {
+          username: req.session.username,
+          phoneNumber: req.session.driverInfo.phoneNumber,
+          licensePlate: req.session.driverInfo.licensePlate,
+          vehicleModel: req.session.driverInfo.vehicleModel,
+          stripeAccountID: response.stripe_user_id
+        };
+
         // Update the model and store the Stripe account ID in the datastore:
         // this Stripe account ID will be used to issue payouts to the driver
-        // userDB.updateUserStripeAccountID()
+        userDB.addUserDriverInfo(driverInfo, (err, data) => {
+          if (err) {
+            throw err;
+          }
 
-        // req.user.stripeAccountId = expressAuthorized.stripe_user_id;
-        // await req.user.save();
-
-        //   // Redirect to the Rocket Rides dashboard
-        //   req.flash('showBanner', 'true');
-        //   res.redirect('/pilots/dashboard');
+          // Redirect to the Driver onboarding page
+          res.redirect("http://localhost:3006/driver");
+        });
       })
       .catch(error => {
-        console.error(error);
-        //Redirect back with error
+        throw error;
       });
   } catch (err) {
     console.log("The Stripe onboarding process has not succeeded.");
     console.log(err);
-    next(err);
+    res.sendStatus(500);
   }
 });
 
+// Redirect to Stripe Express for driver payment setup
 router.get("/stripe/driver/auth", checkAuth, (req, res) => {
   //Generate a random string as `state` to protect from CSRF and include it in the session
-  // req.session.state = Math.random()
-  //   .toString(36)
-  //   .slice(2);
+  req.session.state = Math.random()
+    .toString(36)
+    .slice(2);
 
-  let parameters = {
-    client_id: process.env.STRIPE_CLIENT_ID
-    // state: req.session.state
-  };
+  // let parameters = {
+  //   client_id: process.env.STRIPE_CLIENT_ID,
+  //   state: req.session.state
+  // };
 
   const authUsername = tokenParser(req.headers.authorization).username;
 
@@ -78,19 +83,40 @@ router.get("/stripe/driver/auth", checkAuth, (req, res) => {
       return;
     }
 
-    const userInfo = data[0];
+    // The username needs to be retreived when stripe redirects
+    // back to /stripe/token after the oAuth is complete
+    req.session.username = authUsername;
 
-    parameters = Object.assign(parameters, {
+    const driverInfo = JSON.parse(req.query.driverInfo);
+
+    // Check that all the fields of the driverInfo object are populated
+    if (!stripeDB.containsDriverInfo(driverInfo)) {
+      console.log("Invalid driver info");
+      res.sendStatus(500);
+      return;
+    }
+
+    // Save the driver info to the session, it will be retrieved once stripe
+    // redirects back to PoolUp
+    req.session.driverInfo = driverInfo;
+
+    // Populate the parameters that will be sent in the Stripe redirect. They will
+    // be used to autopopulate some of the fields in the Stripe Express setup
+    const userInfo = data[0];
+    parameters = {
+      client_id: process.env.STRIPE_CLIENT_ID,
+      state: req.session.state,
       "stripe_user[business_type]": "individual",
       "stripe_user[email]": userInfo.email,
-      "stripe_user[phone_number]": req.query.phoneNumber
-    });
+      "stripe_user[phone_number]": driverInfo.phoneNumber
+    };
 
     res.send({
       redirectUrl:
         "https://connect.stripe.com/express/oauth/authorize?" +
         querystring.stringify(parameters)
     });
+    return;
   });
 });
 

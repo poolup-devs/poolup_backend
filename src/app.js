@@ -1,15 +1,33 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const session = require("express-session");
+const fileStore = require("session-file-store")(session);
 
 //Express config
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:3006"],
+    methods: ["GET", "POST"],
+    credentials: true
+  })
+);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + "/../public"));
+
+app.use(
+  session({
+    name: "session_poolup",
+    secret: "change_in_prod_get_from_env_file",
+    saveUninitialized: true,
+    resave: true
+    //store: new fileStore()
+  })
+);
 
 const userRouter = require("./user/index");
 const rideRouter = require("./ride/index");

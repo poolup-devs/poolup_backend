@@ -18,6 +18,16 @@ const userSchema = mongoose.Schema({
       default: ""
     }
   },
+  driver: {
+    licensePlate: {
+      type: String,
+      default: ""
+    },
+    vehicleModel: {
+      type: String,
+      default: ""
+    }
+  },
   phoneNumber: String,
   picUrl: String,
   picType: {

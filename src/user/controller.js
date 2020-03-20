@@ -201,10 +201,19 @@ const getPicUrl = (username, callback) => {
   });
 };
 
-const updateUserStripeAccountID = (authUsername, stripeAccountID, callback) => {
+const addUserDriverInfo = (driverInfo, callback) => {
   User.findOneAndUpdate(
-    { username: authUsername },
-    { stripe: { accountID: stripeAccountID } },
+    { username: driverInfo.username },
+    {
+      stripe: {
+        accountID: driverInfo.stripeAccountID
+      },
+      driver: {
+        licensePlate: driverInfo.licensePlate,
+        vehicleModel: driverInfo.vehicleModel
+      },
+      phoneNumber: driverInfo.phoneNumber
+    },
     { new: true },
     (err, result) => {
       if (err) {
@@ -319,7 +328,7 @@ module.exports = {
   getPicType,
   getPicUrl,
   signup,
-  updateUserStripeAccountID,
+  addUserDriverInfo,
   updateUser,
   deleteUser,
   confirmCredentials,

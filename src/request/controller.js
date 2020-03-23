@@ -45,12 +45,7 @@ const getRecipientRequests = (recipientID, status, callback) => {
     query = { recipientID: recipientID };
   } else if (status == "visible") {
     query = {
-      $and: [
-        { recipientID: recipientID },
-        {
-          $nor: [{ archived: true }]
-        }
-      ]
+      $and: [{ recipientID: recipientID }, { archived: false }]
     };
   } else {
     query = { recipientID: recipientID, status: status };
@@ -99,7 +94,7 @@ const approveRequest = (requestID, callback) => {
     } else {
       if (findResult.archived) {
         callback("Ride has already been archived");
-      } else if (findResult.status != "pending") {
+      } else if (findResult.status !== "pending") {
         callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(
@@ -131,7 +126,7 @@ const cancelRequest = (requestID, callback) => {
     } else {
       if (findResult.archived) {
         callback("Ride has already been archived");
-      } else if (findResult.status != "pending") {
+      } else if (findResult.status !== "pending") {
         callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(
@@ -163,7 +158,7 @@ const denyRequest = (requestID, callback) => {
     } else {
       if (findResult.archived) {
         callback("Ride has already been archived");
-      } else if (findResult.status != "pending") {
+      } else if (findResult.status !== "pending") {
         callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(

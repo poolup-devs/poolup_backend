@@ -141,7 +141,7 @@ router.delete("/rides/delete-ride", checkAuth, (req, res) => {
 //Get Ride Details
 router.get("/rides/ride-details", checkAuth, (req, res) => {
   var rideID = req.query.rideID;
-  console.log(rideID);
+
   db.rideDetails(mongoose.Types.ObjectId(rideID), (err, data) => {
     if (err) {
       res.status(500).json({ error: err });

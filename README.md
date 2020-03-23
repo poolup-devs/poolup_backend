@@ -1363,10 +1363,10 @@ GET request
 | ------------------ | ----------- | ----------------------------------------- |
 | /request/sender    | GET         | [Sender Requests](#sender-requests)       |
 | /request/recepient | GET         | [Recepient Requests](#recepient-requests) |
-| /request/new       | POST        | [New Request](#create-request)            |
+| /request/new       | POST        | [Create New Request](#create-request)     |
 | /request/approve   | PUT         | [Approve Request](#approve-request)       |
 | /request/cancel    | PUT         | [Cancel Request](#cancel-request)         |
-| /request/deny      | PUT         | [Deny Request](#deny-requst)              |
+| /request/deny      | PUT         | [Deny Request](#deny-request)             |
 | /request/archive   | PUT         | [Archive Request](#archive-request)       |
 | /request/delete    | DELETE      | [Delete Request](#delete-request)         |
 

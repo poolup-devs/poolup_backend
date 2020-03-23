@@ -1389,6 +1389,7 @@ GET request
 
     senderID: <String>,
     status: <String>,
+    // senderID is the username to get that user's requests that they sent
     // status value of "all" returns all status types,
     // "visible" displays everything but archived requests
 
@@ -1412,6 +1413,7 @@ GET request
 
     recipientID: <String>,
     status: <String>,
+    // recipientID is the username to get requests that other users sent to this user
     // status value of "all" returns all status types,
     // "visible" displays everything but archived requests
 

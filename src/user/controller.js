@@ -201,6 +201,21 @@ const getPicUrl = (username, callback) => {
   });
 };
 
+const checkIfDriver = (username, callback) => {
+  User.findOne(
+    {
+      username: username
+    },
+    (err, result) => {
+      if (err) {
+        callback(err);
+      } else {
+        callback(null);
+      }
+    }
+  );
+};
+
 const addUserDriverInfo = (driverInfo, callback) => {
   User.findOneAndUpdate(
     { username: driverInfo.username },
@@ -210,7 +225,8 @@ const addUserDriverInfo = (driverInfo, callback) => {
       },
       driver: {
         licensePlate: driverInfo.licensePlate,
-        vehicleModel: driverInfo.vehicleModel
+        vehicleModel: driverInfo.vehicleModel,
+        driversLicense: driverInfo.driversLicense
       },
       phoneNumber: driverInfo.phoneNumber
     },
@@ -328,6 +344,7 @@ module.exports = {
   getPicType,
   getPicUrl,
   signup,
+  checkIfDriver,
   addUserDriverInfo,
   updateUser,
   deleteUser,

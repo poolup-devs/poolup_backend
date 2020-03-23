@@ -26,6 +26,10 @@ const userSchema = mongoose.Schema({
     vehicleModel: {
       type: String,
       default: ""
+    },
+    driversLicense: {
+      type: String,
+      default: ""
     }
   },
   phoneNumber: String,

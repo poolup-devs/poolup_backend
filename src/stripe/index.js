@@ -12,13 +12,21 @@ const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
 const rideDB = require("../ride/controller.js");
 const userDB = require("../user/controller.js");
 const TransferDB = require("./transfer/controller.js");
-const stripeDB = require("./controller.js");
+const driverValidation = require("./tool/driver-info-validation.js");
 
 // Called when Stripe redirects from the account setup
 router.get("/stripe/token", (req, res) => {
+  // Check that the session exists
+  if (!req.session.username || !req.session.driverInfo) {
+    console.log("Cookie containing driver info is missing");
+    res.status(500).redirect("http://localhost:3006/driver");
+    return;
+  }
+
   // Check state value in cookie to make sure it matches previous state
   if (req.session.state != req.query.state) {
-    res.sendStatus(500);
+    console.log("Stripe state does not match session state.");
+    res.status(500).redirect("http://localhost:3006/driver");
     return;
   }
 
@@ -39,6 +47,7 @@ router.get("/stripe/token", (req, res) => {
           phoneNumber: req.session.driverInfo.phoneNumber,
           licensePlate: req.session.driverInfo.licensePlate,
           vehicleModel: req.session.driverInfo.vehicleModel,
+          driversLicense: req.session.driverInfo.driversLicense,
           stripeAccountID: response.stripe_user_id
         };
 
@@ -50,36 +59,40 @@ router.get("/stripe/token", (req, res) => {
           }
 
           // Redirect to the Driver onboarding page
-          res.redirect("http://localhost:3006/driver");
+          res.redirect("http://localhost:3006/driver/my-drives");
         });
       })
       .catch(error => {
         throw error;
       });
   } catch (err) {
-    console.log("The Stripe onboarding process has not succeeded.");
     console.log(err);
-    res.sendStatus(500);
+    res.status(500).redirect("http://localhost:3006/driver");
+    return;
   }
 });
 
 // Redirect to Stripe Express for driver payment setup
-router.get("/stripe/driver/auth", checkAuth, (req, res) => {
-  //Generate a random string as `state` to protect from CSRF and include it in the session
-  req.session.state = Math.random()
-    .toString(36)
-    .slice(2);
-
-  // let parameters = {
-  //   client_id: process.env.STRIPE_CLIENT_ID,
-  //   state: req.session.state
-  // };
-
+router.post("/stripe/driver/auth", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
 
   userDB.findUserByUsername(authUsername, (err, data) => {
     if (err) {
-      res.sendStatus(500);
+      res.status(500).json({
+        error: err
+      });
+      return;
+    }
+
+    //Get the user info from the database request
+    const userInfo = data[0];
+
+    // Check if a driver already has a stripe account ID
+    // If they do then that means they already registered as a drive
+    if (userInfo.stripe.accountID) {
+      res.status(400).json({
+        error: "User is already registered as a driver"
+      });
       return;
     }
 
@@ -87,12 +100,19 @@ router.get("/stripe/driver/auth", checkAuth, (req, res) => {
     // back to /stripe/token after the oAuth is complete
     req.session.username = authUsername;
 
-    const driverInfo = JSON.parse(req.query.driverInfo);
+    const driverInfo = {
+      phoneNumber: req.body.phoneNumber,
+      licensePlate: req.body.licensePlate,
+      vehicleModel: req.body.vehicleModel,
+      driversLicense: req.body.driversLicense
+    };
 
     // Check that all the fields of the driverInfo object are populated
-    if (!stripeDB.containsDriverInfo(driverInfo)) {
+    if (!driverValidation.containsDriverInfo(driverInfo)) {
       console.log("Invalid driver info");
-      res.sendStatus(500);
+      res.json(400, {
+        error: "Invalid driver information; check that all fields are populated"
+      });
       return;
     }
 
@@ -100,9 +120,13 @@ router.get("/stripe/driver/auth", checkAuth, (req, res) => {
     // redirects back to PoolUp
     req.session.driverInfo = driverInfo;
 
+    //Generate a random string as `state` to protect from CSRF and include it in the session
+    req.session.state = Math.random()
+      .toString(36)
+      .slice(2);
+
     // Populate the parameters that will be sent in the Stripe redirect. They will
     // be used to autopopulate some of the fields in the Stripe Express setup
-    const userInfo = data[0];
     parameters = {
       client_id: process.env.STRIPE_CLIENT_ID,
       state: req.session.state,
@@ -111,7 +135,7 @@ router.get("/stripe/driver/auth", checkAuth, (req, res) => {
       "stripe_user[phone_number]": driverInfo.phoneNumber
     };
 
-    res.send({
+    res.status(200).json({
       redirectUrl:
         "https://connect.stripe.com/express/oauth/authorize?" +
         querystring.stringify(parameters)

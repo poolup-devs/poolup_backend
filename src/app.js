@@ -1,8 +1,9 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const session = require("express-session");
-const fileStore = require("session-file-store")(session);
+const MongoStore = require("connect-mongo")(session);
 
 //Express config
 const app = express();
@@ -24,8 +25,14 @@ app.use(
     name: "session_poolup",
     secret: "change_in_prod_get_from_env_file",
     saveUninitialized: true,
-    resave: true
-    //store: new fileStore()
+    resave: true,
+    cookie: {
+      maxAge: 3600000 // 1 hour in miliseconds
+    },
+    store: new MongoStore({
+      mongooseConnection: mongoose.connection,
+      ttl: 3600 // 1 hour in seconds
+    })
   })
 );
 

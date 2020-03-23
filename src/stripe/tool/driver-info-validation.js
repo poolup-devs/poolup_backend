@@ -1,6 +1,10 @@
 const containsDriverInfo = driverInfo => {
   //driverInfo should have all its field populated
-  if (driverInfo.licensePlate == "" || driverInfo.vehicleModel == "") {
+  if (
+    driverInfo.licensePlate == "" ||
+    driverInfo.vehicleModel == "" ||
+    driverInfo.driversLicense == ""
+  ) {
     return false;
   }
 

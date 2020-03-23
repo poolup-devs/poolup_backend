@@ -129,6 +129,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 |   |       controller.js
 |   |       index.js
 |   |       noti.js
+|   |
 |   +---request
 |   |       controller.js
 |   |       index.js
@@ -138,6 +139,11 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 |   |       controller.js
 |   |       index.js
 |   |       ride.js
+|   |
+|   +---stripe
+|   |   |    index.js
+|   |   +----tool
+|   |           driver-info-validation.js
 |   |
 |   +---user
 |   |       controller.js
@@ -235,6 +241,7 @@ Models:
 3. [Noti](#noti-model)
 4. [Review](#review-model)
 5. [Request](#request-model)
+6. [Stripe](#stripe-model)
 
 ---
 
@@ -242,37 +249,20 @@ Models:
 
 ### Schema
 
-<<<<<<< HEAD
-| column | type | required | properties |
-| --------------- | ------- | -------- | ---------------------- |
-| name | String | Yes | |
-| email | String | Yes | |
-| username | String | Yes | |
-| password | String | Yes | |
-| phoneNumber | String | | |
-| driverList | Array | | |
-| riderList | Array | | |
-| picUrl | String | | |
-| picType | String | | |
-| Verified | Boolean | Yes | |
-| Rating | Object | | totalCount, totalValue |
-| stripeAccountID | Object | | |
-=======
-| column | type | required | properties |  
+| column      | type    | required | properties                    |
 | ----------- | ------- | -------- | ----------------------------- |
-| name | String | Yes | |
-| email | String | Yes | |  
-| username | String | Yes | |  
-| password | String | Yes | |  
-| phoneNumber | String | | |  
-| driverList | Array | | |  
-| riderList | Array | | |  
-| picUrl | String | | |  
-| picType | String | | |  
-| Verified | Boolean | Yes | |  
-| rating | Object | | sumOfAllRatings, totalRatings |
-
-> > > > > > > master
+| name        | String  | Yes      |                               |
+| email       | String  | Yes      |                               |
+| username    | String  | Yes      |                               |
+| password    | String  | Yes      |                               |
+| phoneNumber | String  |          |                               |
+| driverList  | Array   |          |                               |
+| riderList   | Array   |          |                               |
+| picUrl      | String  |          |                               |
+| picType     | String  |          |                               |
+| Verified    | Boolean | Yes      |                               |
+| rating      | Object  |          | sumOfAllRatings, totalRatings |
+| stripe      | Object  |          | customerID, accountID         |
 
 ### API Endpoints
 
@@ -291,15 +281,7 @@ Models:
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
 | /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
-
-<<<<<<< HEAD
-| /users/getInfo | GET | [Get a user's account information](#get-users-info) |
-| /users/rating | GET | [Get a user's rating](#get-user-rating) |
-| /users/rating | PATCH | [Add a new rating to a user](#add-user-rating) |
-=======
-| /users/get-rating | GET | [Get a user's rating](#get-rating)
-
-> > > > > > > master
+| /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
 
 ---
 
@@ -626,64 +608,6 @@ none required
 ```
 
 ---
-
-### Get Users Info
-
-GET request
-
-**params**
-
-username (not id)
-
-**example**
-
-localhost:3000/users/getInfo?username=bin315a1
-
-**return value**
-
-200 status
-
-```
-{
-    "name": "Han",
-    "email": "bin315a1@g.ucla.edu",
-    "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png"
-}
-```
-
----
-
-### Get User rating
-
-GET Request
-
-**params**
-
-username
-
-**example**
-
-localhost:3000/users/rating?username=elin4046
-
-**return value**
-
-Returns 200 if successful. Returns 500 upon error, or if the user does not have at least 3 ratings yet.
-
-```
-{
-    "averageRating": "2.00"
-}
-```
-
-### Add User rating
-
-PATCH Request
-
-**params**
-
-username
-
-**example**
 
 ### Get rating
 
@@ -1393,6 +1317,65 @@ GET request
     "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"],
 	"rideId": "507f191e810c19729de860ea"
 }
+```
+
+---
+
+### Stripe Model
+
+### API Endpoints
+
+| url                 | HTTP Method | description                                                                                                          |
+| ------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| /stripe/token       | GET         | [Process Stripe account authoriation code and complete driver onboarding](#Process-Stripe-Account-Authoriation-Code) |
+| /stripe/driver/auth | POST        | [Prepare for redirect to Stripe express account signup](#Prepare-for-redirect-to-stripe)                             |
+
+---
+
+### Process Stripe Account Authoriation Code
+
+GET request
+
+- This endpoint is called by Stripe after a user completes the stripe account signup process. The token is used to make a request to Stripe get the user's Stripe Account Id.
+- The driver's information (phone number, drivers license, license plate, vehicle model) was stored in a cookie when /stripe/driver/auth was called and the user's page was redirected to Stripe. This information, along with the Stripe account Id, is then stored in the database for the user that is logged in.
+- More information on this process can be found on Stripe's documentation: https://stripe.com/docs/connect/express-accounts
+
+**body**
+
+```
+{
+	"token": "ac_GwlrGacQIGKsSlSBdhis7vBHq7GKqiH4",
+	"state": "csjf6b4g1ft"
+}
+```
+
+**return value**
+
+- On Success
+  - Redirects page to /driver/my-drives
+- On Error
+  - Redirects page to /driver
+
+---
+
+### Prepare for Redirect to Stripe
+
+POST request
+
+- Accepts the drivers info (phone number, drivers license, license plate, vehicle model), stores it in a cookie, and returns a URL that is used to redirect to Stripe's account setup.
+
+**params**
+
+```
+"token": "ac_GwlrGacQIGKsSlSBdhis7vBHq7GKqiH4"
+
+"state": "csjf6b4g1ft"
+```
+
+**return value**
+
+```
+"redirectUrl": "https://connect.stripe.com/express/oauth/authorize?client_id={CLIENT_ID}&state={STATE_VALUE}&stripe_user[email]=user@example.com"
 ```
 
 ---

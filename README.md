@@ -1306,7 +1306,7 @@ POST request
 {
 	"revieweeUsername": "john_smith",
 	"rideId": "507f191e810c19729de860ea"
-}
+}Freq
 ```
 
 **return value**
@@ -1359,16 +1359,16 @@ GET request
 
 ### API Endpoints
 
-| url                | HTTP Method | description                            |
-| ------------------ | ----------- | -------------------------------------- |
-| /request/sender    | GET         | [Sender Requests](#sender-requests)    |
-| /request/recepient | GET         | [Recepient Requests](#sender-requests) |
-| /request/new       | POST        | [New Request](#new-requests)           |
-| /request/approve   | PUT         | [Approve Request](#approve-signup)     |
-| /request/cancel    | PUT         | [Cancel Request](#cancel-login)        |
-| /request/deny      | PUT         | [Deny Request](#deny-signup)           |
-| /request/archive   | PUT         | [Archive Request](#archive-login)      |
-| /request/delete    | DELETE      | [Delete Request](#delete-signup)       |
+| url                | HTTP Method | description                               |
+| ------------------ | ----------- | ----------------------------------------- |
+| /request/sender    | GET         | [Sender Requests](#sender-requests)       |
+| /request/recepient | GET         | [Recepient Requests](#recepient-requests) |
+| /request/new       | POST        | [New Request](#create-request)            |
+| /request/approve   | PUT         | [Approve Request](#approve-request)       |
+| /request/cancel    | PUT         | [Cancel Request](#cancel-request)         |
+| /request/deny      | PUT         | [Deny Request](#deny-requst)              |
+| /request/archive   | PUT         | [Archive Request](#archive-request)       |
+| /request/delete    | DELETE      | [Delete Request](#delete-request)         |
 
 ### Statuses
 

@@ -132,7 +132,8 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
       state: req.session.state,
       "stripe_user[business_type]": "individual",
       "stripe_user[email]": userInfo.email,
-      "stripe_user[phone_number]": driverInfo.phoneNumber
+      "stripe_user[phone_number]": driverInfo.phoneNumber,
+      "stripe_user[product_description]": "Driver on PoolUp"
     };
 
     res.status(200).json({

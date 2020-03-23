@@ -74,6 +74,7 @@ router.put("/request/approve", (req, res) => {
 // Cancel a specified request
 router.put("/request/cancel", (req, res) => {
   const requestID = req.body.params.requestID;
+
   db.cancelRequest(requestID, (err, data) => {
     if (err) {
       res.status(500).json({ errorMsg: err });
@@ -145,16 +146,19 @@ router.delete("/request/delete", (req, res) => {
 });
 
 // Remind a Receiver
-router.delete("/request/remind", (req, res) => {
-  const requestID = req.body.requestID;
+router.get("/request/remind", (req, res) => {
+  const requestID = req.query.requestID;
 
-  // Grab request details
+  // TODO: send notification
 
-  // send notification
-
-  // reduce request value by 1
-
-  res.sendStatus(200);
+  // reduce reminders value by 1
+  db.decrementRemindCount(requestID, (err, data) => {
+    if (err) {
+      res.status(500).json({ errorMsg: err });
+    }
+    console.log(data);
+    res.sendStatus(200);
+  });
 });
 
 module.exports = router;

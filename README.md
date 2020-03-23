@@ -1361,6 +1361,8 @@ GET request
 
 | url                | HTTP Method | description                               |
 | ------------------ | ----------- | ----------------------------------------- |
+| /request/info      | GET         | [Request Information](#request-info)      |
+| /request/remind    | GET         | [Remind Driver](#remind-driver)           |
 | /request/sender    | GET         | [Sender Requests](#sender-requests)       |
 | /request/recipient | GET         | [Recipient Requests](#recipient-requests) |
 | /request/new       | POST        | [Create New Request](#create-request)     |
@@ -1376,6 +1378,44 @@ GET request
 - Approved: This status reflects the state where a driver has approved an already existing user's request
 - Denied: This status reflects the state where a driver has denied an already existing user's request
 - Cancelled: This status reflects the state where a rider has cancelled his initial request
+
+### Request Info
+
+Request Info
+
+- Get a Request's information
+
+**query params**
+
+```
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure, 404 if no matching request was found
+
+---
+
+### Remind Driver
+
+Remind Driver
+
+- Reminds a Driver to Approve the request
+
+**query params**
+
+```
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure, 404 if no matching request was found
+
+---
 
 ### Sender Requests
 
@@ -1530,7 +1570,7 @@ PUT request
 
 ### Delete Request
 
-Delete request
+Delete Request
 
 - Deletes a request
 

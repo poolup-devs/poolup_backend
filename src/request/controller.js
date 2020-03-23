@@ -22,7 +22,8 @@ const getSenderRequests = (senderID, status, callback) => {
     query = { senderID: senderID };
   } else if (status == "visible") {
     query = {
-      $and: [{ senderID: senderID }, { archived: false }]
+      senderID: senderID,
+      archived: false
     };
   } else {
     query = { senderID: senderID, status: status };
@@ -45,7 +46,8 @@ const getRecipientRequests = (recipientID, status, callback) => {
     query = { recipientID: recipientID };
   } else if (status == "visible") {
     query = {
-      $and: [{ recipientID: recipientID }, { archived: false }]
+      recipientID: recipientID,
+      archived: false
     };
   } else {
     query = { recipientID: recipientID, status: status };
@@ -210,13 +212,34 @@ const unarchiveRequest = (requestID, callback) => {
 
 // deleteRequest deletes a specified request from the database
 const deleteRequest = (requestID, callback) => {
-  Request.deleteOne({ requestID }, (err, result) => {
+  Request.deleteOne({ _id: requestID }, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
       callback(null, result);
     }
   });
+};
+
+// decrementRemindCount decrements the reminders count by one
+const decrementRemindCount = (requestID, callback) => {
+  console.log(requestID);
+  const filter = { _id: requestID };
+  const update = { $inc: { reminders: -1 } };
+  const options = { new: true };
+
+  Request.findOneAndUpdate(
+    filter,
+    update,
+    options,
+    (updateErr, updateResult) => {
+      if (updateErr) {
+        callback(updateErr, null);
+      } else {
+        callback(null, updateResult);
+      }
+    }
+  );
 };
 
 module.exports = {
@@ -229,5 +252,6 @@ module.exports = {
   denyRequest,
   archiveRequest,
   unarchiveRequest,
-  deleteRequest
+  deleteRequest,
+  decrementRemindCount
 };

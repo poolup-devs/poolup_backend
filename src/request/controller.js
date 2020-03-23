@@ -22,12 +22,7 @@ const getSenderRequests = (senderID, status, callback) => {
     query = { senderID: senderID };
   } else if (status == "visible") {
     query = {
-      $and: [
-        { senderID: senderID },
-        {
-          $nor: [{ archived: true }]
-        }
-      ]
+      $and: [{ senderID: senderID }, { archived: false }]
     };
   } else {
     query = { senderID: senderID, status: status };

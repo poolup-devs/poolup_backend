@@ -88,7 +88,7 @@ router.put("/request/cancel", (req, res) => {
 // Deny a specified request
 router.put("/request/deny", (req, res) => {
   const requestID = req.body.params.requestID;
-  const msg = req.body.msg;
+  const msg = req.body.params.msg;
   db.denyRequest(requestID, (err, data) => {
     if (err) {
       res.status(500).json({ errorMsg: err });

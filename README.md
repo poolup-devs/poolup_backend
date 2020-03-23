@@ -1352,7 +1352,7 @@ GET request
 | status      | String   | Yes      |            |
 | archived    | Boolean  | Yes      |            |
 | reminders   | Number   | No       |            |
-| carryon     | Number   | No       |            |
+| carryOn     | Number   | No       |            |
 | luggage     | Number   | No       |            |
 | msg         | String   | No       |            |
 | date        | Date     | No       |            |

@@ -16,7 +16,7 @@ const requestSchema = mongoose.Schema({
     type: Number,
     default: 1
   },
-  carryon: {
+  carryOn: {
     type: Number,
     default: 0
   },

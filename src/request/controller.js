@@ -77,7 +77,7 @@ const createRequest = (requestInfo, callback) => {
     rideID: requestInfo.rideID,
     senderID: requestInfo.senderID,
     recipientID: requestInfo.recipientID,
-    carryon: requestInfo.carryon,
+    carryOn: requestInfo.carryOn,
     luggage: requestInfo.luggage,
     msg: requestInfo.msg,
     date: new Date()

@@ -42,23 +42,23 @@ const getSenderRequests = (senderID, status, callback) => {
   });
 };
 
-// getRecepientRequests gets Recepient requests based off status
-const getRecepientRequests = (recepientID, status, callback) => {
+// getrecipientRequests gets recipient requests based off status
+const getRecipientRequests = (recipientID, status, callback) => {
   let query = {};
 
   if (status == "all") {
-    query = { recepientID: recepientID };
+    query = { recipientID: recipientID };
   } else if (status == "visible") {
     query = {
       $and: [
-        { recepientID: recepientID },
+        { recipientID: recipientID },
         {
           $nor: [{ archived: true }]
         }
       ]
     };
   } else {
-    query = { recepientID: recepientID, status: status };
+    query = { recipientID: recipientID, status: status };
   }
 
   Request.find(query, (err, result) => {
@@ -76,7 +76,7 @@ const createRequest = (requestInfo, callback) => {
   newRequest = {
     rideID: requestInfo.rideID,
     senderID: requestInfo.senderID,
-    recepientID: requestInfo.recepientID,
+    recipientID: requestInfo.recipientID,
     carryon: requestInfo.carryon,
     luggage: requestInfo.luggage,
     msg: requestInfo.msg,
@@ -231,7 +231,7 @@ const deleteRequest = (requestID, callback) => {
 
 module.exports = {
   getRequestInfo,
-  getRecepientRequests,
+  getRecipientRequests,
   getSenderRequests,
   createRequest,
   approveRequest,

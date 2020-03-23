@@ -1348,7 +1348,7 @@ GET request
 | ----------- | -------- | -------- | ---------- |
 | rideID      | ObjectID | Yes      |            |
 | senderID    | String   | Yes      |            |
-| recepientID | String   | Yes      |            |
+| recipientID | String   | Yes      |            |
 | status      | String   | Yes      |            |
 | archived    | Boolean  | Yes      |            |
 | reminders   | Number   | No       |            |
@@ -1362,7 +1362,7 @@ GET request
 | url                | HTTP Method | description                               |
 | ------------------ | ----------- | ----------------------------------------- |
 | /request/sender    | GET         | [Sender Requests](#sender-requests)       |
-| /request/recepient | GET         | [Recepient Requests](#recepient-requests) |
+| /request/recipient | GET         | [Recipient Requests](#recipient-requests) |
 | /request/new       | POST        | [Create New Request](#create-request)     |
 | /request/approve   | PUT         | [Approve Request](#approve-request)       |
 | /request/cancel    | PUT         | [Cancel Request](#cancel-request)         |
@@ -1400,17 +1400,17 @@ GET request
 
 ---
 
-### Recepient Requests
+### Recipient Requests
 
 GET request
 
-- Get a recepient's requests with the given status
+- Get a recipient's requests with the given status
 
 **query params**
 
 ```
 
-    recepientID: <String>,
+    recipientID: <String>,
     status: <String>,
     // status value of "all" returns all status types,
     // "visible" displays everything but archived requests
@@ -1435,7 +1435,7 @@ POST request
 {
     senderID: <String>,
     rideID: <String>,
-    recepientID: <String>,
+    recipientID: <String>,
     msg: <String>
 }
 ```

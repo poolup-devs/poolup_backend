@@ -32,12 +32,12 @@ router.get("/request/sender", (req, res) => {
   });
 });
 
-// Get a recepient's requests
-router.get("/request/recepient", (req, res) => {
-  const recepientID = req.query.recepientID;
+// Get a Recipient's requests
+router.get("/request/recipient", (req, res) => {
+  const recipientID = req.query.recipientID;
   const status = req.query.status;
 
-  db.getRecepientRequests(recepientID, status, (err, data) => {
+  db.getRecipientRequests(recipientID, status, (err, data) => {
     if (err) {
       res.status(500).json({ errorMsg: err });
     } else {

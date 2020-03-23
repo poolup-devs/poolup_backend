@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const requestSchema = mongoose.Schema({
   rideID: mongoose.Types.ObjectId,
   senderID: String,
-  recepientID: String,
+  RecipientID: String,
   status: {
     type: String,
     default: "pending"

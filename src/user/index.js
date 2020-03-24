@@ -158,7 +158,7 @@ router.get("/users/phoneNumberValidation", (req, res) => {
 //Get My Info
 router.get("/users/my-info", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
-  db.getUserInfo(authUsername, (err, data) => {
+  db.getMyInfo(authUsername, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {

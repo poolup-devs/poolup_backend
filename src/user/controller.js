@@ -130,7 +130,7 @@ const findUserByPhoneNumber = (phoneNumber, callback) => {
   });
 };
 
-const getUserInfo = (authUsername, callback) => {
+const getMyInfo = (authUsername, callback) => {
   User.findOne({ username: authUsername }, (err, result) => {
     if (err) {
       callback(err, null);
@@ -438,6 +438,7 @@ module.exports = {
   findUserByEmail,
   findUserByUsername,
   findUserByPhoneNumber,
+  getMyInfo, 
   uploadPicUrl,
   getPicType,
   getPicUrl,

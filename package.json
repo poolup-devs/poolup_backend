@@ -6,8 +6,8 @@
   "scripts": {
     "start": "env-cmd -f ./config/dev.env node src/server.js",
     "dev": "env-cmd -f ./config/dev.env nodemon src/server.js",
-    "setup": "node setup.js",
-    "init_db": "env-cmd -f ./config/dev.env node init_db.js",
+    "setup": "node setup/setup.js",
+    "init_db": "env-cmd -f ./config/dev.env node setup/init_db.js",
     "test": "env-cmd -f ./config/test.env jest --watch --runInBand"
   },
   "jest": {

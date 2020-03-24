@@ -89,7 +89,7 @@ router.post("/rides/post-ride", checkAuth, (req, res) => {
 router.put("/rides/join-ride", checkAuth, (req, res) => {
   const ride = req.body.ride; //need the _id and owner's username of the ride
   const authUsername = tokenParser(req.headers.authorization).username; //my username
-  db.joinRide(ride.ownerUsername, ride._id, authUsername, (err, data) => {
+  db.joinRide(ride._id, authUsername, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else if (data.length === 0) {

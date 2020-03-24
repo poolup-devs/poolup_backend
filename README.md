@@ -1094,7 +1094,7 @@ PUT request
 		-  `ridesCancelled` property is incremented
 
 - In the event that a **passenger** cancels a ride, the following occurs:
-	1. Only the driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`.
+	1. The driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`.
 		- An example of a notification received by the driver is the following:
 			```
 			{
@@ -1111,8 +1111,9 @@ PUT request
 					}
 			}
 			```
-	2. The passenger who cancelled is removed from the ride, and a new spot is freed up.
-	3. The passenger who cancelled receive the following penalty:
+    2. All other passengers, if any, are notified about the cancellation. This notification ONLY includes the additional property: `cancellationReason`.  
+	3. The passenger who cancelled is removed from the ride, and a new spot is freed up.
+	4. The passenger who cancelled receive the following penalty:
 		-  `ridesCancelled` property is incremented
 
 **body**

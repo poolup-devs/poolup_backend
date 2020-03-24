@@ -10,6 +10,35 @@ const jwt = require("jsonwebtoken");
 
 
 describe("Testing Ride endpoints", () => {
+    describe("Testing when a user joins a ride as a passenger", () => {
+        afterEach(async () => {
+            await Ride.deleteMany({})
+            await User.deleteMany({})
+            await Noti.deleteMany({})
+        }) 
+        test("Testing whether the ride details are updated and whether all previous passengers are notified", async () => {
+            const passenger = await User.create({username: 'passenger3', email: 'passenger3@g.ucla.edu'})
+            const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ["passenger1", "passenger2"], seats: 1})
+            const rideDetails = await db.joinRide(ride._id, 'passenger3')
+            expect(rideDetails.seats).toBe(0)
+            expect(Array.from(rideDetails.passengers)).toEqual(['passenger1', 'passenger2', 'passenger3'])
+            
+            // Expect that a notification is sent to both the driver and all other passengers 
+            expect(await Noti.findOne({username: "driverUsername"})).toEqual(expect.objectContaining({
+                msg: "passenger3 has joined your ride", 
+                senderEmail: "passenger3@g.ucla.edu"
+            }))
+            expect(await Noti.findOne({username: "passenger1"})).toEqual(expect.objectContaining({
+                msg: "passenger3 has joined your ride", 
+                senderEmail: "passenger3@g.ucla.edu"
+            }))
+            expect(await Noti.findOne({username: "passenger2"})).toEqual(expect.objectContaining({
+                msg: "passenger3 has joined your ride", 
+                senderEmail: "passenger3@g.ucla.edu"
+            }))
+        })      
+    })
+
     describe("Testing cancellation of rides", () => {
         afterEach(async () => {
             await Ride.deleteMany({})

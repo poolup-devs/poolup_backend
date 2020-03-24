@@ -181,32 +181,35 @@ const updateCompletedRidesTask = (rideId) => {
 //     .limit(18);
 // };
 
-const joinRide = async (ownerUsername, ride_id, passengerUsername, callback) => {
-  const passenger = await User.findOne({username: passengerUsername})
-  const noti = {
-    username: ownerUsername,
-    msg: `${passengerUsername} has joined your ride`,
-    senderEmail: passenger.email,
-    date: new Date()
-  };
-  Ride.findOneAndUpdate(
-    { _id: ride_id, seats: { $gte: 1 } },
-    { $push: { passengers: passengerUsername }, $inc: { seats: -1 } },
-    { new: true },
-    (err1, result1) => {
-      if (err1) {
-        callback(err1, null);
-      } else {
-        Noti.create(noti, (err2, result2) => {
-          if (err2) {
-            callback(err2, null);
-          } else {
-            callback(null, result1);
-          }
-        });
+const joinRide = async (rideId, passengerUsername) => {
+  return new Promise(async (resolve, reject) => {
+    const passengerToAdd = await User.findOne({username: passengerUsername})
+    const rideDetails = await Ride.findOneAndUpdate(
+      { _id: rideId, seats: { $gte: 1 } },
+      { $push: { passengers: passengerToAdd.username }, $inc: { seats: -1 } },
+      { new: true }
+    )
+
+    await Noti.create({
+      username: rideDetails.ownerUsername, 
+      msg: `${passengerToAdd.username} has joined your ride`,
+      senderEmail: passengerToAdd.email,
+      date: new Date()
+    })
+
+    // Notify all other passengers 
+    for (var i = 0; i < rideDetails.passengers.length; i++) {
+      if (rideDetails.passengers[i] != passengerToAdd.username) {
+        await Noti.create({
+          username: rideDetails.passengers[i], 
+          msg: `${passengerToAdd.username} has joined your ride`,
+          senderEmail: passengerToAdd.email,
+          date: new Date()
+        })
       }
     }
-  );
+    return resolve(rideDetails)
+  })
 };
 
 // Cancel a ride, whether the user was a driver or passenger

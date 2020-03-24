@@ -201,19 +201,31 @@ const getPicUrl = (username, callback) => {
   });
 };
 
-const checkIfDriver = (username, callback) => {
-  User.findOne(
-    {
-      username: username
-    },
-    (err, result) => {
-      if (err) {
-        callback(err);
-      } else {
-        callback(null);
+const checkIfDriver = username => {
+  return new Promise(async (resolve, reject) => {
+    User.findOne(
+      {
+        username: username
+      },
+      (err, result) => {
+        if (err) {
+          reject(err);
+        }
+
+        // If username not found
+        if (!result) {
+          reject(new Error("User not found"));
+          return;
+        }
+
+        if (result.stripe.accountID) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
       }
-    }
-  );
+    );
+  });
 };
 
 const addUserDriverInfo = (driverInfo, callback) => {

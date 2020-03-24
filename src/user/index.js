@@ -355,4 +355,16 @@ router.get("/users/rating", checkAuth, async (req, res) => {
   }
 });
 
+// Check to see if a user is registered as a driver
+router.get("/users/driverStatus", checkAuth, async (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+
+  try {
+    const isDriver = await db.checkIfDriver(authUsername);
+    res.status(200).send({ isDriver: isDriver });
+  } catch (e) {
+    res.status(500).send({ error: e.message });
+  }
+});
+
 module.exports = router;

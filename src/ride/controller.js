@@ -289,16 +289,6 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
   })
 }
 
-const rideDelete = (_id, callback) => {
-  Ride.deleteOne({ _id }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
-  });
-};
-
 module.exports = {
   getMatchingRides,
   getRideHistory,
@@ -309,7 +299,6 @@ module.exports = {
   postRide,
   joinRide,
   cancelRide,
-  rideDelete, 
   // Only for the testing suite
   updateCompletedRidesTask, 
 };

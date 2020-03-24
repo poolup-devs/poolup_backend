@@ -1,4 +1,4 @@
-# PoolUp Backend
+# PoolUp Backend - main
 
 ### api.poolup.co
 
@@ -8,11 +8,53 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 1. [Setup](#setup)
 2. [Dev-Rules](#dev-rules)
 3. [Documentation](#documentation)
-4. [Deployment](#deployment)
+4. [Deployment](#deployment) - Temporarily Deprecated
 
 # Setup
+Using **Docker Commands** is advised for setup/ running the application.
+The NPM Scripts and Local Development Setup is listed below for additional reference.
 
-## NPM Scripts
+## Local Environment Setup
+
+1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
+2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
+3. Install all used packages and dependencies using:
+   > npm install
+4. To connect to the development s3 bucket, run:
+
+   > npm run setup
+
+   This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
+
+   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
+
+5. Install mongoDB by following installation guides from:
+   Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
+   Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
+
+   This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
+   For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
+
+---
+
+## Running Docker
+Currently the latest version of the app uses 3 docker containers:
+1. web : main PoolUp application container
+2. mongo : mongodb database container
+3. mongo_seed : a database seeder that is removed upon creation, after db seeding
+
+All dockerfiles should be located under `/dockerfiles`, within a designated directory
+
+Docker conatainers and Docker networks is configured and maintained with docker-compose, with:
+`docker-compose.yml`
+
+- To seed the initializing mongodb container and start the server, use the docker-compose command:
+    > docker-compose up
+
+---
+
+## NPM Scripts (for additional reference)
+Use Docker commands for 
 
 1. Starting the NodeJS app
 
@@ -51,36 +93,9 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 ---
 
-## Local Environment Setup
 
-1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
-2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
-3. Install all used packages and dependencies using:
-   > npm install
-4. To connect to the development s3 bucket, run:
 
-   > npm run setup
-
-   This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
-
-   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
-
-5. Install mongoDB by following installation guides from:
-   Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
-   Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
-
-   This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
-   For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
-
-6. Optional: Initialize the database with default objects.
-
-   > npm run init_db
-
-   This REMOVES existing database collections and populates them with default objects.
-
----
-
-## Local Development Setup
+## Local Development Setup (for additional reference)
 
 1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
 2. Open another terminal and run `npm run dev` in the home directory; this starts the backend application with nodemon
@@ -110,8 +125,10 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 |   setup.js
 |
 +---config
-|       dev.env
-|       test.env
+|       .env-cmdrc
++---dockerfiles
+|       main
+|       mongo_seed
 |
 +---src
 |   |   app.js

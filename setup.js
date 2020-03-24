@@ -6,6 +6,7 @@ fs.mkdir('config', {recursive: true}, (e) => {
         throw e
     }
 }) 
-fs.createReadStream('.sample_env').pipe(fs.createWriteStream('config/dev.env'));
-fs.createReadStream('.sample_env').pipe(fs.createWriteStream('config/test.env'));
+// fs.createReadStream('.sample_env').pipe(fs.createWriteStream('config/dev.env'));
+// fs.createReadStream('.sample_env').pipe(fs.createWriteStream('config/test.env'));
 
+fs.createReadStream('.sample_env').pipe(fs.createWriteStream('config/.env-cmdrc'));

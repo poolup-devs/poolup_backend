@@ -13,5 +13,4 @@ COPY . .
 EXPOSE 3000
 
 # RUN npm run init_db
-CMD ["npm", "run", "init_db"]
 CMD ["npm", "run", "docker-dev"]

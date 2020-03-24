@@ -77,7 +77,7 @@ const rideSeed = () => {
     
         ride_list = [
             {
-                "ownerEmail": "user1@g.ucla.edu.com",
+                "ownerEmail": "user1@g.ucla.edu",
                 "ownerUsername": "user1",
                 "ownerPhoneNumber": "1231231234",
                 "from": "Irvine",
@@ -89,7 +89,7 @@ const rideSeed = () => {
                 "passengers": ["user2","user3"]
             },
             {
-                "ownerEmail": "user1@g.ucla.edu.com",
+                "ownerEmail": "user1@g.ucla.edu",
                 "ownerUsername": "user1",
                 "ownerPhoneNumber": "1231231234",
                 "from": "Irvine",
@@ -101,7 +101,7 @@ const rideSeed = () => {
                 "passengers": ["user2","user3"]
             },  
             {
-                "ownerEmail": "user4@g.ucla.edu.com",
+                "ownerEmail": "user4@g.ucla.edu",
                 "ownerUsername": "user4",
                 "ownerPhoneNumber": "1231231234",
                 "from": "Los Angeles",
@@ -113,7 +113,7 @@ const rideSeed = () => {
                 "passengers": ["user1"]
             },
             {
-                "ownerEmail": "user4@g.ucla.edu.com",
+                "ownerEmail": "user4@g.ucla.edu",
                 "ownerUsername": "user4",
                 "ownerPhoneNumber": "1231231234",
                 "from": "Los Angeles",
@@ -125,7 +125,7 @@ const rideSeed = () => {
                 "passengers": ["user1"]
             },
             {
-                "ownerEmail": "user2@g.ucla.edu.com",
+                "ownerEmail": "user2@g.ucla.edu",
                 "ownerUsername": "user2",
                 "ownerPhoneNumber": "1231231234",
                 "from": "Los Angeles",
@@ -137,7 +137,7 @@ const rideSeed = () => {
                 "passengers": ["user1"]
             },
             {
-                "ownerEmail": "user2@g.ucla.edu.com",
+                "ownerEmail": "user2@g.ucla.edu",
                 "ownerUsername": "user2",
                 "ownerPhoneNumber": "1231231234",
                 "from": "Los Angeles",

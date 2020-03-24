@@ -30,10 +30,10 @@ router.post("/reviews/decline-review", checkAuth, async (req, res) => {
     }
 })
 
-// Get all reviews received by a user 
+// Get reviews received by a user 
 router.get("/reviews", async (req, res) => {
     try {
-      const userReviews = await db.getUserReviews(req.query.username)
+      const userReviews = await db.getUserReviews(req.query.username, req.query.pageNum)
       res.status(200).send(userReviews) 
     }
     catch(e) {

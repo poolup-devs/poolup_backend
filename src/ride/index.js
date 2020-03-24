@@ -103,36 +103,26 @@ router.put("/rides/join-ride", checkAuth, (req, res) => {
 });
 
 //Cancel a Ride
-router.put("/rides/cancel-ride", checkAuth, (req, res) => {
+router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
   const ride = req.body.ride;
+  const cancellationReason = req.body.cancellationReason
+  if (req.body.messageToDriver) {
+    var messageToDriver = req.body.messageToDriver
+  }
+  else {
+    var messageToDriver = null
+  }
+
   const authUsername = tokenParser(req.headers.authorization).username;
-  db.cancelRide(ride.ownerUsername, ride._id, authUsername, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else if (data.length === 0) {
-      res.status(404).send({
-        message: "ERROR: The ride is full"
-      });
-    } else {
-      res.status(200).send(data);
-    }
-  });
+
+  try {
+    const msg = await db.cancelRide(ride._id, authUsername, cancellationReason, messageToDriver)
+    res.status(200).send(msg)
+  }
+  catch(e) {
+    res.status(500).send({error: e})
+  }
 });
 
-//Delete a ride
-router.delete("/rides/delete-ride", checkAuth, (req, res) => {
-  const ride = req.body.ride;
-  const authUsername = tokenParser(req.headers.authorization).username;
-  if (ride.ownerUsername !== authUsername) {
-    res.sendStatus(401);
-  }
-  db.rideDelete(ride._id, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(200).send(data);
-    }
-  });
-});
 
 module.exports = router;

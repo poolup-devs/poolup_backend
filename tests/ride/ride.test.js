@@ -80,6 +80,9 @@ describe("Testing Ride endpoints", () => {
             }))
             expect(passengerNoti.additionalProperties).toEqual({cancellationReason: 'Other'})
 
+            // No notification should have been sent to the cancelled passenger itself 
+            expect(await Noti.findOne({username: 'passenger1'})).not.toBeTruthy()
+            
             // Check whether passenger was removed from ride 
             const cancelledRide = await Ride.findById(ride._id) 
             expect(cancelledRide.seats).toBe(1)

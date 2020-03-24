@@ -278,9 +278,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       }
       
       // Remove the passenger from the list of passengers and free up a spot 
-      cancelledRideDoc.passengers.splice(cancelledRideDoc.passengers.indexOf(username), 1)
-      cancelledRideDoc.seats++; 
-      await cancelledRideDoc.save() 
+      await Ride.updateOne({_id: rideId}, {$inc: {seats: 1}, $pull: {passengers: username}})
       
       // Increment the user's number of cancelled rides 
       await User.updateOne({username}, {$inc: {ridesCancelled: 1}}) 

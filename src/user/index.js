@@ -41,70 +41,69 @@ router.post("/users/login", (req, res) => {
   });
 });
 
-//User Signup
-router.post("/users/signup", (req, res) => {
-  req.body.password = sha256(req.body.password);
-  const accepted_email =
-    req.body.username.toLowerCase() + "@" + process.env.ACCEPTED_EMAIL;
-  db.checkAvailability(accepted_email, req.body.username, (err, result) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      if (result.length === 0) {
-        db.signup(req.body, accepted_email, (err, result) => {
-          if (err) {
-            res.sendStatus(500);
-          } else {
-            const token = jwt.sign({ email: accepted_email }, JWT_EMAIL_KEY, {
-              expiresIn: "24h" //24 hours
-            });
-            var url =
-              "restapi." +
-              process.env.PRODUCTION_DOMAIN_URL +
-              "/users/verify?token=" +
-              token;
-            var email = {
-              to: accepted_email,
-              from: "pool-up@outlook.com",
-              templateId: "d-0d8dff79ca8e4d0e8b4b9b1b12038a62",
-              dynamic_template_data: {
-                subject: "PoolUp Email Verification",
-                name: req.body.username,
-                url: url
-              }
-            };
-            if (process.env.MODE === "STAGING") {
-              url =
-                "localhost:" +
-                process.env.PORT +
-                "/users/verify?token=" +
-                token;
-              var email = {
-                to: accepted_email,
-                from: "pool-up@outlook.com",
-                subject: "PoolUp: Email Verification Required",
-                text: "Here's the link",
-                html: "Token: <br>" + token + "<br>Link for local dev: " + url
-              };
-            }
-            sgMail
-              .send(email)
-              .then(() => {
-                res.sendStatus(201);
-              })
-              .catch(error => {
-                res.sendStatus(500);
-              });
-          }
-        });
+// User Signup
+router.post("/users/signup", async (req, res) => {
+  try {
+    // Validate form information
+    if (
+      await db.isValidAccount(
+        req.body.email,
+        req.body.username,
+        req.body.password
+      )
+    ) {
+      // Create new user
+      await db.signup(req.body);
+
+      // Construct verification email
+      var { email, username } = req.body;
+      const token = jwt.sign({ email }, JWT_EMAIL_KEY, { expiresIn: "24h" });
+      if (process.env.MODE === "STAGING") {
+        var url =
+          "localhost:" + process.env.PORT + "/users/verify?token=" + token;
+        var verificationEmail = {
+          to: email,
+          from: "pool-up@outlook.com",
+          subject: "PoolUp: Email Verification Required",
+          text: "Here's the link",
+          html: "<br>Link for local dev: <br>" + url
+        };
       } else {
-        res.status(409).send({
-          message:
-            "ERROR: User with email / username already exists, or is waiting for email verification"
-        });
+        var url =
+          "restapi." +
+          process.env.PRODUCTION_DOMAIN_URL +
+          "/users/verify?token=" +
+          token;
+        var verificationEmail = {
+          to: email,
+          from: "pool-up@outlook.com",
+          templateId: "d-0d8dff79ca8e4d0e8b4b9b1b12038a62",
+          dynamic_template_data: {
+            subject: "PoolUp Email Verification",
+            name: req.body.username,
+            url: url
+          }
+        };
       }
+
+      // Send verification email
+      sgMail
+        .send(verificationEmail)
+        .then(() => {
+          res.sendStatus(201);
+        })
+        .catch(error => {
+          // Remove the user that was added to the database when sign-up fails
+          db.deleteUser(username, (err, user) => {
+            res
+              .status(500)
+              .send({ error: "Could not send verification email!" });
+          });
+        });
     }
-  });
+  } catch (e) {
+    res.status(500).send({ error: e });
+  }
 });
 
 //Verify Email
@@ -156,7 +155,7 @@ router.get("/users/phoneNumberValidation", (req, res) => {
   });
 });
 
-//Get Current User Info
+//Get My Info
 router.get("/users/my-info", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
   db.getUserInfo(authUsername, (err, data) => {
@@ -289,18 +288,20 @@ router.delete("/users/deleteUser", checkAuth, (req, res) => {
 });
 
 //confirm credentials
-router.post("/users/checkCredentials", checkAuth, (req, res) => {
+router.post("/users/checkCredentials", checkAuth, async (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
   req.body.password = sha256(req.body.password);
-  db.confirmCredentials(authUsername, req.body.password, (err, result) => {
-    if (err) {
-      res.sendStatus(500);
-    } else if (!result) {
+  try {
+    const result = await db.confirmCredentials(authUsername, req.body.password);
+    if (!result) {
       res.sendStatus(401);
     } else {
       res.sendStatus(200);
     }
-  });
+  } catch (e) {
+    console.log(e);
+    res.status(500).send(e);
+  }
 });
 
 //Reset Password
@@ -318,11 +319,42 @@ router.patch("/users/changePassword", checkAuth, (req, res) => {
   });
 });
 
+// Update About Me
+router.patch("/users/updateAboutMe", checkAuth, async (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+  try {
+    const updatedUser = await db.updateAboutMe(authUsername, req.body.aboutMe);
+    res.status(200).send(updatedUser);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+});
+
 // Get the average rating of a user
 router.get("/users/get-rating", async (req, res) => {
   try {
     const averageRating = await db.getAverageRating(req.query.username);
     res.status(200).send({ averageRating });
+  } catch (e) {
+    res.status(404).send({ error: e });
+  }
+});
+
+// Get public user profile info
+router.get("/users/get-public-profile", async (req, res) => {
+  try {
+    const publicProfileInfo = await db.getPublicProfileInfo(req.query.username);
+    res.status(200).send(publicProfileInfo);
+  } catch (e) {
+    res.status(404).send({ error: e });
+  }
+});
+
+// Get school
+router.get("/users/school", async (req, res) => {
+  try {
+    const school = await db.getSchool(req.query.username);
+    res.status(200).send({ school });
   } catch (e) {
     res.status(404).send({ error: e });
   }

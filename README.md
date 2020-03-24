@@ -242,20 +242,23 @@ Models:
 
 ### Schema
 
-| column      | type    | required | properties                    |
-| ----------- | ------- | -------- | ----------------------------- |
-| name        | String  | Yes      |                               |
-| email       | String  | Yes      |                               |
-| username    | String  | Yes      |                               |
-| password    | String  | Yes      |                               |
-| phoneNumber | String  |          |                               |
-| driverList  | Array   |          |                               |
-| riderList   | Array   |          |                               |
-| picUrl      | String  |          |                               |
-| picType     | String  |          |                               |
-| Verified    | Boolean | Yes      |                               |
-| rating      | Object  |          | sumOfAllRatings, totalRatings |
-| stripe      | Object  |          | accountID, customerID         |
+| column         | type    | required | properties                    |
+| -------------- | ------- | -------- | ----------------------------- |
+| name           | String  | Yes      |                               |
+| email          | String  | Yes      |                               |
+| username       | String  | Yes      |                               |
+| password       | String  | Yes      |                               |
+| phoneNumber    | String  |          |                               |
+| picUrl         | String  |          |                               |
+| picType        | String  |          |                               |
+| verified       | Boolean | Yes      |                               |
+| createdAt      | Date    |          |                               |
+| aboutMe        | String  |          |                               |
+| school         | String  |          |                               |
+| ridesCancelled | Number  |          |                               |
+| ridesCompleted | Number  |          |                               |
+| rating         | Object  |          | sumOfAllRatings, totalRatings |
+| stripe         | Object  |          | accountID, customerID         |
 
 ### API Endpoints
 
@@ -275,6 +278,9 @@ Models:
 | /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
 | /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
+| /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
+| /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
+| /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |
 
 ---
 
@@ -309,31 +315,37 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
 
 POST request
 
-Only requiremetn for user signup is password and username; the email username + "@g.ucla.edu"; the frontend code should substring-ize the email and pass only the username part for the API call
+- Must provide an email, username, and password.
+- Validates the information inputted by the user by following several requirements, as outlined below. - For each unmet requirement, an error message is returned in the response body. 1. **Username is not unique** -> "A verified account already exists with this username!" 2. **Email is not unique** -> "An account already exists with this email!" 3. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!" 4. **Email is not a student email** -> "Not an .edu email address!" 5. **Signing up with the credentials of an unverified account** -> "You must verify this account by checking your email!" 6. **Password too short** -> "Password must be at least 8 characters long!"
 
-ex) the username for bin315a1 would become bin315a1@g.ucla.edu
-
-- Verifying the email should be done within the **30** minutes after signup; else the user must signup again
-- A profile pic of Bruinbear with random color is assigned
+- Sends a confirmation email containing the following link: https://bruinpool.io/users/verify?token=TOKENATTACHEDHERE. The user must activate within **30 minutes** after signing up, or they must signup again.
+- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. - To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school - The associations can be stored in a JSON file and imported periodically to the database via the mongoexport command - Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"} - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu"
+- A default profile pic of Bruinbear with random color is assigned
 
 **Body**
 
 ```
 {
-	"password": "samplePassword1",
-	"username":"bin315a1"
+	"email": "user@ucla.edu"
+	"username":"exampleUsername",
+	"password": "examplePassword",
+    "name": "First Last"
 }
 ```
 
 **return value**
 
-201 status,
+201 Created if all requirements are met and a verification email was successfully sent.
+
+500 status if a requirement is not met or if the verification email could not be sent, along with an error message.
+
+Example of error message:
 
 ```
-Created
+{
+	error: "Could not send verification email!"
+}
 ```
-
-A confirmation email is sent, which contains a link the link: https://bruinpool.io/users/verify?token=TOKENATTACHEDHERE , with a email verification token attached on the url as query
 
 ---
 
@@ -654,6 +666,100 @@ GET request
 
 ---
 
+### Get school
+
+GET request
+
+- Get the user's school
+- The user's school is parsed during sign-up by referencing the Schools collection. For more details, reference the sign-up endpoint.
+
+**params/body**
+
+- username
+
+**example**
+
+- localhost:3000/users/get-rating?username=elin4046
+
+**return value**
+
+- An object containing the field `school`. If the school cannot be determined from the email, the `school` field will be set to null.
+
+```
+{
+    "school": "UCLA"
+}
+```
+
+---
+
+### Update about me
+
+PATCH request
+
+- Update the logged in user's about me description
+
+**body**
+
+- aboutMe
+
+```
+{
+    "aboutMe": "This is my new about me description!"
+}
+```
+
+**example**
+
+- localhost:3000/users/updateAboutMe
+
+**return value**
+
+- 200 status if successful
+- 500 status if a database error occurs while updating: 'Could not find user in database when updating about me.'
+
+Returns the user document containing the updated aboutMe property
+
+---
+
+### Get public profile info
+
+GET request
+
+- Get all of a user's public information
+- Returns the following user properties: - `name, school, aboutMe, rating, ridesCompleted, ridesCancelled, picUrl, picType`
+- Any properties that are not defined are not included; for example, if a user has not received any reviews yet, the `rating` property cannot be computed and subsequently will not be returned
+
+- Additional Note: - `ridesCompleted` automatically updates 2 hours after a ride containing at least one passenger begins - Drivers will receive a **completed ride** for each passenger dropped off - Passengers will receive a single **completed ride** after a carpooling session
+
+**query**
+
+- username
+
+**example**
+
+- localhost:3000/users/get-public-profile?username=admin
+
+**return value**
+
+- 200 status if successful
+- 404 status with an error message if the user could not be found
+
+```
+{
+	"picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
+	"picType": "png",
+	"name": "First Last",
+	"school": "UCLA",
+	"rating": "3.33",
+	"ridesCompleted": 3,
+	"ridesCancelled": 1,
+	"aboutMe": "This is my about me!"
+}
+```
+
+---
+
 ### Ride Model
 
 ### Schema
@@ -890,6 +996,9 @@ localhost:3000/rides/drives-upcoming?pageNum=0&username=bin315a1
 
 POST request
 
+- Creates a new ride document.
+- Schedules a task to occur two hours after the start of a ride that updates the driver and passenger's `ridesCompleted` property.
+
 **body**
 
 a new ride object:
@@ -989,34 +1098,68 @@ The ride object that the user is trying to join:
 
 PUT request
 
+- Whether the logged in user is a driver or a passenger in the ride is abstracted away.
+
+- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs: 1. The ride is removed from the Ride collection. 2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
+
+- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs: 1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`. - An example of a notification received by a passenger in the ride is the following:
+  `{ viewed: false, _id: 5e6532be23cf21496470c042, username: 'passenger1', msg: 'driverUsername has cancelled your ride', senderEmail: 'driverUsername@ucla.edu', date: 2020-03-08T18:00:30.136Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling' } }` 2. The ride is removed from the Ride collection. 3. The driver receives the following penalty: - `ridesCancelled` property is incremented
+
+- In the event that a **passenger** cancels a ride, the following occurs: 1. Only the driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`. - An example of a notification received by the driver is the following:
+  `{ viewed: false, _id: 5e6534144a54ab39342752d0, username: 'driverUsername', msg: 'passenger1 has cancelled your ride', senderEmail: 'passenger1@ucla.edu', date: 2020-03-08T18:06:12.834Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } }` 2. The passenger who cancelled is removed from the ride, and a new spot is freed up. 3. The passenger who cancelled receive the following penalty: - `ridesCancelled` property is incremented
+
 **body**
 
-The ride object that the user is trying to cancel:
+- `ride`: ride object that the logged in user is trying to cancel
+- `cancellationReason`: String when the user selects from a drop-down of cancellation reasons
+- `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver - optional field, omit from body if user does not type any message into the form
 
 ```
 {
-	"ride" : {
-        "passengers": [
-            "bin315a1"
-        ],
-        "_id": "5d505f0d5482ec4e38597cdd",
-        "ownerEmail": "bin315a1@gmail.com",
-        "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
-        "from": "Irvine",
-        "to": "Los Angeles",
-        "date": "2019-08-30T00:00:00.000Z",
-        "price": "20",
-        "seats": 4,
-        "detail": "Second test for post",
-        "__v": 0
-    }
+	"ride": {
+		"_id" : "5e649bba9e2f6d3570e88462",
+		"passengers" : [
+			"user1"
+		],
+		"ownerEmail" : "user2@g.ucla.edu.com",
+		"ownerUsername" : "user2",
+		"ownerPhoneNumber" : "1231231234",
+		"from" : "Los Angeles",
+		"to" : "Irvine",
+		"date" : "2020-03-05T08:00:00.000Z",
+		"price" : "20",
+		"seats" : 4,
+		"detail" : "rider1_past, driver2_past",
+		"_v" : 0
+	},
+	"messageToDriver": "Sorry for cancelling!",
+	"cancellationReason": "Change of travel plans"
 }
 ```
 
 **return value**
 
-200 status with the same ride object cancelled
+- 200 status, with a short **description of the event** that occurred. - For example, the following Strings are possible return values: - "Driver cancelled ride without penalty because there were no passengers." - "Driver cancelled ride and received a penalty because there were passengers." - "Passenger cancelled ride and received a penalty."
+- 500 status, with an object containing `error` property. - For example, the following errors are possible messages: - "Ride does not exist in database!" - "User is not a driver or passenger of this ride."
+
+---
+
+**return value**
+
+200 status, with a short description of the event that occurred.
+
+For example, the following events are possible return values:
+
+1. "Driver cancelled ride without penalty because there were no passengers."
+2. "Driver cancelled ride and received a penalty because there were passengers."
+3. "Passenger cancelled ride and received a penalty."
+
+500 status, with an object containing `error` property.
+
+For example, the following errors are possible messages:
+
+1. "Ride does not exist in database!"
+2. "User is not a driver or passenger of this ride."
 
 ---
 
@@ -1067,14 +1210,15 @@ The ride object that the user is trying to delete (The ride object's owner has t
 
 ### Schema
 
-| column               | type    | required |
-| -------------------- | ------- | -------- |
-| username             | String  | Yes      |
-| email                | String  | Yes      |
-| msg                  | String  | Yes      |
-| passengerPhoneNumber | String  |          |
-| passengerEmail       | String  | Yes      |
-| viewed               | Boolean | Yes      |
+| column               | type    | required | description                                 |
+| -------------------- | ------- | -------- | ------------------------------------------- |
+| username             | String  | Yes      |                                             |
+| email                | String  | Yes      |                                             |
+| msg                  | String  | Yes      |                                             |
+| senderPhoneNumber    | String  |          |                                             |
+| senderEmail          | String  | Yes      |                                             |
+| viewed               | Boolean | Yes      |                                             |
+| additionalProperties | Mixed   |          | fields specific to the type of notification |
 
 ### API Endpoints
 
@@ -1105,7 +1249,7 @@ none needed
         "_id": "5d55bb66261da0092430c990",
         "username": "bin315a1",
         "msg": "bin315a1 has joined your ride",
-        "passengerEmail": "bin315a1@g.ucla.edu",
+        "senderEmail": "bin315a1@g.ucla.edu",
         "date": "2019-08-15T20:07:02.242Z",
         "__v": 0
     },
@@ -1114,7 +1258,7 @@ none needed
         "_id": "5d55bb485457802c949bb8f4",
         "username": "bin315a1",
         "msg": "bin315a1 has joined your ride",
-        "passengerEmail": "bin315a1@g.ucla.edu",
+        "senderEmail": "bin315a1@g.ucla.edu",
         "date": "2019-08-15T20:06:32.716Z",
         "__v": 0
     }
@@ -1134,8 +1278,8 @@ POST request
 ```
 {
     msg: <message>,
-    passengerPhoneNumber: <String>,
-    passengerEmail: <String>
+    senderPhoneNumber: <String>,
+    senderEmail: <String>
 }
 ```
 
@@ -1246,11 +1390,15 @@ POST request
 
 GET request
 
+- Get all reviews received by a user with pagination beginning with 0
+
+GET request
+
 - Get all reviews received by a user
 
 **params/body**
 
-username
+username, pageNum
 
 **example**
 
@@ -1310,9 +1458,6 @@ POST request
 ```
 
 **return value**
-
-- 200 status code w/ data on the newly created Review document
-- 500 status code w/ database errors or in the case of duplicate declines
 
 ---
 

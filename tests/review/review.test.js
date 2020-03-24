@@ -20,16 +20,19 @@ describe("Testing rating system operations", () => {
         reviewerUsername: 'test_reviewer_1', 
         revieweeUsername: testRevieweeUsername, 
         rating: 1, 
+        datePosted: new Date('Jan 1, 2020')
     })
     const testReview2 = new Review({
         reviewerUsername: 'test_reviewer_2', 
         revieweeUsername: testRevieweeUsername, 
         rating: 2, 
+        datePosted: new Date('Jan 2, 2020')
     })
     const testReview3 = new Review({
         reviewerUsername: 'test_reviewer_3', 
         revieweeUsername: testRevieweeUsername, 
         rating: 3, 
+        datePosted: new Date('Jan 3, 2020')
     })
 
     beforeEach(() => {
@@ -43,8 +46,9 @@ describe("Testing rating system operations", () => {
     })
         
     describe("Test the retrieval of all of a user's reviews", () => {
+
         test("Get all of the reviews for a user who has at least one review.",  () => {
-            const expectedReviews = [testReview1._id, testReview2._id, testReview3._id]
+            const expectedReviews = [testReview3._id, testReview2._id, testReview1._id]
             return db.getUserReviews(testRevieweeUsername, 0).then((reviews) => {
                 expect(reviews.map(a => a._id)).toStrictEqual(expectedReviews)
             })
@@ -65,12 +69,12 @@ describe("Testing rating system operations", () => {
 
         test("Get the 6th review from a user who has more than 5 reviews (retrieval with pagination)", async () => {
             try {
-                await Review.create({reviewerUsername: 'test_reviewer_4', revieweeUsername: testRevieweeUsername, rating: 3})
-                await Review.create({reviewerUsername: 'test_reviewer_5', revieweeUsername: testRevieweeUsername, rating: 3})
-                const sixth_review = await Review.create({reviewerUsername: 'test_reviewer_6', revieweeUsername: testRevieweeUsername, rating: 3})
+                await Review.create({reviewerUsername: 'test_reviewer_4', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 4, 2020')})
+                await Review.create({reviewerUsername: 'test_reviewer_5', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 5, 2020')})
+                const sixth_review = await Review.create({reviewerUsername: 'test_reviewer_6', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 6, 2020')})
                 return db.getUserReviews(testRevieweeUsername, 1).then((reviews) => {
                     expect(reviews.length).toBe(1)
-                    expect(reviews[0]._id).toEqual(sixth_review._id)
+                    expect(reviews[0]._id).toEqual(testReview1._id)
                 })
             }
             catch(e) {
@@ -167,7 +171,6 @@ describe("Testing rating system operations", () => {
                 mostRecentRide = await mostRecentRide.save()                 
                 eligibleUsersForReview = await db.getUsersToReviewFromLatestRide('test_passenger_username')
                 
-                
                 expect(eligibleUsersForReview).toEqual(expect.objectContaining({
                     usernamesToReview: [mostRecentRide.ownerUsername], 
                     rideId: mostRecentRide._id
@@ -257,14 +260,14 @@ describe("Testing rating system operations", () => {
         test("When requsting all the reviews left for a user, should expect 200 response code.", async () => {
             await request(app)
                 .get('/reviews') 
-                .query({username: testRevieweeUsername})
+                .query({username: testRevieweeUsername, pageNum: 0})
                 .expect(200)
         })
 
         test("When requsting all the reviews left for a user with no reviews, should expect 200 response code still.", async () => {
             await request(app)
                 .get('/reviews') 
-                .query({username: 'user_that_does_not_exist'})
+                .query({username: 'user_that_does_not_exist', pageNum: 0})
                 .expect(200)
         })
 

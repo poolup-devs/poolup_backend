@@ -250,7 +250,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
     // Passenger cancellation 
     if (cancelledRideDoc.passengers.includes(username)) {
       // Notify driver of passenger cancellation 
-      let noti = await Noti.create({
+      let driverNoti = await Noti.create({
         username: cancelledRideDoc.ownerUsername,
         msg: `${username} has cancelled your ride`,
         senderEmail: user.email,
@@ -258,10 +258,24 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       })
       // Update schema-less property: additionalProperties
       // If messageToDriver was not specified, the field will be set to null 
-      noti.additionalProperties = {cancellationReason: cancellationReason, messageToDriver: messageToDriver}
-      noti.markModified('additionalProperties')
-      await noti.save() 
+      driverNoti.additionalProperties = {cancellationReason: cancellationReason, messageToDriver: messageToDriver}
+      driverNoti.markModified('additionalProperties')
+      await driverNoti.save() 
 
+      // Notify all other passengers of cancellation 
+      for (var i = 0; i < cancelledRideDoc.passengers.length; i++) {
+        if (cancelledRideDoc.passengers[i] != username) {
+          let passengerNoti = await Noti.create({
+            username: cancelledRideDoc.passengers[i], 
+            msg: `${username} has cancelled your ride`,
+            senderEmail: user.email,
+            date: new Date()
+          })
+          passengerNoti.additionalProperties = {cancellationReason: cancellationReason}
+          passengerNoti.markModified('additionalProperties') 
+          await passengerNoti.save() 
+        }
+      }
       
       // Remove the passenger from the list of passengers and free up a spot 
       cancelledRideDoc.passengers.splice(cancelledRideDoc.passengers.indexOf(username), 1)

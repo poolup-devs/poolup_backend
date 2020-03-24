@@ -282,6 +282,8 @@ Models:
 | /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
 | /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
+| /users/driverStatus          | GET         | [Check if a user is a driver](#check-if-driver)                    |
+
 
 ---
 
@@ -630,6 +632,36 @@ GET request
 ```
 {
     "averageRating": 2.50
+}
+```
+
+---
+
+
+### Check if Driver
+
+GET request
+
+- Check if a user is a driver
+
+**params/body**
+
+```
+none
+```
+
+**example**
+
+- localhost:3000/users/driverStatus
+
+**return value**
+
+- An object containing a boolean
+- If true then the user is a driver, else they are not.
+
+```
+{
+    "isDriver": true
 }
 ```
 

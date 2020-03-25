@@ -52,8 +52,6 @@ router.get("/stripe/token", (req, res) => {
           stripeAccountID: response.stripe_user_id
         };
 
-        console.log(driverInfo);
-
         // Update the model and store the Stripe account ID in the datastore:
         // this Stripe account ID will be used to issue payouts to the driver
         userDB.addUserDriverInfo(driverInfo, (err, data) => {

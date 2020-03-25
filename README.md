@@ -242,23 +242,23 @@ Models:
 
 ### Schema
 
-| column              | type    | required | properties                    |        
-| ------------------- | ------- | -------- | ----------------------------- | 
-| name                | String  | Yes      |                               | 
-| email               | String  | Yes      |                               |                        
-| username            | String  | Yes      |                               |                        
-| password            | String  | Yes      |                               |                       
-| phoneNumber         | String  |          |                               |                        
-| picUrl              | String  |          |                               |                        
-| picType             | String  |          |                               |                        
-| verified            | Boolean | Yes      |                               |  
-| createdAt           | Date    |          |                               |
-| aboutMe             | String  |          |                               |
-| school              | String  |          |                               |
-| ridesCancelled      | Number  |          |                               |
-| ridesCompleted      | Number  |          |                               |
-| rating              | Object  |          | sumOfAllRatings, totalRatings |                           
-
+| column         | type    | required | properties                    |
+| -------------- | ------- | -------- | ----------------------------- |
+| name           | String  | Yes      |                               |
+| email          | String  | Yes      |                               |
+| username       | String  | Yes      |                               |
+| password       | String  | Yes      |                               |
+| phoneNumber    | String  |          |                               |
+| picUrl         | String  |          |                               |
+| picType        | String  |          |                               |
+| verified       | Boolean | Yes      |                               |
+| createdAt      | Date    |          |                               |
+| aboutMe        | String  |          |                               |
+| school         | String  |          |                               |
+| ridesCancelled | Number  |          |                               |
+| ridesCompleted | Number  |          |                               |
+| rating         | Object  |          | sumOfAllRatings, totalRatings |
+| stripe         | Object  |          | accountID, customerID         |
 
 ### API Endpoints
 
@@ -316,25 +316,14 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
 POST request
 
 - Must provide an email, username, and password.
-- Validates the information inputted by the user by following several requirements, as outlined below. 
-	- For each unmet requirement, an error message is returned in the response body. 
-		1. **Username is not unique** -> "A verified account already exists with this username!"
-		2. **Email is not unique** -> "An account already exists with this email!"
-		3. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!"
-		4. **Email is not a student email** -> "Not an .edu email address!"
-		5. **Signing up with the credentials of an unverified account** -> "You must verify this account by checking your email!"
-		6. **Password too short** -> "Password must be at least 8 characters long!"  
+- Validates the information inputted by the user by following several requirements, as outlined below. - For each unmet requirement, an error message is returned in the response body. 1. **Username is not unique** -> "A verified account already exists with this username!" 2. **Email is not unique** -> "An account already exists with this email!" 3. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!" 4. **Email is not a student email** -> "Not an .edu email address!" 5. **Signing up with the credentials of an unverified account** -> "You must verify this account by checking your email!" 6. **Password too short** -> "Password must be at least 8 characters long!"
 
 - Sends a confirmation email containing the following link: https://bruinpool.io/users/verify?token=TOKENATTACHEDHERE. The user must activate within **30 minutes** after signing up, or they must signup again.
-- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. 
-	- To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school 
-        - The associations can be stored in a JSON file and imported periodically to the database via the mongoexport command 
-		- Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"} 
-            - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu" 
+- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. - To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school - The associations can be stored in a JSON file and imported periodically to the database via the mongoexport command - Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"} - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu"
 - A default profile pic of Bruinbear with random color is assigned
-  
 
 **Body**
+
 ```
 {
 	"email": "user@ucla.edu"
@@ -343,6 +332,7 @@ POST request
     "name": "First Last"
 }
 ```
+
 **return value**
 
 201 Created if all requirements are met and a verification email was successfully sent.
@@ -350,11 +340,13 @@ POST request
 500 status if a requirement is not met or if the verification email could not be sent, along with an error message.
 
 Example of error message:
+
 ```
 {
 	error: "Could not send verification email!"
 }
 ```
+
 ---
 
 ### Email Verification
@@ -622,38 +614,77 @@ none required
 
 ---
 
-### Get rating 
-GET request 
+### Get Users Info
+
+GET request
+
+**params**
+
+username (not id)
+
+**example**
+
+localhost:3000/users/getInfo?username=bin315a1
+
+**return value**
+
+200 status
+
+```
+{
+    "name": "Han",
+    "email": "bin315a1@g.ucla.edu",
+    "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png"
+}
+```
+
+---
+
+### Get rating
+
+GET request
+
 - Get the rating of a user
 
 **params/body**
-- username 
 
-**example** 
+- username
+
+**example**
+
 - localhost:3000/users/get-rating?username=elin4046
 
-**return value** 
-- An object containing the property averageRating, which is a floating point that is truncated to two decimal points, eg. 2.50 
+**return value**
+
+- An object containing the property averageRating, which is a floating point that is truncated to two decimal points, eg. 2.50
+
 ```
 {
     "averageRating": 2.50
 }
 ```
+
 ---
 
-### Get school 
-GET request 
+### Get school
+
+GET request
+
 - Get the user's school
-- The user's school is parsed during sign-up by referencing the Schools collection. For more details, reference the sign-up endpoint. 
+- The user's school is parsed during sign-up by referencing the Schools collection. For more details, reference the sign-up endpoint.
 
 **params/body**
-- username 
 
-**example** 
+- username
+
+**example**
+
 - localhost:3000/users/get-rating?username=elin4046
 
-**return value** 
-- An object containing the field ``school``. If the school cannot be determined from the email, the ``school`` field will be set to null. 
+**return value**
+
+- An object containing the field `school`. If the school cannot be determined from the email, the `school` field will be set to null.
+
 ```
 {
     "school": "UCLA"
@@ -662,12 +693,14 @@ GET request
 
 ---
 
-### Update about me 
+### Update about me
 
-PATCH request 
-- Update the logged in user's about me description 
+PATCH request
+
+- Update the logged in user's about me description
 
 **body**
+
 - aboutMe
 
 ```
@@ -676,13 +709,14 @@ PATCH request
 }
 ```
 
-**example** 
-- localhost:3000/users/updateAboutMe 
+**example**
 
+- localhost:3000/users/updateAboutMe
 
-**return value** 
-- 200 status if successful 
-- 500 status if a database error occurs while updating: 'Could not find user in database when updating about me.' 
+**return value**
+
+- 200 status if successful
+- 500 status if a database error occurs while updating: 'Could not find user in database when updating about me.'
 
 Returns the user document containing the updated aboutMe property
 
@@ -693,16 +727,13 @@ Returns the user document containing the updated aboutMe property
 GET request
 
 - Get all of a user's public information
-- Returns the following user properties:
-	- ``name, school, aboutMe, rating, ridesCompleted, ridesCancelled, picUrl, picType``
-- Any properties that are not defined are not included; for example, if a user has not received any reviews yet, the ``rating`` property cannot be computed and subsequently will not be returned 
+- Returns the following user properties: - `name, school, aboutMe, rating, ridesCompleted, ridesCancelled, picUrl, picType`
+- Any properties that are not defined are not included; for example, if a user has not received any reviews yet, the `rating` property cannot be computed and subsequently will not be returned
 
-- Additional Note: 
-	- ``ridesCompleted`` automatically updates 2 hours after a ride containing at least one passenger begins
-		- Drivers will receive a **completed ride** for each passenger dropped off
-		- Passengers will receive a single **completed ride** after a carpooling session 
-		
+- Additional Note: - `ridesCompleted` automatically updates 2 hours after a ride containing at least one passenger begins - Drivers will receive a **completed ride** for each passenger dropped off - Passengers will receive a single **completed ride** after a carpooling session
+
 **query**
+
 - username
 
 **example**
@@ -713,6 +744,7 @@ GET request
 
 - 200 status if successful
 - 404 status with an error message if the user could not be found
+
 ```
 {
 	"picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
@@ -725,6 +757,7 @@ GET request
 	"aboutMe": "This is my about me!"
 }
 ```
+
 ---
 
 ### Ride Model
@@ -963,8 +996,8 @@ localhost:3000/rides/drives-upcoming?pageNum=0&username=bin315a1
 
 POST request
 
-- Creates a new ride document. 
-- Schedules a task to occur two hours after the start of a ride that updates the driver and passenger's ``ridesCompleted`` property. 
+- Creates a new ride document.
+- Schedules a task to occur two hours after the start of a ride that updates the driver and passenger's `ridesCompleted` property.
 
 **body**
 
@@ -1067,60 +1100,20 @@ PUT request
 
 - Whether the logged in user is a driver or a passenger in the ride is abstracted away.
 
-- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs:
-	1. The ride is removed from the Ride collection.
-	2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
+- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs: 1. The ride is removed from the Ride collection. 2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
 
-  
-- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs:
-	1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`.
-		- An example of a notification received by a passenger in the ride is the following:
-			```
-			{
-				viewed: false,
-				_id: 5e6532be23cf21496470c042,
-				username: 'passenger1',
-				msg: 'driverUsername has cancelled your ride',
-				senderEmail: 'driverUsername@ucla.edu',
-				date: 2020-03-08T18:00:30.136Z,
-				__v: 0,
-				additionalProperties: {
-					cancellationReason: 'No longer traveling'
-				}
-			}
-			```
-	2. The ride is removed from the Ride collection.
-	3. The driver receives the following penalty:
-		-  `ridesCancelled` property is incremented
+- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs: 1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`. - An example of a notification received by a passenger in the ride is the following:
+  `{ viewed: false, _id: 5e6532be23cf21496470c042, username: 'passenger1', msg: 'driverUsername has cancelled your ride', senderEmail: 'driverUsername@ucla.edu', date: 2020-03-08T18:00:30.136Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling' } }` 2. The ride is removed from the Ride collection. 3. The driver receives the following penalty: - `ridesCancelled` property is incremented
 
-- In the event that a **passenger** cancels a ride, the following occurs:
-	1. Only the driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`.
-		- An example of a notification received by the driver is the following:
-			```
-			{
-				viewed: false,
-				_id: 5e6534144a54ab39342752d0,
-				username: 'driverUsername',
-				msg: 'passenger1 has cancelled your ride',
-				senderEmail: 'passenger1@ucla.edu',
-				date: 2020-03-08T18:06:12.834Z,
-				__v: 0,
-					additionalProperties: {
-						cancellationReason: 'No longer traveling',
-						messageToDriver: "Sorry I can't make it!!!"
-					}
-			}
-			```
-	2. The passenger who cancelled is removed from the ride, and a new spot is freed up.
-	3. The passenger who cancelled receive the following penalty:
-		-  `ridesCancelled` property is incremented
+- In the event that a **passenger** cancels a ride, the following occurs: 1. Only the driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`. - An example of a notification received by the driver is the following:
+  `{ viewed: false, _id: 5e6534144a54ab39342752d0, username: 'driverUsername', msg: 'passenger1 has cancelled your ride', senderEmail: 'passenger1@ucla.edu', date: 2020-03-08T18:06:12.834Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } }` 2. The passenger who cancelled is removed from the ride, and a new spot is freed up. 3. The passenger who cancelled receive the following penalty: - `ridesCancelled` property is incremented
 
 **body**
 
 - `ride`: ride object that the logged in user is trying to cancel
 - `cancellationReason`: String when the user selects from a drop-down of cancellation reasons
-- `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver
-	- optional field, omit from body if user does not type any message into the form
+- `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver - optional field, omit from body if user does not type any message into the form
+
 ```
 {
 	"ride": {
@@ -1146,15 +1139,8 @@ PUT request
 
 **return value**
 
-- 200 status, with a short **description of the event** that occurred.
-	- For example, the following Strings are possible return values:
-		- "Driver cancelled ride without penalty because there were no passengers."
-		- "Driver cancelled ride and received a penalty because there were passengers."
-		- "Passenger cancelled ride and received a penalty."
-- 500 status, with an object containing ``error`` property.
-	- For example, the following errors are possible messages:
-		- "Ride does not exist in database!"
-		- "User is not a driver or passenger of this ride."
+- 200 status, with a short **description of the event** that occurred. - For example, the following Strings are possible return values: - "Driver cancelled ride without penalty because there were no passengers." - "Driver cancelled ride and received a penalty because there were passengers." - "Passenger cancelled ride and received a penalty."
+- 500 status, with an object containing `error` property. - For example, the following errors are possible messages: - "Ride does not exist in database!" - "User is not a driver or passenger of this ride."
 
 ---
 
@@ -1162,16 +1148,19 @@ PUT request
 
 200 status, with a short description of the event that occurred.
 
-For example, the following events are possible return values:  
+For example, the following events are possible return values:
+
 1. "Driver cancelled ride without penalty because there were no passengers."
 2. "Driver cancelled ride and received a penalty because there were passengers."
 3. "Passenger cancelled ride and received a penalty."
 
-500 status, with an object containing ``error`` property. 
+500 status, with an object containing `error` property.
 
-For example, the following errors are possible messages: 
+For example, the following errors are possible messages:
+
 1. "Ride does not exist in database!"
 2. "User is not a driver or passenger of this ride."
+
 ---
 
 ### Delete a ride
@@ -1221,16 +1210,15 @@ The ride object that the user is trying to delete (The ride object's owner has t
 
 ### Schema
 
-| column               | type    | required | description                                        |
-| -------------------- | ------- | -------- | ---------------------------------------------------|
-| username             | String  | Yes      |                                                    |
-| email                | String  | Yes      |                                                    |
-| msg                  | String  | Yes      |                                                    |
-| senderPhoneNumber    | String  |          |                                                    |
-| senderEmail          | String  | Yes      |                                                    |
-| viewed               | Boolean | Yes      |                                                    |
-| additionalProperties | Mixed   |          | fields specific to the type of notification        |
-
+| column               | type    | required | description                                 |
+| -------------------- | ------- | -------- | ------------------------------------------- |
+| username             | String  | Yes      |                                             |
+| email                | String  | Yes      |                                             |
+| msg                  | String  | Yes      |                                             |
+| senderPhoneNumber    | String  |          |                                             |
+| senderEmail          | String  | Yes      |                                             |
+| viewed               | Boolean | Yes      |                                             |
+| additionalProperties | Mixed   |          | fields specific to the type of notification |
 
 ### API Endpoints
 
@@ -1324,51 +1312,58 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
     "ok": 1
 }
 ```
---- 
+
+---
+
 ### Review Model
 
 ### Schema
 
-| property               | type     | required | 
-| --------------------   | -------- | -------- |
-| *reviewerUsername*     | String   | Yes      | 
-| *revieweeUsername*     | String   | Yes      |  
-| *rideId*               | ObjectId | Yes      | 
-| datePosted             | Date     |          | 
-| rating                 | Number   |          | 
-| comment                | String   |          | 
-| isDeclined             | Boolean  |          | 
+| property           | type     | required |
+| ------------------ | -------- | -------- |
+| _reviewerUsername_ | String   | Yes      |
+| _revieweeUsername_ | String   | Yes      |
+| _rideId_           | ObjectId | Yes      |
+| datePosted         | Date     |          |
+| rating             | Number   |          |
+| comment            | String   |          |
+| isDeclined         | Boolean  |          |
 
-* Italicized properties uniquely identify a Review document
-* A Review document describes whether a reviewer chooses to review a reviewee, and if so, provides the details of the review
-* Details on whether the users are drivers or riders in a carpooling session are abstracted 
+- Italicized properties uniquely identify a Review document
+- A Review document describes whether a reviewer chooses to review a reviewee, and if so, provides the details of the review
+- Details on whether the users are drivers or riders in a carpooling session are abstracted
 
 ---
+
 ### API Endpoints
 
-| url                                    | HTTP Method | description                                                         
-| -------------------------------------- | ----------- | ------------
-| /reviews                               | POST        | [Add a review ](#add-review)         
-| /reviews                               | GET         | [Get all of a user's reviews](#get-all-reviews)
-| /reviews/decline-review                | POST        | [Decline to review a user](#decline-to-review)
-| /reviews/get-eligible-users-to-review  | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review)       
+| url                                   | HTTP Method | description                                                         |
+| ------------------------------------- | ----------- | ------------------------------------------------------------------- |
+| /reviews                              | POST        | [Add a review ](#add-review)                                        |
+| /reviews                              | GET         | [Get all of a user's reviews](#get-all-reviews)                     |
+| /reviews/decline-review               | POST        | [Decline to review a user](#decline-to-review)                      |
+| /reviews/get-eligible-users-to-review | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review) |
 
 ---
+
 ### Add Review
+
 POST request
+
 - Add a review using the currently logged in account as the reviewer
 
-**params/body** 
-- Required fields: revieweeUsername, rideId, and rating 
+**params/body**
+
+- Required fields: revieweeUsername, rideId, and rating
+
 ```
     {
-        "revieweeUsername": "elin4046", 
-        "rideId": "507f1f77bcf86cd799439011", 
-        "rating": 1, 
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439011",
+        "rating": 1,
         "comment": "Driver arrived really late and was super rude!"
     }
 ```
-
 
 **return value**
 
@@ -1379,7 +1374,7 @@ POST request
 {
 	"isDeclined": false,
 	"_id": "5e1e997e67eae745e865a233",
-	"reviewerUsername": "admin", 
+	"reviewerUsername": "admin",
 	"revieweeUsername": "elin4046",
 	"rideId": "507f1f77bcf86cd799439011",
 	"rating": 1,
@@ -1390,21 +1385,28 @@ POST request
 ```
 
 ---
+
 ### Get all reviews
-GET request 
-- Get all reviews received by a user with pagination beginning with 0  
 
-**params/body** 
+GET request
 
-username, pageNum 
+- Get all reviews received by a user with pagination beginning with 0
+
+GET request
+
+- Get all reviews received by a user
+
+**params/body**
+
+username, pageNum
 
 **example**
 
 localhost:3000/reviews?username=elin4046
 
-**return value** 
+**return value**
 
-- 200 status code - A list of review documents made to the user, empty [] if none exist. 
+- 200 status code - A list of review documents made to the user, empty [] if none exist.
 
 ```
 [
@@ -1434,42 +1436,45 @@ localhost:3000/reviews?username=elin4046
 ```
 
 ---
-### Decline to review 
-POST request
-- Indicate the currently logged in user's decision to not review another user after being prompted to do so 
-- This is important to prevent any further notifications 
 
-**params/body** 
-- revieweeUsername and the ride's rideId 
+### Decline to review
+
+POST request
+
+- Indicate the currently logged in user's decision to not review another user after being prompted to do so
+- This is important to prevent any further notifications
+
+**params/body**
+
+- revieweeUsername and the ride's rideId
 
 **example**
 
 ```
 {
-	"revieweeUsername": "john_smith",  
+	"revieweeUsername": "john_smith",
 	"rideId": "507f191e810c19729de860ea"
-}
+}Freq
 ```
 
-**return value** 
-- 200 status code w/ data on the newly created Review document
-- 500 status code w/ database errors or in the case of duplicate declines 
+**return value**
 
 ---
+
 ### Get list of usernames to review
-GET request 
+
+GET request
+
 - Get a list of usernames that may be reviewed using the currently logged in account
-- For example: 
-	- If a user was a driver in their latest carpooling session, the request will return the usernames of each of his/her passengers 
-	- If a user was a passenger in their latest carpooling session, the request will return the username of the driver 
-	- If a user has previously **declined** an opportunity to review a passenger, that passenger's username will not be returned 
+- For example: - If a user was a driver in their latest carpooling session, the request will return the usernames of each of his/her passengers - If a user was a passenger in their latest carpooling session, the request will return the username of the driver - If a user has previously **declined** an opportunity to review a passenger, that passenger's username will not be returned
 
 **params/body**
-- none required 
 
-**return value** 
-- An object containing a list of eligible usernames and the latest carpooling session's rideId, if there exists one.
-	- rideId is a necessary property to uniquely identify a Review document 
+- none required
+
+**return value**
+
+- An object containing a list of eligible usernames and the latest carpooling session's rideId, if there exists one. - rideId is a necessary property to uniquely identify a Review document
 
 ```
 {
@@ -1479,6 +1484,255 @@ GET request
 ```
 
 ---
+
+### Request Model
+
+### Schema
+
+| column      | type     | required | properties |
+| ----------- | -------- | -------- | ---------- |
+| rideID      | ObjectID | Yes      |            |
+| senderID    | String   | Yes      |            |
+| recipientID | String   | Yes      |            |
+| status      | String   | Yes      |            |
+| archived    | Boolean  | Yes      |            |
+| reminders   | Number   | No       |            |
+| carryOn     | Number   | No       |            |
+| luggage     | Number   | No       |            |
+| msg         | String   | No       |            |
+| date        | Date     | No       |            |
+
+### API Endpoints
+
+| url                | HTTP Method | description                               |
+| ------------------ | ----------- | ----------------------------------------- |
+| /request/info      | GET         | [Request Information](#request-info)      |
+| /request/remind    | GET         | [Remind Driver](#remind-driver)           |
+| /request/sender    | GET         | [Sender Requests](#sender-requests)       |
+| /request/recipient | GET         | [Recipient Requests](#recipient-requests) |
+| /request/new       | POST        | [Create New Request](#create-request)     |
+| /request/approve   | PUT         | [Approve Request](#approve-request)       |
+| /request/cancel    | PUT         | [Cancel Request](#cancel-request)         |
+| /request/deny      | PUT         | [Deny Request](#deny-request)             |
+| /request/archive   | PUT         | [Archive Request](#archive-request)       |
+| /request/delete    | DELETE      | [Delete Request](#delete-request)         |
+
+### Statuses
+
+- Pending: This status reflects the state where a rider has requested a ride, and the driver has yet to respond
+- Approved: This status reflects the state where a driver has approved an already existing user's request
+- Denied: This status reflects the state where a driver has denied an already existing user's request
+- Cancelled: This status reflects the state where a rider has cancelled his initial request
+
+### Request Info
+
+Request Info
+
+- Get a Request's information
+
+**query params**
+
+```
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure, 404 if no matching request was found
+
+---
+
+### Remind Driver
+
+Remind Driver
+
+- Reminds a Driver to Approve the request
+
+**query params**
+
+```
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure, 404 if no matching request was found
+
+---
+
+### Sender Requests
+
+GET request
+
+- Get a sender's requests with the given status
+
+**query params**
+
+```
+
+    senderID: <String>,
+    status: <String>,
+    // senderID is the username to get that user's requests that they sent
+    // status value of "all" returns all status types,
+    // "visible" displays everything but archived requests
+
+```
+
+**return value**
+
+200 ok status with data of all matching requests, 500 error if failure
+
+---
+
+### Recipient Requests
+
+GET request
+
+- Get a recipient's requests with the given status
+
+**query params**
+
+```
+
+    recipientID: <String>,
+    status: <String>,
+    // recipientID is the username to get requests that other users sent to this user
+    // status value of "all" returns all status types,
+    // "visible" displays everything but archived requests
+
+```
+
+**return value**
+
+200 ok status with data of all matching requests, 500 error if failure
+
+---
+
+### Create Request
+
+POST request
+
+- Create a request
+
+**body**
+
+```
+{
+    senderID: <String>,
+    rideID: <String>,
+    recipientID: <String>,
+    msg: <String>
+}
+```
+
+**return value**
+
+200 created status with the request id for later use, 500 error if failure
+
+---
+
+### Approve Request
+
+PUT request
+
+- Change the status of a request to "approved"
+
+**query params (req.body.params.<field>)**
+
+```
+
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure such as if unsuccessful
+
+---
+
+### Deny Request
+
+PUT request
+
+- Change the status of a request to "denied"
+
+**query params (req.body.params.<field>)**
+
+```
+
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure such as if the ride is already "archived" or "cancelled"
+
+---
+
+### Cancel Request
+
+PUT request
+
+- Change the status of a request to "cancelled"
+
+**query params (req.body.params.<field>)**
+
+```
+
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure such as if the ride is already "archived" or "denied"
+
+---
+
+### Archive Request
+
+PUT request
+
+- Change the status of a request to "archived"
+
+**query params (req.body.params.<field>)**
+
+```
+
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure
+
+---
+
+### Delete Request
+
+Delete Request
+
+- Deletes a request
+
+**body**
+
+```
+{
+    requestID = <String>
+}
+```
+
+**return value**
+
+201 status if successful, 500 error if failure, 404 if no matching request was found
+
+---
+
 # Deployment
 
 ## Deployment Instructions

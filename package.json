@@ -43,6 +43,7 @@
     "nodemon": "^1.19.1",
     "parse-domain": "^2.3.4",
     "sha256": "^0.2.0",
+    "stripe": "^7.14.0",
     "supertest": "^4.0.2"
   }
 }

@@ -237,8 +237,9 @@ const addUserDriverInfo = (driverInfo, callback) => {
       },
       driver: {
         licensePlate: driverInfo.licensePlate,
-        vehicleModel: driverInfo.vehicleModel,
-        driversLicense: driverInfo.driversLicense
+        vehicleMakeModel: driverInfo.vehicleMakeModel,
+        driversLicense: driverInfo.driversLicense,
+        vehicleColor: driverInfo.vehicleColor
       },
       phoneNumber: driverInfo.phoneNumber
     },

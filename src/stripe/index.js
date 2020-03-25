@@ -46,10 +46,13 @@ router.get("/stripe/token", (req, res) => {
           username: req.session.username,
           phoneNumber: req.session.driverInfo.phoneNumber,
           licensePlate: req.session.driverInfo.licensePlate,
-          vehicleModel: req.session.driverInfo.vehicleModel,
+          vehicleMakeModel: req.session.driverInfo.vehicleMakeModel,
           driversLicense: req.session.driverInfo.driversLicense,
+          vehicleColor: req.session.driverInfo.vehicleColor,
           stripeAccountID: response.stripe_user_id
         };
+
+        console.log(driverInfo);
 
         // Update the model and store the Stripe account ID in the datastore:
         // this Stripe account ID will be used to issue payouts to the driver
@@ -103,8 +106,9 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
     const driverInfo = {
       phoneNumber: req.body.phoneNumber,
       licensePlate: req.body.licensePlate,
-      vehicleModel: req.body.vehicleModel,
-      driversLicense: req.body.driversLicense
+      vehicleMakeModel: req.body.vehicleMakeModel,
+      driversLicense: req.body.driversLicense,
+      vehicleColor: req.body.vehicleColor
     };
 
     // Check that all the fields of the driverInfo object are populated

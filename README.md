@@ -284,7 +284,6 @@ Models:
 | /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
 | /users/driverStatus          | GET         | [Check if a user is a driver](#check-if-driver)                    |
 
-
 ---
 
 ### User Login
@@ -636,7 +635,6 @@ GET request
 ```
 
 ---
-
 
 ### Check if Driver
 
@@ -1399,15 +1397,21 @@ POST request
 **params**
 
 ```
-"token": "ac_GwlrGacQIGKsSlSBdhis7vBHq7GKqiH4"
-
-"state": "csjf6b4g1ft"
+{
+    phoneNumber: "8054036772",
+    licensePlate: "csjf6b4g1ft",
+    vehicleMakeModel: "Toyota Rav4,
+    driversLicense: "Y9922030",
+    vehicleColor: "Red"
+}
 ```
 
 **return value**
 
 ```
-"redirectUrl": "https://connect.stripe.com/express/oauth/authorize?client_id={CLIENT_ID}&state={STATE_VALUE}&stripe_user[email]=user@example.com"
+{
+    "redirectUrl": "https://connect.stripe.com/express/oauth/authorize?client_id={CLIENT_ID}&state={STATE_VALUE}&stripe_user[email]=user@example.com"
+}
 ```
 
 ---

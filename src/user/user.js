@@ -23,11 +23,15 @@ const userSchema = mongoose.Schema({
       type: String,
       default: ""
     },
-    vehicleModel: {
+    vehicleMakeModel: {
       type: String,
       default: ""
     },
     driversLicense: {
+      type: String,
+      default: ""
+    },
+    vehicleColor: {
       type: String,
       default: ""
     }

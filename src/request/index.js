@@ -32,7 +32,7 @@ router.get("/request/sender", (req, res) => {
   });
 });
 
-// Get a Recipient's requests
+// Get a recipient's requests
 router.get("/request/recipient", (req, res) => {
   const recipientID = req.query.recipientID;
   const status = req.query.status;

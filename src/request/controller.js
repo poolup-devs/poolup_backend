@@ -180,6 +180,37 @@ const denyRequest = (requestID, callback) => {
   });
 };
 
+const paidRequest = (requestID, callback) => {
+  const filter = { _id: requestID };
+  const update = { $set: { status: "paid" } };
+  const options = { new: true };
+
+  Request.findOne(filter, (findErr, findResult) => {
+    if (findErr) {
+      callback(findErr, null);
+    } else {
+      if (findResult.archived) {
+        callback("Ride has already been archived");
+      } else if (findResult.status !== "approved") {
+        callback("Ride hasn't been approved", null);
+      } else {
+        Request.findOneAndUpdate(
+          filter,
+          update,
+          options,
+          (updateErr, updateResult) => {
+            if (updateErr) {
+              callback(updateErr, null);
+            } else {
+              callback(null, updateResult);
+            }
+          }
+        );
+      }
+    }
+  });
+};
+
 // archiveRequest sets a specified request archived field to true
 const archiveRequest = (requestID, callback) => {
   const filter = { _id: requestID };

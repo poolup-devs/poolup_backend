@@ -9,6 +9,8 @@ const handlePaymentIntentSucceeded = paymentIntent => {
   const riderUsername = paymentIntent.meta["riderUsername"];
   const driverStripeAcct = paymentIntent.meta["driverStripeAcct"];
 
+  // TODO: Make set request to paid status
+
   // Grab Ride Information
   rideDB.rideDetails(rideID, (err, ride) => {
     if (err) {
@@ -39,7 +41,8 @@ const handlePaymentIntentSucceeded = paymentIntent => {
             amount: paymentIntent.amount,
             currency: paymentIntent.currency,
             rideID: rideID,
-            destination: driverStripeAcct
+            destination: driverStripeAcct,
+            customerUsername: riderUsername
           },
           (err, transfer) => {
             if (err) {
@@ -85,4 +88,58 @@ const triggerTransfer = transfer => {
       }
     }
   );
+};
+
+const refund = (riderUsername, rideID, callback) => {
+  query = { customerUsername: riderUsername, rideID: rideID };
+
+  // Validate Transfer
+  Transfer.findTransfer(query, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      transfer = result[0];
+
+      if (transfer.status !== "scheduled") {
+        callback("Refund Failed: Transfer status is " + transfer.status, null);
+        return;
+      }
+    }
+  });
+
+  // Issue Refund
+  stripe.refunds.create(
+    {
+      payment_intent: paymentIntentID
+    },
+    function(err, refund) {
+      if (err) {
+        callback(err, null);
+      } else {
+        const filter = { _id: transferID };
+        const update = { $set: { status: "refunded" } };
+        const options = { new: true };
+
+        // Update Status
+        Transfer.findOneAndUpdate(
+          filter,
+          update,
+          options,
+          (updateErr, result) => {
+            if (updateErr) {
+              callback(updateErr, null);
+            } else {
+              callback(null, result);
+            }
+          }
+        );
+      }
+    }
+  );
+};
+
+module.exports = {
+  handlePaymentIntentSucceeded,
+  triggerTransfer,
+  refund
 };

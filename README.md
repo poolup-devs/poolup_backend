@@ -1523,6 +1523,7 @@ GET request
 - Approved: This status reflects the state where a driver has approved an already existing user's request
 - Denied: This status reflects the state where a driver has denied an already existing user's request
 - Cancelled: This status reflects the state where a rider has cancelled his initial request
+- Paid: This status reflects the state where a rider has gone through the payment flow successfully. This is automatically set when the payment flow is sucessful. It also automatically archives the request.
 
 ### Request Info
 

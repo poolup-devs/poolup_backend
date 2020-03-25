@@ -104,6 +104,9 @@ const refund = (riderUsername, rideID, callback) => {
         callback("Refund Failed: Transfer status is " + transfer.status, null);
         return;
       }
+
+      //TODO: Check if they're within grace period to cancel
+      // Otherwise return an error
     }
   });
 

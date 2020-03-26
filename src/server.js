@@ -30,7 +30,7 @@ app.get("/test-connection", (req, res) => {
 ////////////////////////////////////////
 
 app.get("/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "/../public/index.html"), err => {
+  res.status(400).sendFile(path.join(__dirname, "/../public/index.html"), err => {
     if (err) {
       res.status(500).send(err);
     }

@@ -16,8 +16,8 @@ const sha256 = require("sha256");
 const login = (email, password, callback) => {
   User.findOne(
     {
-      email: email,
-      password: password
+      email: email
+      //password: password
     },
     (err, result) => {
       if (err) {
@@ -135,14 +135,7 @@ const getMyInfo = (authUsername, callback) => {
     if (err) {
       callback(err, null);
     } else if (result) {
-      const res_list = [
-        "username",
-        "name",
-        "email",
-        "createdAt",
-        "picUrl",
-        "stripe"
-      ];
+      const res_list = ["username", "name", "email", "createdAt", "picUrl"];
       const result_ = {};
 
       res_list.forEach(function(item) {
@@ -208,6 +201,60 @@ const getPicUrl = (username, callback) => {
       callback(null, result[0].picUrl);
     }
   });
+};
+
+const checkIfDriver = username => {
+  return new Promise(async (resolve, reject) => {
+    User.findOne(
+      {
+        username: username
+      },
+      (err, result) => {
+        if (err) {
+          reject(err);
+        }
+
+        // If username not found
+        if (!result) {
+          reject(new Error("User not found"));
+          return;
+        }
+
+        if (result.driver.isDriver) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      }
+    );
+  });
+};
+
+const addUserDriverInfo = (driverInfo, callback) => {
+  User.findOneAndUpdate(
+    { username: driverInfo.username },
+    {
+      stripe: {
+        accountID: driverInfo.stripeAccountID
+      },
+      driver: {
+        isDriver: true,
+        licensePlate: driverInfo.licensePlate,
+        vehicleMakeModel: driverInfo.vehicleMakeModel,
+        driversLicense: driverInfo.driversLicense,
+        vehicleColor: driverInfo.vehicleColor
+      },
+      phoneNumber: driverInfo.phoneNumber
+    },
+    { new: true },
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, result);
+      }
+    }
+  );
 };
 
 const updateUser = (authUsername, updates, callback) => {
@@ -438,11 +485,13 @@ module.exports = {
   findUserByEmail,
   findUserByUsername,
   findUserByPhoneNumber,
-  getMyInfo, 
+  getMyInfo,
   uploadPicUrl,
   getPicType,
   getPicUrl,
   signup,
+  checkIfDriver,
+  addUserDriverInfo,
   updateUser,
   deleteUser,
   isValidAccount,

@@ -139,6 +139,11 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 |   |       index.js
 |   |       ride.js
 |   |
+|   +---stripe
+|   |   |    index.js
+|   |   +----tool
+|   |           driver-info-validation.js
+|   |
 |   +---user
 |   |       controller.js
 |   |       index.js
@@ -235,6 +240,7 @@ Models:
 3. [Noti](#noti-model)
 4. [Review](#review-model)
 5. [Request](#request-model)
+6. [Stripe](#stripe-model)
 
 ---
 
@@ -242,23 +248,24 @@ Models:
 
 ### Schema
 
-| column         | type    | required | properties                    |
-| -------------- | ------- | -------- | ----------------------------- |
-| name           | String  | Yes      |                               |
-| email          | String  | Yes      |                               |
-| username       | String  | Yes      |                               |
-| password       | String  | Yes      |                               |
-| phoneNumber    | String  |          |                               |
-| picUrl         | String  |          |                               |
-| picType        | String  |          |                               |
-| verified       | Boolean | Yes      |                               |
-| createdAt      | Date    |          |                               |
-| aboutMe        | String  |          |                               |
-| school         | String  |          |                               |
-| ridesCancelled | Number  |          |                               |
-| ridesCompleted | Number  |          |                               |
-| rating         | Object  |          | sumOfAllRatings, totalRatings |
-| stripe         | Object  |          | accountID, customerID         |
+| column         | type    | required | properties                                                   |
+| -------------- | ------- | -------- | ------------------------------------------------------------ |
+| name           | String  | Yes      |                                                              |
+| email          | String  | Yes      |                                                              |
+| username       | String  | Yes      |                                                              |
+| password       | String  | Yes      |                                                              |
+| phoneNumber    | String  |          |                                                              |
+| picUrl         | String  |          |                                                              |
+| picType        | String  |          |                                                              |
+| verified       | Boolean | Yes      |                                                              |
+| createdAt      | Date    |          |                                                              |
+| aboutMe        | String  |          |                                                              |
+| school         | String  |          |                                                              |
+| ridesCancelled | Number  |          |                                                              |
+| ridesCompleted | Number  |          |                                                              |
+| rating         | Object  |          | sumOfAllRatings, totalRatings                                |
+| stripe         | Object  |          | accountID, customerID                                        |
+| driver         | Object  |          | licensePlate, vehicleMakeModel, driversLicense, vehicleColor |
 
 ### API Endpoints
 
@@ -281,6 +288,7 @@ Models:
 | /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
 | /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
 | /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |
+| /users/driverStatus          | GET         | [Check if a user is a driver](#check-if-driver)                    |
 
 ---
 
@@ -614,32 +622,6 @@ none required
 
 ---
 
-### Get Users Info
-
-GET request
-
-**params**
-
-username (not id)
-
-**example**
-
-localhost:3000/users/getInfo?username=bin315a1
-
-**return value**
-
-200 status
-
-```
-{
-    "name": "Han",
-    "email": "bin315a1@g.ucla.edu",
-    "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png"
-}
-```
-
----
-
 ### Get rating
 
 GET request
@@ -666,6 +648,63 @@ GET request
 
 ---
 
+### Check if Driver
+
+GET request
+
+- Check if a user is a driver
+
+**params/body**
+
+```
+none
+```
+
+**example**
+
+- localhost:3000/users/driverStatus
+
+**return value**
+
+- An object containing a boolean
+- If true then the user is a driver, else they are not.
+
+```
+{
+    "isDriver": true
+}
+```
+
+---
+
+### Get rating
+
+GET request
+
+- Get the rating of a user
+
+**params/body**
+
+- username
+
+**example**
+
+- localhost:3000/users/get-rating?username=elin4046
+
+**return value**
+
+- An object containing the property averageRating, which is a floating point that is truncated to two decimal points, eg. 2.50
+
+```
+
+{
+"averageRating": 2.50
+}
+
+```
+
+---
+
 ### Get school
 
 GET request
@@ -686,9 +725,11 @@ GET request
 - An object containing the field `school`. If the school cannot be determined from the email, the `school` field will be set to null.
 
 ```
+
 {
-    "school": "UCLA"
+"school": "UCLA"
 }
+
 ```
 
 ---
@@ -704,9 +745,11 @@ PATCH request
 - aboutMe
 
 ```
+
 {
-    "aboutMe": "This is my new about me description!"
+"aboutMe": "This is my new about me description!"
 }
+
 ```
 
 **example**
@@ -746,16 +789,18 @@ GET request
 - 404 status with an error message if the user could not be found
 
 ```
+
 {
-	"picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
-	"picType": "png",
-	"name": "First Last",
-	"school": "UCLA",
-	"rating": "3.33",
-	"ridesCompleted": 3,
-	"ridesCancelled": 1,
-	"aboutMe": "This is my about me!"
+"picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
+"picType": "png",
+"name": "First Last",
+"school": "UCLA",
+"rating": "3.33",
+"ridesCompleted": 3,
+"ridesCancelled": 1,
+"aboutMe": "This is my about me!"
 }
+
 ```
 
 ---
@@ -809,12 +854,14 @@ if FILTER IS UNDEFINED, returns ALL available drives sorted in date/time
 filter Schema:
 
 ```
+
     {
         "from": "CITY",
         "to": "CITY",
         "date_from": "TIMERANGE_START",
         "date_to": "TIMERANGE_END"
     }
+
 ```
 
 For both "from" and "to" fields, if the field is undefined it is ignored from the filter;
@@ -827,36 +874,44 @@ For "date_from" and "date_to" fields, if either is undefined the filter is set t
 URL syntax:
 
 ```
-localhost:3000/rides/matching-rides?filter={"from": "Irvine",  "to" : "Los Angeles", "date_from": "2019-09-10T00:00:00.000Z", "date_to":"2019-09-12T00:00:00.000Z"}
+
+localhost:3000/rides/matching-rides?filter={"from": "Irvine", "to" : "Los Angeles", "date_from": "2019-09-10T00:00:00.000Z", "date_to":"2019-09-12T00:00:00.000Z"}
+
 ```
 
 Get all rides from Irvine to Los Angeles between 8:00 AM to 9:30 AM on 2019-09-13
 
 ```
+
     {
         "from": "Irvine",
         "to": "Los Angeles",
         "date_from": "2019-09-13T08:00:00.000Z",
         "date_to": "2019-09-13T09:30:00.000Z"
     }
+
 ```
 
 Get all rides from Irvine to anywhere between 8:00 AM to 9:30 AM on 2019-09-13
 
 ```
+
     {
         "from": "Irvine",
         "date_from": "2019-09-13T08:00:00.000Z",
         "date_to": "2019-09-13T09:30:00.000Z"
     }
+
 ```
 
 Get all rides from Irvine to anywhere anytime (after the current timestamp, of course)
 
 ```
+
     {
         "from": "Irvine"
     }
+
 ```
 
 localhost:3000/rides/matching-rides?filter=
@@ -866,36 +921,38 @@ localhost:3000/rides/matching-rides?filter=
 200 status
 
 ```
+
 [
-    {
-        "passengers": [],
-        "_id": "5d505ed15482ec4e38597cdb",
-        "ownerEmail": "bin315a1@gmail.com",
-        "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
-        "from": "Irvine",
-        "to": "Los Angeles",
-        "date": "2019-09-11T00:00:00.000Z",
-        "price": "20",
-        "seats": 4,
-        "detail": "Third test for post",
-        "__v": 0
-    },
-    {
-        "passengers": [],
-        "_id": "5d505f005482ec4e38597cdc",
-        "ownerEmail": "bin315a1@gmail.com",
-        "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
-        "from": "Irvine",
-        "to": "Los Angeles",
-        "date": "2019-09-13T00:00:00.000Z",
-        "price": "20",
-        "seats": 4,
-        "detail": "First test for post",
-        "__v": 0
-    }
+{
+"passengers": [],
+"\_id": "5d505ed15482ec4e38597cdb",
+"ownerEmail": "bin315a1@gmail.com",
+"ownerUsername": "bin315a1",
+"ownerPhoneNumber": "1231231234",
+"from": "Irvine",
+"to": "Los Angeles",
+"date": "2019-09-11T00:00:00.000Z",
+"price": "20",
+"seats": 4,
+"detail": "Third test for post",
+"**v": 0
+},
+{
+"passengers": [],
+"\_id": "5d505f005482ec4e38597cdc",
+"ownerEmail": "bin315a1@gmail.com",
+"ownerUsername": "bin315a1",
+"ownerPhoneNumber": "1231231234",
+"from": "Irvine",
+"to": "Los Angeles",
+"date": "2019-09-13T00:00:00.000Z",
+"price": "20",
+"seats": 4,
+"detail": "First test for post",
+"**v": 0
+}
 ]
+
 ```
 
 ---
@@ -1004,19 +1061,21 @@ POST request
 a new ride object:
 
 ```
+
 {
-	"rideInfo": {
-		"ownerEmail": "bin315a1@gmail.com",
-		"ownerUsername": "bin315a1",
-		"from": "Irvine",
-		"to": "Los Angeles",
-		"date": "2019-07-30",
-		"price": "20",
-		"seats": 4,
-		"detail": "Third test for post",
-		"passengers": []
-	}
+"rideInfo": {
+"ownerEmail": "bin315a1@gmail.com",
+"ownerUsername": "bin315a1",
+"from": "Irvine",
+"to": "Los Angeles",
+"date": "2019-07-30",
+"price": "20",
+"seats": 4,
+"detail": "Third test for post",
+"passengers": []
 }
+}
+
 ```
 
 **return value**
@@ -1024,19 +1083,21 @@ a new ride object:
 201 status
 
 ```
+
 {
-    "passengers": [],
-    "_id": "5d55b5721e78951430fdcc66",
-    "ownerEmail": "bin315a1@g.ucla.edu",
-    "ownerUsername": "bin315a1",
-    "from": "Irvine",
-    "to": "Los Angeles",
-    "date": "2019-07-30T00:00:00.000Z",
-    "price": "10",
-    "seats": 4,
-    "detail": "before today's date",
-    "__v": 0
+"passengers": [],
+"\_id": "5d55b5721e78951430fdcc66",
+"ownerEmail": "bin315a1@g.ucla.edu",
+"ownerUsername": "bin315a1",
+"from": "Irvine",
+"to": "Los Angeles",
+"date": "2019-07-30T00:00:00.000Z",
+"price": "10",
+"seats": 4,
+"detail": "before today's date",
+"\_\_v": 0
 }
+
 ```
 
 ---
@@ -1050,23 +1111,26 @@ PUT request
 The ride object that the user is trying to join:
 
 ```
+
 {
-	"ride" : {
-        "passengers": [],
-        "_id": "5d505ed15482ec4e38597cdb",
-        "ownerEmail": "bin315a1@gmail.com",
-        "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
-        "from": "Irvine",
-        "to": "Los Angeles",
-        "date": "2019-09-11T00:00:00.000Z",
-        "price": "20",
-        "seats": 4,
-        "detail": "Third test for post",
-        "__v": 0
+"ride" : {
+"passengers": [],
+"\_id": "5d505ed15482ec4e38597cdb",
+"ownerEmail": "bin315a1@gmail.com",
+"ownerUsername": "bin315a1",
+"ownerPhoneNumber": "1231231234",
+"from": "Irvine",
+"to": "Los Angeles",
+"date": "2019-09-11T00:00:00.000Z",
+"price": "20",
+"seats": 4,
+"detail": "Third test for post",
+"\_\_v": 0
 
     }
+
 }
+
 ```
 
 **return value**
@@ -1074,22 +1138,24 @@ The ride object that the user is trying to join:
 200 status with the same ride object joined
 
 ```
+
 {
-    "passengers": [
-        "bin315a1"
-    ],
-    "_id": "5d505ed15482ec4e38597cdb",
-    "ownerEmail": "bin315a1@gmail.com",
-    "ownerUsername": "bin315a1",
-    "ownerPhoneNumber": "1231231234",
-    "from": "Irvine",
-    "to": "Los Angeles",
-    "date": "2019-09-11T00:00:00.000Z",
-    "price": "20",
-    "seats": 3,
-    "detail": "Third test for post",
-    "__v": 0
+"passengers": [
+"bin315a1"
+],
+"\_id": "5d505ed15482ec4e38597cdb",
+"ownerEmail": "bin315a1@gmail.com",
+"ownerUsername": "bin315a1",
+"ownerPhoneNumber": "1231231234",
+"from": "Irvine",
+"to": "Los Angeles",
+"date": "2019-09-11T00:00:00.000Z",
+"price": "20",
+"seats": 3,
+"detail": "Third test for post",
+"\_\_v": 0
 }
+
 ```
 
 ---
@@ -1115,26 +1181,28 @@ PUT request
 - `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver - optional field, omit from body if user does not type any message into the form
 
 ```
+
 {
-	"ride": {
-		"_id" : "5e649bba9e2f6d3570e88462",
-		"passengers" : [
-			"user1"
-		],
-		"ownerEmail" : "user2@g.ucla.edu.com",
-		"ownerUsername" : "user2",
-		"ownerPhoneNumber" : "1231231234",
-		"from" : "Los Angeles",
-		"to" : "Irvine",
-		"date" : "2020-03-05T08:00:00.000Z",
-		"price" : "20",
-		"seats" : 4,
-		"detail" : "rider1_past, driver2_past",
-		"_v" : 0
-	},
-	"messageToDriver": "Sorry for cancelling!",
-	"cancellationReason": "Change of travel plans"
+"ride": {
+"\_id" : "5e649bba9e2f6d3570e88462",
+"passengers" : [
+"user1"
+],
+"ownerEmail" : "user2@g.ucla.edu.com",
+"ownerUsername" : "user2",
+"ownerPhoneNumber" : "1231231234",
+"from" : "Los Angeles",
+"to" : "Irvine",
+"date" : "2020-03-05T08:00:00.000Z",
+"price" : "20",
+"seats" : 4,
+"detail" : "rider1_past, driver2_past",
+"\_v" : 0
+},
+"messageToDriver": "Sorry for cancelling!",
+"cancellationReason": "Change of travel plans"
 }
+
 ```
 
 **return value**
@@ -1172,24 +1240,26 @@ DELETE request
 The ride object that the user is trying to delete (The ride object's owner has to be the logged in user):
 
 ```
+
 {
-	"ride" : {
-        "passengers": [
-            "bin315a1"
-        ],
-        "_id": "5d505f0d5482ec4e38597cdd",
-        "ownerEmail": "bin315a1@gmail.com",
-        "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
-        "from": "Irvine",
-        "to": "Los Angeles",
-        "date": "2019-08-30T00:00:00.000Z",
-        "price": "20",
-        "seats": 4,
-        "detail": "Second test for post",
-        "__v": 0
-    }
+"ride" : {
+"passengers": [
+"bin315a1"
+],
+"\_id": "5d505f0d5482ec4e38597cdd",
+"ownerEmail": "bin315a1@gmail.com",
+"ownerUsername": "bin315a1",
+"ownerPhoneNumber": "1231231234",
+"from": "Irvine",
+"to": "Los Angeles",
+"date": "2019-08-30T00:00:00.000Z",
+"price": "20",
+"seats": 4,
+"detail": "Second test for post",
+"\_\_v": 0
 }
+}
+
 ```
 
 **return value**
@@ -1197,11 +1267,13 @@ The ride object that the user is trying to delete (The ride object's owner has t
 200 status with a debrief of action:
 
 ```
+
     {
         "n": 1,
         "ok": 1,
         "deletedCount": 1
     }
+
 ```
 
 ---
@@ -1243,26 +1315,28 @@ none needed
 200 status
 
 ```
+
 [
-    {
-        "viewed": false,
-        "_id": "5d55bb66261da0092430c990",
-        "username": "bin315a1",
-        "msg": "bin315a1 has joined your ride",
-        "senderEmail": "bin315a1@g.ucla.edu",
-        "date": "2019-08-15T20:07:02.242Z",
-        "__v": 0
-    },
-    {
-        "viewed": false,
-        "_id": "5d55bb485457802c949bb8f4",
-        "username": "bin315a1",
-        "msg": "bin315a1 has joined your ride",
-        "senderEmail": "bin315a1@g.ucla.edu",
-        "date": "2019-08-15T20:06:32.716Z",
-        "__v": 0
-    }
+{
+"viewed": false,
+"_id": "5d55bb66261da0092430c990",
+"username": "bin315a1",
+"msg": "bin315a1 has joined your ride",
+"senderEmail": "bin315a1@g.ucla.edu",
+"date": "2019-08-15T20:07:02.242Z",
+"__v": 0
+},
+{
+"viewed": false,
+"_id": "5d55bb485457802c949bb8f4",
+"username": "bin315a1",
+"msg": "bin315a1 has joined your ride",
+"senderEmail": "bin315a1@g.ucla.edu",
+"date": "2019-08-15T20:06:32.716Z",
+"__v": 0
+}
 ]
+
 ```
 
 ---
@@ -1276,11 +1350,13 @@ POST request
 **body**
 
 ```
+
 {
-    msg: <message>,
-    senderPhoneNumber: <String>,
-    senderEmail: <String>
+msg: <message>,
+senderPhoneNumber: <String>,
+senderEmail: <String>
 }
+
 ```
 
 **return value**
@@ -1306,11 +1382,13 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 200 status
 
 ```
+
 {
-    "n": 9,
-    "nModified": 2,
-    "ok": 1
+"n": 9,
+"nModified": 2,
+"ok": 1
 }
+
 ```
 
 ---
@@ -1357,12 +1435,14 @@ POST request
 - Required fields: revieweeUsername, rideId, and rating
 
 ```
+
     {
         "revieweeUsername": "elin4046",
         "rideId": "507f1f77bcf86cd799439011",
         "rating": 1,
         "comment": "Driver arrived really late and was super rude!"
     }
+
 ```
 
 **return value**
@@ -1371,17 +1451,19 @@ POST request
 - 500 status code w/ database errors or in the case of duplicate reviews
 
 ```
+
 {
-	"isDeclined": false,
-	"_id": "5e1e997e67eae745e865a233",
-	"reviewerUsername": "admin",
-	"revieweeUsername": "elin4046",
-	"rideId": "507f1f77bcf86cd799439011",
-	"rating": 1,
-	"comment": "Driver arrived really late and was super rude!",
-	"datePosted": "2020-01-15T04:47:58.738Z",
-	"__v": 0
+"isDeclined": false,
+"\_id": "5e1e997e67eae745e865a233",
+"reviewerUsername": "admin",
+"revieweeUsername": "elin4046",
+"rideId": "507f1f77bcf86cd799439011",
+"rating": 1,
+"comment": "Driver arrived really late and was super rude!",
+"datePosted": "2020-01-15T04:47:58.738Z",
+"\_\_v": 0
 }
+
 ```
 
 ---
@@ -1409,30 +1491,32 @@ localhost:3000/reviews?username=elin4046
 - 200 status code - A list of review documents made to the user, empty [] if none exist.
 
 ```
+
 [
-    {
-        "isDeclined": false,
-        "_id": "5e1ea29e94b3263a60b162da",
-        "revieweeUsername": "elin4046",
-        "rideId": "507f1f77bcf86cd799439012",
-        "rating": 1,
-        "comment": "Driver arrived really late and was super rude!",
-        "reviewerUsername": "admin",
-        "datePosted": "2020-01-15T05:26:54.837Z",
-        "__v": 0
-    },
-    {
-        "isDeclined": false,
-        "_id": "5e1ea2e494b3263a60b162db",
-        "revieweeUsername": "elin4046",
-        "rideId": "507f1f77bcf86cd799439013",
-        "rating": 4,
-        "comment": "A super laid back guy. We had a great conversation the whole time.",
-        "reviewerUsername": "admin",
-        "datePosted": "2020-01-15T05:28:04.757Z",
-        "__v": 0
-    }
+{
+"isDeclined": false,
+"_id": "5e1ea29e94b3263a60b162da",
+"revieweeUsername": "elin4046",
+"rideId": "507f1f77bcf86cd799439012",
+"rating": 1,
+"comment": "Driver arrived really late and was super rude!",
+"reviewerUsername": "admin",
+"datePosted": "2020-01-15T05:26:54.837Z",
+"__v": 0
+},
+{
+"isDeclined": false,
+"_id": "5e1ea2e494b3263a60b162db",
+"revieweeUsername": "elin4046",
+"rideId": "507f1f77bcf86cd799439013",
+"rating": 4,
+"comment": "A super laid back guy. We had a great conversation the whole time.",
+"reviewerUsername": "admin",
+"datePosted": "2020-01-15T05:28:04.757Z",
+"__v": 0
+}
 ]
+
 ```
 
 ---
@@ -1451,13 +1535,13 @@ POST request
 **example**
 
 ```
-{
-	"revieweeUsername": "john_smith",
-	"rideId": "507f191e810c19729de860ea"
-}Freq
-```
 
-**return value**
+{
+"revieweeUsername": "john_smith",
+"rideId": "507f191e810c19729de860ea"
+}
+
+```
 
 ---
 
@@ -1477,10 +1561,12 @@ GET request
 - An object containing a list of eligible usernames and the latest carpooling session's rideId, if there exists one. - rideId is a necessary property to uniquely identify a Review document
 
 ```
+
 {
-    "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"],
-	"rideId": "507f191e810c19729de860ea"
+"usernamesToReview": ["elin4046", "michaelSB", "bin315a1"],
+"rideId": "507f191e810c19729de860ea"
 }
+
 ```
 
 ---
@@ -1533,6 +1619,7 @@ Request Info
 **query params**
 
 ```
+
     requestID = <String>
 
 ```
@@ -1552,6 +1639,7 @@ Remind Driver
 **query params**
 
 ```
+
     requestID = <String>
 
 ```
@@ -1595,13 +1683,13 @@ GET request
 **query params**
 
 ```
-
+{
     recipientID: <String>,
     status: <String>,
     // recipientID is the username to get requests that other users sent to this user
     // status value of "all" returns all status types,
     // "visible" displays everything but archived requests
-
+}
 ```
 
 **return value**
@@ -1722,14 +1810,83 @@ Delete Request
 **body**
 
 ```
+
 {
-    requestID = <String>
+requestID = <String>
 }
+
 ```
 
 **return value**
 
 201 status if successful, 500 error if failure, 404 if no matching request was found
+
+---
+
+### Stripe Model
+
+### API Endpoints
+
+| url                 | HTTP Method | description                                                                                                          |
+| ------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| /stripe/token       | GET         | [Process Stripe account authoriation code and complete driver onboarding](#Process-Stripe-Account-Authoriation-Code) |
+| /stripe/driver/auth | POST        | [Prepare for redirect to Stripe express account signup](#Prepare-for-redirect-to-stripe)                             |
+
+---
+
+### Process Stripe Account Authoriation Code
+
+GET request
+
+- This endpoint is called by Stripe after a user completes the stripe account signup process. The token is used to make a request to Stripe get the user's Stripe Account Id.
+- The driver's information (phone number, drivers license, license plate, vehicle model) was stored in a cookie when /stripe/driver/auth was called and the user's page was redirected to Stripe. This information, along with the Stripe account Id, is then stored in the database for the user that is logged in.
+- More information on this process can be found on Stripe's documentation: https://stripe.com/docs/connect/express-accounts
+
+**body**
+
+```
+
+{
+    "token": "ac_GwlrGacQIGKsSlSBdhis7vBHq7GKqiH4",
+    "state": "csjf6b4g1ft"
+}
+
+```
+
+**return value**
+
+```
+{
+    redirectUrl: "https://connect.stripe.com/express/oauth/authorize?client_id={CLIENT_ID}&state={STATE_VALUE}&stripe_user[email]=user@example.com"
+}
+```
+
+---
+
+### Prepare for Redirect to Stripe
+
+POST request
+
+- Accepts the drivers info (phone number, drivers license, license plate, vehicle model), stores it in a cookie, and returns a URL that is used to redirect to Stripe's account setup.
+
+**params**
+
+```
+{
+    phoneNumber: "8054036772",
+    licensePlate: "csjf6b4g1ft",
+    vehicleMakeModel: "Toyota Rav4,
+    driversLicense: "Y9922030",
+    vehicleColor: "Red"
+}
+```
+
+**return value**
+
+- On Success
+  - Redirects page to /driver/my-drives
+- On Error
+  - Redirects page to /driver
 
 ---
 

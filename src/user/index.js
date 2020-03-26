@@ -340,6 +340,18 @@ router.get("/users/get-rating", async (req, res) => {
   }
 });
 
+// Check to see if a user is registered as a driver
+router.get("/users/driverStatus", checkAuth, async (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+
+  try {
+    const isDriver = await db.checkIfDriver(authUsername);
+    res.status(200).send({ isDriver: isDriver });
+  } catch (e) {
+    res.status(500).send({ error: e.message });
+  }
+});
+
 // Get public user profile info
 router.get("/users/get-public-profile", async (req, res) => {
   try {

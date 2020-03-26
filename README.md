@@ -821,6 +821,18 @@ GET request
 | seats**(remaining)** | Number | Yes      |
 | detail               | String |          |
 | passengers           | Array  |          |
+| instantBook          | Object |          |
+
+<br>
+
+| instantBook           | type    | required |
+| --------------------- | ------- | -------- |
+| enabled               | Boolean | yes      |
+| specificPickUpDropOff | Boolean |          |
+| smokingAllowed        | Boolean |          |
+| noPetsAllowed         | Boolean |          |
+| singleCarryOn         | Boolean |          |
+| singleLuggage         | Boolean |          |
 
 ### API Endpoints
 

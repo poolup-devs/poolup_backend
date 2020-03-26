@@ -6,7 +6,6 @@ const mongoose = require("mongoose");
 const db = require("./controller.js");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
-const paymentHandler = require("../../stripe/tool/payment-handler.js");
 
 //Get List of Available/ future Rides
 router.get("/rides/matching-rides", (req, res) => {
@@ -126,13 +125,7 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
       messageToDriver
     );
 
-    paymentHandler.refund(authUsername, ride._id, (err, result) => {
-      if (err) {
-        res.status(500).send({ error: err });
-      } else {
-        res.status(200).send(result);
-      }
-    });
+    res.status(200).send(msg);
   } catch (e) {
     res.status(500).send({ error: e });
   }

@@ -17,6 +17,10 @@ const userSchema = mongoose.Schema({
     }
   },
   driver: {
+    isDriver: {
+      type: Boolean,
+      default: false
+    },
     licensePlate: {
       type: String,
       default: ""

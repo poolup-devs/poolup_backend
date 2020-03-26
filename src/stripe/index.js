@@ -90,7 +90,7 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
 
     // Check if a driver already has a stripe account ID
     // If they do then that means they already registered as a drive
-    if (userInfo.stripe.accountID) {
+    if (userInfo.driver.isDriver) {
       res.status(400).json({
         error: "User is already registered as a driver"
       });

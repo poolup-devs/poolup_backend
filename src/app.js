@@ -10,7 +10,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:3006"],
+    origin: [process.env.FRONT_END_URL],
     methods: ["GET", "POST"],
     credentials: true
   })
@@ -23,7 +23,7 @@ app.use(express.static(__dirname + "/../public"));
 app.use(
   session({
     name: "session_poolup",
-    secret: "change_in_prod_get_from_env_file",
+    secret: process.env.SESSION_SECRET_KEY,
     saveUninitialized: true,
     resave: true,
     cookie: {

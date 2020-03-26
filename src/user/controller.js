@@ -220,7 +220,7 @@ const checkIfDriver = username => {
           return;
         }
 
-        if (result.stripe.accountID) {
+        if (result.driver.isDriver) {
           resolve(true);
         } else {
           resolve(false);
@@ -238,6 +238,7 @@ const addUserDriverInfo = (driverInfo, callback) => {
         accountID: driverInfo.stripeAccountID
       },
       driver: {
+        isDriver: true,
         licensePlate: driverInfo.licensePlate,
         vehicleMakeModel: driverInfo.vehicleMakeModel,
         driversLicense: driverInfo.driversLicense,

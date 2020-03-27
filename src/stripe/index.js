@@ -61,6 +61,7 @@ router.post("/stripe/create-payment-intent", (req, res) => {
   const spotsToBePurchased = req.body.spotsToBePurchased;
   const riderUsername = req.body.username;
   const currency = "usd";
+  const applicationFee = 0;
 
   // Get Ride Details
   rideDB.rideDetails(rideID, (err, ride) => {
@@ -100,14 +101,15 @@ router.post("/stripe/create-payment-intent", (req, res) => {
               riderUsername: riderUsername,
               driverStripeAcct: driver.stripe.accountID
             },
-            receipt_email: rider.email
+            receipt_email: rider.email,
+            application_fee_amount: applicationFee
           },
           function(err, paymentIntent) {
             if (err) {
-              console.log(err);
               res.status(500).json({ error: err });
               return;
             } else {
+              console.log(paymentIntent);
               res
                 .status(200)
                 .json({ clientSecret: paymentIntent.client_secret });

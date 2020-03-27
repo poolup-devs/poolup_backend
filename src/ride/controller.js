@@ -1,6 +1,8 @@
 const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
+const payment = require("../../stripe/tool/payment-handler.js");
+
 var schedule = require("node-schedule");
 
 ///////////////////////////////////////////////////////////////
@@ -234,6 +236,20 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
     if (username === cancelledRideDoc.ownerUsername) {
       // Notify all passengers that the ride has been cancelled
       cancelledRideDoc.passengers.forEach(async passengerUsername => {
+        // Refund Passenger
+        await paymentHandler.refund(
+          passengerUsername,
+          rideId,
+          true,
+          (err, result) => {
+            if (err) {
+              res.status(500).send({ error: err });
+            } else {
+              res.status(200).send(result);
+            }
+          }
+        );
+
         let noti = await Noti.create({
           username: passengerUsername,
           msg: `${username} has cancelled your ride`,
@@ -264,6 +280,20 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
 
     // Passenger cancellation
     if (cancelledRideDoc.passengers.includes(username)) {
+      // Refund Passenger
+      await paymentHandler.refund(
+        cancelledRideDoc.ownerUsername,
+        rideId,
+        false,
+        (err, result) => {
+          if (err) {
+            res.status(500).send({ error: err });
+          } else {
+            res.status(200).send(result);
+          }
+        }
+      );
+
       // Notify driver of passenger cancellation
       let noti = await Noti.create({
         username: cancelledRideDoc.ownerUsername,

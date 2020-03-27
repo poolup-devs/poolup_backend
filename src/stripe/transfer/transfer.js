@@ -19,6 +19,7 @@ const TransferSchema = mongoose.Schema({
   rideID: String, // Change to mongo object id
   destination: String, // Stripe Connected Account ID
   customerUsername: String,
+  timeBooked: Date, //TODO: Add to Readme
   expired: {
     type: Boolean,
     default: false

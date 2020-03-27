@@ -47,6 +47,7 @@ const checkExpired = () => {
   });
 };
 
+// TODO: Block Transfers for a ride (in case of claim)
 // Block Transfer
 const blockTransfer = (transferID, callback) => {
   const filter = { _id: transferID };

@@ -289,7 +289,5 @@ module.exports = {
   joinRide,
   cancelRide,
   rideDelete,
-  rideDetails,
-  // Only for the testing suite
-  updateCompletedRidesTask
+  rideDetails
 };

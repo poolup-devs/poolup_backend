@@ -208,7 +208,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
 
       // Delete the ride
       await Ride.deleteOne({ _id: rideId });
-      
+      scheduler.cancelTasksAssociatedWithRide(rideId)
       // There are no passengers in the ride, so the driver can freely cancel without penalties
       if (cancelledRideDoc.passengers.length === 0) {
         return resolve(

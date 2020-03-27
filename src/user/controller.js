@@ -16,8 +16,8 @@ const sha256 = require("sha256");
 const login = (email, password, callback) => {
   User.findOne(
     {
-      email: email
-      //password: password
+      email: email,
+      password: password
     },
     (err, result) => {
       if (err) {

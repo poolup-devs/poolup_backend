@@ -32,30 +32,20 @@ const handlePaymentIntentSucceeded = paymentIntent => {
         console.log("Ride is Full");
         return;
       } else {
-        //var targetDate = new Date(ride.Date.getDate() + 1); // 24 hours after creation
-        var targetDate = new Date(time.Now()); // 24 hours after creation
+        var targetDate = new Date(ride.Date.getDate() + 1); // 24 hours after creation
 
-        transferDB.createTransfer(
-          {
+        try {
+          transferDB.createTransfer({
             paymentIntentID: paymentIntent.id,
             targetDate: targetDate,
             amount: paymentIntent.amount,
-            currency: paymentIntent.currency,
             rideID: rideID,
             destination: driverStripeAcct,
-            customerUsername: riderUsername,
-            timeBooked: time.Now()
-          },
-          (err, transfer) => {
-            if (err) {
-              // TODO: Better Error Handling
-              console.log(err);
-              return;
-            } else {
-              console.log("Transfer Scheduled: ", transfer);
-            }
-          }
-        );
+            customerUsername: riderUsername
+          });
+        } catch (e) {
+          console.log("DRIVER TRANSFER FAILED: ", e);
+        }
       }
     });
   });
@@ -93,10 +83,11 @@ const triggerTransfer = transfer => {
 };
 
 const policyChecker = (transfer, driverCancelled) => {
-  let timeCancelled = time.Now();
+  let timeCancelled = Date.now();
+  console.log(transfer.paymentIntentID);
   let params = {
     payment_intent: transfer.paymentIntentID,
-    amount: transfer.amount,
+    amount: 1900,
     refund_application_fee: false
   };
 
@@ -120,17 +111,7 @@ const policyChecker = (transfer, driverCancelled) => {
   if (!cancelledInAdvance && !bookedAndCancelledRightAfter) {
     params.amount = params.amount / 2.0;
 
-    try {
-      transferDB.createTransfer(
-        transfer.targetDate,
-        params.amount,
-        transfer.rideID,
-        transfer.destination,
-        transfer.customerUsername
-      );
-    } catch (e) {
-      console.log("DRIVER TRANSFER FAILED: ", e);
-    }
+    // Create a tramsfer for driver
 
     return params;
   }
@@ -177,13 +158,11 @@ const refund = (riderUsername, rideID, driverCancelled, callback) => {
   let params = {};
 
   // Validate Transfer
-  Transfer.findTransfer(query, (err, result) => {
+  transferDB.findTransfer(query, (err, transfer) => {
     if (err) {
       callback(err, null);
     } else {
-      transfer = result[0];
-
-      if (transfer.status !== "scheduled") {
+      if (transfer.status !== "pending") {
         callback("Refund Failed: Transfer status is " + transfer.status, null);
         return;
       }
@@ -193,30 +172,36 @@ const refund = (riderUsername, rideID, driverCancelled, callback) => {
   });
 
   // Issue Refund
-  stripe.refunds.create(params, function(err, refund) {
-    if (err) {
-      callback(err, null);
-    } else {
-      console.log(refund);
-      const filter = { _id: transferID };
-      const update = { $set: { status: "refunded" } };
-      const options = { new: true };
+  stripe.refunds.create(
+    {
+      payment_intent: "pi_1GRQDrB5ZqQN3ixi8uD4ggUn",
+      amount: 1900
+    },
+    function(err, refund) {
+      if (err) {
+        callback(err, null);
+      } else {
+        console.log(refund);
+        const filter = { _id: transferID };
+        const update = { $set: { status: "refunded" } };
+        const options = { new: true };
 
-      // Update Status
-      Transfer.findOneAndUpdate(
-        filter,
-        update,
-        options,
-        (updateErr, result) => {
-          if (updateErr) {
-            callback(updateErr, null);
-          } else {
-            callback(null, result);
+        // Update Status
+        transferDB.findOneAndUpdate(
+          filter,
+          update,
+          options,
+          (updateErr, result) => {
+            if (updateErr) {
+              callback(updateErr, null);
+            } else {
+              callback(null, result);
+            }
           }
-        }
-      );
+        );
+      }
     }
-  });
+  );
 };
 
 module.exports = {

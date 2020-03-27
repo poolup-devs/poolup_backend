@@ -11,7 +11,8 @@ const handlePaymentIntentSucceeded = require("./tool/payment-handler.js")
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
 const rideDB = require("../ride/controller.js");
 const userDB = require("../user/controller.js");
-const TransferDB = require("./transfer/controller.js");
+const transferDB = require("./transfer/controller.js");
+const paymentHandler = require("./tool/payment-handler.js");
 const driverValidation = require("./tool/driver-info-validation.js");
 
 // Called when Stripe redirects from the account setup
@@ -176,7 +177,7 @@ router.post("/stripe/account", (req, res) => {
 
 // Create Customer
 router.post("/stripe/customer", (req, res) => {
-  stripe.customer.create(
+  stripe.customers.create(
     {
       description: "Some Customer"
     },
@@ -192,9 +193,8 @@ router.post("/stripe/customer", (req, res) => {
 
 // Create a Payment Intent
 router.post("/stripe/create-payment-intent", (req, res) => {
-  const rideID = req.body.rideID;
-  const spotsToBePurchased = req.body.spotsToBePurchased;
-  const riderUsername = req.body.username;
+  const rideID = req.body.options.rideID;
+  const riderUsername = req.body.options.username;
   const currency = "usd";
   const applicationFee = 0;
 
@@ -209,20 +209,30 @@ router.post("/stripe/create-payment-intent", (req, res) => {
     }
 
     // Get Rider Details
-    userDB.getUserInfo(riderUsername, (err, rider) => {
+    userDB.findUserByUsername(riderUsername, (err, riders) => {
       if (err) {
         res.status(500).json({ error: err });
         return;
+      } else if (riders.length < 1) {
+        res.status(500).json({ error: "User not found" });
+        return;
       }
 
+      let rider = riders[0];
+
       // Get Driver Details
-      userDB.getUserInfo(ride.ownerUsername, (err, driver) => {
+      userDB.findUserByUsername(ride.ownerUsername, (err, drivers) => {
         if (err) {
           res.status(500).json({ error: err });
           return;
+        } else if (drivers.length < 1) {
+          res.status(500).json({ error: "User not found" });
+          return;
         }
 
-        var amount = ride.price * spotsToBePurchased * 100;
+        let driver = drivers[0];
+
+        var amount = ride.price * 100;
 
         // Create Payment Intent
         stripe.paymentIntents.create(
@@ -236,11 +246,12 @@ router.post("/stripe/create-payment-intent", (req, res) => {
               riderUsername: riderUsername,
               driverStripeAcct: driver.stripe.accountID
             },
-            receipt_email: rider.email,
-            application_fee_amount: applicationFee
+            receipt_email: rider.email
+            // application_fee_amount: applicationFee
           },
           function(err, paymentIntent) {
             if (err) {
+              console.log(err);
               res.status(500).json({ error: err });
               return;
             } else {
@@ -303,25 +314,31 @@ router.post("/stripe/webhook", async (req, res) => {
 
 // Tester Endpoint
 router.get("/stripe/test", async (req, res) => {
-  try {
-    const testDate = new Date();
-    testDate.setDate(testDate.getDate() - 1);
-    const testID = "1";
-    const testoUsername = "oef";
-    const testcUsername = "asdf";
+  // try {
+  //   transferDB.createTransfer({
+  //     paymentIntentID: "pi_1GRQDrB5ZqQN3ixi8uD4ggUn",
+  //     targetDate: Date.now() + 1,
+  //     amount: 15,
+  //     rideID: "pi_1GRQDrB5ZqQN3ixi8uD4ggUn",
+  //     destination: "acct_1GROU3HvkidE7D9R",
+  //     customerUsername: "user1"
+  //   });
 
-    const test = await TransferDB.createTransfer({
-      paymentIntentID: "1234",
-      targetDate: testDate,
-      amount: 100,
-      rideID: "",
-      destination: "cus_GcWwbWaTlAojQS",
-      customerUsername: "adf"
-    });
-    // const test = await TransferDB.checkExpired();
-    res.send(test).status(200);
-  } catch (e) {
-    res.send(e).status(400);
-  }
+  // } catch (e) {
+  //   console.log("DRIVER TRANSFER FAILED: ", e);
+  // }
+
+  paymentHandler.refund(
+    "user1",
+    "pi_1GRQDrB5ZqQN3ixi8uD4ggUn",
+    true,
+    (err, data) => {
+      if (err) {
+        res.status(500).json({ err: err });
+      } else {
+        res.status(200).json({ result: data });
+      }
+    }
+  );
 });
 module.exports = router;

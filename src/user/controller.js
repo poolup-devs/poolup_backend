@@ -135,7 +135,14 @@ const getMyInfo = (authUsername, callback) => {
     if (err) {
       callback(err, null);
     } else if (result) {
-      const res_list = ["username", "name", "email", "createdAt", "picUrl"];
+      const res_list = [
+        "username",
+        "name",
+        "email",
+        "createdAt",
+        "picUrl",
+        "stripe"
+      ];
       const result_ = {};
 
       res_list.forEach(function(item) {

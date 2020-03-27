@@ -77,6 +77,7 @@ router.get("/rides/drives-upcoming", checkAuth, (req, res) => {
 
 //Post a Ride
 router.post("/rides/post-ride", checkAuth, (req, res) => {
+  console.log(req.body.rideInfo);
   db.postRide(req.body.rideInfo, (err, data) => {
     if (err) {
       res.status(500).send(err);
@@ -132,7 +133,7 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
 });
 
 //Get Ride Details
-router.get("/rides/ride-details", checkAuth, (req, res) => {
+router.get("/rides/ride-details", (req, res) => {
   var rideID = req.query.rideID;
 
   db.rideDetails(mongoose.Types.ObjectId(rideID), (err, data) => {

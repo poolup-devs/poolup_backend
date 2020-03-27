@@ -1,22 +1,9 @@
 const Transfer = require("./transfer.js").Transfer;
 
-const createTransfer = (
-  targetDate,
-  amount,
-  rideID,
-  destination,
-  customerUsername
-) => {
+const createTransfer = transferInfo => {
   return new Promise(async (resolve, reject) => {
     try {
-      const newTransfer = await new Transfer({
-        targetDate,
-        amount,
-        rideID,
-        destination,
-        customerUsername,
-        date: new Date()
-      }).save();
+      const newTransfer = await new Transfer(transferInfo).save();
       resolve(newTransfer);
     } catch (e) {
       reject();
@@ -152,9 +139,10 @@ const findTransfer = (query, callback) => {
     } else if (result.length === 0) {
       callback("No Transfer Found", null);
     } else if (result.length > 1) {
-      callback("Multiple Transfers Found", null);
+      // callback("Multiple Transfers Found", null);
+      callback(null, result[0]);
     } else {
-      callback(reult, null);
+      callback(null, result);
     }
   });
 };

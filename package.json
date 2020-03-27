@@ -6,8 +6,8 @@
   "scripts": {
     "start": "env-cmd -f ./config/dev.env node src/server.js",
     "dev": "env-cmd -f ./config/dev.env nodemon src/server.js",
-    "setup": "node setup.js",
-    "init_db": "env-cmd -f ./config/dev.env node init_db.js",
+    "setup": "node setup/setup.js",
+    "init_db": "env-cmd -f ./config/dev.env node setup/init_db.js",
     "test": "env-cmd -f ./config/test.env jest --watch --runInBand"
   },
   "jest": {
@@ -25,11 +25,13 @@
     "bluebird": "^3.5.5",
     "body-parser": "^1.19.0",
     "chalk": "^2.4.2",
+    "connect-mongo": "^3.2.0",
     "cors": "^2.8.5",
     "dotenv": "^8.0.0",
     "email-addresses": "^3.1.0",
     "env-cmd": "^10.0.1",
     "express": "^4.17.1",
+    "express-session": "^1.17.0",
     "file-type": "^12.0.0",
     "fs": "0.0.1-security",
     "isemail": "^3.2.0",

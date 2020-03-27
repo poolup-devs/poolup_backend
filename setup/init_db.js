@@ -1,9 +1,10 @@
-require("./src/db/mongoose");
+require("../src/db/mongoose");
 const chalk = require("chalk")
 
-// User Seed
-const User = require('./src/user/user').User 
-const Ride = require("./src/ride/ride.js").Ride
+const User = require('../src/user/user').User 
+const Ride = require("../src/ride/ride.js").Ride
+// Used to execute shell commands 
+var spawn = require('child_process').spawn;
 
 const userSeed = () =>
 {
@@ -52,7 +53,7 @@ const userSeed = () =>
         ]
         try {
             User.insertMany(user_list).then(() => {
-                console.log(chalk.green("[DB_INIT]: ") + "Successfully initialized developement database - User!")
+                console.log(chalk.green("[DB_INIT]: ") + "Successfully initialized development database - User!")
                 rideSeed();
             })
         }
@@ -151,8 +152,8 @@ const rideSeed = () => {
         ]
         try {
             Ride.insertMany(ride_list).then(()=>{
-                console.log(chalk.green("[DB_INIT]: ") + "Successfully initialized developement database - Ride!")
-                process.exit(0);
+                console.log(chalk.green("[DB_INIT]: ") + "Successfully initialized development database - Ride!")
+                seedSchool()
             })
         }
         catch(e) {
@@ -164,5 +165,26 @@ const rideSeed = () => {
     })
 }
 
+// Seed schools collection used to parse emails for the school the user attends 
+const seedSchool = () => {
+    var child = spawn('mongoimport --db poolup-dev --collection schools --file setup\\schoolEmails.json --jsonArray --drop' + 
+    '&&  mongoimport --db poolup-test --collection schools --file setup\\schoolEmails.json --jsonArray --drop', 
+    {
+        shell: true
+    });
+
+    child.stderr.on('data', function (data) {
+        console.error(data.toString().trim());
+    });
+    child.on('exit', function (exitCode) {
+        if (exitCode == 0) {
+            console.log(chalk.green("[DB_INIT]: ") + "Successfully initialized test and development database - Schools!")
+        }
+        else {
+            console.log(chalk.red("[ERROR]: ")+"Database could not be initialized with the Schools collection!")
+        }
+        process.exit(exitCode)
+    });
+}
 
 userSeed();

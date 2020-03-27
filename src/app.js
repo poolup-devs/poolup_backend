@@ -1,15 +1,40 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const session = require("express-session");
+const MongoStore = require("connect-mongo")(session);
 
 //Express config
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [process.env.FRONT_END_URL],
+    methods: ["GET", "POST"],
+    credentials: true
+  })
+);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + "/../public"));
+
+app.use(
+  session({
+    name: "session_poolup",
+    secret: process.env.SESSION_SECRET_KEY,
+    saveUninitialized: true,
+    resave: true,
+    cookie: {
+      maxAge: 3600000 // 1 hour in miliseconds
+    },
+    store: new MongoStore({
+      mongooseConnection: mongoose.connection,
+      ttl: 3600 // 1 hour in seconds
+    })
+  })
+);
 
 const userRouter = require("./user/index");
 const rideRouter = require("./ride/index");

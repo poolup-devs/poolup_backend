@@ -170,7 +170,7 @@ router.get("/users/my-info", checkAuth, (req, res) => {
 //Get a User's Info
 router.get("/users/info", checkAuth, (req, res) => {
   const userName = req.query.username;
-  db.getUserInfo(userName, (err, data) => {
+  db.getMyInfo(userName, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {

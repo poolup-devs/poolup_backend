@@ -438,7 +438,7 @@ module.exports = {
   findUserByEmail,
   findUserByUsername,
   findUserByPhoneNumber,
-  getMyInfo, 
+  getMyInfo,
   uploadPicUrl,
   getPicType,
   getPicUrl,

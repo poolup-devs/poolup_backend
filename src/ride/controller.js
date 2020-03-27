@@ -1,7 +1,7 @@
 const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
-const payment = require("../../stripe/tool/payment-handler.js");
+const payment = require("../stripe/tool/payment-handler.js");
 
 var schedule = require("node-schedule");
 

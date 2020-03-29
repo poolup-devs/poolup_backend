@@ -79,16 +79,13 @@ router.get("/stripe/token", (req, res) => {
 router.post("/stripe/driver/auth", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
 
-  userDB.findUserByUsername(authUsername, (err, data) => {
+  userDB.getMyInfo(authUsername, (err, userInfo) => {
     if (err) {
       res.status(500).json({
         error: err
       });
       return;
     }
-
-    //Get the user info from the database request
-    const userInfo = data[0];
 
     // Check if a driver already has a stripe account ID
     // If they do then that means they already registered as a drive
@@ -210,28 +207,18 @@ router.post("/stripe/create-payment-intent", (req, res) => {
     }
 
     // Get Rider Details
-    userDB.findUserByUsername(riderUsername, (err, riders) => {
+    userDB.getMyInfo(riderUsername, (err, rider) => {
       if (err) {
         res.status(500).json({ error: err });
         return;
-      } else if (riders.length < 1) {
-        res.status(500).json({ error: "User not found" });
-        return;
       }
 
-      let rider = riders[0];
-
       // Get Driver Details
-      userDB.findUserByUsername(ride.ownerUsername, (err, drivers) => {
+      userDB.getMyInfo(ride.ownerUsername, (err, driver) => {
         if (err) {
           res.status(500).json({ error: err });
           return;
-        } else if (drivers.length < 1) {
-          res.status(500).json({ error: "User not found" });
-          return;
         }
-
-        let driver = drivers[0];
 
         var amount = ride.price * 100;
 

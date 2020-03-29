@@ -17,17 +17,18 @@ const driverValidation = require("./tool/driver-info-validation.js");
 
 // Called when Stripe redirects from the account setup
 router.get("/stripe/token", (req, res) => {
+  const FRONT_END_URL = process.env.FRONT_END_URL;
   // Check that the session exists
   if (!req.session.username || !req.session.driverInfo) {
     console.log("Cookie containing driver info is missing");
-    res.status(500).redirect("http://localhost:3006/driver");
+    res.status(500).redirect(FRONT_END_URL + "/driver");
     return;
   }
 
   // Check state value in cookie to make sure it matches previous state
   if (req.session.state != req.query.state) {
     console.log("Stripe state does not match session state.");
-    res.status(500).redirect("http://localhost:3006/driver");
+    res.status(500).redirect(FRONT_END_URL + "/driver");
     return;
   }
 
@@ -61,7 +62,7 @@ router.get("/stripe/token", (req, res) => {
           }
 
           // Redirect to the Driver onboarding page
-          res.redirect("http://localhost:3006/driver/my-drives");
+          res.redirect(FRONT_END_URL + "/driver/my-drives");
         });
       })
       .catch(error => {
@@ -69,7 +70,7 @@ router.get("/stripe/token", (req, res) => {
       });
   } catch (err) {
     console.log(err);
-    res.status(500).redirect("http://localhost:3006/driver");
+    res.status(500).redirect(FRONT_END_URL + "/driver");
     return;
   }
 });
@@ -153,7 +154,7 @@ router.get("/stripe/public-key", (req, res) => {
   res.status(200).send({ publicKey: process.env.STRIPE_PUBLIC_KEY });
 });
 
-// Create Account
+// Create Generic Stripe Account
 router.post("/stripe/account", (req, res) => {
   const country = req.body.country;
   const email = req.body.email;

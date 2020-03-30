@@ -1,11 +1,14 @@
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
 const transferDB = require("../transfer/controller.js");
 const rideDB = require("../../ride/controller.js");
+const requestDB = require("../../request/controller.js");
+const Transfer = require("../transfer/transfer").Transfer;
 
 const handlePaymentIntentSucceeded = paymentIntent => {
   console.log("💰 Payment received!");
 
   const rideID = paymentIntent.meta["rideID"];
+  const requestID = paymentIntent.meta["requestID"];
   const riderUsername = paymentIntent.meta["riderUsername"];
   const driverStripeAcct = paymentIntent.meta["driverStripeAcct"];
 
@@ -46,6 +49,14 @@ const handlePaymentIntentSucceeded = paymentIntent => {
         } catch (e) {
           console.log("DRIVER TRANSFER FAILED: ", e);
         }
+
+        try {
+          requestDB.paidRequest({
+            requestID: requestID
+          });
+        } catch (e) {
+          console.log("Request set status to 'paid' FAILED: ", e);
+        }
       }
     });
   });
@@ -63,19 +74,18 @@ const triggerTransfer = transfer => {
         // TODO: Better Error Handling
         console.log(err);
       } else {
-        // TODO: Send Transfer Success Notification
+        transferDB.setStatusToComplete(
+          { transferID: transfer.id },
+          (err, data) => {
+            if (err) {
+              console.log(err);
+            } else {
+              console.log("Update Successful");
 
-        // TODO: Update Transfer Object
-        // transferDB.transferSuccessUpdate(
-        //   { transferID: transfer.id },
-        //   (err, data) => {
-        //     if (err) {
-        //       console.log(err);
-        //     } else {
-        //       console.log("Update Successful");
-        //     }
-        //   }
-        // );
+              // TODO: Send Transfer Success Notification
+            }
+          }
+        );
         console.log(res);
       }
     }
@@ -84,10 +94,10 @@ const triggerTransfer = transfer => {
 
 const policyChecker = (transfer, driverCancelled) => {
   let timeCancelled = Date.now();
-  console.log(transfer.paymentIntentID);
+
   let params = {
     payment_intent: transfer.paymentIntentID,
-    amount: 1900,
+    amount: transfer.amount,
     refund_application_fee: false
   };
 
@@ -112,6 +122,18 @@ const policyChecker = (transfer, driverCancelled) => {
     params.amount = params.amount / 2.0;
 
     // Create a tramsfer for driver
+    try {
+      transferDB.createTransfer({
+        paymentIntentID: transfer.paymentIntentID,
+        targetDate: transfer.targetDate,
+        amount: params.amount,
+        rideID: transfer.rideID,
+        destination: transfer.driverStripeAcct,
+        customerUsername: transfer.riderUsername
+      });
+    } catch (e) {
+      console.log("Driver Create Transfer FAILED: ", e);
+    }
 
     return params;
   }
@@ -155,53 +177,46 @@ const didRiderCancelInAdvance = (rideID, timeCancelled) => {
 
 const refund = (riderUsername, rideID, driverCancelled, callback) => {
   let query = { customerUsername: riderUsername, rideID: rideID };
-  let params = {};
 
   // Validate Transfer
-  transferDB.findTransfer(query, (err, transfer) => {
+  Transfer.findOne(query, (err, transfer) => {
     if (err) {
       callback(err, null);
     } else {
-      if (transfer.status !== "pending") {
+      if (transfer.status !== "scheduled") {
         callback("Refund Failed: Transfer status is " + transfer.status, null);
         return;
       }
 
-      params = policyChecker(transfer, driverCancelled);
+      let params = policyChecker(transfer, driverCancelled);
+
+      // Issue Refund
+      stripe.refunds.create(params, function(err, refund) {
+        if (err) {
+          callback(err, null);
+        } else {
+          console.log(refund);
+          const filter = { _id: transfer._id };
+          const update = { $set: { status: "refunded" } };
+          const options = { new: true };
+
+          // Update Status
+          Transfer.findOneAndUpdate(
+            filter,
+            update,
+            options,
+            (updateErr, result) => {
+              if (updateErr) {
+                callback(updateErr, null);
+              } else {
+                callback(null, result);
+              }
+            }
+          );
+        }
+      });
     }
   });
-
-  // Issue Refund
-  stripe.refunds.create(
-    {
-      payment_intent: "pi_1GRQDrB5ZqQN3ixi8uD4ggUn",
-      amount: 1900
-    },
-    function(err, refund) {
-      if (err) {
-        callback(err, null);
-      } else {
-        console.log(refund);
-        const filter = { _id: transferID };
-        const update = { $set: { status: "refunded" } };
-        const options = { new: true };
-
-        // Update Status
-        transferDB.findOneAndUpdate(
-          filter,
-          update,
-          options,
-          (updateErr, result) => {
-            if (updateErr) {
-              callback(updateErr, null);
-            } else {
-              callback(null, result);
-            }
-          }
-        );
-      }
-    }
-  );
 };
 
 module.exports = {

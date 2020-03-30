@@ -1,9 +1,11 @@
 const Transfer = require("./transfer.js").Transfer;
 
+// createTransfer creates a new transfer object
 const createTransfer = transferInfo => {
   return new Promise(async (resolve, reject) => {
     try {
       const newTransfer = await new Transfer(transferInfo).save();
+      console.log(newTransfer);
       resolve(newTransfer);
     } catch (e) {
       reject();
@@ -11,11 +13,14 @@ const createTransfer = transferInfo => {
   });
 };
 
+// checkExpired is used to determine whether to trigger a transfer
+// for transfers that are scheduled
 const checkExpired = () => {
   return new Promise(async (resolve, reject) => {
     try {
       await Transfer.find({
         targetDate: { $lt: new Date() },
+        status: "scheduled",
         expired: false
       }).then(Transfers => {
         if (Transfers.length === 0) {
@@ -34,25 +39,20 @@ const checkExpired = () => {
   });
 };
 
-// TODO: Block Transfers for a ride (in case of claim)
-// Block Transfer
+// blockTransfer sets the status of a transfer to "blocked"
 const blockTransfer = (transferID, callback) => {
   const filter = { _id: transferID };
   const update = { $set: { status: "blocked" } };
   const options = { new: true };
 
   // Validate Transfer
-  Transfer.findTransfer(filter, (err, result) => {
+  Transfer.findOne(filter, (err, transfer) => {
     if (err) {
       callback(err, null);
       return;
-    } else {
-      let transfer = result[0];
-
-      if (transfer.status !== "scheduled") {
-        callback("Block Failed: Transfer status is " + transfer.status, null);
-        return;
-      }
+    } else if (transfer.status !== "scheduled") {
+      callback("Block Failed: Transfer status is " + transfer.status, null);
+      return;
     }
   });
 
@@ -67,23 +67,20 @@ const blockTransfer = (transferID, callback) => {
   });
 };
 
-// Resume Transfer
+// resumeTransfer sets the status of a transfer to back to "scheduled"
 const resumeTransfer = (transferID, callback) => {
   const filter = { _id: transferID };
   const update = { $set: { status: "scheduled" } };
   const options = { new: true };
 
   // Validate Transfer
-  Transfer.findTransfer(filter, (err, result) => {
+  Transfer.findOne(filter, (err, transfer) => {
     if (err) {
       callback(err, null);
       return;
-    } else {
-      let transfer = result[0];
-      if (transfer.status !== "blocked") {
-        callback("Resume Failed: Transfer status is " + transfer.status, null);
-        return;
-      }
+    } else if (transfer.status !== "scheduled") {
+      callback("Resume Failed: Transfer status is " + transfer.status, null);
+      return;
     }
   });
 
@@ -98,26 +95,24 @@ const resumeTransfer = (transferID, callback) => {
   });
 };
 
-const setStatusToTransfered = transferID => {
+// setStatusToComplete sets the status of a transfer to "completed"
+const setStatusToComplete = transferID => {
   const filter = { _id: transferID };
-  const update = { $set: { status: "transfered" } };
+  const update = { $set: { status: "completed" } };
   const options = { new: true };
 
   // Validate Transfer
-  Transfer.findTransfer(filter, (err, result) => {
+  Transfer.findOne(filter, (err, transfer) => {
     if (err) {
       callback(err, null);
       return;
-    } else {
-      let transfer = result[0];
-
-      if (transfer.status !== "scheduled") {
-        callback(
-          "Set To Transfered Failed: Transfer status is " + transfer.status,
-          null
-        );
-        return;
-      }
+    } else if (transfer.status !== "scheduled") {
+      callback(
+        "Set Status to 'completed' Failed: Transfer status is " +
+          transfer.status,
+        null
+      );
+      return;
     }
   });
 
@@ -126,21 +121,6 @@ const setStatusToTransfered = transferID => {
     if (err) {
       callback(err, null);
       return;
-    } else {
-      callback(null, result);
-    }
-  });
-};
-
-const findTransfer = (query, callback) => {
-  Transfer.find(query, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else if (result.length === 0) {
-      callback("No Transfer Found", null);
-    } else if (result.length > 1) {
-      // callback("Multiple Transfers Found", null);
-      callback(null, result[0]);
     } else {
       callback(null, result);
     }
@@ -152,6 +132,5 @@ module.exports = {
   createTransfer,
   blockTransfer,
   resumeTransfer,
-  setStatusToTransfered,
-  findTransfer
+  setStatusToComplete
 };

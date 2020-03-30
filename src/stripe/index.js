@@ -192,7 +192,8 @@ router.post("/stripe/customer", (req, res) => {
 // Create a Payment Intent
 router.post("/stripe/create-payment-intent", (req, res) => {
   const rideID = req.body.options.rideID;
-  const riderUsername = req.body.options.username;
+  const requestID = req.body.options.requestID;
+  const riderUsername = req.body.options.riderUsername;
   const currency = "usd";
   const applicationFee = 0;
 
@@ -204,6 +205,8 @@ router.post("/stripe/create-payment-intent", (req, res) => {
     } else if (!ride) {
       res.status(404).json({ error: "Ride not found: " + rideID });
       return;
+    } else if (1 > ride.seats) {
+      res.status(500).json({ error: "Not Enough Seats" });
     }
 
     // Get Rider Details
@@ -231,6 +234,7 @@ router.post("/stripe/create-payment-intent", (req, res) => {
             customer: rider.stripe.customerID,
             metadata: {
               rideID: rideID,
+              requestID: requestID,
               riderUsername: riderUsername,
               driverStripeAcct: driver.stripe.accountID
             },
@@ -304,21 +308,20 @@ router.post("/stripe/webhook", async (req, res) => {
 router.get("/stripe/test", async (req, res) => {
   // try {
   //   transferDB.createTransfer({
-  //     paymentIntentID: "pi_1GRQDrB5ZqQN3ixi8uD4ggUn",
+  //     paymentIntentID: "pi_1GSF9kB5ZqQN3ixiFH0tNg5W",
   //     targetDate: Date.now() + 1,
-  //     amount: 15,
-  //     rideID: "pi_1GRQDrB5ZqQN3ixi8uD4ggUn",
+  //     amount: 2000,
+  //     rideID: "pi_1GSF9kB5ZqQN3ixiFH0tNg5W",
   //     destination: "acct_1GROU3HvkidE7D9R",
   //     customerUsername: "user1"
   //   });
-
   // } catch (e) {
   //   console.log("DRIVER TRANSFER FAILED: ", e);
   // }
 
   paymentHandler.refund(
     "user1",
-    "pi_1GRQDrB5ZqQN3ixi8uD4ggUn",
+    "pi_1GSF9kB5ZqQN3ixiFH0tNg5W",
     true,
     (err, data) => {
       if (err) {

@@ -281,6 +281,7 @@ module.exports = {
   approveRequest,
   cancelRequest,
   denyRequest,
+  paidRequest,
   archiveRequest,
   unarchiveRequest,
   deleteRequest,

@@ -1891,6 +1891,14 @@ POST request
 
 ---
 
+Transfers
+
+Statuses
+
+1. Scheduled
+2. Blocked
+3. Complete
+
 # Deployment
 
 ## Deployment Instructions

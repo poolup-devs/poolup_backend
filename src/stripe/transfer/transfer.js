@@ -2,13 +2,9 @@ const mongoose = require("mongoose");
 
 const TransferSchema = mongoose.Schema({
   paymentIntentID: String,
-  transferID: {
-    type: String,
-    default: ""
-  },
   status: {
     type: String,
-    default: "pending"
+    default: "scheduled"
   },
   targetDate: Date,
   amount: Number,

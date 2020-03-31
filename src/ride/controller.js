@@ -140,9 +140,9 @@ const postRide = (rideInfo, callback) => {
     if (err) {
       callback(err, null);
     } else {
-      // Schedule a job that updates the number of completed rides for each user in the carpool
-      // Scheduled job will occur two hours after the carpool begins
+      // Schedule a job that updates the number of completed rides for each user in the carpool that will occur two hours after the carpool begins
       scheduler.scheduleTaskHoursAfterDate('updateCompletedRidesTask.${result._id}', scheduledTasks.updateCompletedRidesTask(result._id), rideInfo.date, 2)
+      // scheduler.scheduleTaskHoursAfterDate('prompt')
       callback(null, result);
     }
   });

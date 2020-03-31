@@ -8,8 +8,13 @@ const scheduleTaskHoursAfterDate = (uniqueTaskName, task, date, hours) => {
 }
 
 const cancelTask = (taskName) => {
-    const task = schedule.scheduledJobs[taskName]
-    task.cancel()
+    return new Promise((resolve, reject) => {
+        const task = schedule.scheduledJobs[taskName]
+        if (!task) {
+            resolve(true)
+        }
+        resolve(task.cancel())
+    })
 }
 
 // Clean up all tasks associated with a ride, such as when a ride is cancelled and deleted 

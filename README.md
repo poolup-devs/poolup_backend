@@ -234,7 +234,7 @@ There must be a white space between the string "Bearer" and the token string
 ## Scheduling Tasks
 All scheduled tasks should be in /tasks/scheduledTasks.js, with unit tests in /tests/tasks/scheduledTasks.test.js
 Operations
--  `scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)`
+-  `void scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)`
 	- Schedules a task to *run once*, X hours after a certain date
 		-  **uniqueTaskName**: uniquely identify the task in the case you ever need to cancel the task
 		-  **task**: function pointer of the task to schedule
@@ -245,8 +245,8 @@ Operations
 	- This will clean up tasks named with the following format: **taskFunctionName:{rideId}**
 		- ex: **updateCompletedRidesTask:{rideId}** or **promptLeaveAReviewTask:{rideId}**
 	- This can be used to clean up scheduled email reminders and web notifications for rides that have been cancellled 
--  `cancelTask(taskName)`
-	- Cancel a task
+-  `bool cancelTask(taskName)`
+	- Cancel a task, returns a Promise that resolves into a boolean value 
 
 ## Models & API Endpoints Documentation
 

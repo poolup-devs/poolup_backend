@@ -1,9 +1,10 @@
 const Ride = require('../ride/ride').Ride
 const User = require('../user/user').User
 
+// A completed ride is one that hasn't been cancelled and contains at least one passenger
 const isCompletedRide = (rideDetails) => {
   return new Promise(async (resolve, reject) => {
-    return resolve(rideDetails && rideDetails.length > 0) 
+    return resolve(rideDetails && rideDetails.passengers.length > 0) 
   })
 }
 
@@ -23,14 +24,25 @@ const updateCompletedRidesTask = (rideId) => {
     }
 }
 
-// const createLeaveReviewNotiTask = (rideId) => {
-//   return async function() {
-//     const rideDetails = await Ride.findById(rideId)
-//     if (await )
-//     // Driver gets notified for every passenger
-    
-//   }
-// }
+const createNotiToLeaveReviewTask = (rideId) => {
+  return async function() {
+    const rideDetails = await Ride.findById(rideId)
+    if (await isCompletedRide(rideDetails)) {
+      // Driver gets notified to review passengers 
+      const passengerNames = []
+      rideDetails.passengers.forEach(async (passengerUsername) => {
+        const passenger = await User.findOne({username: passengerUsername})
+        passengerNames.append(passenger.name)
+      })
+
+      if (passengerNames.length == 1) {
+        const noti = Noti.create({
+          
+        })
+      }
+    }
+  }
+}
 
 // Get a list of users that need to be reviewed
 const getUsersToReviewFromLatestRide = (username) => {

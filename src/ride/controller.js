@@ -158,7 +158,6 @@ const joinRide = async (
   const noti = {
     username: ownerUsername,
     msg: `${passengerUsername} has joined your ride`,
-    senderEmail: passenger.email,
     date: new Date()
   };
   Ride.findOneAndUpdate(
@@ -197,7 +196,6 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
         let noti = await Noti.create({
           username: passengerUsername,
           msg: `${username} has cancelled your ride`,
-          senderEmail: user.email,
           date: new Date()
         });
         // Update schema-less property: additionalProperties
@@ -229,7 +227,6 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       let noti = await Noti.create({
         username: cancelledRideDoc.ownerUsername,
         msg: `${username} has cancelled your ride`,
-        senderEmail: user.email,
         date: new Date()
       });
       // Update schema-less property: additionalProperties

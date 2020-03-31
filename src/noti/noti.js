@@ -2,8 +2,6 @@ const mongoose = require("mongoose");
 const notiSchema = mongoose.Schema({
   username: String,
   msg: String,
-  senderPhoneNumber: String,
-  senderEmail: String,
   viewed: {
     type: Boolean,
     default: false

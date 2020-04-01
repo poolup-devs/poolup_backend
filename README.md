@@ -3,7 +3,7 @@
 ### api.poolup.co
 
 This is the backend code repository for PoolUp: made with NodeJS, Express, and MongoDB w/ Mongoose.
-For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineering Manager.
+For additional guidence/help, email bin315a1@g.ucla.edu or your current Lead Backend Manager.
 
 1. [Setup](#setup)
 2. [Dev-Rules](#dev-rules)
@@ -11,7 +11,8 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 4. [Deployment](#deployment) - Temporarily Deprecated
 
 # Setup
-Using **Docker Commands** is advised for setup/ running the application.
+After the Local Environment Setup, using **Docker Commands** is advised for application setup & running the application.
+
 The NPM Scripts and Local Development Setup is listed below for additional reference.
 
 ## Local Environment Setup
@@ -43,12 +44,21 @@ Currently the latest version of the app uses 3 docker containers:
 2. mongo : mongodb database container
 3. mongo_seed : a database seeder that is removed upon creation, after db seeding
 
-All dockerfiles should be located under `/dockerfiles`, within a designated directory
+- All dockerfiles should be located under `/dockerfiles`, within a designated directory
 
-Docker conatainers and Docker networks is configured and maintained with docker-compose, with:
+- Docker conatainers and Docker networks is configured and maintained with docker-compose, with:
 `docker-compose.yml`
 
-- To seed the initializing mongodb container and start the server, use the docker-compose command:
+- The local source code volume will be mounted on web container's volume; any changes made to the code will be accounted for in the container (there is no need to build everytime there's a change in code)
+
+- However, if additional JS library needs to be installed, config files are changed, or etc, image should be built again before running docker compose
+
+### Docker Commands
+
+#### 1. Building the initial docker images
+    > docker-compose build
+
+#### 2. Run docker compose:
     > docker-compose up
 
 ---
@@ -123,6 +133,7 @@ Use Docker commands for
 |   package.json
 |   README.md
 |   setup.js
+|   docker-compose.yml
 |
 +---config
 |       .env-cmdrc

@@ -5,13 +5,16 @@ services:
         ports:
             - 27017:27017
     web:
-        build: 
+        build:
             context: .
             dockerfile: ./dockerfiles/main/Dockerfile
+        command: npm run docker-dev
         ports:
             - 3000:3000
         depends_on:
             - mongo
+        volumes:
+            - .:/home/nodejs/app
     mongo_seed:
         build: 
             context: .

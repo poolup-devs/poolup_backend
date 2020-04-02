@@ -35,7 +35,7 @@ const addNewReview = (reviewInfo) => {
                         scheduler.cancelTask(`expireAbilityToLeaveReviewTask.${reviewInfo.rideId}.${revieweeUsername}.${reviewerUsername}`)
                     }
                     else {
-                        // Create the review, but leave it as unpublished 
+                        // Counterpart has not left their review, so create new review but leave it as unpublished 
                         var newReview = await Review.create(reviewInfo)
                     }
                     resolve(newReview)
@@ -88,66 +88,8 @@ const getUserReviews = (username, pageNumber) => {
 }
 
 
-// Get a list of users that need to be reviewed (from last ride)
-const getUsersToReviewFromLatestRide = (username) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            // Obtain latest ride details 
-            Ride.findOne({$or: [{passengers: username}, {ownerUsername: username}], date: { $lt: new Date() } }, async (err, latestRide) => {
-                if (!latestRide) {
-                    return resolve({usernamesToReview: []})
-                }
-                const {passengers} = latestRide
-                const rideId = latestRide._id
-                const driverUsername = latestRide.ownerUsername
-                // User was the driver for the ride 
-                if (driverUsername === username) {
-                    usernamesToReview = [] 
-                    for (var i = 0; i < passengers.length; i++) {
-                        //  Driver has not rated the passenger yet and has not declined a notification to do so 
-                        if (!(await isExistingReview(username, passengers[i], rideId))) {
-                            usernamesToReview.push(passengers[i])
-                        }
-                    }
-                    resolve({usernamesToReview, rideId})
-                }
-                else {
-                    // User was a passenger for this ride and has not reviewed the driver 
-                    if (!(await isExistingReview(username, driverUsername, rideId))) {
-                        resolve({usernamesToReview: [driverUsername], rideId})
-                    }
-                    else {
-                        resolve({usernamesToReview: [], rideId})
-                    }
-                }
-            }).sort({date: -1}).limit(1); 
-        }
-        catch(e) {
-            console.log(e) 
-        }
-    })
-}
-
-// Helper method that determines whether a review exists in the database 
-const isExistingReview = async (reviewer, reviewee, rideId) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const review = await Review.findOne({
-                reviewerUsername : reviewer,
-                revieweeUsername : reviewee, 
-                rideId : rideId, 
-            })
-            resolve(review)
-        }
-        catch(e) {
-            console.log(e)
-        }
-    })
-}
-
 module.exports = {
     addNewReview, 
     declineReview, 
-    getUserReviews, 
-    getUsersToReviewFromLatestRide
+    getUserReviews
 }; 

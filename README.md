@@ -1409,7 +1409,6 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 | /reviews                              | POST        | [Add a review ](#add-review)                                        |
 | /reviews                              | GET         | [Get all of a user's reviews](#get-all-reviews)                     |
 | /reviews/decline-review               | POST        | [Decline to review a user](#decline-to-review)                      |
-| /reviews/get-eligible-users-to-review | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review) |
 
 ---
 

@@ -85,7 +85,8 @@ describe("Testing rating system operations", () => {
 
     describe("Test operation to add a review to the database", () => {
         afterEach(async () => {
-            await User.deleteMany({}) 
+            await User.deleteMany() 
+            await Review.deleteMany()
         }) 
         test("A review without a required field, such as rideId, should error instead of creating the review.", async () => {
             try {
@@ -101,11 +102,11 @@ describe("Testing rating system operations", () => {
             }
         })
 
-        test("Adding a review with all the required fields should create a new review document in the database and update the rating field in User.", async () => {
+        test("When a user submits a review before his counterpart has, expect a new review document to be created but not published and the reviewee should not have their rating changed yet.", async () => {
             try {
                 const revieweeUsername = 'reviewee' 
 
-                // create a dummy user who receives the new review 
+                // Create a dummy user who receives the new review 
                 const userWhoReceivesReview = await User.create({username: revieweeUsername}); 
                 const reviewInfo = {
                     reviewerUsername: 'reviewer', 
@@ -116,18 +117,46 @@ describe("Testing rating system operations", () => {
                 const newReview = await db.addNewReview(reviewInfo)
                 const {reviewerUsername, rating, rideId} = reviewInfo
                 expect(newReview).toEqual(expect.objectContaining({
-                    reviewerUsername, revieweeUsername, rating, rideId
+                    reviewerUsername, revieweeUsername, rating, rideId, isPublished: false
                 })) 
 
-                // check that the rating field is updated in the User model 
+                // Check that the rating field is unchanged 
                 User.findOne({username: revieweeUsername}, (err, user) => {
-                    expect(user.rating.totalRatings).toBe(1)
-                    expect(user.rating.sumOfAllRatings).toBe(reviewInfo.rating) 
+                    expect(user.rating.totalRatings).toBe(0)
+                    expect(user.rating.sumOfAllRatings).toBe(0) 
                 })
             } 
             catch(e) {
                 console.log(e)
             }
+        })
+
+        test("When a user submits a review after his counterpart has, expect both reviews to be published and both ratings updated", async () => {
+            // Create a dummy user who receives the new review 
+            let firstReviewer = await User.create({username: 'driverUsername'}); 
+            let secondReviewer = await User.create({username: 'riderUsername'}); 
+            const rideId = mongoose.Types.ObjectId()
+            const firstReview = await Review.create({ reviewerUsername: firstReviewer.username, revieweeUsername: secondReviewer.username, rating: 3, rideId })
+            const secondReview = await db.addNewReview({ reviewerUsername: secondReviewer.username, revieweeUsername: firstReviewer.username, rating: 4, rideId })
+
+            // Expect both reviews are published 
+            expect((await Review.findById(firstReview._id)).isPublished).toBeTruthy()  
+            expect(secondReview).toEqual(expect.objectContaining({
+                reviewerUsername: secondReviewer.username, 
+                revieweeUsername: firstReviewer.username, 
+                rating: 4,  
+                rideId,
+                isPublished: true 
+            })) 
+
+            // Expect both ratings to be updated 
+            firstReviewer = await User.findById(firstReviewer._id)
+            expect(firstReviewer.rating.totalRatings).toBe(1)
+            expect(firstReviewer.rating.sumOfAllRatings).toBe(4) 
+
+            secondReviewer = await User.findById(secondReviewer._id)
+            expect(secondReviewer.rating.totalRatings).toBe(1)
+            expect(secondReviewer.rating.sumOfAllRatings).toBe(3) 
         })
     })
 

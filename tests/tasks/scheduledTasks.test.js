@@ -2,7 +2,9 @@ require("../../src/db/mongoose");
 const User = require('../../src/user/user').User
 const Ride = require("../../src/ride/ride").Ride 
 const Noti = require("../../src/noti/noti").Noti 
+const Review = require("../../src/review/review").Review 
 const scheduledTasks = require('../../src/tasks/scheduledTasks')
+const schedule = require('node-schedule')
 
 describe("Testing the update completed rides scheduled task", () => {
     afterEach(async () => {
@@ -51,6 +53,7 @@ describe("Testing leave a review notification", () => {
         await Ride.deleteMany({})
         await User.deleteMany({})
         await Noti.deleteMany({})
+        await Review.deleteMany({})
     }) 
     test("Testing whether drivers and passengers receive proper notifications to leave a review", async () => {
         let driver = await User.create({name: 'Sarah Lynn', username: 'driverUsername'})
@@ -70,5 +73,37 @@ describe("Testing leave a review notification", () => {
         expect(await Noti.findOne({username: passenger2.username})).toEqual(expect.objectContaining({
             username: passenger2.username, msg: "Leave a review for your driver, Sarah Lynn.", redirectPath: process.env.MY_RIDES_PATH
         }))
+    })
+
+    test("Testing whether an expiry task is created for every review that can be sent out", async () => {
+        let driver = await User.create({name: 'Sarah Lynn', username: 'driverUsername'})
+        let passenger1 = await User.create({name: 'John Smith', username: 'passenger1'})
+        let passenger2 = await User.create({name: 'Aiden Turner', username: 'passenger2'})
+        const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1', 'passenger2'], seats: 0})
+        await scheduledTasks.createNotiToLeaveReviewTask(ride._id)()
+        expect(schedule.scheduledJobs[`expireAbilityToMakeReview.${ride._id}.driverUsername.passenger1`]).toBeTruthy()
+        expect(schedule.scheduledJobs[`expireAbilityToMakeReview.${ride._id}.passenger1.driverUsername`]).toBeTruthy()
+        expect(schedule.scheduledJobs[`expireAbilityToMakeReview.${ride._id}.driverUsername.passenger2`]).toBeTruthy()
+        expect(schedule.scheduledJobs[`expireAbilityToMakeReview.${ride._id}.passenger2.driverUsername`]).toBeTruthy()
+    })
+
+    test("Testing that a review should be made public if one exists before the time for leaving a review expires", async () => {
+        // Passenger with a 5.0 rating over two reviews 
+        let passenger1 = await User.create({username: 'passenger1', rating: {sumOfAllRatings: 10, totalRatings: 2}})
+        const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1', 'passenger2'], seats: 0})
+        // Unpublished review because counterpart has not submitted their review yet, should be published after ability for counterpart to leave review expires 
+        const review = await Review.create({rideId: ride._id, reviewerUsername: "driverUsername", revieweeUsername: "passenger1", isPublished: false, rating: 4})
+
+        await scheduledTasks.expireAbilityToLeaveReviewTask(ride._id, review.reviewerUsername, review.revieweeUsername)()
+        
+        expect((await Review.findById(review._id)).isPublished).toBe(true)
+        expect(((await User.findById(passenger1._id)).rating.sumOfAllRatings)).toBe(14)
+        expect(((await User.findById(passenger1._id)).rating.totalRatings)).toBe(3)
+    })
+
+    test("Testing that reviews can no longer be made if a user does not leave a review before the ability to leave a review expires", async () => {
+        const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1', 'passenger2'], seats: 0})
+        await scheduledTasks.expireAbilityToLeaveReviewTask(ride._id, "driverUsername", "passenger1")()
+        expect((await Review.findOne({rideId: ride._id, reviewerUsername: "driverUsername", revieweeUsername: "passenger1"})).isDeclined).toBe(true)
     })
 })

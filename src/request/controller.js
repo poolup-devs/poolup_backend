@@ -62,9 +62,51 @@ const getRecipientRequests = (recipientID, status, callback) => {
   });
 };
 
+// Check to see if a request already exists for the sender, receipient, and rider
+const doesRequestExist = requestInfo => {
+  return new Promise(async (resolve, reject) => {
+    Request.findOne(
+      {
+        rideID: requestInfo.rideID,
+        senderID: requestInfo.senderID,
+        recipientID: requestInfo.recipientID
+      },
+      (err, result) => {
+        if (err) {
+          reject(err);
+        }
+
+        // A request for this ride and user was found
+        if (result) {
+          resolve(true);
+          return;
+        } else {
+          resolve(false);
+          return;
+        }
+      }
+    );
+  });
+};
+
 // createRequest creates a new request from the specified user with
 // regards about the specified ride
-const createRequest = (requestInfo, callback) => {
+const createRequest = async (requestInfo, callback) => {
+  //Check to see if a request has already been sent by this user and ride
+  try {
+    result = await doesRequestExist(requestInfo);
+    if (result) {
+      callback(
+        new Error("A request has already been created for this ride"),
+        null
+      );
+      return;
+    }
+  } catch (e) {
+    callback(e, null);
+    return;
+  }
+
   newRequest = {
     rideID: requestInfo.rideID,
     senderID: requestInfo.senderID,

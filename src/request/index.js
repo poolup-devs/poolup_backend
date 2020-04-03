@@ -48,9 +48,9 @@ router.get("/request/recipient", (req, res) => {
 
 // Create a new request
 router.post("/request/new", (req, res) => {
-  db.createRequest(req.body.requestInfo, (err, data) => {
+  db.createRequest(req.body, (err, data) => {
     if (err) {
-      res.status(500).json({ errorMsg: err });
+      res.status(500).json({ errorMsg: err.message });
     } else {
       res.status(200).json({ requestID: data._id });
       //TODO: Send new request notification

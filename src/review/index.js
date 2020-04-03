@@ -46,7 +46,7 @@ router.get("/reviews/get-eligible-users-to-review", checkAuth, async (req, res) 
     try {
         const loggedInUser = tokenParser(req.headers.authorization).username
         const usersToReview = await db.getUsersToReviewForRide(req.query.rideId, loggedInUser)
-        res.status(200).send(usersToReview) 
+        res.status(200).send({usernamesToReview: usersToReview}) 
       }
       catch(e) {
         res.status(500).send({error: e}) 

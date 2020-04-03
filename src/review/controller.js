@@ -87,9 +87,37 @@ const getUserReviews = (username, pageNumber) => {
     })
 }
 
+const getUsersToReviewForRide = (rideId, username) => {
+    return new Promise(async (resolve, reject) => {
+        const rideDetails = await Ride.findById(rideId)
+        
+        // User was a driver 
+        if (username == rideDetails.ownerUsername) {
+            let usernamesToReview = [] 
+            for (let i = 0; i < rideDetails.passengers.length; i++) {
+                const existingReview = await Review.findOne({reviewerUsername: username, revieweeUsername: rideDetails.passengers[i], rideId})
+                if (!existingReview) {
+                    usernamesToReview.push(rideDetails.passengers[i])
+                }
+            }
+            resolve(usernamesToReview)
+        }
+    
+        // User was a passenger
+        const existingReview = await Review.findOne({reviewerUsername: username, revieweeUsername: rideDetails.ownerUsername, rideId})
+        if (existingReview) {
+            resolve([])
+        }
+        else {
+            resolve([rideDetails.ownerUsername])
+        }
+    })
+}
+
 
 module.exports = {
     addNewReview, 
     declineReview, 
-    getUserReviews
+    getUserReviews, 
+    getUsersToReviewForRide
 }; 

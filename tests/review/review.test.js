@@ -177,6 +177,44 @@ describe("Testing rating system operations", () => {
             expect(declinedReview.isDeclined).toBe(true) 
         })
     })
+
+    describe("Test getting usernames to review for a ride", () => {
+        afterEach(async () => {
+            await Ride.deleteMany() 
+            await Review.deleteMany()
+        }) 
+        test("If a driver has not left any reviews for his passengers, should return all passengers", async () => {
+            const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1", "passenger_2", "passenger_3"]})
+            const usersToReview = await db.getUsersToReviewForRide(ride._id, "driver_username")
+            expect(usersToReview.sort()).toEqual(["passenger_1", "passenger_2", "passenger_3"])
+        })
+        
+        test("If a driver has left a review for one passenger but not the others, should return the others", async () => {
+            const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1", "passenger_2", "passenger_3"]})
+            const reviewToOnePassenger = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_2", rideId: ride._id, rating: 3})
+            const usersToReview = await db.getUsersToReviewForRide(ride._id, "driver_username")
+            expect(usersToReview.sort()).toEqual(["passenger_1", "passenger_3"])
+        })
+
+        test("If a driver has left a review for each of his passengers, should return empty list", async () => {
+            const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1", "passenger_2", "passenger_3"]})
+            const reviewToPassenger1 = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_1", rideId: ride._id, rating: 3})
+            const reviewToPassenger2 = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_2", rideId: ride._id, rating: 3})
+            const reviewToPassenger3 = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_3", rideId: ride._id, rating: 3})
+            const usersToReview = await db.getUsersToReviewForRide(ride._id, "driver_username")
+            expect(usersToReview).toEqual([])
+        })
+
+        test("Should correctly add a new review when properly authenticated.", async () => {
+            const verifiedUserUsernameAuthToken = jwt.sign({ username: 'driver_username' }, process.env.JWT_SECRET_KEY);
+            const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1", "passenger_2", "passenger_3"]})
+            await request(app)
+                .get('/reviews/get-eligible-users-to-review')
+                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
+                .query({rideId: ride._id.toString()})
+                .expect(200) 
+        })
+    })
     
 
     describe("Testing rating system API endpoints", () => {

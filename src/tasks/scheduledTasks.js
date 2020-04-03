@@ -53,13 +53,13 @@ const createNotiToLeaveReviewTask = (rideId) => {
           redirectPath: process.env.MY_RIDES_PATH
         })
         // Schedule the last day each passenger has to leave a review to the driver 
-        scheduler.scheduleTaskHoursAfterDate(`expireAbilityToMakeReview.${rideId}.${passengerUsername}.${driverUsername}`, 
+        scheduler.scheduleTaskHoursAfterDate(`expireAbilityToLeaveReviewTask.${rideId}.${passengerUsername}.${driverUsername}`, 
           expireAbilityToLeaveReviewTask(rideId, passengerUsername, driverUsername), 
           Date.now(), 
           24*7
         )   
         // Schedule the last day the driver has to leave a review to each passenger
-        scheduler.scheduleTaskHoursAfterDate(`expireAbilityToMakeReview.${rideId}.${driverUsername}.${passengerUsername}`, 
+        scheduler.scheduleTaskHoursAfterDate(`expireAbilityToLeaveReviewTask.${rideId}.${driverUsername}.${passengerUsername}`, 
           expireAbilityToLeaveReviewTask(rideId, driverUsername, passengerUsername), 
           Date.now(), 
           24*7

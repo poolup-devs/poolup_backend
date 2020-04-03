@@ -2,61 +2,94 @@ const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
 const transferDB = require("../transfer/controller.js");
 const rideDB = require("../../ride/controller.js");
 const requestDB = require("../../request/controller.js");
+const userDB = require("../../user/controller.js");
 const Transfer = require("../transfer/transfer").Transfer;
 
 const handlePaymentIntentSucceeded = paymentIntent => {
   console.log("💰 Payment received!");
-
-  const rideID = paymentIntent.meta["rideID"];
-  const requestID = paymentIntent.meta["requestID"];
-  const riderUsername = paymentIntent.meta["riderUsername"];
-  const driverStripeAcct = paymentIntent.meta["driverStripeAcct"];
-
-  // TODO: Make set request to paid status
+  console.log(paymentIntent);
+  const rideID = paymentIntent.metadata["rideID"];
+  const requestID = paymentIntent.metadata["requestID"];
+  const riderUsername = paymentIntent.metadata["riderUsername"];
 
   // Grab Ride Information
   rideDB.rideDetails(rideID, (err, ride) => {
     if (err) {
-      // TODO: Better Error Handling
+      console.log("Ride Details Failed");
       console.log(err);
-      return;
+
+      // Cancel PaymentIntent
+      stripe.paymentIntents.cancel(paymentIntent.id, function(err, _) {
+        if (err != nil) {
+          console.log("Cancel PaymentIntent Failed");
+          console.log(err);
+        }
+      });
+
+      // TODO: Return error to frontend
+      return err;
     }
 
     // Add User to ride
     rideDB.joinRide(ride.ownerUsername, riderUsername, (err, data) => {
       if (err) {
-        // TODO: Better Error Handling
-        // TODO: refund the amount back to the user
-        console.log(err);
-        return;
-      } else if (data.length === 0) {
-        // TODO: Better Error Handling
-        // TODO: refund the amount back to the user
-        console.log("Ride is Full");
-        return;
+        console.log("Join Ride Failed", err);
+
+        // Cancel PaymentIntent
+        stripe.paymentIntents.cancel(paymentIntent.id, function(err, _) {
+          if (err != nil) {
+            console.log("Cancel PaymentIntent Failed: ", err);
+          }
+        });
+
+        // TODO: Return error to frontend
+        return err;
       } else {
         var targetDate = new Date(ride.Date.getDate() + 1); // 24 hours after creation
 
-        try {
-          transferDB.createTransfer({
-            paymentIntentID: paymentIntent.id,
-            targetDate: targetDate,
-            amount: paymentIntent.amount,
-            rideID: rideID,
-            destination: driverStripeAcct,
-            customerUsername: riderUsername
-          });
-        } catch (e) {
-          console.log("DRIVER TRANSFER FAILED: ", e);
-        }
+        stripe.paymentIntents.capture(paymentIntent.id, function(
+          err,
+          paymentIntent
+        ) {
+          if (err) {
+            console.log("Capture PaymentIntent Failed: ", err);
+            return err;
+          } else {
+            console.log("rideID", rideID);
+            console.log("customerUsername", riderUsername);
 
-        try {
-          requestDB.paidRequest({
-            requestID: requestID
-          });
-        } catch (e) {
-          console.log("Request set status to 'paid' FAILED: ", e);
-        }
+            userDB.getMyInfo(ride.ownerUsername, (err, driverInfo) => {
+              if (err) {
+                return err;
+              } else {
+                try {
+                  transferDB.createTransfer({
+                    paymentIntentID: paymentIntent.id,
+                    targetDate: targetDate,
+                    amount: paymentIntent.amount,
+                    rideID: rideID,
+                    destination: driverInfo.stripe.accountID,
+                    customerUsername: riderUsername
+                  });
+                } catch (e) {
+                  console.log("DRIVER TRANSFER FAILED: ", e);
+                  return e;
+                }
+
+                try {
+                  if (requestID != "") {
+                    requestDB.paidRequest({
+                      requestID: requestID
+                    });
+                  }
+                } catch (e) {
+                  console.log("Request set status to 'paid' FAILED: ", e);
+                  return e;
+                }
+              }
+            });
+          }
+        });
       }
     });
   });
@@ -76,7 +109,7 @@ const triggerTransfer = transfer => {
       } else {
         transferDB.setStatusToComplete(
           { transferID: transfer.id },
-          (err, data) => {
+          (err, _) => {
             if (err) {
               console.log(err);
             } else {

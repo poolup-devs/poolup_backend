@@ -232,6 +232,7 @@ router.post("/stripe/create-payment-intent", (req, res) => {
             currency: currency,
             payment_method_types: ["card"],
             customer: rider.stripe.customerID,
+            capture_method: "manual",
             metadata: {
               rideID: rideID,
               requestID: requestID,
@@ -247,7 +248,6 @@ router.post("/stripe/create-payment-intent", (req, res) => {
               res.status(500).json({ error: err });
               return;
             } else {
-              console.log(paymentIntent);
               res
                 .status(200)
                 .json({ clientSecret: paymentIntent.client_secret });
@@ -304,32 +304,42 @@ router.post("/stripe/webhook", async (req, res) => {
   res.sendStatus(200);
 });
 
-// Tester Endpoint
-router.get("/stripe/test", async (req, res) => {
-  // try {
-  //   transferDB.createTransfer({
-  //     paymentIntentID: "pi_1GSF9kB5ZqQN3ixiFH0tNg5W",
-  //     targetDate: Date.now() + 1,
-  //     amount: 2000,
-  //     rideID: "pi_1GSF9kB5ZqQN3ixiFH0tNg5W",
-  //     destination: "acct_1GROU3HvkidE7D9R",
-  //     customerUsername: "user1"
-  //   });
-  // } catch (e) {
-  //   console.log("DRIVER TRANSFER FAILED: ", e);
-  // }
+// =====================
+// Development Endpoints
+// =====================
 
-  paymentHandler.refund(
-    "user1",
-    "pi_1GSF9kB5ZqQN3ixiFH0tNg5W",
-    true,
-    (err, data) => {
-      if (err) {
-        res.status(500).json({ err: err });
-      } else {
-        res.status(200).json({ result: data });
-      }
+// Trigger Payment Intent Success Flow
+router.post(
+  "/stripe/development/triggerPaymentIntentSucessful",
+  async (req, res) => {
+    console.log(req.body);
+    const paymentIntent = req.body.paymentIntent;
+    if (paymentIntent == null) {
+      console.log("Paymentintent undefined");
+      return;
     }
-  );
+
+    let err = handlePaymentIntentSucceeded(paymentIntent);
+    if (err != null) {
+      res.status(500).json({ error: err });
+    } else {
+      res.sendStatus(200);
+    }
+  }
+);
+
+// Trigger Refund
+router.post("/stripe/development/triggerRefund", async (req, res) => {
+  const riderUsername = req.body.riderUsername;
+  const rideID = req.body.rideID;
+
+  paymentHandler.refund(riderUsername, rideID, true, (err, data) => {
+    if (err) {
+      res.status(500).json({ err: err });
+    } else {
+      res.status(200).json({ result: data });
+    }
+  });
 });
+
 module.exports = router;

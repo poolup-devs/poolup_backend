@@ -95,11 +95,7 @@ router.put("/rides/join-ride", checkAuth, (req, res) => {
   // Add User to ride
   db.joinRide(ride.ownerUsername, ride._id, authUsername, (err, data) => {
     if (err) {
-      res.sendStatus(500);
-    } else if (data.length === 0) {
-      res.status(404).send({
-        message: "ERROR: The ride is full"
-      });
+      res.sendStatus(500).json({ error: err });
     } else {
       res.status(200).send(data);
     }

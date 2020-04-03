@@ -215,7 +215,11 @@ const joinRide = async (
           if (err2) {
             callback(err2, null);
           } else {
-            callback(null, result1);
+            if (result1.length == 0) {
+              callback("ERROR: Ride is already full", null);
+            } else {
+              callback(null, result1);
+            }
           }
         });
       }

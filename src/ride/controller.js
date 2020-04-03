@@ -207,18 +207,18 @@ const joinRide = async (
     { _id: ride_id, seats: { $gte: 1 } },
     { $push: { passengers: passengerUsername }, $inc: { seats: -1 } },
     { new: true },
-    (err1, result1) => {
-      if (err1) {
-        callback(err1, null);
+    (update_err, update_result) => {
+      if (update_err) {
+        callback(update_err, null);
       } else {
-        Noti.create(noti, (err2, result2) => {
-          if (err2) {
-            callback(err2, null);
+        Noti.create(noti, (noti_err, _) => {
+          if (noti_err) {
+            callback(noti_err, null);
           } else {
-            if (result1.length == 0) {
+            if (update_result.length == 0) {
               callback("ERROR: Ride is already full", null);
             } else {
-              callback(null, result1);
+              callback(null, update_result);
             }
           }
         });

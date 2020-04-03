@@ -74,10 +74,10 @@ const declineReview = (reviewer, reviewee, rideId) => {
 }
 
 
-// Get all the reviews received by a user 
+// Get all the publically available reviews received by a user 
 const getUserReviews = (username, pageNumber) => {
     return new Promise(async (resolve, reject) => {
-        await Review.find({revieweeUsername : username, isDeclined: false}, (err, reviews) => { 
+        await Review.find({revieweeUsername : username, isDeclined: false, isPublished: true}, (err, reviews) => { 
           // if there are no reviews, return []
           resolve(Array.from(reviews)) 
         })

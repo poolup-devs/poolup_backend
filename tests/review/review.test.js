@@ -20,19 +20,22 @@ describe("Testing rating system operations", () => {
         reviewerUsername: 'test_reviewer_1', 
         revieweeUsername: testRevieweeUsername, 
         rating: 1, 
-        datePosted: new Date('Jan 1, 2020')
+        datePosted: new Date('Jan 1, 2020'), 
+        isPublished: true
     })
     const testReview2 = new Review({
         reviewerUsername: 'test_reviewer_2', 
         revieweeUsername: testRevieweeUsername, 
         rating: 2, 
-        datePosted: new Date('Jan 2, 2020')
+        datePosted: new Date('Jan 2, 2020'),
+        isPublished: true
     })
     const testReview3 = new Review({
         reviewerUsername: 'test_reviewer_3', 
         revieweeUsername: testRevieweeUsername, 
         rating: 3, 
-        datePosted: new Date('Jan 3, 2020')
+        datePosted: new Date('Jan 3, 2020'),
+        isPublished: true
     })
 
     beforeEach(() => {
@@ -69,9 +72,9 @@ describe("Testing rating system operations", () => {
 
         test("Get the 6th review from a user who has more than 5 reviews (retrieval with pagination)", async () => {
             try {
-                await Review.create({reviewerUsername: 'test_reviewer_4', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 4, 2020')})
-                await Review.create({reviewerUsername: 'test_reviewer_5', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 5, 2020')})
-                const sixth_review = await Review.create({reviewerUsername: 'test_reviewer_6', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 6, 2020')})
+                await Review.create({reviewerUsername: 'test_reviewer_4', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 4, 2020'), isPublished: true})
+                await Review.create({reviewerUsername: 'test_reviewer_5', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 5, 2020'), isPublished: true})
+                const sixth_review = await Review.create({reviewerUsername: 'test_reviewer_6', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 6, 2020'), isPublished: true})
                 return db.getUserReviews(testRevieweeUsername, 1).then((reviews) => {
                     expect(reviews.length).toBe(1)
                     expect(reviews[0]._id).toEqual(testReview1._id)
@@ -80,6 +83,14 @@ describe("Testing rating system operations", () => {
             catch(e) {
                 console.log(e)
             }
+        })
+
+        test("Expect non-publically published reviews made to a user to not be returned.", async () => {
+            const publishedReview = await Review.create({reviewerUsername: 'test_reviewer_1', revieweeUsername: "test_reviewee_1", rating: 4, datePosted: new Date('Jan 4, 2020'), isPublished: true})
+            const unpublishedReview = await Review.create({reviewerUsername: 'test_reviewer_2', revieweeUsername: "test_reviewee_1", rating: 3, datePosted: new Date('Jan 4, 2020'), isPublished: false})
+            const reviews = await db.getUserReviews("test_reviewee_1", 0)
+            expect(reviews.length).toBe(1)
+            expect(reviews[0]._id).toEqual(publishedReview._id)
         })
     })
 

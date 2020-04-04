@@ -5,8 +5,6 @@ fs.mkdir('config', {recursive: true}, (e) => {
         console.log("Could not create config directory!")
         throw e
     }
-}) 
-// fs.createReadStream('.sample_env').pipe(fs.createWriteStream('config/dev.env'));
-// fs.createReadStream('.sample_env').pipe(fs.createWriteStream('config/test.env'));
+});
 
 fs.createReadStream('.sample_env').pipe(fs.createWriteStream('config/.env-cmdrc'));

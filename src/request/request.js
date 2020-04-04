@@ -3,12 +3,27 @@ const mongoose = require("mongoose");
 const requestSchema = mongoose.Schema({
   rideID: mongoose.Types.ObjectId,
   senderID: String,
-  recepientID: String,
+  recipientID: String,
   status: {
     type: String,
     default: "pending"
   },
-  luggage: Number,
+  archived: {
+    type: Boolean,
+    default: false
+  },
+  reminders: {
+    type: Number,
+    default: 1
+  },
+  carryOn: {
+    type: Number,
+    default: 0
+  },
+  luggage: {
+    type: Number,
+    default: 0
+  },
   msg: String,
   date: Date
 });

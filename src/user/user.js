@@ -1,37 +1,58 @@
 const mongoose = require("mongoose");
 
 const userSchema = mongoose.Schema({
-  name: String, 
+  // Account information
+  name: String,
   email: String,
-  username: {
-    type: String,
-    index: true 
-  },
+  username: { type: String, index: true },
   password: String,
+  stripe: {
+    customerID: {
+      type: String,
+      default: ""
+    },
+    accountID: {
+      type: String,
+      default: ""
+    }
+  },
+  driver: {
+    isDriver: {
+      type: Boolean,
+      default: false
+    },
+    licensePlate: {
+      type: String,
+      default: ""
+    },
+    vehicleMakeModel: {
+      type: String,
+      default: ""
+    },
+    driversLicense: {
+      type: String,
+      default: ""
+    },
+    vehicleColor: {
+      type: String,
+      default: ""
+    }
+  },
   phoneNumber: String,
   picUrl: String,
-  picType: {
-    type: String,
-    default: "png"
-  },
-  verified: {
-    type: Boolean,
-    default: false
-  },
-  createdAt: {
-    type: Date,
-    default: new Date()
-  }, 
+  picType: { type: String, default: "png" },
+  verified: { type: Boolean, default: false },
+  createdAt: { type: Date, default: new Date() },
+
+  // Personal information
+  aboutMe: String,
+  school: String,
+  ridesCancelled: { type: Number, default: 0 },
+  ridesCompleted: { type: Number, default: 0 },
   rating: {
-    sumOfAllRatings: {
-      type: Number, 
-      default: 0 
-    }, 
-    totalRatings: {
-      type: Number, 
-      default: 0 
-    }, 
-  } 
+    sumOfAllRatings: { type: Number, default: 0 },
+    totalRatings: { type: Number, default: 0 }
+  }
 });
 
 userSchema.statics.setRandomBruinBear = function(username) {

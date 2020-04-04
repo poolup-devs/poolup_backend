@@ -1,8 +1,9 @@
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
 const transferDB = require("../transfer/controller.js");
-const rideDB = require("../../ride/controller.js");
 const requestDB = require("../../request/controller.js");
 const userDB = require("../../user/controller.js");
+const mongoose = require("mongoose");
+const rideDB = require("../../ride/controller.js");
 const Transfer = require("../transfer/transfer").Transfer;
 
 const handlePaymentIntentSucceeded = paymentIntent => {
@@ -11,9 +12,13 @@ const handlePaymentIntentSucceeded = paymentIntent => {
   const rideID = paymentIntent.metadata["rideID"];
   const requestID = paymentIntent.metadata["requestID"];
   const riderUsername = paymentIntent.metadata["riderUsername"];
+  userDB.getMyInfo(riderUsername, (err, user) => {
+    console.log(user);
+    return;
+  });
 
   // Grab Ride Information
-  rideDB.rideDetails(rideID, (err, ride) => {
+  rideDB.rideDetails(mongoose.Types.ObjectId(rideID), (err, ride) => {
     if (err) {
       console.log("Ride Details Failed");
       console.log(err);
@@ -188,7 +193,7 @@ const didRiderBookAndCancelRightAfter = timeCancelled => {
 };
 
 const didRiderCancelInAdvance = (rideID, timeCancelled) => {
-  Ride.rideDetails(mongoose.Types.ObjectId(rideID), (err, data) => {
+  rideDB.rideDetails(mongoose.Types.ObjectId(rideID), (err, data) => {
     if (err) {
       console.log(err);
       return false;

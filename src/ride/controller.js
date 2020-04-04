@@ -1,9 +1,8 @@
 const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
-const payment = require("../stripe/tool/payment-handler.js");
-
-var schedule = require("node-schedule");
+const scheduler = require("../tasks/scheduler");
+const scheduledTasks = require("../tasks/scheduledTasks");
 
 ///////////////////////////////////////////////////////////////
 ///////////GET RIDES///////////////////////////////////////////
@@ -143,52 +142,16 @@ const postRide = (rideInfo, callback) => {
     } else {
       // Schedule a job that updates the number of completed rides for each user in the carpool
       // Scheduled job will occur two hours after the carpool begins
-      var scheduledDate = new Date(rideInfo.date);
-      scheduledDate.setHours(scheduledDate.getHours() + 2);
-
-      var job = schedule.scheduleJob(
-        scheduledDate,
-        updateCompletedRidesTask(result._id)
+      scheduler.scheduleTaskHoursAfterDate(
+        "updateCompletedRidesTask.${result._id}",
+        scheduledTasks.updateCompletedRidesTask(result._id),
+        rideInfo.date,
+        2
       );
       callback(null, result);
     }
   });
 };
-
-const updateCompletedRidesTask = rideId => {
-  return async function() {
-    const completedRide = await Ride.findById(rideId);
-    // At least a single passenger on the completed ride
-    if (completedRide.passengers.length > 0) {
-      // Update the driver's number of completed rides based on the number of passengers dropped off
-      await User.findOneAndUpdate(
-        { username: completedRide.ownerUsername },
-        { $inc: { ridesCompleted: completedRide.passengers.length } }
-      );
-
-      // Update each passenger's number of completed rides by 1
-      completedRide.passengers.forEach(async passenger => {
-        await User.findOneAndUpdate(
-          { username: passenger },
-          { $inc: { ridesCompleted: 1 } }
-        );
-      });
-    }
-  };
-};
-
-// const fetchMore = (multiplier, callback) => {
-//   Ride.find({}, (err, result) => {
-//     if (err) {
-//       callback(err, null);
-//     } else {
-//       callback(null, result);
-//     }
-//   })
-//     .sort({ _id: -1 })
-//     .skip(multiplier * 18)
-//     .limit(18);
-// };
 
 const joinRide = async (
   ownerUsername,
@@ -268,6 +231,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
 
       // Delete the ride
       await Ride.deleteOne({ _id: rideId });
+      scheduler.cancelTasksAssociatedWithRide(rideId);
       // There are no passengers in the ride, so the driver can freely cancel without penalties
       if (cancelledRideDoc.passengers.length === 0) {
         return resolve(
@@ -362,7 +326,5 @@ module.exports = {
   joinRide,
   cancelRide,
   rideDelete,
-  rideDetails,
-  // Only for the testing suite
-  updateCompletedRidesTask
+  rideDetails
 };

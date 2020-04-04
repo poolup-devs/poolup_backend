@@ -8,14 +8,9 @@ const Transfer = require("../transfer/transfer").Transfer;
 
 const handlePaymentIntentSucceeded = paymentIntent => {
   console.log("💰 Payment received!");
-  console.log(paymentIntent);
   const rideID = paymentIntent.metadata["rideID"];
   const requestID = paymentIntent.metadata["requestID"];
   const riderUsername = paymentIntent.metadata["riderUsername"];
-  userDB.getMyInfo(riderUsername, (err, user) => {
-    console.log(user);
-    return;
-  });
 
   // Grab Ride Information
   rideDB.rideDetails(mongoose.Types.ObjectId(rideID), (err, ride) => {
@@ -36,7 +31,7 @@ const handlePaymentIntentSucceeded = paymentIntent => {
     }
 
     // Add User to ride
-    rideDB.joinRide(ride.ownerUsername, riderUsername, (err, data) => {
+    rideDB.joinRide(ride.ownerUsername, rideID, riderUsername, (err, data) => {
       if (err) {
         console.log("Join Ride Failed", err);
 
@@ -50,7 +45,7 @@ const handlePaymentIntentSucceeded = paymentIntent => {
         // TODO: Return error to frontend
         return err;
       } else {
-        var targetDate = new Date(ride.Date.getDate() + 1); // 24 hours after creation
+        var targetDate = new Date(ride.date.getDate() + 1); // Triggers immediately
 
         stripe.paymentIntents.capture(paymentIntent.id, function(
           err,
@@ -60,9 +55,6 @@ const handlePaymentIntentSucceeded = paymentIntent => {
             console.log("Capture PaymentIntent Failed: ", err);
             return err;
           } else {
-            console.log("rideID", rideID);
-            console.log("customerUsername", riderUsername);
-
             userDB.getMyInfo(ride.ownerUsername, (err, driverInfo) => {
               if (err) {
                 return err;
@@ -138,6 +130,9 @@ const policyChecker = (transfer, driverCancelled) => {
     amount: transfer.amount,
     refund_application_fee: false
   };
+
+  // Temporary, until hyper parameter task is completed properly
+  return params;
 
   // Driver Cancellation
   if (driverCancelled) {

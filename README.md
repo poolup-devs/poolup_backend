@@ -12,6 +12,51 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 # Setup
 
+1. [Local Environment Setup](#local-environment-setup)
+2. [Local Development Setup](#local-development-setup)
+3. [Npm Scripts](#npm-scripts)
+4. [Additional Tools](#additional-tools)
+5. [Directory Structure](#directory-structure)
+
+---
+
+## Local Environment Setup
+
+1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
+2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
+3. Install all used packages and dependencies using:
+   > npm install
+4. To connect to the development s3 bucket, run:
+
+   > npm run setup
+
+   This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
+
+   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
+
+5. Install mongoDB by following installation guides from:
+   Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
+   Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
+
+   This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
+   For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
+
+6. Optional: Initialize the database with default objects.
+
+   > npm run init_db
+
+   This REMOVES existing database collections and populates them with default objects.
+
+---
+
+## Local Development Setup
+
+1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
+2. Open another terminal and run `npm run dev` in the home directory; this starts the backend application with nodemon
+3. The local backend development port is set to 3000, now use Postman to test API endpoints. Look at [Using Postman](#using-postman) for instructions.
+
+---
+
 ## NPM Scripts
 
 1. Starting the NodeJS app
@@ -51,47 +96,9 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 ---
 
-## Local Environment Setup
-
-1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
-2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
-3. Install all used packages and dependencies using:
-   > npm install
-4. To connect to the development s3 bucket, run:
-
-   > npm run setup
-
-   This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
-
-   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
-
-5. Install mongoDB by following installation guides from:
-   Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
-   Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
-
-   This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
-   For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
-
-6. Optional: Initialize the database with default objects.
-
-   > npm run init_db
-
-   This REMOVES existing database collections and populates them with default objects.
-
----
-
-## Local Development Setup
-
-1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
-2. Open another terminal and run `npm run dev` in the home directory; this starts the backend application with nodemon
-3. The local backend development port is set to 3000, now use Postman to test API endpoints.
-
----
-
 ## Additional Tools
 
-1. Install Postman to test backend REST APIs
-   Here's a link to a sample set of HTTP requests w/Postman: press the import button on upper left, and use the url https://www.getpostman.com/collections/bcd0df61c8abfc805865
+1. Download and install Postman to test backend REST APIs
 2. Install Robo 3T for mongoDB GUI and create a new connection to the DB using port 27017, the default mongoDB port
 
 ---
@@ -191,11 +198,9 @@ Explain potential conflicts that may arise with the current code base, issues th
 
 Additional Comment
 
-## Using Postman
-
 ## Using POSTMAN
 
-We use a single account that is shared by everyone. Ask for PoolUp's dev gmail credential, login, and use the collection located in it.
+We use a single account that is shared by everyone (b/c we're broke). Ask for PoolUp's dev gmail credential, login, and use the collection located in it.
 
 **Creating a Postman Request**
 
@@ -230,6 +235,23 @@ For all API requests after login, the bearer token must be included in headers f
 | Authorization | Bearer [Auth token] |
 
 There must be a white space between the string "Bearer" and the token string
+
+## Scheduling Tasks
+All scheduled tasks should be in /tasks/scheduledTasks.js, with unit tests in /tests/tasks/scheduledTasks.test.js
+Operations
+-  `void scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)`
+	- Schedules a task to *run once*, X hours after a certain date
+		-  **uniqueTaskName**: uniquely identify the task in the case you ever need to cancel the task
+		-  **task**: function pointer of the task to schedule
+		-  **date**: JavaScript Date object
+		-  **hours**: number of hours after specified date
+-  `cancelTasksAssociatedWithRide(rideId)`
+	- Clean up all tasks associated with a ride
+	- This will clean up tasks named with the following format: **taskFunctionName:{rideId}**
+		- ex: **updateCompletedRidesTask:{rideId}** or **promptLeaveAReviewTask:{rideId}**
+	- This can be used to clean up scheduled email reminders and web notifications for rides that have been cancellled 
+-  `bool cancelTask(taskName)`
+	- Cancel a task, returns a Promise that resolves into a boolean value 
 
 ## Models & API Endpoints Documentation
 
@@ -791,14 +813,14 @@ GET request
 ```
 
 {
-"picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
-"picType": "png",
-"name": "First Last",
-"school": "UCLA",
-"rating": "3.33",
-"ridesCompleted": 3,
-"ridesCancelled": 1,
-"aboutMe": "This is my about me!"
+    "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
+    "picType": "png",
+    "name": "First Last",
+    "school": "UCLA",
+    "rating": "3.33",
+    "ridesCompleted": 3,
+    "ridesCancelled": 1,
+    "aboutMe": "This is my about me!"
 }
 
 ```
@@ -821,6 +843,18 @@ GET request
 | seats**(remaining)** | Number | Yes      |
 | detail               | String |          |
 | passengers           | Array  |          |
+| instantBook          | Object |          |
+
+<br>
+
+| instantBook           | type    | required |
+| --------------------- | ------- | -------- |
+| enabled               | Boolean | yes      |
+| specificPickUpDropOff | Boolean |          |
+| smokingAllowed        | Boolean |          |
+| noPetsAllowed         | Boolean |          |
+| singleCarryOn         | Boolean |          |
+| singleLuggage         | Boolean |          |
 
 ### API Endpoints
 
@@ -923,34 +957,34 @@ localhost:3000/rides/matching-rides?filter=
 ```
 
 [
-{
-"passengers": [],
-"\_id": "5d505ed15482ec4e38597cdb",
-"ownerEmail": "bin315a1@gmail.com",
-"ownerUsername": "bin315a1",
-"ownerPhoneNumber": "1231231234",
-"from": "Irvine",
-"to": "Los Angeles",
-"date": "2019-09-11T00:00:00.000Z",
-"price": "20",
-"seats": 4,
-"detail": "Third test for post",
-"**v": 0
-},
-{
-"passengers": [],
-"\_id": "5d505f005482ec4e38597cdc",
-"ownerEmail": "bin315a1@gmail.com",
-"ownerUsername": "bin315a1",
-"ownerPhoneNumber": "1231231234",
-"from": "Irvine",
-"to": "Los Angeles",
-"date": "2019-09-13T00:00:00.000Z",
-"price": "20",
-"seats": 4,
-"detail": "First test for post",
-"**v": 0
-}
+    {
+        "passengers": [],
+        "_id": "5d505ed15482ec4e38597cdb",
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-09-11T00:00:00.000Z",
+        "price": "20",
+        "seats": 4,
+        "detail": "Third test for post",
+        "__v": 0
+    },
+    {
+        "passengers": [],
+        "_id": "5d505f005482ec4e38597cdc",
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-09-13T00:00:00.000Z",
+        "price": "20",
+        "seats": 4,
+        "detail": "First test for post",
+        "__v": 0
+    }
 ]
 
 ```
@@ -1063,17 +1097,17 @@ a new ride object:
 ```
 
 {
-"rideInfo": {
-"ownerEmail": "bin315a1@gmail.com",
-"ownerUsername": "bin315a1",
-"from": "Irvine",
-"to": "Los Angeles",
-"date": "2019-07-30",
-"price": "20",
-"seats": 4,
-"detail": "Third test for post",
-"passengers": []
-}
+    "rideInfo": {
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-07-30",
+        "price": "20",
+        "seats": 4,
+        "detail": "Third test for post",
+        "passengers": []
+    }
 }
 
 ```
@@ -1085,17 +1119,17 @@ a new ride object:
 ```
 
 {
-"passengers": [],
-"\_id": "5d55b5721e78951430fdcc66",
-"ownerEmail": "bin315a1@g.ucla.edu",
-"ownerUsername": "bin315a1",
-"from": "Irvine",
-"to": "Los Angeles",
-"date": "2019-07-30T00:00:00.000Z",
-"price": "10",
-"seats": 4,
-"detail": "before today's date",
-"\_\_v": 0
+    "passengers": [],
+    "_id": "5d55b5721e78951430fdcc66",
+    "ownerEmail": "bin315a1@g.ucla.edu",
+    "ownerUsername": "bin315a1",
+    "from": "Irvine",
+    "to": "Los Angeles",
+    "date": "2019-07-30T00:00:00.000Z",
+    "price": "10",
+    "seats": 4,
+    "detail": "before today's date",
+    "_v": 0
 }
 
 ```
@@ -1113,22 +1147,20 @@ The ride object that the user is trying to join:
 ```
 
 {
-"ride" : {
-"passengers": [],
-"\_id": "5d505ed15482ec4e38597cdb",
-"ownerEmail": "bin315a1@gmail.com",
-"ownerUsername": "bin315a1",
-"ownerPhoneNumber": "1231231234",
-"from": "Irvine",
-"to": "Los Angeles",
-"date": "2019-09-11T00:00:00.000Z",
-"price": "20",
-"seats": 4,
-"detail": "Third test for post",
-"\_\_v": 0
-
+    "ride" : {
+        "passengers": [],
+        "_id": "5d505ed15482ec4e38597cdb",
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-09-11T00:00:00.000Z",
+        "price": "20",
+        "seats": 4,
+        "detail": "Third test for post",
+        "_v": 0
     }
-
 }
 
 ```
@@ -1140,20 +1172,20 @@ The ride object that the user is trying to join:
 ```
 
 {
-"passengers": [
-"bin315a1"
-],
-"\_id": "5d505ed15482ec4e38597cdb",
-"ownerEmail": "bin315a1@gmail.com",
-"ownerUsername": "bin315a1",
-"ownerPhoneNumber": "1231231234",
-"from": "Irvine",
-"to": "Los Angeles",
-"date": "2019-09-11T00:00:00.000Z",
-"price": "20",
-"seats": 3,
-"detail": "Third test for post",
-"\_\_v": 0
+    "passengers": [
+        "bin315a1"
+    ],
+    "_id": "5d505ed15482ec4e38597cdb",
+    "ownerEmail": "bin315a1@gmail.com",
+    "ownerUsername": "bin315a1",
+    "ownerPhoneNumber": "1231231234",
+    "from": "Irvine",
+    "to": "Los Angeles",
+    "date": "2019-09-11T00:00:00.000Z",
+    "price": "20",
+    "seats": 3,
+    "detail": "Third test for post",
+    "__v": 0
 }
 
 ```
@@ -1183,24 +1215,24 @@ PUT request
 ```
 
 {
-"ride": {
-"\_id" : "5e649bba9e2f6d3570e88462",
-"passengers" : [
-"user1"
-],
-"ownerEmail" : "user2@g.ucla.edu.com",
-"ownerUsername" : "user2",
-"ownerPhoneNumber" : "1231231234",
-"from" : "Los Angeles",
-"to" : "Irvine",
-"date" : "2020-03-05T08:00:00.000Z",
-"price" : "20",
-"seats" : 4,
-"detail" : "rider1_past, driver2_past",
-"\_v" : 0
-},
-"messageToDriver": "Sorry for cancelling!",
-"cancellationReason": "Change of travel plans"
+    "ride": {
+        "_id" : "5e649bba9e2f6d3570e88462",
+        "passengers" : [
+            "user1" 
+        ],
+        "ownerEmail" : "user2@g.ucla.edu.com",
+        "ownerUsername" : "user2",
+        "ownerPhoneNumber" : "1231231234",
+        "from" : "Los Angeles",
+        "to" : "Irvine",
+        "date" : "2020-03-05T08:00:00.000Z",
+        "price" : "20",
+        "seats" : 4,
+        "detail" : "rider1_past, driver2_past",
+        "_v" : 0
+    },
+    "messageToDriver": "Sorry for cancelling!",
+    "cancellationReason": "Change of travel plans"
 }
 
 ```
@@ -1242,22 +1274,22 @@ The ride object that the user is trying to delete (The ride object's owner has t
 ```
 
 {
-"ride" : {
-"passengers": [
-"bin315a1"
-],
-"\_id": "5d505f0d5482ec4e38597cdd",
-"ownerEmail": "bin315a1@gmail.com",
-"ownerUsername": "bin315a1",
-"ownerPhoneNumber": "1231231234",
-"from": "Irvine",
-"to": "Los Angeles",
-"date": "2019-08-30T00:00:00.000Z",
-"price": "20",
-"seats": 4,
-"detail": "Second test for post",
-"\_\_v": 0
-}
+    "ride" : {
+        "passengers": [
+            "bin315a1"
+        ],
+        "_id": "5d505f0d5482ec4e38597cdd",
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-08-30T00:00:00.000Z",
+        "price": "20",
+        "seats": 4,
+        "detail": "Second test for post",
+        "__v": 0
+    }
 }
 
 ```
@@ -1317,24 +1349,24 @@ none needed
 ```
 
 [
-{
-"viewed": false,
-"_id": "5d55bb66261da0092430c990",
-"username": "bin315a1",
-"msg": "bin315a1 has joined your ride",
-"senderEmail": "bin315a1@g.ucla.edu",
-"date": "2019-08-15T20:07:02.242Z",
-"__v": 0
-},
-{
-"viewed": false,
-"_id": "5d55bb485457802c949bb8f4",
-"username": "bin315a1",
-"msg": "bin315a1 has joined your ride",
-"senderEmail": "bin315a1@g.ucla.edu",
-"date": "2019-08-15T20:06:32.716Z",
-"__v": 0
-}
+    {
+        "viewed": false,
+        "_id": "5d55bb66261da0092430c990",
+        "username": "bin315a1",
+        "msg": "bin315a1 has joined your ride",
+        "senderEmail": "bin315a1@g.ucla.edu",
+        "date": "2019-08-15T20:07:02.242Z",
+        "__v": 0
+    },
+    {
+        "viewed": false,
+        "_id": "5d55bb485457802c949bb8f4",
+        "username": "bin315a1",
+        "msg": "bin315a1 has joined your ride",
+        "senderEmail": "bin315a1@g.ucla.edu",
+        "date": "2019-08-15T20:06:32.716Z",
+        "__v": 0
+    }
 ]
 
 ```
@@ -1352,9 +1384,9 @@ POST request
 ```
 
 {
-msg: <message>,
-senderPhoneNumber: <String>,
-senderEmail: <String>
+    msg: <message>,
+    senderPhoneNumber: <String>,
+    senderEmail: <String>
 }
 
 ```
@@ -1384,9 +1416,9 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 ```
 
 {
-"n": 9,
-"nModified": 2,
-"ok": 1
+    "n": 9,
+    "nModified": 2,
+    "ok": 1
 }
 
 ```
@@ -1453,15 +1485,15 @@ POST request
 ```
 
 {
-"isDeclined": false,
-"\_id": "5e1e997e67eae745e865a233",
-"reviewerUsername": "admin",
-"revieweeUsername": "elin4046",
-"rideId": "507f1f77bcf86cd799439011",
-"rating": 1,
-"comment": "Driver arrived really late and was super rude!",
-"datePosted": "2020-01-15T04:47:58.738Z",
-"\_\_v": 0
+    "isDeclined": false,
+    "_id": "5e1e997e67eae745e865a233",
+    "reviewerUsername": "admin",
+    "revieweeUsername": "elin4046",
+    "rideId": "507f1f77bcf86cd799439011",
+    "rating": 1,
+    "comment": "Driver arrived really late and was super rude!",
+    "datePosted": "2020-01-15T04:47:58.738Z",
+    "__v": 0
 }
 
 ```
@@ -1493,28 +1525,28 @@ localhost:3000/reviews?username=elin4046
 ```
 
 [
-{
-"isDeclined": false,
-"_id": "5e1ea29e94b3263a60b162da",
-"revieweeUsername": "elin4046",
-"rideId": "507f1f77bcf86cd799439012",
-"rating": 1,
-"comment": "Driver arrived really late and was super rude!",
-"reviewerUsername": "admin",
-"datePosted": "2020-01-15T05:26:54.837Z",
-"__v": 0
-},
-{
-"isDeclined": false,
-"_id": "5e1ea2e494b3263a60b162db",
-"revieweeUsername": "elin4046",
-"rideId": "507f1f77bcf86cd799439013",
-"rating": 4,
-"comment": "A super laid back guy. We had a great conversation the whole time.",
-"reviewerUsername": "admin",
-"datePosted": "2020-01-15T05:28:04.757Z",
-"__v": 0
-}
+    {
+        "isDeclined": false,
+        "_id": "5e1ea29e94b3263a60b162da",
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439012",
+        "rating": 1,
+        "comment": "Driver arrived really late and was super rude!",
+        "reviewerUsername": "admin",
+        "datePosted": "2020-01-15T05:26:54.837Z",
+        "__v": 0
+    },
+    {
+        "isDeclined": false,
+        "_id": "5e1ea2e494b3263a60b162db",
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439013",
+        "rating": 4,
+        "comment": "A super laid back guy. We had a great conversation the whole time.",
+        "reviewerUsername": "admin",
+        "datePosted": "2020-01-15T05:28:04.757Z",
+        "__v": 0
+    }
 ]
 
 ```
@@ -1537,8 +1569,8 @@ POST request
 ```
 
 {
-"revieweeUsername": "john_smith",
-"rideId": "507f191e810c19729de860ea"
+    "revieweeUsername": "john_smith",
+    "rideId": "507f191e810c19729de860ea"
 }
 
 ```
@@ -1563,8 +1595,8 @@ GET request
 ```
 
 {
-"usernamesToReview": ["elin4046", "michaelSB", "bin315a1"],
-"rideId": "507f191e810c19729de860ea"
+    "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"],
+    "rideId": "507f191e810c19729de860ea"
 }
 
 ```

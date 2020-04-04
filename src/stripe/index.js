@@ -312,7 +312,6 @@ router.post("/stripe/webhook", async (req, res) => {
 router.post(
   "/stripe/development/triggerPaymentIntentSucessful",
   async (req, res) => {
-    console.log(req.body);
     const paymentIntent = req.body.paymentIntent;
     if (paymentIntent == null) {
       console.log("Paymentintent undefined");
@@ -327,6 +326,19 @@ router.post(
     }
   }
 );
+
+// Trigger Transfer
+router.post("/stripe/development/triggerTransfer", async (req, res) => {
+  const amount = req.body.amount;
+  const currency = "usd";
+  const destination = req.body.destination;
+
+  paymentHandler.triggerTransfer({
+    amount: amount,
+    currency: currency,
+    destination: destination
+  });
+});
 
 // Trigger Refund
 router.post("/stripe/development/triggerRefund", async (req, res) => {

@@ -2,22 +2,32 @@
   "development": {
     "MODE": "STAGING",
     "PORT": "3000",
+    "MONGODB_URL": "mongodb://localhost/poolup-dev",
+    "FRONT_END_URL": "http://localhost:3006",
+
+    "JWT_SECRET_KEY": <INSERT SECRET KEY HERE>,
+    "JWT_EMAIL_KEY": <INSERT SECRET KEY HERE>,
+    "SESSION_SECRET_KEY": "test",
+
     "S3_BUCKET": "poolup-bucket-staging",
-    "AWS_ACCESS_KEY_ID": <ENTER ACCESS KEY HERE>,
-    "AWS_SECRET_ACCESS_KEY": <ENTER SECRET ACCESS KEY HERE>,
-    "SENDGRID_API_KEY": <ENTER API KEY HERE>,
-    "JWT_SECRET_KEY": <ENTER SECRET KEY HERE>,
-    "JWT_EMAIL_KEY": <ENTER SECRET KEY HERE>,
-    "ACCEPTED_EMAIL": "@g.ucla.edu",
-    "MONGODB_URL": "mongodb://localhost/poolup-dev"
+    "AWS_ACCESS_KEY_ID": <INSERT ACCESS KEY HERE>,
+    "AWS_SECRET_ACCESS_KEY": <INSERT SECRET KEY HERE>,
+
+    "SENDGRID_API_KEY": <INSERT API KEY HERE>,
+    "STRIPE_PUBLIC_KEY": <INSERT PUBLIC KEY HERE>,
+    "STRIPE_PRIVATE_KEY": <INSERT PRIVATE KEY HERE>,
+    "STRIPE_WEBHOOK_SECRET": <INSERT SECRET KEY HERE>,
+    
+    "MY_RIDES_PATH": "/rider/my-rides",
+    "MY_DRIVES_PATH": "/driver/my-drives"
+  },
+  "test": {
+    "MONGODB_URL": "mongodb://localhost/poolup-test"
   },
   "development-docker": {
     "MONGODB_URL":"mongodb://mongo:27017/poolup-dev"
   },
   "testing-docker": {
     "MONGODB_URL":"mongodb://mongo:27017/poolup-test"
-  },
-  "testing": {
-    "MONGODB_URL": "mongodb://localhost/poolup-test"
   }
 }

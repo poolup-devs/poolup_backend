@@ -13,101 +13,11 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Lead Bac
 # Setup
 After the Local Environment Setup, using **Docker Commands** is advised for application setup & running the application.
 
-<<<<<<< HEAD
-The NPM Scripts and Local Development Setup is listed below for additional reference.
-
-## Local Environment Setup
-
-1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
-2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
-3. Install all used packages and dependencies using:
-   > npm install
-4. To connect to the development s3 bucket, run:
-
-   > npm run setup
-
-   This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
-
-   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
-
-5. Install mongoDB by following installation guides from:
-   Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
-   Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
-
-   This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
-   For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
-
----
-
-## Running Docker
-Currently the latest version of the app uses 3 docker containers:
-1. web : main PoolUp application container
-2. mongo : mongodb database container
-3. mongo_seed : a database seeder that is removed upon creation, after db seeding
-
-- All dockerfiles should be located under `/dockerfiles`, within a designated directory
-
-- Docker conatainers and Docker networks is configured and maintained with docker-compose, with:
-`docker-compose.yml`
-
-- The local source code volume will be mounted on web container's volume; any changes made to the code will be accounted for in the container (there is no need to build everytime there's a change in code)
-
-- However, if additional JS library needs to be installed, config files are changed, or etc, image should be built again before running docker compose
-
-### Docker Commands
-
-#### 1. Building the initial docker images
-    > docker-compose build
-
-#### 2. Run docker compose:
-    > docker-compose up
-
----
-
-## NPM Scripts (for additional reference)
-Use Docker commands for 
-
-1. Starting the NodeJS app
-
-   > npm start
-
-   Starts up the server by running `node src/server.js` with environment variables defined in dev.env.
-
-2. Start Dev. mode of the NodeJS app
-
-   > npm run dev
-
-   Similar to npm start, but runs nodemon to automatically restart the node application when file chnages in the directory are detected
-
-3. Setup .env variables
-
-   > npm run setup
-
-   Generates the config folder with env files. This is explained in [the next step](#local-environment-setup)
-
-   Do NOT run this script twice; the second run will overwrite the env files, erasing the entered credentials
-
-4. Run Test Scripts
-
-   > npm run test
-
-   We are using [Jest](https://www.npmjs.com/package/jest) to test our JS code.
-   Run tests related to changed files based on Git (uncommitted files).
-   Uses the test.dev environment variables.
-
-5. Initialize database with default creations
-
-   > npm run init_db
-
-   Removes all documents in all the collections, and initializes the database with default objects.
-   Currently only removes and creates from User collection.
-=======
 1. [Local Environment Setup](#local-environment-setup)
 2. [Local Development Setup](#local-development-setup)
 3. [Npm Scripts](#npm-scripts)
 4. [Additional Tools](#additional-tools)
 5. [Directory Structure](#directory-structure)
->>>>>>> master
 
 ---
 
@@ -1268,10 +1178,10 @@ PUT request
 - In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs: 1. The ride is removed from the Ride collection. 2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
 
 - In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs: 1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`. - An example of a notification received by a passenger in the ride is the following:
-  `{ viewed: false, _id: 5e6532be23cf21496470c042, username: 'passenger1', msg: 'driverUsername has cancelled your ride', senderEmail: 'driverUsername@ucla.edu', date: 2020-03-08T18:00:30.136Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling' } }` 2. The ride is removed from the Ride collection. 3. The driver receives the following penalty: - `ridesCancelled` property is incremented
+  `{ viewed: false, _id: 5e6532be23cf21496470c042, username: 'passenger1', msg: 'driverUsername has cancelled your ride', date: 2020-03-08T18:00:30.136Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling' } }` 2. The ride is removed from the Ride collection. 3. The driver receives the following penalty: - `ridesCancelled` property is incremented
 
 - In the event that a **passenger** cancels a ride, the following occurs: 1. Only the driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`. - An example of a notification received by the driver is the following:
-  `{ viewed: false, _id: 5e6534144a54ab39342752d0, username: 'driverUsername', msg: 'passenger1 has cancelled your ride', senderEmail: 'passenger1@ucla.edu', date: 2020-03-08T18:06:12.834Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } }` 2. The passenger who cancelled is removed from the ride, and a new spot is freed up. 3. The passenger who cancelled receive the following penalty: - `ridesCancelled` property is incremented
+  `{ viewed: false, _id: 5e6534144a54ab39342752d0, username: 'driverUsername', msg: 'passenger1 has cancelled your ride', date: 2020-03-08T18:06:12.834Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } }` 2. The passenger who cancelled is removed from the ride, and a new spot is freed up. 3. The passenger who cancelled receive the following penalty: - `ridesCancelled` property is incremented
 
 **body**
 
@@ -1386,8 +1296,6 @@ The ride object that the user is trying to delete (The ride object's owner has t
 | username             | String  | Yes      |                                             |
 | email                | String  | Yes      |                                             |
 | msg                  | String  | Yes      |                                             |
-| senderPhoneNumber    | String  |          |                                             |
-| senderEmail          | String  | Yes      |                                             |
 | viewed               | Boolean | Yes      |                                             |
 | additionalProperties | Mixed   |          | fields specific to the type of notification |
 
@@ -1437,30 +1345,6 @@ none needed
 ]
 
 ```
-
----
-
-### Create Driver Notification
-
-POST request
-
-- most likely not going to be used by frontend
-
-**body**
-
-```
-
-{
-    msg: <message>,
-    senderPhoneNumber: <String>,
-    senderEmail: <String>
-}
-
-```
-
-**return value**
-
-201 created status with data of the notification created, 500 error if failure
 
 ---
 
@@ -1519,7 +1403,8 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 | /reviews                              | POST        | [Add a review ](#add-review)                                        |
 | /reviews                              | GET         | [Get all of a user's reviews](#get-all-reviews)                     |
 | /reviews/decline-review               | POST        | [Decline to review a user](#decline-to-review)                      |
-| /reviews/get-eligible-users-to-review | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review) |
+| /reviews/get-eligible-users-to-review | GET         | [Get list of users to review](#get-list-of-users-to-review) |
+
 
 ---
 
@@ -1571,7 +1456,7 @@ POST request
 
 GET request
 
-- Get all reviews received by a user with pagination beginning with 0
+- Get all publically available reviews received by a user with pagination beginning with 0
 
 GET request
 
@@ -1587,7 +1472,7 @@ localhost:3000/reviews?username=elin4046
 
 **return value**
 
-- 200 status code - A list of review documents made to the user, empty [] if none exist.
+- 200 status code - A list of publically available review documents made to the user, empty [] if none exist.
 
 ```
 
@@ -1644,27 +1529,56 @@ POST request
 
 ---
 
-### Get list of usernames to review
+### Get list of users to review
 
 GET request
 
-- Get a list of usernames that may be reviewed using the currently logged in account
-- For example: - If a user was a driver in their latest carpooling session, the request will return the usernames of each of his/her passengers - If a user was a passenger in their latest carpooling session, the request will return the username of the driver - If a user has previously **declined** an opportunity to review a passenger, that passenger's username will not be returned
+- Get a list of users that the currently logged in user can leave reviews by specifying a rideId 
+- For example: 
+    - If a user was a driver in the ride, the request will return each of his/her passengers's user documents 
+    - If a user was a passenger in the ride, the request will return the driver's user document 
+    - If a user has previously **declined** an opportunity to review a passenger, that passenger's user information will not be returned. After 7 days of being notified to leave a review, the user automatically declines to review a passenger if he has not reviewed yet. 
 
 **params/body**
 
-- none required
+- rideId as a query 
 
 **return value**
 
-- An object containing a list of eligible usernames and the latest carpooling session's rideId, if there exists one. - rideId is a necessary property to uniquely identify a Review document
+- An object containing a list of eligible usernames for review. These usernames can be used to query for additional information, such as profile picture. 
 
 ```
 
 {
-    "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"],
-    "rideId": "507f191e810c19729de860ea"
-}
+        usersToReview: [
+          {
+            stripe: [Object],
+            driver: [Object],
+            rating: [Object],
+            picType: 'png',
+            verified: false,
+            createdAt: 2020-04-08T05:47:55.927Z,
+            ridesCancelled: 0,
+            ridesCompleted: 0,
+            _id: 5e8d658c4b2e974b1c83fd5a,
+            username: 'passenger_1',
+            __v: 0
+          },
+          {
+            stripe: [Object],
+            driver: [Object],
+            rating: [Object],
+            picType: 'png',
+            verified: false,
+            createdAt: 2020-04-08T05:47:55.927Z,
+            ridesCancelled: 0,
+            ridesCompleted: 0,
+            _id: 5e8d658c4b2e974b1c83fd5b,
+            username: 'passenger_2',
+            __v: 0
+          }
+        ]
+      }
 
 ```
 

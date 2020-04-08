@@ -2,14 +2,10 @@ const mongoose = require("mongoose");
 const notiSchema = mongoose.Schema({
   username: String,
   msg: String,
-  senderPhoneNumber: String,
-  senderEmail: String,
-  viewed: {
-    type: Boolean,
-    default: false
-  },
+  viewed: { type: Boolean, default: false },
   viewedAt: Date,
-  date: Date,
+  date: { type: Date, default: Date.now() }, 
+  redirectPath: String, 
   // Used for properties specific to the notification, such as the 'reason for cancellation' in cancellation-type notifications  
   additionalProperties: mongoose.Schema.Types.Mixed, 
 });

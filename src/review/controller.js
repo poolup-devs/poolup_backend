@@ -1,25 +1,46 @@
 const User = require('../user/user').User; 
 const Review = require('./review').Review; 
 const Ride = require('../ride/ride').Ride; 
+const scheduler = require('../tasks/scheduler')
 
 
 // Create a new review with required properties: reviewer username, reviewee username, rating, and ride ID 
 const addNewReview = (reviewInfo) => {
     return new Promise(async (resolve, reject) => {
-        // required properties of Review object 
+        // Required properties of Review object 
         const requiredProperties = ['reviewerUsername', 'revieweeUsername', 'rating', 'rideId']
         try {
-            // simple field validation 
+            // Simple field validation 
             if (requiredProperties.every(property => reviewInfo.hasOwnProperty(property))) {
                 const {reviewerUsername, revieweeUsername, rideId} = reviewInfo
                 
-                // prevent duplicate insertion if document already exists 
+                // Prevent duplicate insertion if document already exists 
                 if (!(await Review.findOne({reviewerUsername, revieweeUsername, rideId}))) {
-                    const review = await new Review(reviewInfo).save()
-                    
-                    // Update the reviewee's rating 
-                    await User.findOneAndUpdate({username: review.revieweeUsername}, {$inc: {"rating.sumOfAllRatings": reviewInfo.rating, "rating.totalRatings": 1}}) 
-                    resolve(review)
+                    const counterpartReview = await Review.findOne({reviewerUsername: revieweeUsername, revieweeUsername: reviewerUsername, rideId})
+
+                    // Counterpart has already left their review 
+                    if (counterpartReview) {
+                        // Publish both reviews 
+                        counterpartReview.isPublished = true 
+                        await counterpartReview.save() 
+                        reviewInfo.isPublished = true 
+                        var newReview = await Review.create(reviewInfo)
+
+                        // Update both ratings 
+                        await User.findOneAndUpdate({username: counterpartReview.revieweeUsername}, {$inc: {"rating.sumOfAllRatings": counterpartReview.rating, "rating.totalRatings": 1}}) 
+                        await User.findOneAndUpdate({username: newReview.revieweeUsername}, {$inc: {"rating.sumOfAllRatings": newReview.rating, "rating.totalRatings": 1}}) 
+
+                        // Cancel the scheduled tasks that expire the ability to review
+                        const ride = await Ride.findById(rideId)
+                        const driverUsername = (ride.ownerUsername == reviewerUsername) ? reviewerUsername : revieweeUsername
+                        const passengerUsername = (reviewerUsername != driverUsername) ? reviewerUsername : revieweeUsername
+                        scheduler.cancelTask(`expireAbilityToLeaveReviewTask.${reviewInfo.rideId}.${driverUsername}.${passengerUsername}`)
+                    }
+                    else {
+                        // Counterpart has not left their review, so create new review but leave it as unpublished 
+                        var newReview = await Review.create(reviewInfo)
+                    }
+                    resolve(newReview)
                 }
                 else {
                     reject('A review has already been made to ' + reviewInfo.revieweeUsername + ' for this ride.')
@@ -55,10 +76,10 @@ const declineReview = (reviewer, reviewee, rideId) => {
 }
 
 
-// Get all the reviews received by a user 
+// Get all the publically available reviews received by a user 
 const getUserReviews = (username, pageNumber) => {
     return new Promise(async (resolve, reject) => {
-        await Review.find({revieweeUsername : username, isDeclined: false}, (err, reviews) => { 
+        await Review.find({revieweeUsername : username, isDeclined: false, isPublished: true}, (err, reviews) => { 
           // if there are no reviews, return []
           resolve(Array.from(reviews)) 
         })
@@ -68,73 +89,58 @@ const getUserReviews = (username, pageNumber) => {
     })
 }
 
-// Helper method that determines whether a review exists in the database 
-const isExistingReview = async (reviewer, reviewee, rideId) => {
+const getUsersToReviewForRide = (rideId, username) => {
     return new Promise(async (resolve, reject) => {
-        try {
-            const review = await Review.findOne({
-                reviewerUsername : reviewer,
-                revieweeUsername : reviewee, 
-                rideId : rideId, 
-            })
-
-            // the user has not made a decision on whether to review yet 
-            if (!review) {
-                resolve(false)
+        const rideDetails = await Ride.findById(rideId)
+        
+        // User was a driver 
+        if (username == rideDetails.ownerUsername) {
+            let usersToReview = [] 
+            for (let i = 0; i < rideDetails.passengers.length; i++) {
+                const existingReview = await Review.findOne({reviewerUsername: username, revieweeUsername: rideDetails.passengers[i], rideId})
+                if (!existingReview) {
+                    const passenger = await User.findOne({username: rideDetails.passengers[i]})
+                    usersToReview.push(passenger)
+                }
             }
-            // some decision was made on whether or not to review a user  
-            resolve(true)
+            resolve(usersToReview)
         }
-        catch(e) {
-            console.log(e)
+    
+        // User was a passenger
+        const existingReview = await Review.findOne({reviewerUsername: username, revieweeUsername: rideDetails.ownerUsername, rideId})
+        if (existingReview) {
+            resolve([])
+        }
+        else {
+            const driver = await User.findOne({username: rideDetails.ownerUsername})
+            resolve([driver])
         }
     })
 }
 
-// Get a list of users that need to be reviewed (from last ride)
-const getUsersToReviewFromLatestRide = (username) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            // Obtain latest ride details 
-            Ride.findOne({$or: [{passengers: username}, {ownerUsername: username}], date: { $lt: new Date() } }, async (err, latestRide) => {
-                if (!latestRide) {
-                    return resolve({usernamesToReview: []})
-                }
-                const {passengers} = latestRide
-                const rideId = latestRide._id
-                const driverUsername = latestRide.ownerUsername
-                // User was the driver for the ride 
-                if (driverUsername === username) {
-                    usernamesToReview = [] 
-                    for (var i = 0; i < passengers.length; i++) {
-                        //  Driver has not rated the passenger yet and has not declined a notification to do so 
-                        if (!(await isExistingReview(username, passengers[i], rideId))) {
-                            usernamesToReview.push(passengers[i])
-                        }
-                    }
-                    resolve({usernamesToReview, rideId})
-                }
-                else {
-                    // User was a passenger for this ride and has not reviewed the driver 
-                    if (!(await isExistingReview(username, driverUsername, rideId))) {
-                        resolve({usernamesToReview: [driverUsername], rideId})
-                    }
-                    else {
-                        resolve({usernamesToReview: [], rideId})
-                    }
-                }
-            }).sort({date: -1}).limit(1); 
+
+// Publish the review, making the view public and applying the rating changes 
+const makeReviewPublic = (rideId, reviewerUsername, revieweeUsername) =>  {
+    return new Promise (async (resolve, reject) => {
+        const review = await Review.findOne({rideId, reviewerUsername, revieweeUsername})
+        if (review) {
+            review.isPublished = true 
+            await review.save() 
+
+            await User.findOneAndUpdate({username: revieweeUsername}, {$inc: {"rating.sumOfAllRatings": review.rating, "rating.totalRatings": 1}})
+            resolve(review) 
         }
-        catch(e) {
-            console.log(e) 
+        else {
+            reject("Could not find review in the database to make public.") 
         }
-    })
+    })   
 }
+
 
 module.exports = {
     addNewReview, 
     declineReview, 
-    isExistingReview, 
     getUserReviews, 
-    getUsersToReviewFromLatestRide
+    getUsersToReviewForRide, 
+    makeReviewPublic
 }; 

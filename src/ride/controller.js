@@ -140,9 +140,11 @@ const postRide = (rideInfo, callback) => {
     if (err) {
       callback(err, null);
     } else {
-      // Schedule a job that updates the number of completed rides for each user in the carpool
-      // Scheduled job will occur two hours after the carpool begins
-      scheduler.scheduleTaskHoursAfterDate('updateCompletedRidesTask.${result._id}', scheduledTasks.updateCompletedRidesTask(result._id), rideInfo.date, 2)
+      // Schedule a job that updates the number of completed rides for each user in the carpool that will occur 2 hours after the carpool begins
+      scheduler.scheduleTaskHoursAfterDate(`updateCompletedRidesTask.${result._id}`, scheduledTasks.updateCompletedRidesTask(result._id), rideInfo.date, 2)
+
+      // Schedule a job that prompts users in the ride to leave reviews 12 hours after carpool begins 
+      scheduler.scheduleTaskHoursAfterDate(`createNotiToLeaveReviewTask.${result._id}`, scheduledTasks.createNotiToLeaveReviewTask(result._id), rideInfo.date, 12)
       callback(null, result);
     }
   });
@@ -158,7 +160,6 @@ const joinRide = async (
   const noti = {
     username: ownerUsername,
     msg: `${passengerUsername} has joined your ride`,
-    senderEmail: passenger.email,
     date: new Date()
   };
   Ride.findOneAndUpdate(
@@ -197,7 +198,6 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
         let noti = await Noti.create({
           username: passengerUsername,
           msg: `${username} has cancelled your ride`,
-          senderEmail: user.email,
           date: new Date()
         });
         // Update schema-less property: additionalProperties
@@ -229,7 +229,6 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       let noti = await Noti.create({
         username: cancelledRideDoc.ownerUsername,
         msg: `${username} has cancelled your ride`,
-        senderEmail: user.email,
         date: new Date()
       });
       // Update schema-less property: additionalProperties

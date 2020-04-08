@@ -185,16 +185,21 @@ describe("Testing rating system operations", () => {
             await Review.deleteMany()
         }) 
         test("If a driver has not left any reviews for his passengers, should return all passengers", async () => {
+            const passenger1 = await User.create({username: 'passenger_1'})
+            const passenger2 = await User.create({username: 'passenger_2'})
+            const passenger3 = await User.create({username: 'passenger_3'})
             const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1", "passenger_2", "passenger_3"]})
             const usersToReview = await db.getUsersToReviewForRide(ride._id, "driver_username")
-            expect(usersToReview.sort()).toEqual(["passenger_1", "passenger_2", "passenger_3"])
+            expect(usersToReview.map(user => user.username)).toEqual(expect.arrayContaining([passenger1.username, passenger2.username, passenger3.username]))
         })
         
         test("If a driver has left a review for one passenger but not the others, should return the others", async () => {
+            const passenger1 = await User.create({username: 'passenger_1'})
+            const passenger3 = await User.create({username: 'passenger_3'})
             const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1", "passenger_2", "passenger_3"]})
             const reviewToOnePassenger = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_2", rideId: ride._id, rating: 3})
             const usersToReview = await db.getUsersToReviewForRide(ride._id, "driver_username")
-            expect(usersToReview.sort()).toEqual(["passenger_1", "passenger_3"])
+            expect(usersToReview.map(user => user.username)).toEqual(expect.arrayContaining([passenger1.username, passenger3.username]))
         })
 
         test("If a driver has left a review for each of his passengers, should return empty list", async () => {
@@ -223,14 +228,14 @@ describe("Testing rating system operations", () => {
             await Review.deleteMany()
         }) 
         test("If a review is made public, then its isPublished property should be set to true and the ratings should take effect", async () => {
-            const rideId = mongoose.Types.ObjectId()
-            const driverReviewToPassenger = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_1", rideId, rating: 3})
+            const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1"]})
+            const driverReviewToPassenger = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_1", rideId: ride._id, rating: 3})
             const passenger = await User.create({username: "passenger_1"})
-            await db.makeReviewPublic(rideId, driverReviewToPassenger.reviewerUsername, driverReviewToPassenger.revieweeUsername) 
-            
+            await db.makeReviewPublic(ride._id, driverReviewToPassenger.reviewerUsername, driverReviewToPassenger.revieweeUsername) 
+
             expect((await Review.findById(driverReviewToPassenger._id)).isPublished).toBe(true)
-            expect((await User.findById(passenger._id)).rating.sumOfAllRatings).toBe(3) 
-            expect((await User.findById(passenger._id)).rating.totalRatings).toBe(1) 
+            expect((await User.findOne({username: passenger.username})).rating.sumOfAllRatings).toBe(3) 
+            expect((await User.findOne({username: passenger.username})).rating.totalRatings).toBe(1) 
         })
     })
 

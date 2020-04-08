@@ -1426,7 +1426,7 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 | /reviews                              | POST        | [Add a review ](#add-review)                                        |
 | /reviews                              | GET         | [Get all of a user's reviews](#get-all-reviews)                     |
 | /reviews/decline-review               | POST        | [Decline to review a user](#decline-to-review)                      |
-| /reviews/get-eligible-users-to-review | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review) |
+| /reviews/get-eligible-users-to-review | GET         | [Get list of users to review](#get-list-of-users-to-review) |
 
 
 ---
@@ -1552,15 +1552,15 @@ POST request
 
 ---
 
-### Get list of usernames to review
+### Get list of users to review
 
 GET request
 
-- Get a list of usernames that the currently logged in user can leave reviews by specifying a rideId 
+- Get a list of users that the currently logged in user can leave reviews by specifying a rideId 
 - For example: 
-    - If a user was a driver in the ride, the request will return the usernames of each of his/her passengers 
-    - If a user was a passenger in the ride, the request will return the username of the driver 
-    - If a user has previously **declined** an opportunity to review a passenger, that passenger's username will not be returned. After 7 days of being notified to leave a review, the user automatically declines to review a passenger if he has not reviewed yet. 
+    - If a user was a driver in the ride, the request will return each of his/her passengers's user documents 
+    - If a user was a passenger in the ride, the request will return the driver's user document 
+    - If a user has previously **declined** an opportunity to review a passenger, that passenger's user information will not be returned. After 7 days of being notified to leave a review, the user automatically declines to review a passenger if he has not reviewed yet. 
 
 **params/body**
 
@@ -1573,8 +1573,35 @@ GET request
 ```
 
 {
-    "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"]
-}
+        usersToReview: [
+          {
+            stripe: [Object],
+            driver: [Object],
+            rating: [Object],
+            picType: 'png',
+            verified: false,
+            createdAt: 2020-04-08T05:47:55.927Z,
+            ridesCancelled: 0,
+            ridesCompleted: 0,
+            _id: 5e8d658c4b2e974b1c83fd5a,
+            username: 'passenger_1',
+            __v: 0
+          },
+          {
+            stripe: [Object],
+            driver: [Object],
+            rating: [Object],
+            picType: 'png',
+            verified: false,
+            createdAt: 2020-04-08T05:47:55.927Z,
+            ridesCancelled: 0,
+            ridesCompleted: 0,
+            _id: 5e8d658c4b2e974b1c83fd5b,
+            username: 'passenger_2',
+            __v: 0
+          }
+        ]
+      }
 
 ```
 

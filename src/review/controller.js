@@ -95,14 +95,15 @@ const getUsersToReviewForRide = (rideId, username) => {
         
         // User was a driver 
         if (username == rideDetails.ownerUsername) {
-            let usernamesToReview = [] 
+            let usersToReview = [] 
             for (let i = 0; i < rideDetails.passengers.length; i++) {
                 const existingReview = await Review.findOne({reviewerUsername: username, revieweeUsername: rideDetails.passengers[i], rideId})
                 if (!existingReview) {
-                    usernamesToReview.push(rideDetails.passengers[i])
+                    const passenger = await User.findOne({username: rideDetails.passengers[i]})
+                    usersToReview.push(passenger)
                 }
             }
-            resolve(usernamesToReview)
+            resolve(usersToReview)
         }
     
         // User was a passenger
@@ -111,7 +112,8 @@ const getUsersToReviewForRide = (rideId, username) => {
             resolve([])
         }
         else {
-            resolve([rideDetails.ownerUsername])
+            const driver = await User.findOne({username: rideDetails.ownerUsername})
+            resolve([driver])
         }
     })
 }
@@ -124,6 +126,7 @@ const makeReviewPublic = (rideId, reviewerUsername, revieweeUsername) =>  {
         if (review) {
             review.isPublished = true 
             await review.save() 
+
             await User.findOneAndUpdate({username: revieweeUsername}, {$inc: {"rating.sumOfAllRatings": review.rating, "rating.totalRatings": 1}})
             resolve(review) 
         }

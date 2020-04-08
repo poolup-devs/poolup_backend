@@ -82,9 +82,7 @@ describe("Testing leave a review notification", () => {
         const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1', 'passenger2'], seats: 0})
         await scheduledTasks.createNotiToLeaveReviewTask(ride._id)()
         expect(schedule.scheduledJobs[`expireAbilityToLeaveReviewTask.${ride._id}.driverUsername.passenger1`]).toBeTruthy()
-        expect(schedule.scheduledJobs[`expireAbilityToLeaveReviewTask.${ride._id}.passenger1.driverUsername`]).toBeTruthy()
         expect(schedule.scheduledJobs[`expireAbilityToLeaveReviewTask.${ride._id}.driverUsername.passenger2`]).toBeTruthy()
-        expect(schedule.scheduledJobs[`expireAbilityToLeaveReviewTask.${ride._id}.passenger2.driverUsername`]).toBeTruthy()
     })
 
     test("Testing that a review should be made public if one exists before the time for leaving a review expires", async () => {

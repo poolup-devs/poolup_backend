@@ -31,8 +31,10 @@ const addNewReview = (reviewInfo) => {
                         await User.findOneAndUpdate({username: newReview.revieweeUsername}, {$inc: {"rating.sumOfAllRatings": newReview.rating, "rating.totalRatings": 1}}) 
 
                         // Cancel the scheduled tasks that expire the ability to review
-                        scheduler.cancelTask(`expireAbilityToLeaveReviewTask.${reviewInfo.rideId}.${reviewerUsername}.${revieweeUsername}`)
-                        scheduler.cancelTask(`expireAbilityToLeaveReviewTask.${reviewInfo.rideId}.${revieweeUsername}.${reviewerUsername}`)
+                        const ride = await Ride.findById(rideId)
+                        const driverUsername = (ride.ownerUsername == reviewerUsername) ? reviewerUsername : revieweeUsername
+                        const passengerUsername = (reviewerUsername != driverUsername) ? reviewerUsername : revieweeUsername
+                        scheduler.cancelTask(`expireAbilityToLeaveReviewTask.${reviewInfo.rideId}.${driverUsername}.${passengerUsername}`)
                     }
                     else {
                         // Counterpart has not left their review, so create new review but leave it as unpublished 
@@ -115,9 +117,27 @@ const getUsersToReviewForRide = (rideId, username) => {
 }
 
 
+// Publish the review, making the view public and applying the rating changes 
+const makeReviewPublic = (rideId, reviewerUsername, revieweeUsername) =>  {
+    return new Promise (async (resolve, reject) => {
+        const review = await Review.findOne({rideId, reviewerUsername, revieweeUsername})
+        if (review) {
+            review.isPublished = true 
+            await review.save() 
+            await User.findOneAndUpdate({username: revieweeUsername}, {$inc: {"rating.sumOfAllRatings": review.rating, "rating.totalRatings": 1}})
+            resolve(review) 
+        }
+        else {
+            reject("Could not find review in the database to make public.") 
+        }
+    })   
+}
+
+
 module.exports = {
     addNewReview, 
     declineReview, 
     getUserReviews, 
-    getUsersToReviewForRide
+    getUsersToReviewForRide, 
+    makeReviewPublic
 }; 

@@ -3,6 +3,7 @@ const User = require('../user/user').User
 const Noti = require('../noti/noti').Noti
 const Review = require('../review/review').Review
 const declineReview = require('../review/controller').declineReview
+const makeReviewPublic = require('../review/controller').makeReviewPublic
 const scheduler = require('./scheduler')
 
 // Task to update the # completed rides for all users in a ride 
@@ -52,41 +53,40 @@ const createNotiToLeaveReviewTask = (rideId) => {
           msg: `Leave a review for your driver, ${driverName}.`, 
           redirectPath: process.env.MY_RIDES_PATH
         })
-        // Schedule the last day each passenger has to leave a review to the driver 
-        scheduler.scheduleTaskHoursAfterDate(`expireAbilityToLeaveReviewTask.${rideId}.${passengerUsername}.${driverUsername}`, 
-          expireAbilityToLeaveReviewTask(rideId, passengerUsername, driverUsername), 
-          Date.now(), 
-          24*7
-        )   
-        // Schedule the last day the driver has to leave a review to each passenger
+
+        // Schedule the last day passengers and drivers have to leave reviews 
         scheduler.scheduleTaskHoursAfterDate(`expireAbilityToLeaveReviewTask.${rideId}.${driverUsername}.${passengerUsername}`, 
           expireAbilityToLeaveReviewTask(rideId, driverUsername, passengerUsername), 
           Date.now(), 
           24*7
-        )
+        )   
       }
     }
   }
 }
 
 // Task to make unidirectional reviews visible and prevent users from leaving further reviews
-const expireAbilityToLeaveReviewTask = (rideId, reviewerUsername, revieweeUsername) => {
+const expireAbilityToLeaveReviewTask = (rideId, driverUsername, passengerUsername) => {
   return async function() {
-    const review = await Review.findOne({reviewerUsername, revieweeUsername, rideId})
+    const driverReviewToPassenger = await Review.findOne({rideId, reviewerUsername: driverUsername, revieweeUsername: passengerUsername})
+    const passengerReviewToDriver = await Review.findOne({rideId, reviewerUsername: passengerUsername, revieweeUsername: driverUsername})
 
-    // Review exists, publish it for others to see and update the reviewee's rating 
-    if (review) {
-      review.isPublished = true 
-      await review.save() 
-      await User.findOneAndUpdate({username: review.revieweeUsername}, {$inc: {"rating.sumOfAllRatings": review.rating, "rating.totalRatings": 1}}) 
+    // 1. Both driver and passenger did not leave reviews, so expire their ability to leave a review for each other 
+    if (!driverReviewToPassenger && !passengerReviewToDriver) {
+      await declineReview(driverUsername, passengerUsername, rideId) 
+      await declineReview(passengerUsername, driverUsername, rideId)
     }
-    else {   
-      // No review exists and the time to leave a review has run out, so prevent further reviews by declining it 
-      try {
-        await declineReview(reviewerUsername, revieweeUsername, rideId)
-      }
-      catch(e) {
-        console.log(e) 
+    else {
+      // 2. One of them left a review but the other didn't 
+      if (driverReviewToPassenger) {
+        // Driver has left a review to the passenger, so make it public, and expire the passenger's ability to leave a review for driver 
+        await makeReviewPublic(rideId, driverUsername, passengerUsername)
+        await declineReview(passengerUsername, driverUsername, rideId) 
+      } 
+      else {
+        // Passenger left review to the driver, so make it public, and expire the driver's ability to leave a review for passenger 
+        await makeReviewPublic(rideId, passengerUsername, driverUsername)
+        await declineReview(driverUsername, passengerUsername, rideId)
       }
     }
   }

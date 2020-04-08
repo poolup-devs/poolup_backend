@@ -98,6 +98,7 @@ describe("Testing rating system operations", () => {
         afterEach(async () => {
             await User.deleteMany() 
             await Review.deleteMany()
+            await Ride.deleteMany() 
         }) 
         test("A review without a required field, such as rideId, should error instead of creating the review.", async () => {
             try {
@@ -146,9 +147,9 @@ describe("Testing rating system operations", () => {
             // Create a dummy user who receives the new review 
             let firstReviewer = await User.create({username: 'driverUsername'}); 
             let secondReviewer = await User.create({username: 'riderUsername'}); 
-            const rideId = mongoose.Types.ObjectId()
-            const firstReview = await Review.create({ reviewerUsername: firstReviewer.username, revieweeUsername: secondReviewer.username, rating: 3, rideId })
-            const secondReview = await db.addNewReview({ reviewerUsername: secondReviewer.username, revieweeUsername: firstReviewer.username, rating: 4, rideId })
+            const ride = await Ride.create({ownerUsername: 'driverUsername', passengers: ['riderUsername']})
+            const firstReview = await Review.create({ reviewerUsername: firstReviewer.username, revieweeUsername: secondReviewer.username, rating: 3, rideId: ride._id })
+            const secondReview = await db.addNewReview({ reviewerUsername: secondReviewer.username, revieweeUsername: firstReviewer.username, rating: 4, rideId: ride._id })
 
             // Expect both reviews are published 
             expect((await Review.findById(firstReview._id)).isPublished).toBeTruthy()  
@@ -156,7 +157,7 @@ describe("Testing rating system operations", () => {
                 reviewerUsername: secondReviewer.username, 
                 revieweeUsername: firstReviewer.username, 
                 rating: 4,  
-                rideId,
+                rideId: ride._id,
                 isPublished: true 
             })) 
 
@@ -215,7 +216,23 @@ describe("Testing rating system operations", () => {
                 .expect(200) 
         })
     })
-    
+
+    describe("Test the publishing of reviews", () => {
+        afterEach(async () => {
+            await User.deleteMany() 
+            await Review.deleteMany()
+        }) 
+        test("If a review is made public, then its isPublished property should be set to true and the ratings should take effect", async () => {
+            const rideId = mongoose.Types.ObjectId()
+            const driverReviewToPassenger = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_1", rideId, rating: 3})
+            const passenger = await User.create({username: "passenger_1"})
+            await db.makeReviewPublic(rideId, driverReviewToPassenger.reviewerUsername, driverReviewToPassenger.revieweeUsername) 
+            
+            expect((await Review.findById(driverReviewToPassenger._id)).isPublished).toBe(true)
+            expect((await User.findById(passenger._id)).rating.sumOfAllRatings).toBe(3) 
+            expect((await User.findById(passenger._id)).rating.totalRatings).toBe(1) 
+        })
+    })
 
     describe("Testing rating system API endpoints", () => {
         const verifiedUserUsernameAuthToken = jwt.sign({ username: 'verified_user' }, process.env.JWT_SECRET_KEY);

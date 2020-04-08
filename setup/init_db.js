@@ -167,8 +167,8 @@ const rideSeed = () => {
 
 // Seed schools collection used to parse emails for the school the user attends 
 const seedSchool = () => {
-    var child = spawn('mongoimport --db poolup-dev --collection schools --file setup\\schoolEmails.json --jsonArray --drop' + 
-    '&&  mongoimport --db poolup-test --collection schools --file setup\\schoolEmails.json --jsonArray --drop', 
+    var child = spawn('mongoimport --db poolup-dev --collection schools --file ./setup/schoolEmails.json --jsonArray --drop' + 
+    '&&  mongoimport --db poolup-test --collection schools --file ./setup/schoolEmails.json --jsonArray --drop', 
     {
         shell: true
     });

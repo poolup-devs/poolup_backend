@@ -9,7 +9,7 @@
     "docker-test": "env-cmd -r ./config/.env-cmdrc -e development,testing-docker jest --watch --runInBand",
     "start": "env-cmd -r ./config/.env-cmdrc -e development node src/server.js",
     "dev": "env-cmd -r ./config/.env-cmdrc -e development nodemon src/server.js",
-    "setup": "node setup.js",
+    "setup": "node ./setup/setup.js",
     "init_db": "env-cmd -r ./config/.env-cmdrc -e development node ./setup/init_db.js",
     "test": "env-cmd -r ./config/.env-cmdrc -e development,testing jest --watch --runInBand"
   },

@@ -1,24 +1,20 @@
-# PoolUp Backend
+# PoolUp Backend - main
 
 ### api.poolup.co
 
 This is the backend code repository for PoolUp: made with NodeJS, Express, and MongoDB w/ Mongoose.
-For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineering Manager.
+For additional guidence/help, email bin315a1@g.ucla.edu or your current Lead Backend Manager.
 
 1. [Setup](#setup)
 2. [Dev-Rules](#dev-rules)
 3. [Documentation](#documentation)
-4. [Deployment](#deployment)
+4. [Deployment](#deployment) - Temporarily Deprecated
 
 # Setup
+After the Local Environment Setup, using **Docker Commands** is advised for application setup & running the application.
 
-1. [Local Environment Setup](#local-environment-setup)
-2. [Local Development Setup](#local-development-setup)
-3. [Npm Scripts](#npm-scripts)
-4. [Additional Tools](#additional-tools)
-5. [Directory Structure](#directory-structure)
-
----
+<<<<<<< HEAD
+The NPM Scripts and Local Development Setup is listed below for additional reference.
 
 ## Local Environment Setup
 
@@ -41,15 +37,83 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
    This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
    For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
 
-6. Optional: Initialize the database with default objects.
+---
 
-   > npm run init_db
+## Running Docker
+Currently the latest version of the app uses 3 docker containers:
+1. web : main PoolUp application container
+2. mongo : mongodb database container
+3. mongo_seed : a database seeder that is removed upon creation, after db seeding
 
-   This REMOVES existing database collections and populates them with default objects.
+- All dockerfiles should be located under `/dockerfiles`, within a designated directory
+
+- Docker conatainers and Docker networks is configured and maintained with docker-compose, with:
+`docker-compose.yml`
+
+- The local source code volume will be mounted on web container's volume; any changes made to the code will be accounted for in the container (there is no need to build everytime there's a change in code)
+
+- However, if additional JS library needs to be installed, config files are changed, or etc, image should be built again before running docker compose
+
+### Docker Commands
+
+#### 1. Building the initial docker images
+    > docker-compose build
+
+#### 2. Run docker compose:
+    > docker-compose up
 
 ---
 
-## Local Development Setup
+## NPM Scripts (for additional reference)
+Use Docker commands for 
+
+1. Starting the NodeJS app
+
+   > npm start
+
+   Starts up the server by running `node src/server.js` with environment variables defined in dev.env.
+
+2. Start Dev. mode of the NodeJS app
+
+   > npm run dev
+
+   Similar to npm start, but runs nodemon to automatically restart the node application when file chnages in the directory are detected
+
+3. Setup .env variables
+
+   > npm run setup
+
+   Generates the config folder with env files. This is explained in [the next step](#local-environment-setup)
+
+   Do NOT run this script twice; the second run will overwrite the env files, erasing the entered credentials
+
+4. Run Test Scripts
+
+   > npm run test
+
+   We are using [Jest](https://www.npmjs.com/package/jest) to test our JS code.
+   Run tests related to changed files based on Git (uncommitted files).
+   Uses the test.dev environment variables.
+
+5. Initialize database with default creations
+
+   > npm run init_db
+
+   Removes all documents in all the collections, and initializes the database with default objects.
+   Currently only removes and creates from User collection.
+=======
+1. [Local Environment Setup](#local-environment-setup)
+2. [Local Development Setup](#local-development-setup)
+3. [Npm Scripts](#npm-scripts)
+4. [Additional Tools](#additional-tools)
+5. [Directory Structure](#directory-structure)
+>>>>>>> master
+
+---
+
+
+
+## Local Development Setup (for additional reference)
 
 1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
 2. Open another terminal and run `npm run dev` in the home directory; this starts the backend application with nodemon
@@ -115,10 +179,13 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 |   package.json
 |   README.md
 |   setup.js
+|   docker-compose.yml
 |
 +---config
-|       dev.env
-|       test.env
+|       .env-cmdrc
++---dockerfiles
+|       main
+|       mongo_seed
 |
 +---src
 |   |   app.js

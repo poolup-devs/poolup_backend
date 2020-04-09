@@ -143,11 +143,23 @@ router.get("/rides/ride-details", checkAuth, (req, res) => {
   });
 });
 
-const Places = require("./places.json");
-
 // Get List of Cities
 router.get("/rides/getAvailableCities", (req, res) => {
-  console.log(Places);
+  const places = require("./places.json");
+
+  let cities = Object.values(places);
+  var merged = [].concat.apply([], cities);
+
+  res.status(200).json(merged);
+});
+
+// Get List of Counties
+router.get("/rides/getAvailableCounties", (req, res) => {
+  const places = require("./places.json");
+
+  let counties = Object.keys(places);
+
+  res.status(200).json(counties);
 });
 
 module.exports = router;

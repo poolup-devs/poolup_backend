@@ -11,6 +11,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Lead Bac
 4. [Deployment](#deployment) - Temporarily Deprecated
 
 # Setup
+
 After the Local Environment Setup, using **Docker Commands** is advised for application setup & running the application.
 
 <<<<<<< HEAD
@@ -40,7 +41,9 @@ The NPM Scripts and Local Development Setup is listed below for additional refer
 ---
 
 ## Running Docker
+
 Currently the latest version of the app uses 3 docker containers:
+
 1. web : main PoolUp application container
 2. mongo : mongodb database container
 3. mongo_seed : a database seeder that is removed upon creation, after db seeding
@@ -48,7 +51,7 @@ Currently the latest version of the app uses 3 docker containers:
 - All dockerfiles should be located under `/dockerfiles`, within a designated directory
 
 - Docker conatainers and Docker networks is configured and maintained with docker-compose, with:
-`docker-compose.yml`
+  `docker-compose.yml`
 
 - The local source code volume will be mounted on web container's volume; any changes made to the code will be accounted for in the container (there is no need to build everytime there's a change in code)
 
@@ -57,15 +60,18 @@ Currently the latest version of the app uses 3 docker containers:
 ### Docker Commands
 
 #### 1. Building the initial docker images
+
     > docker-compose build
 
 #### 2. Run docker compose:
+
     > docker-compose up
 
 ---
 
 ## NPM Scripts (for additional reference)
-Use Docker commands for 
+
+Use Docker commands for
 
 1. Starting the NodeJS app
 
@@ -101,17 +107,16 @@ Use Docker commands for
 
    Removes all documents in all the collections, and initializes the database with default objects.
    Currently only removes and creates from User collection.
-=======
-1. [Local Environment Setup](#local-environment-setup)
-2. [Local Development Setup](#local-development-setup)
-3. [Npm Scripts](#npm-scripts)
-4. [Additional Tools](#additional-tools)
-5. [Directory Structure](#directory-structure)
->>>>>>> master
+   =======
+
+6. [Local Environment Setup](#local-environment-setup)
+7. [Local Development Setup](#local-development-setup)
+8. [Npm Scripts](#npm-scripts)
+9. [Additional Tools](#additional-tools)
+10. [Directory Structure](#directory-structure)
+    > > > > > > > master
 
 ---
-
-
 
 ## Local Development Setup (for additional reference)
 
@@ -304,21 +309,13 @@ For all API requests after login, the bearer token must be included in headers f
 There must be a white space between the string "Bearer" and the token string
 
 ## Scheduling Tasks
+
 All scheduled tasks should be in /tasks/scheduledTasks.js, with unit tests in /tests/tasks/scheduledTasks.test.js
 Operations
--  `void scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)`
-	- Schedules a task to *run once*, X hours after a certain date
-		-  **uniqueTaskName**: uniquely identify the task in the case you ever need to cancel the task
-		-  **task**: function pointer of the task to schedule
-		-  **date**: JavaScript Date object
-		-  **hours**: number of hours after specified date
--  `cancelTasksAssociatedWithRide(rideId)`
-	- Clean up all tasks associated with a ride
-	- This will clean up tasks named with the following format: **taskFunctionName:{rideId}**
-		- ex: **updateCompletedRidesTask:{rideId}** or **promptLeaveAReviewTask:{rideId}**
-	- This can be used to clean up scheduled email reminders and web notifications for rides that have been cancellled 
--  `bool cancelTask(taskName)`
-	- Cancel a task, returns a Promise that resolves into a boolean value 
+
+- `void scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)` - Schedules a task to _run once_, X hours after a certain date - **uniqueTaskName**: uniquely identify the task in the case you ever need to cancel the task - **task**: function pointer of the task to schedule - **date**: JavaScript Date object - **hours**: number of hours after specified date
+- `cancelTasksAssociatedWithRide(rideId)` - Clean up all tasks associated with a ride - This will clean up tasks named with the following format: **taskFunctionName:{rideId}** - ex: **updateCompletedRidesTask:{rideId}** or **promptLeaveAReviewTask:{rideId}** - This can be used to clean up scheduled email reminders and web notifications for rides that have been cancellled
+- `bool cancelTask(taskName)` - Cancel a task, returns a Promise that resolves into a boolean value
 
 ## Models & API Endpoints Documentation
 
@@ -925,18 +922,20 @@ GET request
 
 ### API Endpoints
 
-| url                       | HTTP Method | description                                                               |
-| ------------------------- | ----------- | ------------------------------------------------------------------------- |
-| /rides/matching-rides     | GET         | [Get List of Available future Rides](#get-list-of-available-future-rides) |
-| /rides/user-rides-history | GET         | [Get ANOTHER USER's ride history](#get-another-users-ride-history)        |
-| /rides/my-rides-history   | GET         | [Get MY ride history](#get-my-ride-history)                               |
-| /rides/my-rides-upcoming  | GET         | [Get MY ride upcoming](#get-my-ride-upcoming)                             |
-| /rides/drives-history     | GET         | [Get a user's (OTHER'S AND MINE) drive history](#get-drive-history)       |
-| /rides/drives-upcoming    | GET         | [Get a user's (OTHER'S AND MINE) upcoming drives](#get-upcoming-drives)   |
-| /rides/post-ride          | POST        | [Post a Ride](#post-a-ride)                                               |
-| /rides/join-ride          | PUT         | [Join a Ride](#join-a-ride)                                               |
-| /rides/cancel-ride        | PUT         | [Cancel a Ride](#cancel-a-ride)                                           |
-| /rides/delete-ride        | DELETE      | [Delete a ride](#delete-a-ride)                                           |
+| url                         | HTTP Method | description                                                               |
+| --------------------------- | ----------- | ------------------------------------------------------------------------- |
+| /rides/matching-rides       | GET         | [Get List of Available future Rides](#get-list-of-available-future-rides) |
+| /rides/user-rides-history   | GET         | [Get ANOTHER USER's ride history](#get-another-users-ride-history)        |
+| /rides/my-rides-history     | GET         | [Get MY ride history](#get-my-ride-history)                               |
+| /rides/my-rides-upcoming    | GET         | [Get MY ride upcoming](#get-my-ride-upcoming)                             |
+| /rides/drives-history       | GET         | [Get a user's (OTHER'S AND MINE) drive history](#get-drive-history)       |
+| /rides/drives-upcoming      | GET         | [Get a user's (OTHER'S AND MINE) upcoming drives](#get-upcoming-drives)   |
+| /rides/post-ride            | POST        | [Post a Ride](#post-a-ride)                                               |
+| /rides/join-ride            | PUT         | [Join a Ride](#join-a-ride)                                               |
+| /rides/cancel-ride          | PUT         | [Cancel a Ride](#cancel-a-ride)                                           |
+| /rides/delete-ride          | DELETE      | [Delete a ride](#delete-a-ride)                                           |
+| /rides/getAvailableCities   | GET         | [Get available cities](#get-available-cities)                             |
+| /rides/getAvailableCounties | GET         | [Get available counties](#get-available-counties)                         |
 
 - Note: all get ride apis (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
 
@@ -1285,7 +1284,7 @@ PUT request
     "ride": {
         "_id" : "5e649bba9e2f6d3570e88462",
         "passengers" : [
-            "user1" 
+            "user1"
         ],
         "ownerEmail" : "user2@g.ucla.edu.com",
         "ownerUsername" : "user2",
@@ -1372,6 +1371,48 @@ The ride object that the user is trying to delete (The ride object's owner has t
         "ok": 1,
         "deletedCount": 1
     }
+
+```
+
+---
+
+### Get available cities
+
+GET request
+
+**return value**
+
+200 status with a list of available cities that drivers can use to post a ride:
+
+```
+
+[
+    "cityA",
+    "cityB",
+    ...
+    "cityZ"
+]
+
+```
+
+---
+
+### Get available counties
+
+GET request
+
+**return value**
+
+200 status with a list of available counties that riders can use to search for a ride:
+
+```
+
+[
+    "countyA",
+    "countyB",
+    ...
+    "countyC"
+]
 
 ```
 

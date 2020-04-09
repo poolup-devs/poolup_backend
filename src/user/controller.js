@@ -70,13 +70,66 @@ const signup = async userInfo => {
         }
       );
       resolve(newUser);
-    } catch (e) {
+    }
+    catch (e) {
       User.deleteOne({ username: userInfo.username }, () => {
         reject(e);
       });
     }
   });
 };
+
+const sendVerificationEmail = (email) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (await isValidEmail(email)) {
+        // Construct verification email
+        const token = jwt.sign({ email }, JWT_EMAIL_KEY, { expiresIn: "24h" });
+        if (process.env.MODE === "STAGING") {
+          var url =
+            "localhost:" + process.env.PORT + "/users/verify?token=" + token;
+          var verificationEmail = {
+            to: email,
+            from: "pool-up@outlook.com",
+            subject: "PoolUp: Email Verification Required",
+            text: "Here's the link",
+            html: "<br>Link for local dev: <br>" + url
+          };
+        }
+        else {
+          var url =
+            "restapi." +
+            process.env.PRODUCTION_DOMAIN_URL +
+            "/users/verify?token=" +
+            token;
+          var verificationEmail = {
+            to: email,
+            from: "pool-up@outlook.com",
+            templateId: "d-0d8dff79ca8e4d0e8b4b9b1b12038a62",
+            dynamic_template_data: {
+              subject: "PoolUp Email Verification",
+              name: req.body.username,
+              url: url
+            }
+          };
+        }
+
+        // Send verification email
+        sgMail
+        .send(verificationEmail)
+        .then(() => {
+          resolve(true)
+        })
+        .catch(error => {
+          reject("Could not send verification email!")
+        });
+      }
+    }
+    catch(e) {
+      reject(e) 
+    }
+  })
+}
 
 const verifyEmail = (email, callback) => {
   User.findOneAndUpdate(
@@ -306,6 +359,16 @@ const isValidAccount = (email, username, password) => {
       return reject("A verified account already exists with this username!");
     }
 
+    // Password must be a minimum of 8 characters long
+    if (password.length < 8) {
+      return reject("Password must be at least 8 characters long!");
+    }
+    return resolve(true);
+  });
+};
+
+const isValidEmail = (email) => {
+  return new Promise(async (resolve, reject) => {
     // Validate email address
     if (isEmail.validate(email)) {
       // Must be student email
@@ -321,14 +384,8 @@ const isValidAccount = (email, username, password) => {
     } else {
       return reject("Not a valid email address!");
     }
-
-    // Password must be a minimum of 8 characters long
-    if (password.length < 8) {
-      return reject("Password must be at least 8 characters long!");
-    }
-    return resolve(true);
-  });
-};
+  })
+}
 
 const confirmCredentials = (authUsername, password) => {
   return new Promise(async (resolve, reject) => {
@@ -482,6 +539,8 @@ module.exports = {
   checkAvailability,
   login,
   verifyEmail,
+  isValidEmail,
+  sendVerificationEmail,
   findUserByEmail,
   findUserByUsername,
   findUserByPhoneNumber,

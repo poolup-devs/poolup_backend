@@ -54,57 +54,22 @@ router.post("/users/signup", async (req, res) => {
     ) {
       // Create new user
       await db.signup(req.body);
-
-      // Construct verification email
-      var { email, username } = req.body;
-      const token = jwt.sign({ email }, JWT_EMAIL_KEY, { expiresIn: "24h" });
-      if (process.env.MODE === "STAGING") {
-        var url =
-          "localhost:" + process.env.PORT + "/users/verify?token=" + token;
-        var verificationEmail = {
-          to: email,
-          from: "pool-up@outlook.com",
-          subject: "PoolUp: Email Verification Required",
-          text: "Here's the link",
-          html: "<br>Link for local dev: <br>" + url
-        };
-      } else {
-        var url =
-          "restapi." +
-          process.env.PRODUCTION_DOMAIN_URL +
-          "/users/verify?token=" +
-          token;
-        var verificationEmail = {
-          to: email,
-          from: "pool-up@outlook.com",
-          templateId: "d-0d8dff79ca8e4d0e8b4b9b1b12038a62",
-          dynamic_template_data: {
-            subject: "PoolUp Email Verification",
-            name: req.body.username,
-            url: url
-          }
-        };
-      }
-
-      // Send verification email
-      sgMail
-        .send(verificationEmail)
-        .then(() => {
-          res.sendStatus(201);
-        })
-        .catch(error => {
-          // Remove the user that was added to the database when sign-up fails
-          db.deleteUser(username, (err, user) => {
-            res
-              .status(500)
-              .send({ error: "Could not send verification email!" });
-          });
-        });
     }
   } catch (e) {
     res.status(500).send({ error: e });
   }
 });
+
+// Send verification email 
+router.get("/users/sendVerificationEmail", async (req, res) => {
+  try {
+    await db.sendVerificationEmail(req.query.email)
+    res.status(200).send("Verification email sent successfully.")
+  }
+  catch(e) {
+    res.status(500).send(e)
+  }
+})
 
 //Verify Email
 router.get("/users/verify", (req, res) => {

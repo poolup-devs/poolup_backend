@@ -249,7 +249,8 @@ Models:
 
 | column         | type    | required | properties                                                   |
 | -------------- | ------- | -------- | ------------------------------------------------------------ |
-| name           | String  | Yes      |                                                              |
+| firstName      | String  | Yes      |                                                              |
+| lastName       | String  | Yes      |                                                              |
 | email          | String  | Yes      |                                                              |
 | username       | String  | Yes      |                                                              |
 | password       | String  | Yes      |                                                              |

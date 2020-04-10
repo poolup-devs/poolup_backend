@@ -45,6 +45,14 @@ const checkAvailability = (email, username, callback) => {
 
 const signup = async userInfo => {
   return new Promise(async (resolve, reject) => {
+    //  // Required properties of User document 
+    //  const requiredProperties = ['firstName', 'lastName', 'username', 'password', 'email']
+    //  try {
+    //      // Simple field validation 
+    //      if (requiredProperties.every(property => userInfo.hasOwnProperty(requiredProperties)))
+
+
+
     userInfo.password = sha256(userInfo.password);
     try {
       userInfo.school = await parseSchoolFromEmail(userInfo.email);
@@ -58,7 +66,7 @@ const signup = async userInfo => {
       stripe.customers.create(
         {
           email: userInfo.email,
-          name: userInfo.name
+          name: userInfo.firstName + " " + userInfo.lastName
         },
         function(err, customer) {
           // asynchronously called
@@ -188,7 +196,7 @@ const getMyInfo = (authUsername, callback) => {
     if (err) {
       callback(err, null);
     } else if (result) {
-      const res_list = ["username", "name", "email", "createdAt", "picUrl"];
+      const res_list = ["username", "firstName", "lastName", "email", "createdAt", "picUrl"];
       const result_ = {};
 
       res_list.forEach(function(item) {
@@ -489,7 +497,8 @@ const getPublicProfileInfo = username => {
       reject("User could not be found!");
     }
     const {
-      name,
+      firstName,
+      lastName, 
       picUrl,
       picType,
       aboutMe,
@@ -502,9 +511,10 @@ const getPublicProfileInfo = username => {
     } catch (e) {
       // Ommit rating if it cannot be calculated due to not having any reviews
       resolve({
+        firstName,
+        lastName,
         picUrl,
         picType,
-        name,
         school,
         ridesCompleted,
         ridesCancelled,
@@ -512,9 +522,10 @@ const getPublicProfileInfo = username => {
       });
     }
     resolve({
+      firstName, 
+      lastName,
       picUrl,
       picType,
-      name,
       school,
       rating,
       ridesCompleted,

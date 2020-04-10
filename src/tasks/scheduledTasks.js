@@ -30,21 +30,21 @@ const createNotiToLeaveReviewTask = (rideId) => {
     if (await isCompletedRide(rideDetails)) {
       const driverUsername = rideDetails.ownerUsername
       // Query for a list of passenger names to create driver notification 
-      let passengerNames = []
+      let passengerFirstNames = []
       for (let i = 0; i < rideDetails.passengers.length; i++) {
         const passengerUsername = rideDetails.passengers[i]
         const passenger = await User.findOne({username: passengerUsername})
-        passengerNames.push(passenger.name)                              
+        passengerFirstNames.push(passenger.firstName)                              
       }
 
       // Send a notification to the driver to review their passengers 
-      const msg = await formatPassengerReviewMessage(passengerNames)
+      const msg = await formatPassengerReviewMessage(passengerFirstNames)
       await Noti.create({
         username: driverUsername, msg, redirectPath: process.env.MY_DRIVES_PATH
       })
 
       // Passengers each receive a notification to review driver
-      const driverName = (await User.findOne({username: driverUsername})).name 
+      const driverName = (await User.findOne({username: driverUsername})).firstName 
 
       for (let i = 0; i < rideDetails.passengers.length; i++) {
         const passengerUsername = rideDetails.passengers[i]
@@ -100,20 +100,20 @@ const isCompletedRide = (rideDetails) => {
 }
 
 // Format the "Leave a review for your passenger(s)" message that the driver receives depending on the number of passengers in the ride 
-const formatPassengerReviewMessage = (passengerNames) => {
+const formatPassengerReviewMessage = (passengerFirstNames) => {
   return new Promise((resolve, reject) => {
-    if (passengerNames.length == 1) 
-      return resolve(`Leave a review for your passenger, ${passengerNames[0]}.`)
-    else if (passengerNames.length == 2) 
-      return resolve(`Leave a review for your passengers, ${passengerNames[0]} and ${passengerNames[1]}.`)
+    if (passengerFirstNames.length == 1) 
+      return resolve(`Leave a review for your passenger, ${passengerFirstNames[0]}.`)
+    else if (passengerFirstNames.length == 2) 
+      return resolve(`Leave a review for your passengers, ${passengerFirstNames[0]} and ${passengerFirstNames[1]}.`)
     else {
       let message = "Leave a review for your passengers,"
-      for (let i = 0; i < passengerNames.length; i++) {
-        if (i == passengerNames.length - 1) {
-          message += ` and ${passengerNames[i]}.`;
+      for (let i = 0; i < passengerFirstNames.length; i++) {
+        if (i == passengerFirstNames.length - 1) {
+          message += ` and ${passengerFirstNames[i]}.`;
         }
         else {
-          message += ` ${passengerNames[i]},`
+          message += ` ${passengerFirstNames[i]},`
         }
       }
       return resolve(message)

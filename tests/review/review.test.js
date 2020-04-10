@@ -38,10 +38,10 @@ describe("Testing rating system operations", () => {
         isPublished: true
     })
 
-    beforeEach(() => {
-        new Review(testReview1).save()
-        new Review(testReview2).save()
-        return new Review(testReview3).save()
+    beforeEach(async () => {
+        await new Review(testReview1).save()
+        await new Review(testReview2).save()
+        return await new Review(testReview3).save()
     }) 
 
     afterEach(() => {
@@ -152,7 +152,7 @@ describe("Testing rating system operations", () => {
             const secondReview = await db.addNewReview({ reviewerUsername: secondReviewer.username, revieweeUsername: firstReviewer.username, rating: 4, rideId: ride._id })
 
             // Expect both reviews are published 
-            expect((await Review.findById(firstReview._id)).isPublished).toBeTruthy()  
+            expect((await Review.findOne({rideId: ride._id, revieweeUsername: firstReview.revieweeUsername, reviewerUsername: firstReview.reviewerUsername})).isPublished).toBeTruthy()  
             expect(secondReview).toEqual(expect.objectContaining({
                 reviewerUsername: secondReviewer.username, 
                 revieweeUsername: firstReviewer.username, 

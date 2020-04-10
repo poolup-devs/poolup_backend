@@ -16,16 +16,18 @@ const parseDomain = require('parse-domain')
 
 
 describe("Testing users without existing accounts", () => {
-    test("When signing up a new user, a new user should be added to the database with a name, username, password, email, and an unverified status.", async () => {
+    test("When signing up a new user, a new user should be added to the database with a firstName, username, password, email, and an unverified status.", async () => {
         const newUser = await db.signup({
-            name: "John Smith", 
+            firstName: "John", 
+            lastName: "Smith",
             username: "jsmith", 
             password: "password", 
             email: "jsmith@g.ucla.edu"
         })
 
         expect(newUser).toEqual(expect.objectContaining({
-            name: "John Smith", 
+            firstName: "John", 
+            lastName: "Smith",
             username: "jsmith", 
             password: sha256("password"), 
             email: "jsmith@g.ucla.edu", 
@@ -47,7 +49,8 @@ describe("Testing users without existing accounts", () => {
 
 describe('Testing users with unverified accounts', () => {
     const unverifiedUser = new User({
-        name: "First Last", 
+        firstName: "John", 
+        lastName: "Smith",
         username: "unverifiedUser", 
         password: "password", 
         email: "unverifiedUser@g.ucla.edu"
@@ -92,7 +95,8 @@ describe('Testing users with unverified accounts', () => {
                 .send({
                     username: unverifiedUser.username, 
                     password: 'password', 
-                    name: "First Last"
+                    firstName: "John", 
+                    lastName: "Smith",
                 })
                 .expect(500) 
         })
@@ -101,7 +105,8 @@ describe('Testing users with unverified accounts', () => {
 
 describe('Testing users with verified accounts', () => {
     const verifiedUser = new User({
-        name: "First Last", 
+        firstName: "John", 
+        lastName: "Smith",
         username: "verifiedUser", 
         password: sha256("password"), 
         email: "verifiedUser@g.ucla.edu", 
@@ -133,9 +138,9 @@ describe('Testing users with verified accounts', () => {
         test("When logging in with correct email and password credentials, should return the user's account information.", done => {
             db.login(verifiedUser.email, sha256('password'), (err, result) => {
                 expect(err).toEqual(null)
-                const {name, username, email, verified} = verifiedUser 
+                const {firstName, lastName, username, email, verified} = verifiedUser 
                 expect(result).toEqual(expect.objectContaining({
-                    name, username, password: sha256("password"), email, verified
+                    firstName, lastName, username, password: sha256("password"), email, verified
                 })) 
                 done()
             }) 
@@ -167,7 +172,8 @@ describe('Testing users with verified accounts', () => {
                 .send({
                     username: verifiedUser.username, 
                     password: 'password', 
-                    name: "First Last"
+                    firstName: 'John', 
+                    lastName: 'Smith'
                 })
                 .expect(500) 
         })
@@ -321,12 +327,12 @@ describe('Testing users with verified accounts', () => {
             }
         })
 
-        test("When requesting account information using a valid username, response should return an object with properties: username, name, email, createdAt, and picUrl", done => {
+        test("When requesting account information using a valid username, response should return an object with properties: username, firstName, lastName, email, createdAt, and picUrl", done => {
             db.getMyInfo(verifiedUser.username, (err, result) => {
                 expect(err).toEqual(null) 
-                const {username, name, email, picUrl, createdAt} = verifiedUser 
+                const {username, firstName, lastName, email, picUrl} = verifiedUser 
                 expect(result).toEqual(expect.objectContaining({
-                    username, name, email, picUrl, createdAt
+                    username, firstName, lastName, email, picUrl
                 }))
                 done() 
             })
@@ -341,12 +347,13 @@ describe('Testing users with verified accounts', () => {
 
         test("When updating a user's name or phone number, should set the corresponding user's name and phone number fields", done => {
             const updates = {
-                phoneNumber: '1231231234', name: 'New Name'
+                phoneNumber: '1231231234', firstName: 'John', lastName: 'Smith'
             } 
             db.updateUser(verifiedUser.username, updates, (err, result) => {
                 expect(result).toEqual(expect.objectContaining({
                     phoneNumber: updates.phoneNumber,
-                    name: updates.name 
+                    firstName: updates.firstName, 
+                    lastName: updates.lastName
                 }))
                 done() 
             }) 
@@ -386,9 +393,9 @@ describe('Testing users with verified accounts', () => {
         }) 
 
         test("When retrieving a user's profile pic url using a valid username, should receive it.", done => {
-            const {name, password, email, verified} = verifiedUser 
+            const {firstName, lastName, password, email, verified} = verifiedUser 
             const verifiedUserWithProfilePic = new User({
-                name, username: 'verifiedUserWithPicUrl', password, email, verified, picUrl: 'testUrl'
+                firstName, lastName, username: 'verifiedUserWithPicUrl', password, email, verified, picUrl: 'testUrl'
             }) 
             verifiedUserWithProfilePic.save((err) => {
                 db.getPicUrl(verifiedUserWithProfilePic.username, (err, result) => {
@@ -497,19 +504,6 @@ describe('Testing users with verified accounts', () => {
                 expect(e).toBe('Could not find user in database when updating about me.')
             }
         })
-
-        test("When updating a user's name or phone number, should set the corresponding user's name and phone number fields", done => {
-            const updates = {
-                phoneNumber: '1231231234', name: 'New Name'
-            } 
-            db.updateUser(verifiedUser.username, updates, (err, result) => {
-                expect(result).toEqual(expect.objectContaining({
-                    phoneNumber: updates.phoneNumber,
-                    name: updates.name 
-                }))
-                done() 
-            }) 
-        })
     
         test("When deleting a user, should delete all instances of that user in User, Ride, and Noti", done => {
             const {username} = verifiedUser 
@@ -566,11 +560,12 @@ describe('Testing users with verified accounts', () => {
                 .patch('/users/updateUser')
                 .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
                 .send({
-                    name: 'Evan'
+                    firstName: 'Evan', 
+                    lastName: 'Lin'
                 })
                 .expect(200) 
                 .then((res) => {
-                    expect(res.body).toEqual(expect.objectContaining({name: 'Evan', phoneNumber: verifiedUser.phoneNumber}))
+                    expect(res.body).toEqual(expect.objectContaining({firstName: 'Evan', lastName: 'Lin', phoneNumber: verifiedUser.phoneNumber}))
                 })
         })
 
@@ -579,11 +574,12 @@ describe('Testing users with verified accounts', () => {
                 .patch('/users/updateUser')
                 .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
                 .send({
-                    name: 'Evan'
+                    firstName: 'Evan', 
+                    lastName: 'Lin'
                 })
                 .expect(200) 
                 .then((res) => {
-                    expect(res.body).toEqual(expect.objectContaining({name: 'Evan', phoneNumber: verifiedUser.phoneNumber}))
+                    expect(res.body).toEqual(expect.objectContaining({firstName: 'Evan', lastName: 'Lin', phoneNumber: verifiedUser.phoneNumber}))
                 })
         })
 
@@ -596,7 +592,7 @@ describe('Testing users with verified accounts', () => {
                 })
                 .expect(200) 
                 .then((res) => {
-                    expect(res.body).toEqual(expect.objectContaining({name: verifiedUser.name, phoneNumber: '1111111111'}))
+                    expect(res.body).toEqual(expect.objectContaining({firstName: verifiedUser.firstName, lastName: verifiedUser.lastName, phoneNumber: '1111111111'}))
                 })
         })
 

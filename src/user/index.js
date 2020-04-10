@@ -203,12 +203,16 @@ router.get("/users/usersPic", checkAuth, (req, res) => {
   });
 });
 
-//Update a User's info (name or phoneNumber)
+//Update a User's info (first name, last name, or phoneNumber)
 router.patch("/users/updateUser", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
   const updates = {};
-  if (req.body.name) {
-    updates.name = req.body.name;
+  if (req.body.firstName) {
+    updates.firstName = req.body.firstName;
+  }
+
+  if (req.body.lastName) {
+    updates.lastName = req.body.lastName;
   }
 
   if (req.body.phoneNumber) {

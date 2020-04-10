@@ -16,7 +16,7 @@ describe("Testing the update completed rides scheduled task", () => {
         const ride = await Ride.create({ownerUsername: "driverUsername", passengers: [], seats: 0})
 
         await scheduledTasks.updateCompletedRidesTask(ride._id)()
-        driver = await User.findById(driver._id)
+        driver = await User.findOne({username: 'driverUsername'})
         expect(driver.ridesCompleted).toBe(0)
     })
 
@@ -27,9 +27,9 @@ describe("Testing the update completed rides scheduled task", () => {
         const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1', 'passenger2'], seats: 0})
 
         await scheduledTasks.updateCompletedRidesTask(ride._id)()
-        driver = await User.findById(driver._id)
-        passenger1 = await User.findById(passenger1._id)
-        passenger2 = await User.findById(passenger2._id)
+        driver = await User.findOne({username: driver.username})
+        passenger1 = await User.findOne({username: passenger1.username})
+        passenger2 = await User.findOne({username: passenger2.username})
         expect(driver.ridesCompleted).toBe(2)
         expect(passenger1.ridesCompleted).toBe(1)
         expect(passenger2.ridesCompleted).toBe(1)
@@ -56,29 +56,29 @@ describe("Testing leave a review notification", () => {
         await Review.deleteMany({})
     }) 
     test("Testing whether drivers and passengers receive proper notifications to leave a review", async () => {
-        let driver = await User.create({name: 'Sarah Lynn', username: 'driverUsername'})
-        let passenger1 = await User.create({name: 'John Smith', username: 'passenger1'})
-        let passenger2 = await User.create({name: 'Aiden Turner', username: 'passenger2'})
+        let driver = await User.create({firstName: 'Sarah', username: 'driverUsername'})
+        let passenger1 = await User.create({firstName: 'John', username: 'passenger1'})
+        let passenger2 = await User.create({firstName: 'Aiden', username: 'passenger2'})
         const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1', 'passenger2'], seats: 0})
         await scheduledTasks.createNotiToLeaveReviewTask(ride._id)()
 
         expect(await Noti.findOne({username: ride.ownerUsername})).toEqual(expect.objectContaining({
-            username: driver.username, msg: "Leave a review for your passengers, John Smith and Aiden Turner.", redirectPath: process.env.MY_DRIVES_PATH
+            username: driver.username, msg: "Leave a review for your passengers, John and Aiden.", redirectPath: process.env.MY_DRIVES_PATH
         }))
 
         expect(await Noti.findOne({username: passenger1.username})).toEqual(expect.objectContaining({
-            username: passenger1.username, msg: "Leave a review for your driver, Sarah Lynn.", redirectPath: process.env.MY_RIDES_PATH
+            username: passenger1.username, msg: "Leave a review for your driver, Sarah.", redirectPath: process.env.MY_RIDES_PATH
         }))
 
         expect(await Noti.findOne({username: passenger2.username})).toEqual(expect.objectContaining({
-            username: passenger2.username, msg: "Leave a review for your driver, Sarah Lynn.", redirectPath: process.env.MY_RIDES_PATH
+            username: passenger2.username, msg: "Leave a review for your driver, Sarah.", redirectPath: process.env.MY_RIDES_PATH
         }))
     })
 
     test("Testing whether an expiry task is created for every review that can be sent out", async () => {
-        let driver = await User.create({name: 'Sarah Lynn', username: 'driverUsername'})
-        let passenger1 = await User.create({name: 'John Smith', username: 'passenger1'})
-        let passenger2 = await User.create({name: 'Aiden Turner', username: 'passenger2'})
+        let driver = await User.create({firstName: 'Sarah', username: 'driverUsername'})
+        let passenger1 = await User.create({firstName: 'John', username: 'passenger1'})
+        let passenger2 = await User.create({firstName: 'Aiden', username: 'passenger2'})
         const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1', 'passenger2'], seats: 0})
         await scheduledTasks.createNotiToLeaveReviewTask(ride._id)()
         expect(schedule.scheduledJobs[`expireAbilityToLeaveReviewTask.${ride._id}.driverUsername.passenger1`]).toBeTruthy()

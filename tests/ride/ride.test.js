@@ -24,11 +24,11 @@ describe("Testing Ride endpoints", () => {
             await db.cancelRide(ride._id, "driverUsername", "No longer traveling")
 
             // Check whether ride was deleted 
-            const cancelledRide = await Ride.findById(ride._id) 
+            const cancelledRide = await Ride.findOne({ownerUsername: ride.ownerUsername}) 
             expect(cancelledRide).toBe(null)
 
             // Check incrementation of cancelled rides 
-            const user = await User.findById(driver._id)
+            const user = await User.findOne({username: driver.username})
             expect(user.ridesCancelled).toBe(1)
 
             // Check creation of notification to each passenger with expected properties 

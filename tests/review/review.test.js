@@ -51,9 +51,9 @@ describe("Testing rating system operations", () => {
     describe("Test the retrieval of all of a user's reviews", () => {
 
         test("Get all of the reviews for a user who has at least one review.",  () => {
-            const expectedReviews = [testReview3._id, testReview2._id, testReview1._id]
+            const expectedReviews = [testReview3.reviewerUsername, testReview2.reviewerUsername, testReview1.reviewerUsername]
             return db.getUserReviews(testRevieweeUsername, 0).then((reviews) => {
-                expect(reviews.map(a => a._id)).toStrictEqual(expectedReviews)
+                expect(reviews.map(a => a.reviewerUsername)).toStrictEqual(expectedReviews)
             })
         })
 
@@ -148,11 +148,14 @@ describe("Testing rating system operations", () => {
             let firstReviewer = await User.create({username: 'driverUsername'}); 
             let secondReviewer = await User.create({username: 'riderUsername'}); 
             const ride = await Ride.create({ownerUsername: 'driverUsername', passengers: ['riderUsername']})
-            const firstReview = await Review.create({ reviewerUsername: firstReviewer.username, revieweeUsername: secondReviewer.username, rating: 3, rideId: ride._id })
-            const secondReview = await db.addNewReview({ reviewerUsername: secondReviewer.username, revieweeUsername: firstReviewer.username, rating: 4, rideId: ride._id })
+            let firstReview = await Review.create({ reviewerUsername: firstReviewer.username, revieweeUsername: secondReviewer.username, rating: 3, rideId: ride._id })
+            let secondReview = await db.addNewReview({ reviewerUsername: secondReviewer.username, revieweeUsername: firstReviewer.username, rating: 4, rideId: ride._id })
 
             // Expect both reviews are published 
-            expect((await Review.findOne({rideId: ride._id, revieweeUsername: firstReview.revieweeUsername, reviewerUsername: firstReview.reviewerUsername})).isPublished).toBeTruthy()  
+            firstReview = await Review.findOne({rideId: ride._id, reviewerUsername: firstReview.reviewerUsername, revieweeUsername: firstReview.revieweeUsername})
+            expect(firstReview.isPublished).toBeTruthy()  
+
+            secondReview = await Review.findOne({rideId: ride._id, reviewerUsername: secondReview.reviewerUsername, revieweeUsername: secondReview.revieweeUsername})
             expect(secondReview).toEqual(expect.objectContaining({
                 reviewerUsername: secondReviewer.username, 
                 revieweeUsername: firstReviewer.username, 
@@ -162,11 +165,11 @@ describe("Testing rating system operations", () => {
             })) 
 
             // Expect both ratings to be updated 
-            firstReviewer = await User.findById(firstReviewer._id)
+            firstReviewer = await User.findOne({username: firstReviewer.username})
             expect(firstReviewer.rating.totalRatings).toBe(1)
             expect(firstReviewer.rating.sumOfAllRatings).toBe(4) 
 
-            secondReviewer = await User.findById(secondReviewer._id)
+            secondReviewer = await User.findOne({username: secondReviewer.username})
             expect(secondReviewer.rating.totalRatings).toBe(1)
             expect(secondReviewer.rating.sumOfAllRatings).toBe(3) 
         })
@@ -174,7 +177,7 @@ describe("Testing rating system operations", () => {
 
     describe("Test the operation to decline a review.", () => {
         test("If a user declines to review another user for a particular ride, should add a review document to the database with property isDeclined set to true", async () => {
-            const declinedReview = await db.declineReview('test_reviewer', 'test_reviewee', new mongoose.Types.ObjectId('507f191e810c19729de860ed'))
+            const declinedReview = await db.declineReview(mongoose.Types.ObjectId(), 'test_reviewer', 'test_reviewee')
             expect(declinedReview.isDeclined).toBe(true) 
         })
     })
@@ -233,7 +236,7 @@ describe("Testing rating system operations", () => {
             const passenger = await User.create({username: "passenger_1"})
             await db.makeReviewPublic(ride._id, driverReviewToPassenger.reviewerUsername, driverReviewToPassenger.revieweeUsername) 
 
-            expect((await Review.findById(driverReviewToPassenger._id)).isPublished).toBe(true)
+            expect((await Review.findOne({reviewerUsername: driverReviewToPassenger.reviewerUsername, revieweeUsername: driverReviewToPassenger.revieweeUsername})).isPublished).toBe(true)
             expect((await User.findOne({username: passenger.username})).rating.sumOfAllRatings).toBe(3) 
             expect((await User.findOne({username: passenger.username})).rating.totalRatings).toBe(1) 
         })

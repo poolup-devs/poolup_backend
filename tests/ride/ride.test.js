@@ -53,7 +53,7 @@ describe("Testing Ride endpoints", () => {
                 await db.cancelRide(ride._id, "driverUsername")
 
                 // Check whether ride was deleted 
-                const cancelledRide = await Ride.findById(ride._id) 
+                const cancelledRide = await Ride.findOne({ownerUsername: ride.ownerUsername}) 
                 expect(cancelledRide).toBe(null)
             }
             catch(e) {
@@ -74,12 +74,12 @@ describe("Testing Ride endpoints", () => {
             expect(driverNoti.additionalProperties).toEqual({cancellationReason: 'Other', messageToDriver: "Sorry I can't make it!!!"})
 
             // Check whether passenger was removed from ride 
-            const cancelledRide = await Ride.findById(ride._id) 
+            const cancelledRide = await Ride.findOne({ownerUsername: ride.ownerUsername}) 
             expect(cancelledRide.seats).toBe(1)
             expect(Array.from(cancelledRide.passengers)).toEqual(['passenger2'])
             
             // Check incrementation of cancelled rides 
-            const user = await User.findById(passenger._id)
+            const user = await User.findOne({username: passenger.username})
             expect(user.ridesCancelled).toBe(1)
         })
 

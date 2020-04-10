@@ -73,20 +73,20 @@ const expireAbilityToLeaveReviewTask = (rideId, driverUsername, passengerUsernam
 
     // 1. Both driver and passenger did not leave reviews, so expire their ability to leave a review for each other 
     if (!driverReviewToPassenger && !passengerReviewToDriver) {
-      await declineReview(driverUsername, passengerUsername, rideId) 
-      await declineReview(passengerUsername, driverUsername, rideId)
+      await declineReview(rideId, driverUsername, passengerUsername) 
+      await declineReview(rideId, passengerUsername, driverUsername)
     }
     else {
       // 2. One of them left a review but the other didn't 
       if (driverReviewToPassenger) {
         // Driver has left a review to the passenger, so make it public, and expire the passenger's ability to leave a review for driver 
         await makeReviewPublic(rideId, driverUsername, passengerUsername)
-        await declineReview(passengerUsername, driverUsername, rideId) 
+        await declineReview(rideId, passengerUsername, driverUsername) 
       } 
       else {
         // Passenger left review to the driver, so make it public, and expire the driver's ability to leave a review for passenger 
         await makeReviewPublic(rideId, passengerUsername, driverUsername)
-        await declineReview(driverUsername, passengerUsername, rideId)
+        await declineReview(rideId, driverUsername, passengerUsername)
       }
     }
   }

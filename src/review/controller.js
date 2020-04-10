@@ -4,15 +4,16 @@ const Ride = require('../ride/ride').Ride;
 const scheduler = require('../tasks/scheduler')
 
 
+
 // Create a new review with required properties: reviewer username, reviewee username, rating, and ride ID 
-const addNewReview = (reviewInfo) => {
+const addNewReview = (newReviewInfo) => {
     return new Promise(async (resolve, reject) => {
         // Required properties of Review object 
         const requiredProperties = ['reviewerUsername', 'revieweeUsername', 'rating', 'rideId']
         try {
             // Simple field validation 
-            if (requiredProperties.every(property => reviewInfo.hasOwnProperty(property))) {
-                const {reviewerUsername, revieweeUsername, rideId} = reviewInfo
+            if (requiredProperties.every(property => newReviewInfo.hasOwnProperty(property))) {
+                const {reviewerUsername, revieweeUsername, rideId} = newReviewInfo
                 
                 // Prevent duplicate insertion if document already exists 
                 if (!(await Review.findOne({reviewerUsername, revieweeUsername, rideId}))) {
@@ -20,30 +21,25 @@ const addNewReview = (reviewInfo) => {
 
                     // Counterpart has already left their review 
                     if (counterpartReview) {
+                        var newReview = await Review.create(newReviewInfo)
                         // Publish both reviews 
-                        counterpartReview.isPublished = true 
-                        await counterpartReview.save() 
-                        reviewInfo.isPublished = true 
-                        var newReview = await Review.create(reviewInfo)
-
-                        // Update both ratings 
-                        await User.findOneAndUpdate({username: counterpartReview.revieweeUsername}, {$inc: {"rating.sumOfAllRatings": counterpartReview.rating, "rating.totalRatings": 1}}) 
-                        await User.findOneAndUpdate({username: newReview.revieweeUsername}, {$inc: {"rating.sumOfAllRatings": newReview.rating, "rating.totalRatings": 1}}) 
+                        await makeReviewPublic(rideId, reviewerUsername, revieweeUsername)
+                        await makeReviewPublic(rideId, revieweeUsername, reviewerUsername)
 
                         // Cancel the scheduled tasks that expire the ability to review
                         const ride = await Ride.findById(rideId)
                         const driverUsername = (ride.ownerUsername == reviewerUsername) ? reviewerUsername : revieweeUsername
                         const passengerUsername = (reviewerUsername != driverUsername) ? reviewerUsername : revieweeUsername
-                        scheduler.cancelTask(`expireAbilityToLeaveReviewTask.${reviewInfo.rideId}.${driverUsername}.${passengerUsername}`)
+                        scheduler.cancelTask(`expireAbilityToLeaveReviewTask.${newReviewInfo.rideId}.${driverUsername}.${passengerUsername}`)
                     }
                     else {
                         // Counterpart has not left their review, so create new review but leave it as unpublished 
-                        var newReview = await Review.create(reviewInfo)
+                        var newReview = await Review.create(newReviewInfo)
                     }
                     resolve(newReview)
                 }
                 else {
-                    reject('A review has already been made to ' + reviewInfo.revieweeUsername + ' for this ride.')
+                    reject('A review has already been made to ' + newReviewInfo.revieweeUsername + ' for this ride.')
                 }
             }
             reject('Review must contain a reviewer username, reviewee username, rating, and associated ride ID') 
@@ -55,7 +51,7 @@ const addNewReview = (reviewInfo) => {
 }
 
 // Decline to review a user on a particular ride 
-const declineReview = (reviewer, reviewee, rideId) => {
+const declineReview = (rideId, reviewer, reviewee) => {
     return new Promise(async (resolve, reject) => {
         try {
             if (!(await Review.findOne({reviewerUsername: reviewer, revieweeUsername:reviewee, rideId}))) {

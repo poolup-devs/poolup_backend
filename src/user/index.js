@@ -45,15 +45,10 @@ router.post("/users/login", (req, res) => {
 router.post("/users/signup", async (req, res) => {
   try {
     // Validate form information
-    if (
-      await db.isValidAccount(
-        req.body.email,
-        req.body.username,
-        req.body.password
-      )
-    ) {
+    if (await db.isValidAccount(req.body.username, req.body.password)) {
       // Create new user
-      await db.signup(req.body);
+      const newUser = await db.signup(req.body);
+      res.status(201).send(newUser)
     }
   } catch (e) {
     res.status(500).send({ error: e });
@@ -67,6 +62,7 @@ router.get("/users/sendVerificationEmail", async (req, res) => {
     res.status(200).send("Verification email sent successfully.")
   }
   catch(e) {
+    console.log(e)
     res.status(500).send(e)
   }
 })

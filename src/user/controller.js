@@ -348,7 +348,7 @@ const deleteUser = (authUsername, callback) => {
   });
 };
 
-const isValidAccount = (email, username, password) => {
+const isValidAccount = (username, password) => {
   return new Promise(async (resolve, reject) => {
     // Determine whether an account already exists
     const user = await User.findOne({ username: username.trim() });

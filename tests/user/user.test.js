@@ -39,7 +39,7 @@ describe("Testing users without existing accounts", () => {
             .send({
                 username: 'testUser', 
                 password: 'password', 
-                email: "test@ucla.edu"
+                email: 'jsmith@g.ucla.edu'
             })
             .expect(201) 
     })
@@ -191,7 +191,7 @@ describe('Testing users with verified accounts', () => {
                 const unverifiedUser = await User.create({email: "test@ucla.edu", username: "testUsername", password: "password123", verified: false})
                 try {
                     expect.assertions(1)
-                    await db.isValidAccount(unverifiedUser.email, unverifiedUser.username, unverifiedUser.password)
+                    await db.isValidAccount(unverifiedUser.username, unverifiedUser.password)
                 }
                 catch(e) {
                     expect(e).toBe("You must verify this account by checking your email!")
@@ -201,7 +201,7 @@ describe('Testing users with verified accounts', () => {
             test("When a verified account already exists with the exact same username, should result in an error", async () => {
                 try {
                     expect.assertions(1)
-                    await db.isValidAccount("uniqueEmail@ucla.edu", verifiedUser.username, "validPassword123")
+                    await db.isValidAccount(verifiedUser.username, "validPassword123")
                 }
                 catch(e) {
                     expect(e).toBe("A verified account already exists with this username!")
@@ -211,7 +211,7 @@ describe('Testing users with verified accounts', () => {
             test("When a non-school email is used to sign-up, should result in an error", async () => {
                 try {
                     expect.assertions(1)
-                    await db.isValidAccount("uniqueEmail@ucla.com", "uniqueUsername", "validPassword123")
+                    await db.isValidEmail("uniqueEmail@ucla.com")
                 }
                 catch(e) {
                     expect(e).toBe("Not an .edu email address!")
@@ -221,7 +221,7 @@ describe('Testing users with verified accounts', () => {
             test("When signing up using an email that already exists, should result in an error", async () => {
                 try {
                     expect.assertions(1)
-                    await db.isValidAccount(verifiedUser.email, "uniqueUsername", "validPassword123")
+                    await db.isValidEmail(verifiedUser.email)
                 }
                 catch(e) {
                     expect(e).toBe("An account already exists with this email!")
@@ -231,7 +231,7 @@ describe('Testing users with verified accounts', () => {
             test("When signing up using an improperly formatted email, should result in an error", async () => {
                 try {
                     expect.assertions(1)
-                    await db.isValidAccount("notAValidEmail@", "uniqueUsername", "validPassword123")
+                    await db.isValidEmail("notAValidEmail@", "validPassword123")
                 }
                 catch(e) {
                     expect(e).toBe("Not a valid email address!")
@@ -241,7 +241,7 @@ describe('Testing users with verified accounts', () => {
             test("When signing up using a password that is less than eight characters long, should result in an error", async () => {
                 try {
                     expect.assertions(1)
-                    await db.isValidAccount("email@ucla.edu", "uniqueUsername", "1234567")
+                    await db.isValidAccount("uniqueUsername", "1234567")
                 }
                 catch(e) {
                     expect(e).toBe("Password must be at least 8 characters long!")
@@ -250,7 +250,7 @@ describe('Testing users with verified accounts', () => {
     
             test("isValidAccount should resolve to true if sign-up information meets all requirements.", async () => {
                 try {
-                    const result = await db.isValidAccount("uniqueEmail@ucla.edu", "uniqueUsername", "12345678")
+                    const result = await db.isValidAccount("uniqueUsername", "12345678")
                     expect(result).toBe(true) 
                 }
                 catch(e) {

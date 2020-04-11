@@ -273,8 +273,8 @@ Models:
 | ---------------------------- | ----------- | ------------------------------------------------------------------ |
 | /users/login                 | POST        | [User Login](#user-login)                                          |
 | /users/signup                | POST        | [User Signup](#user-signup)                                        |
+| /users/sendVerificationEmail | GET         | [Send a verification email to signup](#send-verification-email)    |
 | /users/verify                | GET         | [Send a verification Email for signup](#email-verification)        |
-| /users/emailValidation       | GET         | [Validation/usability of Email](#email-validation)                 |
 | /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
 | /users/phoneNumberValidation | GET         | [Validation/usability of a phone number](#phone-number-validation) |
 | /users/upload-profile-pic    | PATCH       | [upload a user profile image](#upload-profile-image)               |
@@ -323,11 +323,19 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
 
 POST request
 
-- Must provide an email, username, and password.
-- Validates the information inputted by the user by following several requirements, as outlined below. - For each unmet requirement, an error message is returned in the response body. 1. **Username is not unique** -> "A verified account already exists with this username!" 2. **Email is not unique** -> "An account already exists with this email!" 3. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!" 4. **Email is not a student email** -> "Not an .edu email address!" 5. **Signing up with the credentials of an unverified account** -> "You must verify this account by checking your email!" 6. **Password too short** -> "Password must be at least 8 characters long!"
+- Must provide username, email, password, first name, and last name. 
+- Validates the information inputted by the user by following several requirements, as outlined below. 
+- For each unmet requirement, an error message is returned in the response body. 
+1. **Username is not unique** -> "A verified account already exists with this username!" 
+2. **Signing up with the credentials of a pending, unverified account** -> "You must verify this account by checking your email!"
+3. **Password too short** -> "Password must be at least 8 characters long!"
 
 - Sends a confirmation email containing the following link: https://bruinpool.io/users/verify?token=TOKENATTACHEDHERE. The user must activate within **30 minutes** after signing up, or they must signup again.
-- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. - To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school - The associations can be stored in a JSON file and imported periodically to the database via the mongoexport command - Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"} - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu"
+- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. 
+    - To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school 
+    - The associations can be stored in a JSON file and imported periodically to the database via the mongoexport command 
+        - Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"} 
+        - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu"
 - A default profile pic of Bruinbear with random color is assigned
 
 **Body**
@@ -357,6 +365,26 @@ Example of error message:
 
 ---
 
+### Send Verification Email 
+
+GET request 
+
+This request first verifies whether the email is valid, returning an error message if not. It uses the following criteria to determine validity: 
+1. **Email is not unique** -> "An account already exists with this email!" 
+2. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!" 
+3. **Email is not a student email** -> "Not an .edu email address!"
+
+If the email is valid, the endpoint sends a verification email to the user. 
+
+**params**
+email address 
+
+**return value** 
+200 response if the email was sent
+500 reponse otherwise, with the error message attached 
+
+---
+
 ### Email Verification
 
 GET request
@@ -374,40 +402,6 @@ localhost:3000/users/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpb
 **return value**
 
 200 status, returns a redirection to https://bruinpool.io/login where the user can now login with the verified email & password
-
----
-
-### Email Validation
-
-Get request
-
-**params**
-
-email
-
-**example**
-
-localhost:3000/users/emailValidation?email=bin315a1@g.ucla.edu
-
-**return value**
-
-200 status, array of user objects with that email
-
-```
-[
-    {
-        "driverList": [],
-        "riderList": [],
-        "verified": true,
-        "_id": "5d55af9f4c5458138f2efa85",
-        "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
-        "username": "bin315a1",
-        "name": "Han",
-        "email": "bin315a1@g.ucla.edu",
-        "__v": 0
-    }
-]
-```
 
 ---
 

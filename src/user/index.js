@@ -83,17 +83,6 @@ router.get("/users/verify", (req, res) => {
   }
 });
 
-//Validate User Email
-router.get("/users/emailValidation", (req, res) => {
-  db.findUserByEmail(req.query.email, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(200).send(data);
-    }
-  });
-});
-
 // Validate Username
 router.get("/users/usernameValidation", (req, res) => {
   db.findUserByUsername(req.query.username, (err, data) => {

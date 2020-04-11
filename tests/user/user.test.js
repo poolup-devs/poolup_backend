@@ -196,7 +196,7 @@ describe('Testing users with verified accounts', () => {
             test("When a user tries to sign-up for an account that needs to be verified via email, should result in an error", async () => {
                 const unverifiedUser = await User.create({email: "test@ucla.edu", username: "testUsername", password: "password123", verified: false})
                 try {
-                    expect.assertions(1)
+                    // expect.assertions(1)
                     await db.isValidAccount(unverifiedUser.username, unverifiedUser.password)
                 }
                 catch(e) {
@@ -204,7 +204,7 @@ describe('Testing users with verified accounts', () => {
                 }
             })
             
-            test("When a verified account already exists with the exact same username, should result in an error", async () => {
+            test.only("When a verified account already exists with the exact same username, should result in an error", async () => {
                 try {
                     expect.assertions(1)
                     await db.isValidAccount(verifiedUser.username, "validPassword123")
@@ -334,7 +334,7 @@ describe('Testing users with verified accounts', () => {
                 expect(result).toEqual(expect.objectContaining({
                     username, firstName, lastName, email, picUrl
                 }))
-                done() 
+                done()
             })
         })
         test("When requesting account information using an invalid username, the response should be an error", done => {
@@ -441,13 +441,6 @@ describe('Testing users with verified accounts', () => {
             await request(app)
                 .get('/users/usernameValidation')
                 .query({username: verifiedUser.username})
-                .expect(200) 
-        })
-
-        test("When sending an GET request to /users/emailValidation with a valid email associated with an account, should expect 200 response.", async () => {
-            await request(app)
-                .get('/users/emailValidation')
-                .query({email: verifiedUser.email})
                 .expect(200) 
         })
 

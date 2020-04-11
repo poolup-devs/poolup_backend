@@ -2,6 +2,11 @@ const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
 const Review = require("../review/review").Review;
+const jwt = require("jsonwebtoken");
+const sgMail = require("@sendgrid/mail");
+
+
+
 
 // Users require a certain minimum amount of ratings to calculate an average rating
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
@@ -92,7 +97,7 @@ const sendVerificationEmail = (email) => {
     try {
       if (await isValidEmail(email)) {
         // Construct verification email
-        const token = jwt.sign({ email }, JWT_EMAIL_KEY, { expiresIn: "24h" });
+        const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, { expiresIn: "24h" });
         if (process.env.MODE === "STAGING") {
           var url =
             "localhost:" + process.env.PORT + "/users/verify?token=" + token;
@@ -362,7 +367,7 @@ const isValidAccount = (username, password) => {
     const user = await User.findOne({ username: username.trim() });
     if (user) {
       if (!user.verified) {
-        return reject("You must verify this account by checking your email!");
+        return resolve("You must verify this account by checking your email!");
       }
       return reject("A verified account already exists with this username!");
     }
@@ -389,6 +394,7 @@ const isValidEmail = (email) => {
       if (await User.findOne({ email: email.trim() })) {
         return reject("An account already exists with this email!");
       }
+      resolve(true)
     } else {
       return reject("Not a valid email address!");
     }

@@ -128,7 +128,7 @@ describe("Testing rating system operations", () => {
                 }
                 const newReview = await db.addNewReview(reviewInfo)
                 const {reviewerUsername, rating, rideId} = reviewInfo
-                expect(newReview).toEqual(expect.objectContaining({
+                expect(newReview).toStrictEqual(expect.objectContaining({
                     reviewerUsername, revieweeUsername, rating, rideId, isPublished: false
                 })) 
 

@@ -410,6 +410,21 @@ const passwordReset = (authUsername, newPassword, callback) => {
   );
 };
 
+const getAboutMe = (username) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const user = await User.findOne({username})
+      if (!user) {
+        reject("There does not exist a user with this username.") 
+      }
+      resolve(user.aboutMe)
+    }
+    catch(e) {
+      reject(e) 
+    }
+  }) 
+}
+
 const updateAboutMe = (authUsername, updatedAboutMe) => {
   return new Promise((resolve, reject) => {
     User.findOneAndUpdate(
@@ -552,6 +567,7 @@ module.exports = {
   deleteUser,
   isValidPassword,
   passwordReset,
+  getAboutMe,
   updateAboutMe,
   getAverageRating,
   getPublicProfileInfo,

@@ -274,6 +274,17 @@ router.patch("/users/changePassword", checkAuth, (req, res) => {
   });
 });
 
+// Get about me 
+router.get("/users/get-about-me", async (req, res) => {
+  try {
+    const aboutMe = await db.getAboutMe(req.query.username) 
+    res.status(200).send({aboutMe})
+  }
+  catch(e) {
+    res.status(500).send(e) 
+  }
+})
+
 // Update About Me
 router.patch("/users/updateAboutMe", checkAuth, async (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;

@@ -293,6 +293,33 @@ describe('Testing users with verified and registered accounts', () => {
                 expect(e).toEqual("Could not parse email to identify school")
             }
         })
+        
+        test("When asking for a user's about me that doesn't exist, should return {} response", async () => {
+            const user = await User.create({username: "username"})
+            const aboutMe = await db.getAboutMe(user.username)
+            expect(aboutMe).not.toBeTruthy()
+        })
+        
+        test("When sending an GET request to /users/get-about-me to a user without an aboutMe, should expect empty 200 response.", async () => {
+            const user = await User.create({username: "username"})
+            await request(app)
+                .get('/users/get-about-me')
+                .query({username: user.username})
+                .expect(200) 
+                .then((res) => {
+                    expect(res.body).toEqual({})
+                })
+        })
+
+        test("When sending an GET request to /users/get-about-me to a user with an aboutMe, should expect 200 response.", async () => {
+            await request(app)
+                .get('/users/get-about-me')
+                .query({username: registeredUser.username})
+                .expect(200) 
+                .then((res) => {
+                    expect(res.body).toEqual({"aboutMe" : "This was my old about me."})
+                })
+        })
 
         test("When requesting account information using a valid username, response should return an object with properties: username, firstName, lastName, email, createdAt, and picUrl", done => {
             db.getMyInfo(registeredUser.username, (err, result) => {

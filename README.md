@@ -286,6 +286,7 @@ Models:
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
 | /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
 | /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
+| /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                   |
 | /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
 | /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |
 | /users/driverStatus          | GET         | [Check if a user is a driver](#check-if-driver)                    |
@@ -748,6 +749,24 @@ GET request
 }
 
 ```
+
+---
+### Get about me 
+
+GET request
+
+- Return a user's about me description, returns {} if one does not exist 
+
+**query** 
+username 
+
+**example**
+localhost:3000/users/get-about-me?username=elin4046
+
+
+**return value** 
+200 if successful 
+500 to indicate database error 
 
 ---
 

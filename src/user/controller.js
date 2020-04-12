@@ -62,6 +62,9 @@ const signup = async userInfo => {
       userInfo.username = userInfo.email.split('@')[0] 
       userInfo.isRegistered = true       
       const newlyRegisteredUser = await User.findOneAndUpdate({email: userInfo.email}, userInfo, {new: true});
+      if (!newlyRegisteredUser) {
+        return reject("User did not verify email before inputting account information.")
+      }
       User.setRandomBruinBear(newlyRegisteredUser.username);
 
       // Give the user a stripe id
@@ -86,9 +89,6 @@ const signup = async userInfo => {
     }
     catch (e) {
       console.log(e)
-      User.deleteOne({ username: newlyRegisteredUser.username }).catch(
-        console.log(e)
-      )
     }
   })
 }

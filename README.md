@@ -347,7 +347,7 @@ POST request
 
 201 Created if the user could be successfully registered into the database. 
 
-500 status if there was a database error while registering the user.
+500 status if there was a database error while registering the user, or if the user skipped the email verification step. 
 
 ---
 

@@ -66,11 +66,22 @@ describe("Testing the sign-up functionality for users without registered account
 
     test("Expect an error if not all required properties are passed into signup", async () => {
         try {
+            expect.assertions(1)
             // Missing email property 
             await db.signup({firstName: "John", lastName: "Smith", password: "password"})
         }
         catch(e) {
             expect(e).toBe("Not all required fields were specified.")
+        }
+    })
+
+    test("Expect an error if not all required properties are passed into signup", async () => {
+        try {
+            expect.assertions(1)
+            await db.signup({firstName: "John", lastName: "Smith", password: "password", email: 'unverifiedAccount@ucla.edu'})
+        }
+        catch(e) {
+            expect(e).toBe("User did not verify email before inputting account information.")
         }
     })
 

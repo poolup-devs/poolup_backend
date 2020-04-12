@@ -42,7 +42,7 @@ const userSchema = mongoose.Schema({
   phoneNumber: String,
   picUrl: String,
   picType: { type: String, default: "png" },
-  verified: { type: Boolean, default: false },
+  isRegistered: { type: Boolean, default: false },
   createdAt: { type: Date, default: new Date() },
 
   // Personal information
@@ -75,7 +75,7 @@ userSchema.statics.setRandomBruinBear = function(username) {
 
 userSchema.index(
   { createdAt: 1 },
-  { expireAfterSeconds: 60 * 30, partialFilterExpression: { verified: false } }
+  { expireAfterSeconds: 60 * 30, partialFilterExpression: { isRegistered: false } }
 );
 
 const User = mongoose.model("User", userSchema);

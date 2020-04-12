@@ -215,11 +215,11 @@ describe("Testing rating system operations", () => {
         })
 
         test("Should correctly add a new review when properly authenticated.", async () => {
-            const verifiedUserUsernameAuthToken = jwt.sign({ username: 'driver_username' }, process.env.JWT_SECRET_KEY);
+            const userAuthToken = jwt.sign({ username: 'driver_username' }, process.env.JWT_SECRET_KEY);
             const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1", "passenger_2", "passenger_3"]})
             await request(app)
                 .get('/reviews/get-eligible-users-to-review')
-                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
+                .set('Authorization', 'Bearer ' + userAuthToken)
                 .query({rideId: ride._id.toString()})
                 .expect(200) 
         })
@@ -243,12 +243,12 @@ describe("Testing rating system operations", () => {
     })
 
     describe("Testing rating system API endpoints", () => {
-        const verifiedUserUsernameAuthToken = jwt.sign({ username: 'verified_user' }, process.env.JWT_SECRET_KEY);
+        const userAuthToken = jwt.sign({ username: 'registeredUser' }, process.env.JWT_SECRET_KEY);
         
         test("Should correctly add a new review when properly authenticated.", async () => {
             await request(app)
                 .post('/reviews')
-                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
+                .set('Authorization', 'Bearer ' + userAuthToken)
                 .send({
                     revieweeUsername: 'some_user', 
                     rideId: mongoose.Types.ObjectId(), 

@@ -29,9 +29,8 @@ const login = (email, password, callback) => {
         callback(err, null);
       } else if (result === null) {
         callback({ message: "user with email and password not found" }, null);
-      } else if (result.verified === false) {
-        callback({ message: "email not verified" }, null);
-      } else {
+      }
+      else {
         callback(null, result);
       }
     }
@@ -50,19 +49,20 @@ const checkAvailability = (email, username, callback) => {
 
 const signup = async userInfo => {
   return new Promise(async (resolve, reject) => {
-    //  // Required properties of User document 
-    //  const requiredProperties = ['firstName', 'lastName', 'username', 'password', 'email']
-    //  try {
-    //      // Simple field validation 
-    //      if (requiredProperties.every(property => userInfo.hasOwnProperty(requiredProperties)))
-
-
-
-    userInfo.password = sha256(userInfo.password);
+    // Required properties 
+    const requiredProperties = ['firstName', 'lastName', 'password', 'email']
+    // Field validation 
+    if (!requiredProperties.every(property => userInfo.hasOwnProperty(property))) {
+      return reject("Not all required fields were specified.") 
+    }
     try {
+      // Create a user document containing a hashed password with username and school fields parsed from email 
+      userInfo.password = sha256(userInfo.password);
       userInfo.school = await parseSchoolFromEmail(userInfo.email);
-      const newUser = await User.create(userInfo);
-      User.setRandomBruinBear(newUser.username);
+      userInfo.username = userInfo.email.split('@')[0] 
+      userInfo.isRegistered = true       
+      const newlyRegisteredUser = await User.create(userInfo);
+      User.setRandomBruinBear(newlyRegisteredUser.username);
 
       // Give the user a stripe id
       var stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
@@ -70,27 +70,27 @@ const signup = async userInfo => {
       // Create Customer ID
       stripe.customers.create(
         {
-          email: userInfo.email,
-          name: userInfo.firstName + " " + userInfo.lastName
+          email: newlyRegisteredUser.email,
+          name: newlyRegisteredUser.firstName + " " + newlyRegisteredUser.lastName
         },
         function(err, customer) {
           // asynchronously called
           if (err) {
             console.log("Failed to create Stripe Customer: ", err);
           } else {
-            newUser.stripe.customerID = customer.id;
+            newlyRegisteredUser.stripe.customerID = customer.id;
           }
         }
       );
-      resolve(newUser);
+      resolve(newlyRegisteredUser);
     }
     catch (e) {
-      User.deleteOne({ username: userInfo.username }, () => {
-        reject(e);
-      });
+      User.deleteOne({ username: newlyRegisteredUser.username }).catch(
+        console.log(e)
+      )
     }
-  });
-};
+  })
+}
 
 const sendVerificationEmail = (email) => {
   return new Promise(async (resolve, reject) => {
@@ -128,42 +128,39 @@ const sendVerificationEmail = (email) => {
         }
 
         // Send verification email
-        sgMail
-        .send(verificationEmail)
-        .then(() => {
-          resolve(true)
-        })
-        .catch(error => {
-          reject("Could not send verification email!")
-        });
+        sgMail.send(verificationEmail)
+          .then(() => {
+            resolve(true)
+          })
+          .catch(error => {
+            reject("Could not send verification email!")
+          });
       }
     }
     catch(e) {
       reject(e) 
     }
-  })
+  })  
 }
 
-const verifyEmail = (email, callback) => {
-  User.findOneAndUpdate(
-    { email },
-    { verified: true },
-    { new: true },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else if (result) {
-        callback(null, result);
-      } else {
-        callback(
-          {
-            message: "ERROR: verification token expired; try signing up again"
-          },
-          null
-        );
+// Adds a user with a verified email to the database. 
+// The user will become permanent only once it is registered with a name and password. 
+const verifyEmail = (email) => {
+  return new Promise(async (resolve, reject) => {
+    const verifiedEmail = await User.findOne({email})
+    if (!verifiedEmail) {
+      resolve(await User.create({email}))
+    }
+    else {
+      // The email has been verified but the user has not registered yet 
+      if (!verifiedEmail.isRegistered) {
+        resolve(verifiedEmail) 
+      }
+      else {
+        reject("The user has already verified their email and registered their account.")
       }
     }
-  );
+  })
 };
 
 const findUserByEmail = (email, callback) => {
@@ -361,17 +358,8 @@ const deleteUser = (authUsername, callback) => {
   });
 };
 
-const isValidAccount = (username, password) => {
+const isValidPassword = (password) => {
   return new Promise(async (resolve, reject) => {
-    // Determine whether an account already exists
-    const user = await User.findOne({ username: username.trim() });
-    if (user) {
-      if (!user.verified) {
-        return resolve("You must verify this account by checking your email!");
-      }
-      return reject("A verified account already exists with this username!");
-    }
-
     // Password must be a minimum of 8 characters long
     if (password.length < 8) {
       return reject("Password must be at least 8 characters long!");
@@ -390,9 +378,9 @@ const isValidEmail = (email) => {
       if (!emailDomain || emailDomain.tld !== "edu") {
         return reject("Not an .edu email address!");
       }
-      // Must be unique email
-      if (await User.findOne({ email: email.trim() })) {
-        return reject("An account already exists with this email!");
+      // A registered account exists with this email 
+      if (await User.findOne({ email: email.trim(), isRegistered: true})) {
+        return reject("A registered account already exists with this email!");
       }
       resolve(true)
     } else {
@@ -570,7 +558,7 @@ module.exports = {
   addUserDriverInfo,
   updateUser,
   deleteUser,
-  isValidAccount,
+  isValidPassword,
   passwordReset,
   updateAboutMe,
   getAverageRating,

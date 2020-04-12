@@ -45,7 +45,7 @@ router.post("/users/login", (req, res) => {
 router.post("/users/signup", async (req, res) => {
   try {
     // Validate form information
-    if (await db.isValidAccount(req.body.username, req.body.password)) {
+    if (await db.isValidPassword(req.body.password)) {
       // Create new user
       const newUser = await db.signup(req.body);
       res.status(201).send(newUser)
@@ -67,19 +67,16 @@ router.get("/users/sendVerificationEmail", async (req, res) => {
   }
 })
 
-//Verify Email
-router.get("/users/verify", (req, res) => {
+// Verify Email
+router.get("/users/verify", async (req, res) => {
   try {
     const userEmail = jwt.verify(req.query.token, JWT_EMAIL_KEY);
-    db.verifyEmail(userEmail.email, (err, data) => {
-      if (err) {
-        res.status(400).send(err);
-      } else {
-        res.redirect("https://" + process.env.PRODUCTION_DOMAIN_URL + "/login");
-      }
-    });
-  } catch (err) {
-    res.sendStatus(401);
+    await db.verifyEmail(userEmail.email)
+    // Redirect to register the user's name and password 
+    res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/signup/3");
+  } 
+  catch (err) {
+    res.status(401).send(err);
   }
 });
 

@@ -11,7 +11,7 @@ const userSeed = () =>
     return User.deleteMany({}).then((res, err) => {
         user_list = [
             {
-                verified: true,
+                isRegistered: true, 
                 password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
                 username: "admin",
                 firstName: "admin",
@@ -19,7 +19,7 @@ const userSeed = () =>
                 picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
             },
             {
-                verified: true,
+                isRegistered: true, 
                 password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
                 username: "user1",
                 firstName: "user1",
@@ -27,7 +27,7 @@ const userSeed = () =>
                 picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
             }, 
             {
-                verified: true,
+                isRegistered: true, 
                 password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
                 username: "user2",
                 firstName: "user2",
@@ -35,7 +35,7 @@ const userSeed = () =>
                 picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_pink.png",
             }, 
             {
-                verified: true,
+                isRegistered: true, 
                 password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
                 username: "user3",
                 firstName: "user3",
@@ -43,7 +43,7 @@ const userSeed = () =>
                 picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_purple.png",
             }, 
             {
-                verified: true,
+                isRegistered: true, 
                 password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
                 username: "user4",
                 firstName: "user4",

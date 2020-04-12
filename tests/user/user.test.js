@@ -38,7 +38,7 @@ describe("Testing the verification of an email", () => {
             await db.verifyEmail(verifiedUser.email)     
         }
         catch(e) {
-            expect(e).toBe("The user has already verified their email and registered their account.")
+            expect(e).toEqual({name: "AccountAlreadyRegistered", message: "The user has already verified their email and registered their account."})
         }
     })
     

@@ -72,10 +72,15 @@ router.get("/users/verify", async (req, res) => {
     res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/signup/3");
   } 
   catch (err) {
-    if (err == 'TokenExpiredError') {
-      res.redirect(401, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/signup/2/expired")
+    if (err.name === 'TokenExpiredError') {
+      res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/signup/2/expired")
     }
-    res.status(401).send(err);
+    else if (err.name == 'AccountAlreadyRegistered') {
+      res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/login")
+    }
+    else {
+      res.status(401).send(err);
+    }
   }
 });
 

@@ -149,7 +149,7 @@ const verifyEmail = (email) => {
         resolve(verifiedEmail) 
       }
       else {
-        reject("The user has already verified their email and registered their account.")
+        reject({name: "AccountAlreadyRegistered", message: "The user has already verified their email and registered their account."})
       }
     }
   })

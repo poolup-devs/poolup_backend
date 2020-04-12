@@ -53,6 +53,17 @@ describe("Testing the verification of an email", () => {
 
 
 describe("Testing the sign-up functionality for users without registered accounts", () => {
+    // Create a user who has verified their email  
+    const verifiedAccount = new User({email: "verifiedEmail@ucla.edu", isRegistered: false})
+
+    beforeEach(async () => {
+        await new User(verifiedAccount).save()
+    })
+
+    afterEach(async () => {
+        await User.deleteMany()
+    })
+
     test("Expect an error if not all required properties are passed into signup", async () => {
         try {
             // Missing email property 
@@ -64,13 +75,13 @@ describe("Testing the sign-up functionality for users without registered account
     })
 
     test("When signing up a new user, a new user should be added to the database with a firstName, username, hashed password, email, school, and isRegistered set to true.", async () => {
-        const newUser = await db.signup({firstName: "John", lastName: "Smith", password: "password", email: "jsmith@g.ucla.edu"})
+        const newUser = await db.signup({firstName: "John", lastName: "Smith", password: "password", email: verifiedAccount.email})
         expect(newUser).toEqual(expect.objectContaining({
             firstName: "John", 
             lastName: "Smith",
-            username: "jsmith", 
+            username: "verifiedEmail", 
             password: sha256("password"), 
-            email: "jsmith@g.ucla.edu", 
+            email: "verifiedEmail@ucla.edu", 
             school: "UCLA",
             isRegistered: true
         })) 
@@ -83,7 +94,7 @@ describe("Testing the sign-up functionality for users without registered account
                 firstName: "John", 
                 lastName: "Smith",
                 password: "password", 
-                email: "jsmith@g.ucla.edu"
+                email: verifiedAccount.email
             })
             .expect(201) 
     })

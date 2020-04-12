@@ -61,7 +61,7 @@ const signup = async userInfo => {
       userInfo.school = await parseSchoolFromEmail(userInfo.email);
       userInfo.username = userInfo.email.split('@')[0] 
       userInfo.isRegistered = true       
-      const newlyRegisteredUser = await User.create(userInfo);
+      const newlyRegisteredUser = await User.findOneAndUpdate({email: userInfo.email}, userInfo, {new: true});
       User.setRandomBruinBear(newlyRegisteredUser.username);
 
       // Give the user a stripe id
@@ -85,6 +85,7 @@ const signup = async userInfo => {
       resolve(newlyRegisteredUser);
     }
     catch (e) {
+      console.log(e)
       User.deleteOne({ username: newlyRegisteredUser.username }).catch(
         console.log(e)
       )

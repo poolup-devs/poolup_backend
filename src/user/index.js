@@ -46,9 +46,9 @@ router.post("/users/signup", async (req, res) => {
   try {
     // Validate form information
     if (await db.isValidPassword(req.body.password)) {
-      // Create new user
-      const newUser = await db.signup(req.body);
-      res.status(201).send(newUser)
+      // Update the verified user's information with account information 
+      const registeredUser = await db.signup(req.body);
+      res.status(201).send(registeredUser)
     }
   } catch (e) {
     res.status(500).send({ error: e });

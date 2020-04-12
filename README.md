@@ -339,7 +339,7 @@ POST request
 	"email": "user@ucla.edu"
     "firstName": "Evan", 
     "lastName": "Lin", 
-	"password": "examplePassword",
+	"password": "examplePassword"
 }
 ```
 

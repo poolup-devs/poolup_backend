@@ -77,7 +77,7 @@ router.get("/users/verify", async (req, res) => {
   } 
   catch (err) {
     if (err == 'TokenExpiredError') {
-      res.redirect(401, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/signup/expired-verification-link")
+      res.redirect(401, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/signup/2/expired")
     }
     res.status(401).send(err);
   }

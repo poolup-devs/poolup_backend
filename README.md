@@ -1049,6 +1049,7 @@ POST request
 
 - Creates a new ride document.
 - Schedules a task to occur two hours after the start of a ride that updates the driver and passenger's `ridesCompleted` property.
+- Schedules a task that occurs 12 hours after the start of the ride to send web notifications to leave reviews.
 
 **body**
 

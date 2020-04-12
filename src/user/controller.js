@@ -18,23 +18,14 @@ const parseDomain = require("parse-domain");
 const isEmail = require("isemail");
 const sha256 = require("sha256");
 
-const login = (email, password, callback) => {
-  User.findOne(
-    {
-      email: email,
-      password: password
-    },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else if (result === null) {
-        callback({ message: "user with email and password not found" }, null);
-      }
-      else {
-        callback(null, result);
-      }
+const login = async (email, password) => {
+  return new Promise(async (resolve, reject) => {
+    const user = await User.findOne({email, password}) 
+    if (!user) {
+      return reject("User with email and password not found.") 
     }
-  );
+    return resolve(user)
+  })
 };
 
 const checkAvailability = (email, username, callback) => {

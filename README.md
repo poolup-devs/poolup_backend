@@ -323,7 +323,8 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
 
 POST request
 
-- Registers an account in the database by providing an email, first name, last name, and password of at least 8 digits. 
+- Permanently registers an account in the database and returns an authentication token. 
+- Must provide an email, first name, last name, and password of at least 8 digits. 
 - The `username` property is updated by parsing the email. 
 - The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. 
     - To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school 
@@ -336,17 +337,49 @@ POST request
 
 ```
 {
-	"email": "user@ucla.edu"
+	"email": "elin0467@g.ucla.edu",
     "firstName": "Evan", 
     "lastName": "Lin", 
-	"password": "examplePassword"
+	"password": "password"
 }
 ```
 
 **return value**
+{
+    "registeredUser": {
+        "stripe": {
+            "customerID": "",
+            "accountID": ""
+        },
+        "driver": {
+            "isDriver": false,
+            "licensePlate": "",
+            "vehicleMakeModel": "",
+            "driversLicense": "",
+            "vehicleColor": ""
+        },
+        "rating": {
+            "sumOfAllRatings": 0,
+            "totalRatings": 0
+        },
+        "picType": "png",
+        "isRegistered": true,
+        "createdAt": "2020-04-12T20:13:40.851Z",
+        "ridesCancelled": 0,
+        "ridesCompleted": 0,
+        "_id": "5e93769a95c105385c0ccd9b",
+        "email": "elin0467@g.ucla.edu",
+        "__v": 0,
+        "firstName": "Evan",
+        "lastName": "Lin",
+        "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+        "school": "UCLA",
+        "username": "elin0467"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImVsaW4wNDY3IiwiaWF0IjoxNTg2NzIyNTA0LCJleHAiOjE1ODY4MDg5MDR9.SgNf9XUOUBMuTfRuw4LgOTTRbw04_8rFD7ng87-ax7U"
+}
 
-201 Created if the user could be successfully registered into the database. 
-
+201 Created if the user was successfully registered into the database. 
 500 status if there was a database error while registering the user, or if the user skipped the email verification step. 
 
 ---
@@ -448,6 +481,8 @@ localhost:3000/users/phoneNumberValidation?phoneNumber=1231231234
 ### Upload Profile Image
 
 PATCH request
+
+Upload a profile picture for the currently logged in user. 
 
 **Body**
 

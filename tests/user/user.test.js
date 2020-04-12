@@ -134,23 +134,20 @@ describe('Testing users with verified and registered accounts', () => {
     })
 
     describe("Testing signup/login/authentication functionality", () => {
-        test("When logging in with an invalid password, should return an error.", done => {
-            db.login(registeredUser.email, sha256('invalid_password'), (err, result) => {
-                expect(result).toEqual(null)
-                expect(err).toEqual({ message: "user with email and password not found" }) 
-                done()
-            }) 
+        test("When logging in with an invalid password, should return an error.", async () => {
+            try {
+                expect.assertions(1)
+                await db.login(registeredUser.email, sha256('invalid_password'))
+            }
+            catch(e) {
+                expect(e).toBe("User with email and password not found.") 
+            }
         })
     
-        test("When logging in with correct email and password credentials, should return the user's account information.", done => {
-            db.login(registeredUser.email, sha256('password'), (err, result) => {
-                expect(err).toEqual(null)
-                const {firstName, lastName, username, email, isRegistered} = registeredUser 
-                expect(result).toEqual(expect.objectContaining({
-                    firstName, lastName, username, password: sha256("password"), email, isRegistered
-                })) 
-                done()
-            }) 
+        test("When logging in with correct email and password credentials, should return true.", async () => {
+            const validCredentials = await db.login(registeredUser.email, sha256('password'))
+            const {firstName, lastName, username, password, email, phoneNumber, aboutMe, isRegistered} = registeredUser
+            expect(validCredentials).toEqual(expect.objectContaining({firstName, lastName, username, password, email, phoneNumber, aboutMe, isRegistered}))
         }) 
 
         test("When sending an POST request to /users/login for a user with invalid password, should expect a 401 authentication error response back.", async () => {

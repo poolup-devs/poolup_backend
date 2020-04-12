@@ -23,22 +23,18 @@ const STRIPE_CLIENT_ID = process.env.STRIPE_CLIENT_ID;
 sgMail.setApiKey(SENDGRID_API_KEY);
 
 //User Login
-router.post("/users/login", (req, res) => {
-  if (req.body.password) {
-    req.body.password = sha256(req.body.password);
-  }
-  db.login(req.body.email, req.body.password, (err, data) => {
-    if (err) {
-      res.status(401).send(err);
-    } else {
-      const token = jwt.sign({ username: data.username }, JWT_SECRET_KEY, {
-        expiresIn: "24h"
-      });
-      res.status(200).send({
-        authToken: token
-      });
+router.post("/users/login", async (req, res) => {
+  try {
+    if (req.body.password) {
+      req.body.password = sha256(req.body.password);
     }
-  });
+    const user = await db.login(req.body.email, req.body.password)
+    const token = jwt.sign({ username: user.username }, JWT_SECRET_KEY, { expiresIn: "24h"})
+    res.status(200).send({authToken: token})
+  }
+  catch(e) {
+    res.status(401).send({message: e}) 
+  }
 });
 
 // User Signup
@@ -48,7 +44,8 @@ router.post("/users/signup", async (req, res) => {
     if (await db.isValidPassword(req.body.password)) {
       // Update the verified user's information with account information 
       const registeredUser = await db.signup(req.body);
-      res.status(201).send(registeredUser)
+      const token = jwt.sign({ username: registeredUser.username }, JWT_SECRET_KEY, { expiresIn: "24h"})
+      res.status(201).send({registeredUser, token}) 
     }
   } catch (e) {
     res.status(500).send({ error: e });
@@ -62,7 +59,6 @@ router.get("/users/sendVerificationEmail", async (req, res) => {
     res.status(200).send("Verification email sent successfully.")
   }
   catch(e) {
-    console.log(e)
     res.status(500).send(e)
   }
 })

@@ -393,7 +393,8 @@ This request first verifies whether the email is valid, returning an error messa
 1. **Email is not unique** -> "An account already exists with this email!" 
 2. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!" 
 3. **Email is not a student email** -> "Not an .edu email address!"
-
+4. **Email is associated with a registered account** -> "A registered account already exists with this email!"
+**
 If the email is valid, the endpoint sends a verification email to the user. 
 This endpoint can be called multiple times to resend the verification email. 
 

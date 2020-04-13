@@ -11,6 +11,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Lead Bac
 4. [Deployment](#deployment) - Temporarily Deprecated
 
 # Setup
+
 After the Local Environment Setup, using **Docker Commands** is advised for application setup & running the application.
 
 1. [Local Environment Setup](#local-environment-setup)
@@ -20,8 +21,6 @@ After the Local Environment Setup, using **Docker Commands** is advised for appl
 5. [Directory Structure](#directory-structure)
 
 ---
-
-
 
 ## Local Development Setup (for additional reference)
 
@@ -214,21 +213,13 @@ For all API requests after login, the bearer token must be included in headers f
 There must be a white space between the string "Bearer" and the token string
 
 ## Scheduling Tasks
+
 All scheduled tasks should be in /tasks/scheduledTasks.js, with unit tests in /tests/tasks/scheduledTasks.test.js
 Operations
--  `void scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)`
-	- Schedules a task to *run once*, X hours after a certain date
-		-  **uniqueTaskName**: uniquely identify the task in the case you ever need to cancel the task
-		-  **task**: function pointer of the task to schedule
-		-  **date**: JavaScript Date object
-		-  **hours**: number of hours after specified date
--  `cancelTasksAssociatedWithRide(rideId)`
-	- Clean up all tasks associated with a ride
-	- This will clean up tasks named with the following format: **taskFunctionName:{rideId}**
-		- ex: **updateCompletedRidesTask:{rideId}** or **promptLeaveAReviewTask:{rideId}**
-	- This can be used to clean up scheduled email reminders and web notifications for rides that have been cancellled 
--  `bool cancelTask(taskName)`
-	- Cancel a task, returns a Promise that resolves into a boolean value 
+
+- `void scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)` - Schedules a task to _run once_, X hours after a certain date - **uniqueTaskName**: uniquely identify the task in the case you ever need to cancel the task - **task**: function pointer of the task to schedule - **date**: JavaScript Date object - **hours**: number of hours after specified date
+- `cancelTasksAssociatedWithRide(rideId)` - Clean up all tasks associated with a ride - This will clean up tasks named with the following format: **taskFunctionName:{rideId}** - ex: **updateCompletedRidesTask:{rideId}** or **promptLeaveAReviewTask:{rideId}** - This can be used to clean up scheduled email reminders and web notifications for rides that have been cancellled
+- `bool cancelTask(taskName)` - Cancel a task, returns a Promise that resolves into a boolean value
 
 ## Models & API Endpoints Documentation
 
@@ -1195,7 +1186,7 @@ PUT request
     "ride": {
         "_id" : "5e649bba9e2f6d3570e88462",
         "passengers" : [
-            "user1" 
+            "user1"
         ],
         "ownerEmail" : "user2@g.ucla.edu.com",
         "ownerUsername" : "user2",
@@ -1398,13 +1389,12 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 
 ### API Endpoints
 
-| url                                   | HTTP Method | description                                                         |
-| ------------------------------------- | ----------- | ------------------------------------------------------------------- |
-| /reviews                              | POST        | [Add a review ](#add-review)                                        |
-| /reviews                              | GET         | [Get all of a user's reviews](#get-all-reviews)                     |
-| /reviews/decline-review               | POST        | [Decline to review a user](#decline-to-review)                      |
+| url                                   | HTTP Method | description                                                 |
+| ------------------------------------- | ----------- | ----------------------------------------------------------- |
+| /reviews                              | POST        | [Add a review ](#add-review)                                |
+| /reviews                              | GET         | [Get all of a user's reviews](#get-all-reviews)             |
+| /reviews/decline-review               | POST        | [Decline to review a user](#decline-to-review)              |
 | /reviews/get-eligible-users-to-review | GET         | [Get list of users to review](#get-list-of-users-to-review) |
-
 
 ---
 
@@ -1533,19 +1523,19 @@ POST request
 
 GET request
 
-- Get a list of users that the currently logged in user can leave reviews by specifying a rideId 
-- For example: 
-    - If a user was a driver in the ride, the request will return each of his/her passengers's user documents 
-    - If a user was a passenger in the ride, the request will return the driver's user document 
-    - If a user has previously **declined** an opportunity to review a passenger, that passenger's user information will not be returned. After 7 days of being notified to leave a review, the user automatically declines to review a passenger if he has not reviewed yet. 
+- Get a list of users that the currently logged in user can leave reviews by specifying a rideId
+- For example:
+  - If a user was a driver in the ride, the request will return each of his/her passengers's user documents
+  - If a user was a passenger in the ride, the request will return the driver's user document
+  - If a user has previously **declined** an opportunity to review a passenger, that passenger's user information will not be returned. After 7 days of being notified to leave a review, the user automatically declines to review a passenger if he has not reviewed yet.
 
 **params/body**
 
-- rideId as a query 
+- rideId as a query
 
 **return value**
 
-- An object containing a list of eligible usernames for review. These usernames can be used to query for additional information, such as profile picture. 
+- An object containing a list of eligible usernames for review. These usernames can be used to query for additional information, such as profile picture.
 
 ```
 
@@ -1903,6 +1893,20 @@ POST request
   - Redirects page to /driver
 
 ---
+
+### Stripe Hyperparameters
+
+- Application Fee
+  - The total of anything we want to add on top of base amount charged. Includes what we want in order to cover Stripe and our profit.
+  - Modify the env var: 0 < STRIPE_APPLICATION_FEE < 1 (decimal)
+- Flaker Limit
+  - Threshold to determine whether a cancellation was cancelled in advance or if it was last minute.
+  - If the user cancelled x hours before departure time, if x > FLAKER_LIMIT then it was cancelled in advance, otherwise it was cancelled last minute
+  - Modify the env var: 0 < FLAKER_LIMIT (hours)
+- Indecision Limit
+  - Riders who cancel in advance will receive a full refund, otherwise INDECISION_LIMIT determines if a rider who cancelled last minute will get a refund of partial refund.
+  - if the rider cancelled within x hours of booking and x <= INDECISION_LIMIT they get a full refund, otherwise they get a partial refund
+  - Modify the env var: 0 < INDECISION_LIMIT < FLAKER_LIMIT (minutes)
 
 Transfers
 

@@ -172,7 +172,8 @@ router.post("/stripe/create-payment-intent", (req, res) => {
   const requestID = req.body.options.requestID;
   const riderUsername = req.body.options.riderUsername;
   const currency = "usd";
-  const applicationFee = 0;
+  const applicationFeePercentage =
+    parseFloat(process.env.STRIPE_APPLICATION_FEE) || 0;
 
   // Get Ride Details
   rideDB.rideDetails(rideID, (err, ride) => {
@@ -200,38 +201,38 @@ router.post("/stripe/create-payment-intent", (req, res) => {
           return;
         }
 
-        var amount = ride.price * 100;
+        const amount = ride.price * 100;
+        const applicationFee = amount * applicationFeePercentage;
+        const options = {
+          amount: amount,
+          currency: currency,
+          payment_method_types: ["card"],
+          customer: rider.stripe.customerID,
+          capture_method: "manual",
+          metadata: {
+            rideID: rideID,
+            requestID: requestID,
+            riderUsername: riderUsername,
+            driverStripeAcct: driver.stripe.accountID,
+          },
+          receipt_email: rider.email,
+          application_fee_amount: applicationFee,
+        };
+        if (applicationFee <= 0) {
+          delete options.application_fee_amount;
+        }
 
         // Create Payment Intent
-        stripe.paymentIntents.create(
-          {
-            amount: amount,
-            currency: currency,
-            payment_method_types: ["card"],
-            customer: rider.stripe.customerID,
-            capture_method: "manual",
-            metadata: {
-              rideID: rideID,
-              requestID: requestID,
-              riderUsername: riderUsername,
-              driverStripeAcct: driver.stripe.accountID,
-            },
-            receipt_email: rider.email,
-            // application_fee_amount: applicationFee
-          },
-          function (err, paymentIntent) {
-            if (err) {
-              console.log(err);
-              res.status(500).json({ error: err });
-              return;
-            } else {
-              res
-                .status(200)
-                .json({ clientSecret: paymentIntent.client_secret });
-              return;
-            }
+        stripe.paymentIntents.create(options, function (err, paymentIntent) {
+          if (err) {
+            console.log(err);
+            res.status(500).json({ error: err });
+            return;
+          } else {
+            res.status(200).json({ clientSecret: paymentIntent.client_secret });
+            return;
           }
-        );
+        });
       });
     });
   });
@@ -311,11 +312,15 @@ router.post("/stripe/development/triggerTransfer", async (req, res) => {
   const destination = req.body.destination;
   const rideID = req.body.rideID;
 
+  const applicationFeePercentage =
+    parseFloat(process.env.STRIPE_APPLICATION_FEE) || 0;
+  amount = amount - mount * applicationFeePercentage;
+
   paymentHandler.triggerTransfer({
     amount: amount,
     currency: currency,
     destination: destination,
-    transfer_group=rideID
+    transfer_group: rideID,
   });
 });
 

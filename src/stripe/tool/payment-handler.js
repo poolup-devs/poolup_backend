@@ -5,6 +5,7 @@ const userDB = require("../../user/controller.js");
 const mongoose = require("mongoose");
 const rideDB = require("../../ride/controller.js");
 const Transfer = require("../transfer/transfer").Transfer;
+const Ride = require("../../ride/ride").Ride;
 
 const handlePaymentIntentSucceeded = (paymentIntent) => {
   console.log("💰 Payment received!");
@@ -133,13 +134,12 @@ const policyChecker = (transfer, driverCancelled) => {
     refund_application_fee: false,
   };
 
-  // Temporary, until hyper parameter task is completed properly
-  return params;
+  const applicationFeePercentage =
+    parseFloat(process.env.STRIPE_APPLICATION_FEE) || 0;
 
   // Driver Cancellation
-  if (driverCancelled) {
+  if (driverCancelled && applicationFeePercentage > 0) {
     params.refund_application_fee = true;
-
     return params;
   }
 
@@ -158,7 +158,7 @@ const policyChecker = (transfer, driverCancelled) => {
 
     // Create a tramsfer for driver
     try {
-      transferDB.createTransfer({
+      triggerTransfer({
         paymentIntentID: transfer.paymentIntentID,
         targetDate: transfer.targetDate,
         amount: params.amount,
@@ -177,9 +177,12 @@ const policyChecker = (transfer, driverCancelled) => {
 };
 
 const didRiderBookAndCancelRightAfter = (timeCancelled) => {
-  let timeBooked = transfer.booked;
-  let timeBookedInAdvance = timeBooked - timeCancelled;
-  let limit = 30;
+  const MS_PER_MIN = 1000 * 60;
+  let timeBooked = transfer.date;
+  let timeBookedInAdvance = Math.floor(
+    (timeBooked - timeCancelled) / MS_PER_MIN
+  );
+  let limit = parseFloat(process.env.INDECISION_LIMIT) || 30;
 
   // Check if its within the limit or not
   if (timeBookedInAdvance <= limit) {
@@ -198,7 +201,7 @@ const didRiderCancelInAdvance = (rideID, timeCancelled) => {
       departureTime = data[0].date;
 
       let timeLeftBeforeDeparture = departureTime - timeCancelled;
-      let limit = 24;
+      let limit = parseFloat(process.env.FLAKER_LIMIT) || 24;
 
       // Check if its within the limit or not
       if (timeLeftBeforeDeparture > limit) {

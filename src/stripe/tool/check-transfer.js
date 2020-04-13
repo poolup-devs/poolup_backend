@@ -7,7 +7,13 @@ const checkTransfer = async () => {
   const expiredTransfers = await TransferDB.checkExpired();
   if (expiredTransfers.length > 0) {
     // If objects exist, then return the res to the corresponding handler under /tool/payment-handler.js
-    expiredTransfers.forEach(expiredTransfer => {
+    expiredTransfers.forEach((expiredTransfer) => {
+      const applicationFeePercentage =
+        parseFloat(process.env.STRIPE_APPLICATION_FEE) || 0;
+
+      expiredTransfer.amount =
+        expiredTransfer.amount -
+        expiredTransfer.amount * applicationFeePercentage;
       triggerTransfer(expiredTransfer);
     });
   }

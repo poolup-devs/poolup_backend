@@ -40,17 +40,18 @@ router.get("/reviews", async (req, res) => {
       res.status(500).send({error: e}) 
     }
 }) 
-  
-// Get a list of users that need to be reviewed using the currently logged in account 
+
+// Get all users to review for a ride 
 router.get("/reviews/get-eligible-users-to-review", checkAuth, async (req, res) => {
     try {
         const loggedInUser = tokenParser(req.headers.authorization).username
-        const usersToReview = await db.getUsersToReviewFromLatestRide(loggedInUser) 
-        res.status(200).send(usersToReview)
-    }
-    catch(e) {
-        res.status(500).send({error: e})
-    }
-}) 
+        const usersToReview = await db.getUsersToReviewForRide(req.query.rideId, loggedInUser)
+        res.status(200).send({usersToReview}) 
+      }
+      catch(e) {
+        res.status(500).send({error: e}) 
+      }
+})
+  
 
 module.exports = router;

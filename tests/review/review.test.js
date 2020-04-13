@@ -20,19 +20,22 @@ describe("Testing rating system operations", () => {
         reviewerUsername: 'test_reviewer_1', 
         revieweeUsername: testRevieweeUsername, 
         rating: 1, 
-        datePosted: new Date('Jan 1, 2020')
+        datePosted: new Date('Jan 1, 2020'), 
+        isPublished: true
     })
     const testReview2 = new Review({
         reviewerUsername: 'test_reviewer_2', 
         revieweeUsername: testRevieweeUsername, 
         rating: 2, 
-        datePosted: new Date('Jan 2, 2020')
+        datePosted: new Date('Jan 2, 2020'),
+        isPublished: true
     })
     const testReview3 = new Review({
         reviewerUsername: 'test_reviewer_3', 
         revieweeUsername: testRevieweeUsername, 
         rating: 3, 
-        datePosted: new Date('Jan 3, 2020')
+        datePosted: new Date('Jan 3, 2020'),
+        isPublished: true
     })
 
     beforeEach(() => {
@@ -69,9 +72,9 @@ describe("Testing rating system operations", () => {
 
         test("Get the 6th review from a user who has more than 5 reviews (retrieval with pagination)", async () => {
             try {
-                await Review.create({reviewerUsername: 'test_reviewer_4', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 4, 2020')})
-                await Review.create({reviewerUsername: 'test_reviewer_5', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 5, 2020')})
-                const sixth_review = await Review.create({reviewerUsername: 'test_reviewer_6', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 6, 2020')})
+                await Review.create({reviewerUsername: 'test_reviewer_4', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 4, 2020'), isPublished: true})
+                await Review.create({reviewerUsername: 'test_reviewer_5', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 5, 2020'), isPublished: true})
+                const sixth_review = await Review.create({reviewerUsername: 'test_reviewer_6', revieweeUsername: testRevieweeUsername, rating: 3, datePosted: new Date('Jan 6, 2020'), isPublished: true})
                 return db.getUserReviews(testRevieweeUsername, 1).then((reviews) => {
                     expect(reviews.length).toBe(1)
                     expect(reviews[0]._id).toEqual(testReview1._id)
@@ -81,11 +84,21 @@ describe("Testing rating system operations", () => {
                 console.log(e)
             }
         })
+
+        test("Expect non-publically published reviews made to a user to not be returned.", async () => {
+            const publishedReview = await Review.create({reviewerUsername: 'test_reviewer_1', revieweeUsername: "test_reviewee_1", rating: 4, datePosted: new Date('Jan 4, 2020'), isPublished: true})
+            const unpublishedReview = await Review.create({reviewerUsername: 'test_reviewer_2', revieweeUsername: "test_reviewee_1", rating: 3, datePosted: new Date('Jan 4, 2020'), isPublished: false})
+            const reviews = await db.getUserReviews("test_reviewee_1", 0)
+            expect(reviews.length).toBe(1)
+            expect(reviews[0]._id).toEqual(publishedReview._id)
+        })
     })
 
     describe("Test operation to add a review to the database", () => {
         afterEach(async () => {
-            await User.deleteMany({}) 
+            await User.deleteMany() 
+            await Review.deleteMany()
+            await Ride.deleteMany() 
         }) 
         test("A review without a required field, such as rideId, should error instead of creating the review.", async () => {
             try {
@@ -101,11 +114,11 @@ describe("Testing rating system operations", () => {
             }
         })
 
-        test("Adding a review with all the required fields should create a new review document in the database and update the rating field in User.", async () => {
+        test("When a user submits a review before his counterpart has, expect a new review document to be created but not published and the reviewee should not have their rating changed yet.", async () => {
             try {
                 const revieweeUsername = 'reviewee' 
 
-                // create a dummy user who receives the new review 
+                // Create a dummy user who receives the new review 
                 const userWhoReceivesReview = await User.create({username: revieweeUsername}); 
                 const reviewInfo = {
                     reviewerUsername: 'reviewer', 
@@ -116,121 +129,46 @@ describe("Testing rating system operations", () => {
                 const newReview = await db.addNewReview(reviewInfo)
                 const {reviewerUsername, rating, rideId} = reviewInfo
                 expect(newReview).toEqual(expect.objectContaining({
-                    reviewerUsername, revieweeUsername, rating, rideId
+                    reviewerUsername, revieweeUsername, rating, rideId, isPublished: false
                 })) 
 
-                // check that the rating field is updated in the User model 
+                // Check that the rating field is unchanged 
                 User.findOne({username: revieweeUsername}, (err, user) => {
-                    expect(user.rating.totalRatings).toBe(1)
-                    expect(user.rating.sumOfAllRatings).toBe(reviewInfo.rating) 
+                    expect(user.rating.totalRatings).toBe(0)
+                    expect(user.rating.sumOfAllRatings).toBe(0) 
                 })
             } 
             catch(e) {
                 console.log(e)
             }
         })
-    })
 
-    describe("Test the operation to get a list of eligible usernames to review", () => {
-        afterEach(async () => {
-            await Ride.deleteMany({})
-        })
+        test("When a user submits a review after his counterpart has, expect both reviews to be published and both ratings updated", async () => {
+            // Create a dummy user who receives the new review 
+            let firstReviewer = await User.create({username: 'driverUsername'}); 
+            let secondReviewer = await User.create({username: 'riderUsername'}); 
+            const ride = await Ride.create({ownerUsername: 'driverUsername', passengers: ['riderUsername']})
+            const firstReview = await Review.create({ reviewerUsername: firstReviewer.username, revieweeUsername: secondReviewer.username, rating: 3, rideId: ride._id })
+            const secondReview = await db.addNewReview({ reviewerUsername: secondReviewer.username, revieweeUsername: firstReviewer.username, rating: 4, rideId: ride._id })
 
-        test("If the user has not joined a ride as a driver/passenger before, should expect empty array for usernamesToReview.", async () => {
-            eligibleUsersForReview = await db.getUsersToReviewFromLatestRide('test_username')
-            expect(eligibleUsersForReview).toEqual(expect.objectContaining({
-                usernamesToReview: []
-            }))
-        }) 
+            // Expect both reviews are published 
+            expect((await Review.findById(firstReview._id)).isPublished).toBeTruthy()  
+            expect(secondReview).toEqual(expect.objectContaining({
+                reviewerUsername: secondReviewer.username, 
+                revieweeUsername: firstReviewer.username, 
+                rating: 4,  
+                rideId: ride._id,
+                isPublished: true 
+            })) 
 
-        test("If a passenger had declined an opportunity to write a review for the driver, should return []", async () => {
-            const previousRide = await Ride.create({ownerUsername: 'driver_username', passengers: ['passenger_who_declined_to_review_driver'], date: new Date('January 3, 2020')})
-            await Review.create({revieweeUsername: 'driver_username', reviewerUsername: 'passenger_who_declined_to_review_driver', rideId: previousRide._id, isDeclined: true}) 
-            eligibleUsersForReview = await db.getUsersToReviewFromLatestRide('passenger_who_declined_to_review_driver')
-            expect(eligibleUsersForReview).toEqual(expect.objectContaining({
-                usernamesToReview: []
-            }))
-        })
+            // Expect both ratings to be updated 
+            firstReviewer = await User.findById(firstReviewer._id)
+            expect(firstReviewer.rating.totalRatings).toBe(1)
+            expect(firstReviewer.rating.sumOfAllRatings).toBe(4) 
 
-        test("If a driver had declined an opportunity to write a review for one passenger but not the other, should return the other only", async () => {
-            const previousRide = await Ride.create({ownerUsername: 'driver_username', passengers: ['passenger_without_review_from_driver', 'passenger_not_reviewed_yet_by_driver'], date: new Date('January 3, 2020')})
-            await Review.create({revieweeUsername: 'passenger_without_review_from_driver', reviewerUsername: 'driver_username', rideId: previousRide._id, isDeclined: true}) 
-            eligibleUsersForReview = await db.getUsersToReviewFromLatestRide('driver_username')
-            expect(eligibleUsersForReview).toEqual(expect.objectContaining({
-                usernamesToReview: ['passenger_not_reviewed_yet_by_driver'],
-                rideId: previousRide._id
-            }))
-        })
-
-        test("If the user was a passenger in their latest ride, should return the driver's username, if the driver has not been rated yet.", async () => {
-            try {
-                let previousRide = new Ride({ownerUsername: 'driver_username_1', passengers: ['passenger_1', 'test_passenger_username', 'passenger_2'], date: new Date('January 3, 2020')})
-                previousRide = await previousRide.save() 
-
-                let mostRecentRide = new Ride({ownerUsername: 'driver_username_2', passengers: ['passenger_1', 'test_passenger_username', 'passenger_2'], date: new Date('January 6, 2020')})
-                mostRecentRide = await mostRecentRide.save()                 
-                eligibleUsersForReview = await db.getUsersToReviewFromLatestRide('test_passenger_username')
-                
-                expect(eligibleUsersForReview).toEqual(expect.objectContaining({
-                    usernamesToReview: [mostRecentRide.ownerUsername], 
-                    rideId: mostRecentRide._id
-                }))
-            }
-            catch(e) {
-                console.log(e) 
-            }
-        })
-
-        test("If a user who was a passenger in their latest ride has already left a review for the driver, should expect empty array for usernamesToReview", async () => {
-            let mostRecentRide = new Ride({ownerUsername: 'test_driver_username', passengers: ['passenger_1', 'test_passenger_username', 'passenger_2'], date: new Date('January 6, 2020')})
-            mostRecentRide = await mostRecentRide.save()
-            await Review.create({reviewerUsername: 'test_passenger_username', revieweeUsername: 'test_driver_username', rideId: mostRecentRide._id, rating: 3})
-            eligibleUsersForReview = await db.getUsersToReviewFromLatestRide('test_passenger_username')
-            expect(eligibleUsersForReview).toEqual(expect.objectContaining({
-                usernamesToReview: [], 
-                rideId: mostRecentRide._id
-            }))        
-        }) 
-
-        test("If a driver has not reviewed any passengers yet, should expect all passengers to be in usernamesToReview", async () => {
-            let mostRecentRide = new Ride({ownerUsername: 'test_driver_username', passengers: ['passenger_1', 'passenger_2', 'passenger_3'], date: new Date('January 6, 2020')})
-            mostRecentRide = await mostRecentRide.save()
-
-            eligibleUsersForReview = await db.getUsersToReviewFromLatestRide('test_driver_username')
-            expect(eligibleUsersForReview).toEqual(expect.objectContaining({
-                usernamesToReview: Array.from(mostRecentRide.passengers), 
-                rideId: mostRecentRide._id
-            }))
-        })
-        
-
-        test("If a driver has rated one of the passengers, but not the others, should expect all passengers except the one already rated.", async () => {
-            let mostRecentRide = new Ride({ownerUsername: 'test_driver_username', passengers: ['passenger_1', 'passenger_2', 'passenger_3'], date: new Date('January 6, 2020')})
-            mostRecentRide = await mostRecentRide.save()
-            // driver rates passenger 2 but not the others 
-            await Review.create({reviewerUsername: 'test_driver_username', revieweeUsername: 'passenger_2', rideId: mostRecentRide._id, rating: 3})
-
-            eligibleUsersForReview = await db.getUsersToReviewFromLatestRide('test_driver_username')
-            expect(eligibleUsersForReview).toEqual(expect.objectContaining({
-                usernamesToReview: ['passenger_1', 'passenger_3'], 
-                rideId: mostRecentRide._id
-            }))
-        })
-
-        test("If a driver has rated all of the passengers, should expect an empty array for usernamesToReview.", async () => {
-            let mostRecentRide = new Ride({ownerUsername: 'test_driver_username', passengers: ['passenger_1', 'passenger_2', 'passenger_3'], date: new Date('January 6, 2020')})
-            mostRecentRide = await mostRecentRide.save()
-            
-            // driver rates all 3 passengers
-            await Review.create({reviewerUsername: 'test_driver_username', revieweeUsername: 'passenger_1', rideId: mostRecentRide._id, rating: 3})
-            await Review.create({reviewerUsername: 'test_driver_username', revieweeUsername: 'passenger_2', rideId: mostRecentRide._id, rating: 3})
-            await Review.create({reviewerUsername: 'test_driver_username', revieweeUsername: 'passenger_3', rideId: mostRecentRide._id, rating: 3})
-
-            eligibleUsersForReview = await db.getUsersToReviewFromLatestRide('test_driver_username')
-            expect(eligibleUsersForReview).toEqual(expect.objectContaining({
-                usernamesToReview: [], 
-                rideId: mostRecentRide._id
-            }))
+            secondReviewer = await User.findById(secondReviewer._id)
+            expect(secondReviewer.rating.totalRatings).toBe(1)
+            expect(secondReviewer.rating.sumOfAllRatings).toBe(3) 
         })
     })
 
@@ -240,7 +178,66 @@ describe("Testing rating system operations", () => {
             expect(declinedReview.isDeclined).toBe(true) 
         })
     })
-    
+
+    describe("Test getting usernames to review for a ride", () => {
+        afterEach(async () => {
+            await Ride.deleteMany() 
+            await Review.deleteMany()
+        }) 
+        test("If a driver has not left any reviews for his passengers, should return all passengers", async () => {
+            const passenger1 = await User.create({username: 'passenger_1'})
+            const passenger2 = await User.create({username: 'passenger_2'})
+            const passenger3 = await User.create({username: 'passenger_3'})
+            const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1", "passenger_2", "passenger_3"]})
+            const usersToReview = await db.getUsersToReviewForRide(ride._id, "driver_username")
+            expect(usersToReview.map(user => user.username)).toEqual(expect.arrayContaining([passenger1.username, passenger2.username, passenger3.username]))
+        })
+        
+        test("If a driver has left a review for one passenger but not the others, should return the others", async () => {
+            const passenger1 = await User.create({username: 'passenger_1'})
+            const passenger3 = await User.create({username: 'passenger_3'})
+            const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1", "passenger_2", "passenger_3"]})
+            const reviewToOnePassenger = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_2", rideId: ride._id, rating: 3})
+            const usersToReview = await db.getUsersToReviewForRide(ride._id, "driver_username")
+            expect(usersToReview.map(user => user.username)).toEqual(expect.arrayContaining([passenger1.username, passenger3.username]))
+        })
+
+        test("If a driver has left a review for each of his passengers, should return empty list", async () => {
+            const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1", "passenger_2", "passenger_3"]})
+            const reviewToPassenger1 = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_1", rideId: ride._id, rating: 3})
+            const reviewToPassenger2 = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_2", rideId: ride._id, rating: 3})
+            const reviewToPassenger3 = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_3", rideId: ride._id, rating: 3})
+            const usersToReview = await db.getUsersToReviewForRide(ride._id, "driver_username")
+            expect(usersToReview).toEqual([])
+        })
+
+        test("Should correctly add a new review when properly authenticated.", async () => {
+            const verifiedUserUsernameAuthToken = jwt.sign({ username: 'driver_username' }, process.env.JWT_SECRET_KEY);
+            const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1", "passenger_2", "passenger_3"]})
+            await request(app)
+                .get('/reviews/get-eligible-users-to-review')
+                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
+                .query({rideId: ride._id.toString()})
+                .expect(200) 
+        })
+    })
+
+    describe("Test the publishing of reviews", () => {
+        afterEach(async () => {
+            await User.deleteMany() 
+            await Review.deleteMany()
+        }) 
+        test("If a review is made public, then its isPublished property should be set to true and the ratings should take effect", async () => {
+            const ride = await Ride.create({ownerUsername: "driver_username", passengers: ["passenger_1"]})
+            const driverReviewToPassenger = await Review.create({reviewerUsername: "driver_username", revieweeUsername: "passenger_1", rideId: ride._id, rating: 3})
+            const passenger = await User.create({username: "passenger_1"})
+            await db.makeReviewPublic(ride._id, driverReviewToPassenger.reviewerUsername, driverReviewToPassenger.revieweeUsername) 
+
+            expect((await Review.findById(driverReviewToPassenger._id)).isPublished).toBe(true)
+            expect((await User.findOne({username: passenger.username})).rating.sumOfAllRatings).toBe(3) 
+            expect((await User.findOne({username: passenger.username})).rating.totalRatings).toBe(1) 
+        })
+    })
 
     describe("Testing rating system API endpoints", () => {
         const verifiedUserUsernameAuthToken = jwt.sign({ username: 'verified_user' }, process.env.JWT_SECRET_KEY);
@@ -269,20 +266,6 @@ describe("Testing rating system operations", () => {
                 .get('/reviews') 
                 .query({username: 'user_that_does_not_exist', pageNum: 0})
                 .expect(200)
-        })
-
-        test("When requesting for a list of usernames that a review can be sent to, should expect a 200 response code always.", async () => {
-            await request(app) 
-                .get('/reviews/get-eligible-users-to-review')
-                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
-                .expect(200) 
-        })
-
-        test("When requesting to decline an option to review, should expect 200 response code", async () => {
-            await request(app) 
-                .get('/reviews/get-eligible-users-to-review')
-                .set('Authorization', 'Bearer ' + verifiedUserUsernameAuthToken)
-                .expect(200) 
         })
     }) 
 }) 

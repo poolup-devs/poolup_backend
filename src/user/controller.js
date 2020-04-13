@@ -392,8 +392,8 @@ const parseSchoolFromEmail = schoolEmail => {
     if (!emailDomain) {
       reject("Could not parse email to identify school");
     }
-
     Schools.findOne({ emailDomain: emailDomain.domain }, (err, result) => {
+      
       if (!result) {
         // Domain -> School not found in database, so set to null until we can add it later
         return resolve(null);

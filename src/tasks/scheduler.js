@@ -19,7 +19,7 @@ const cancelTask = (taskName) => {
 
 // Clean up all tasks associated with a ride, such as when a ride is cancelled and deleted 
 const cancelTasksAssociatedWithRide = (rideId) => {
-    const tasksToCancel = ['updateCompletedRidesTask.${rideId}']
+    const tasksToCancel = [`updateCompletedRidesTask.${rideId}`, `createNotiToLeaveReviewTask.${rideId}`]
     tasksToCancel.forEach((task) => {
         cancelTask(task)
     })

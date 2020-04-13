@@ -69,7 +69,7 @@ describe("Testing Ride endpoints", () => {
             // Check whether a notification was sent to the driver 
             const driverNoti = await Noti.findOne({username: 'driverUsername'})
             expect(driverNoti).toEqual(expect.objectContaining({
-                username: 'driverUsername', 'msg': 'passenger1 has cancelled your ride', senderEmail: 'passenger1@ucla.edu'
+                username: 'driverUsername', 'msg': 'passenger1 has cancelled your ride'
             }))
             expect(driverNoti.additionalProperties).toEqual({cancellationReason: 'Other', messageToDriver: "Sorry I can't make it!!!"})
 

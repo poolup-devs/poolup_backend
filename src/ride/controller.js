@@ -21,11 +21,11 @@ const getMatchingRides = (filter_, pageNum, callback) => {
     if (filter_.date_from && filter_.date_to) {
       filter.date = {
         $gte: filter_.date_from,
-        $lte: filter_.date_to
+        $lte: filter_.date_to,
       };
     } else {
       filter.date = {
-        $gte: new Date()
+        $gte: new Date(),
       };
     }
 
@@ -140,13 +140,20 @@ const postRide = (rideInfo, callback) => {
     if (err) {
       callback(err, null);
     } else {
-      // Schedule a job that updates the number of completed rides for each user in the carpool
-      // Scheduled job will occur two hours after the carpool begins
+      // Schedule a job that updates the number of completed rides for each user in the carpool that will occur 2 hours after the carpool begins
       scheduler.scheduleTaskHoursAfterDate(
-        "updateCompletedRidesTask.${result._id}",
+        `updateCompletedRidesTask.${result._id}`,
         scheduledTasks.updateCompletedRidesTask(result._id),
         rideInfo.date,
         2
+      );
+
+      // Schedule a job that prompts users in the ride to leave reviews 12 hours after carpool begins
+      scheduler.scheduleTaskHoursAfterDate(
+        `createNotiToLeaveReviewTask.${result._id}`,
+        scheduledTasks.createNotiToLeaveReviewTask(result._id),
+        rideInfo.date,
+        12
       );
       callback(null, result);
     }
@@ -163,8 +170,7 @@ const joinRide = async (
   const noti = {
     username: ownerUsername,
     msg: `${passengerUsername} has joined your ride`,
-    senderEmail: passenger.email,
-    date: new Date()
+    date: new Date(),
   };
   Ride.findOneAndUpdate(
     { _id: ride_id, seats: { $gte: 1 } },
@@ -202,7 +208,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
     // Driver cancellation
     if (username === cancelledRideDoc.ownerUsername) {
       // Notify all passengers that the ride has been cancelled
-      cancelledRideDoc.passengers.forEach(async passengerUsername => {
+      cancelledRideDoc.passengers.forEach(async (passengerUsername) => {
         // Refund Passenger
         await paymentHandler.refund(
           passengerUsername,
@@ -220,8 +226,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
         let noti = await Noti.create({
           username: passengerUsername,
           msg: `${username} has cancelled your ride`,
-          senderEmail: user.email,
-          date: new Date()
+          date: new Date(),
         });
         // Update schema-less property: additionalProperties
         noti.additionalProperties = { cancellationReason: cancellationReason };
@@ -266,14 +271,13 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       let noti = await Noti.create({
         username: cancelledRideDoc.ownerUsername,
         msg: `${username} has cancelled your ride`,
-        senderEmail: user.email,
-        date: new Date()
+        date: new Date(),
       });
       // Update schema-less property: additionalProperties
       // If messageToDriver was not specified, the field will be set to null
       noti.additionalProperties = {
         cancellationReason: cancellationReason,
-        messageToDriver: messageToDriver
+        messageToDriver: messageToDriver,
       };
       noti.markModified("additionalProperties");
       await noti.save();
@@ -326,5 +330,5 @@ module.exports = {
   joinRide,
   cancelRide,
   rideDelete,
-  rideDetails
+  rideDetails,
 };

@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const rideDB = require("../../ride/controller.js");
 const Transfer = require("../transfer/transfer").Transfer;
 
-const handlePaymentIntentSucceeded = paymentIntent => {
+const handlePaymentIntentSucceeded = (paymentIntent) => {
   console.log("💰 Payment received!");
   const rideID = paymentIntent.metadata["rideID"];
   const requestID = paymentIntent.metadata["requestID"];
@@ -19,7 +19,7 @@ const handlePaymentIntentSucceeded = paymentIntent => {
       console.log(err);
 
       // Cancel PaymentIntent
-      stripe.paymentIntents.cancel(paymentIntent.id, function(err, _) {
+      stripe.paymentIntents.cancel(paymentIntent.id, function (err, _) {
         if (err != nil) {
           console.log("Cancel PaymentIntent Failed");
           console.log(err);
@@ -36,7 +36,7 @@ const handlePaymentIntentSucceeded = paymentIntent => {
         console.log("Join Ride Failed", err);
 
         // Cancel PaymentIntent
-        stripe.paymentIntents.cancel(paymentIntent.id, function(err, _) {
+        stripe.paymentIntents.cancel(paymentIntent.id, function (err, _) {
           if (err != nil) {
             console.log("Cancel PaymentIntent Failed: ", err);
           }
@@ -47,7 +47,7 @@ const handlePaymentIntentSucceeded = paymentIntent => {
       } else {
         var targetDate = new Date(ride.date.getDate() + 1); // Triggers immediately
 
-        stripe.paymentIntents.capture(paymentIntent.id, function(
+        stripe.paymentIntents.capture(paymentIntent.id, function (
           err,
           paymentIntent
         ) {
@@ -66,7 +66,7 @@ const handlePaymentIntentSucceeded = paymentIntent => {
                     amount: paymentIntent.amount,
                     rideID: rideID,
                     destination: driverInfo.stripe.accountID,
-                    customerUsername: riderUsername
+                    customerUsername: riderUsername,
                   });
                 } catch (e) {
                   console.log("DRIVER TRANSFER FAILED: ", e);
@@ -76,7 +76,7 @@ const handlePaymentIntentSucceeded = paymentIntent => {
                 try {
                   if (requestID != "") {
                     requestDB.paidRequest({
-                      requestID: requestID
+                      requestID: requestID,
                     });
                   }
                 } catch (e) {
@@ -92,14 +92,16 @@ const handlePaymentIntentSucceeded = paymentIntent => {
   });
 };
 
-const triggerTransfer = transfer => {
+const triggerTransfer = (transfer) => {
   stripe.transfers.create(
     {
       amount: transfer.amount,
       currency: transfer.currency,
-      destination: transfer.destination
+      source_transaction: transfer.paymentIntentID,
+      destination: transfer.destination,
+      transfer_group: transfer.rideID,
     },
-    function(err, res) {
+    function (err, res) {
       if (err) {
         // TODO: Better Error Handling
         console.log(err);
@@ -128,7 +130,7 @@ const policyChecker = (transfer, driverCancelled) => {
   let params = {
     payment_intent: transfer.paymentIntentID,
     amount: transfer.amount,
-    refund_application_fee: false
+    refund_application_fee: false,
   };
 
   // Temporary, until hyper parameter task is completed properly
@@ -162,7 +164,7 @@ const policyChecker = (transfer, driverCancelled) => {
         amount: params.amount,
         rideID: transfer.rideID,
         destination: transfer.driverStripeAcct,
-        customerUsername: transfer.riderUsername
+        customerUsername: transfer.riderUsername,
       });
     } catch (e) {
       console.log("Driver Create Transfer FAILED: ", e);
@@ -174,7 +176,7 @@ const policyChecker = (transfer, driverCancelled) => {
   return params;
 };
 
-const didRiderBookAndCancelRightAfter = timeCancelled => {
+const didRiderBookAndCancelRightAfter = (timeCancelled) => {
   let timeBooked = transfer.booked;
   let timeBookedInAdvance = timeBooked - timeCancelled;
   let limit = 30;
@@ -224,7 +226,7 @@ const refund = (riderUsername, rideID, driverCancelled, callback) => {
       let params = policyChecker(transfer, driverCancelled);
 
       // Issue Refund
-      stripe.refunds.create(params, function(err, refund) {
+      stripe.refunds.create(params, function (err, refund) {
         if (err) {
           callback(err, null);
         } else {
@@ -255,5 +257,5 @@ const refund = (riderUsername, rideID, driverCancelled, callback) => {
 module.exports = {
   handlePaymentIntentSucceeded,
   triggerTransfer,
-  refund
+  refund,
 };

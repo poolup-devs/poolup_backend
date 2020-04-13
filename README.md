@@ -106,25 +106,12 @@ Use Docker commands for
 
    Removes all documents in all the collections, and initializes the database with default objects.
    Currently only removes and creates from User collection.
-   =======
-   =======
 
 6. [Local Environment Setup](#local-environment-setup)
 7. [Local Development Setup](#local-development-setup)
 8. [Npm Scripts](#npm-scripts)
 9. [Additional Tools](#additional-tools)
 10. [Directory Structure](#directory-structure)
-
----
-
-> > > > > > > 8feefa9dbdd05d6baec9b6d933f3da274932eb1a
-
-6. [Local Environment Setup](#local-environment-setup)
-7. [Local Development Setup](#local-development-setup)
-8. [Npm Scripts](#npm-scripts)
-9. [Additional Tools](#additional-tools)
-10. [Directory Structure](#directory-structure)
-    > > > > > > > master
 
 ---
 

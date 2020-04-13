@@ -154,7 +154,7 @@ const policyChecker = (transfer, driverCancelled) => {
   );
 
   if (!cancelledInAdvance && !bookedAndCancelledRightAfter) {
-    params.amount = params.amount / 2.0;
+    params.amount = Math.floor(params.amount / 2);
 
     // Create a tramsfer for driver
     try {
@@ -193,14 +193,16 @@ const didRiderBookAndCancelRightAfter = (timeCancelled) => {
 };
 
 const didRiderCancelInAdvance = (rideID, timeCancelled) => {
-  rideDB.rideDetails(mongoose.Types.ObjectId(rideID), (err, data) => {
+  Ride.findOne(rideID, (err, ride) => {
     if (err) {
       console.log(err);
       return false;
     } else {
-      departureTime = data[0].date;
-
-      let timeLeftBeforeDeparture = departureTime - timeCancelled;
+      departureTime = ride.date;
+      const MS_PER_HOUR = 1000 * 60 * 60;
+      let timeLeftBeforeDeparture = Math.floor(
+        (departureTime - timeCancelled) / MS_PER_HOUR
+      );
       let limit = parseFloat(process.env.FLAKER_LIMIT) || 24;
 
       // Check if its within the limit or not

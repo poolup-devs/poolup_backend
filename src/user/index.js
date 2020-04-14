@@ -23,114 +23,65 @@ const STRIPE_CLIENT_ID = process.env.STRIPE_CLIENT_ID;
 sgMail.setApiKey(SENDGRID_API_KEY);
 
 //User Login
-router.post("/users/login", (req, res) => {
-  if (req.body.password) {
-    req.body.password = sha256(req.body.password);
-  }
-  db.login(req.body.email, req.body.password, (err, data) => {
-    if (err) {
-      res.status(401).send(err);
-    } else {
-      const token = jwt.sign({ username: data.username }, JWT_SECRET_KEY, {
-        expiresIn: "24h"
-      });
-      res.status(200).send({
-        authToken: token
-      });
+router.post("/users/login", async (req, res) => {
+  try {
+    if (req.body.password) {
+      req.body.password = sha256(req.body.password);
     }
-  });
+    const user = await db.login(req.body.email, req.body.password)
+    const token = jwt.sign({ username: user.username }, JWT_SECRET_KEY, { expiresIn: "24h"})
+    res.status(200).send({authToken: token})
+  }
+  catch(e) {
+    res.status(401).send({message: e}) 
+  }
 });
 
 // User Signup
 router.post("/users/signup", async (req, res) => {
   try {
     // Validate form information
-    if (
-      await db.isValidAccount(
-        req.body.email,
-        req.body.username,
-        req.body.password
-      )
-    ) {
-      // Create new user
-      await db.signup(req.body);
-
-      // Construct verification email
-      var { email, username } = req.body;
-      const token = jwt.sign({ email }, JWT_EMAIL_KEY, { expiresIn: "24h" });
-      if (process.env.MODE === "STAGING") {
-        var url =
-          "localhost:" + process.env.PORT + "/users/verify?token=" + token;
-        var verificationEmail = {
-          to: email,
-          from: "pool-up@outlook.com",
-          subject: "PoolUp: Email Verification Required",
-          text: "Here's the link",
-          html: "<br>Link for local dev: <br>" + url
-        };
-      } else {
-        var url =
-          "restapi." +
-          process.env.PRODUCTION_DOMAIN_URL +
-          "/users/verify?token=" +
-          token;
-        var verificationEmail = {
-          to: email,
-          from: "pool-up@outlook.com",
-          templateId: "d-0d8dff79ca8e4d0e8b4b9b1b12038a62",
-          dynamic_template_data: {
-            subject: "PoolUp Email Verification",
-            name: req.body.username,
-            url: url
-          }
-        };
-      }
-
-      // Send verification email
-      sgMail
-        .send(verificationEmail)
-        .then(() => {
-          res.sendStatus(201);
-        })
-        .catch(error => {
-          // Remove the user that was added to the database when sign-up fails
-          db.deleteUser(username, (err, user) => {
-            res
-              .status(500)
-              .send({ error: "Could not send verification email!" });
-          });
-        });
+    if (await db.isValidPassword(req.body.password)) {
+      // Update the verified user's information with account information 
+      const registeredUser = await db.signup(req.body);
+      const token = jwt.sign({ username: registeredUser.username }, JWT_SECRET_KEY, { expiresIn: "24h"})
+      res.status(201).send({registeredUser, token}) 
     }
   } catch (e) {
     res.status(500).send({ error: e });
   }
 });
 
-//Verify Email
-router.get("/users/verify", (req, res) => {
+// Send verification email 
+router.get("/users/sendVerificationEmail", async (req, res) => {
+  try {
+    await db.sendVerificationEmail(req.query.email)
+    res.status(200).send("Verification email sent successfully.")
+  }
+  catch(e) {
+    res.status(500).send(e)
+  }
+})
+
+// Verify Email
+router.get("/users/verify", async (req, res) => {
   try {
     const userEmail = jwt.verify(req.query.token, JWT_EMAIL_KEY);
-    db.verifyEmail(userEmail.email, (err, data) => {
-      if (err) {
-        res.status(400).send(err);
-      } else {
-        res.redirect("https://" + process.env.PRODUCTION_DOMAIN_URL + "/login");
-      }
-    });
-  } catch (err) {
-    res.sendStatus(401);
-  }
-});
-
-//Validate User Email
-router.get("/users/emailValidation", (req, res) => {
-  db.findUserByEmail(req.query.email, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(200).send(data);
+    await db.verifyEmail(userEmail.email)
+    // Redirect to register the user's name and password 
+    res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/signup/3");
+  } 
+  catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/signup/2/expired")
     }
-  });
+    else if (err.name == 'AccountAlreadyRegistered') {
+      res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/login")
+    }
+    else {
+      res.status(401).send(err);
+    }
+  }
 });
 
 // Validate Username
@@ -242,12 +193,16 @@ router.get("/users/usersPic", checkAuth, (req, res) => {
   });
 });
 
-//Update a User's info (name or phoneNumber)
+//Update a User's info (first name, last name, or phoneNumber)
 router.patch("/users/updateUser", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
   const updates = {};
-  if (req.body.name) {
-    updates.name = req.body.name;
+  if (req.body.firstName) {
+    updates.firstName = req.body.firstName;
+  }
+
+  if (req.body.lastName) {
+    updates.lastName = req.body.lastName;
   }
 
   if (req.body.phoneNumber) {
@@ -318,6 +273,17 @@ router.patch("/users/changePassword", checkAuth, (req, res) => {
     }
   });
 });
+
+// Get about me 
+router.get("/users/get-about-me", async (req, res) => {
+  try {
+    const aboutMe = await db.getAboutMe(req.query.username) 
+    res.status(200).send({aboutMe})
+  }
+  catch(e) {
+    res.status(500).send(e) 
+  }
+})
 
 // Update About Me
 router.patch("/users/updateAboutMe", checkAuth, async (req, res) => {

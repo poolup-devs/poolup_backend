@@ -1,8 +1,12 @@
 const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
+const Request = require("../request/request").Request;
 const scheduler = require("../tasks/scheduler");
 const scheduledTasks = require("../tasks/scheduledTasks");
+
+const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
+const MY_RIDES_PATH = process.env.MY_RIDES_PATH;
 
 ///////////////////////////////////////////////////////////////
 ///////////GET RIDES///////////////////////////////////////////
@@ -226,21 +230,31 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       return reject("Ride does not exist in database!");
     }
 
-    const user = await User.findOne({ username });
+    // const user = await User.findOne({ username });
     // Driver cancellation
     if (username === cancelledRideDoc.ownerUsername) {
-      // Notify all passengers that the ride has been cancelled
-      cancelledRideDoc.passengers.forEach(async (passengerUsername) => {
+      let affectedUsers = cancelledRideDoc.passengers;
+      const associatedRequests = await Request.find({rideID: rideId});
+      for (request of associatedRequests) {
+        affectedUsers.push(request.senderID);
+      }
+
+      // Notify all passengers/ requesters that the ride has been cancelled
+      affectedUsers.forEach(async (passengerUsername) => {
         let noti = await Noti.create({
           username: passengerUsername,
           msg: `${username} has cancelled your ride`,
           date: new Date(),
+          redirectPath: MY_RIDES_PATH
         });
         // Update schema-less property: additionalProperties
         noti.additionalProperties = { cancellationReason: cancellationReason };
         noti.markModified("additionalProperties");
         await noti.save();
       });
+
+      // Delete all the requests
+      await Request.deleteMany({rideID: rideId})
 
       // Delete the ride
       await Ride.deleteOne({ _id: rideId });
@@ -266,6 +280,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
         username: cancelledRideDoc.ownerUsername,
         msg: `${username} has cancelled your ride`,
         date: new Date(),
+        redirectPath: MY_DRIVES_PATH
       });
       // Update schema-less property: additionalProperties
       // If messageToDriver was not specified, the field will be set to null

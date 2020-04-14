@@ -93,16 +93,6 @@ describe("Testing Ride endpoints", () => {
                 username: 'driverUsername', 'msg': 'passenger1 has cancelled your ride'
             }))
             expect(driverNoti.additionalProperties).toEqual({cancellationReason: 'Other', messageToDriver: "Sorry I can't make it!!!"})
-
-            // Check whether a notification was sent to the other passenger 
-            const passengerNoti = await Noti.findOne({username: 'passenger2'})
-            expect(passengerNoti).toEqual(expect.objectContaining({
-                username: 'passenger2', 'msg': 'passenger1 has cancelled your ride', senderEmail: 'passenger1@ucla.edu'
-            }))
-            expect(passengerNoti.additionalProperties).toEqual({cancellationReason: 'Other'})
-
-            // No notification should have been sent to the cancelled passenger itself 
-            expect(await Noti.findOne({username: 'passenger1'})).not.toBeTruthy()
             
             // Check whether passenger was removed from ride 
             const cancelledRide = await Ride.findOne({ownerUsername: ride.ownerUsername}).lean()

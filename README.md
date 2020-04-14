@@ -12,7 +12,6 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 # Setup
 
-<<<<<<< HEAD
 1. [Local Environment Setup](#local-environment-setup)
 2. [Local Development Setup](#local-development-setup)
 3. [Npm Scripts](#npm-scripts)
@@ -51,19 +50,6 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 ---
 
 ## Local Development Setup
-=======
-After the Local Environment Setup, using **Docker Commands** is advised for application setup & running the application.
-
-1. [Local Environment Setup](#local-environment-setup)
-2. [Local Development Setup](#local-development-setup)
-3. [Npm Scripts](#npm-scripts)
-4. [Additional Tools](#additional-tools)
-5. [Directory Structure](#directory-structure)
-
----
-
-## Local Development Setup (for additional reference)
->>>>>>> origin/master
 
 1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
 2. Open another terminal and run `npm run dev` in the home directory; this starts the backend application with nodemon
@@ -1257,7 +1243,6 @@ PUT request
 
 - Whether the logged in user is a driver or a passenger in the ride is abstracted away.
 
-<<<<<<< HEAD
 - In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs:
 	1. The ride is removed from the Ride collection.
 	2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
@@ -1306,15 +1291,6 @@ PUT request
 	3. The passenger who cancelled is removed from the ride, and a new spot is freed up.
 	4. The passenger who cancelled receive the following penalty:
 		-  `ridesCancelled` property is incremented
-=======
-- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs: 1. The ride is removed from the Ride collection. 2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
-
-- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs: 1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`. - An example of a notification received by a passenger in the ride is the following:
-  `{ viewed: false, _id: 5e6532be23cf21496470c042, username: 'passenger1', msg: 'driverUsername has cancelled your ride', date: 2020-03-08T18:00:30.136Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling' } }` 2. The ride is removed from the Ride collection. 3. The driver receives the following penalty: - `ridesCancelled` property is incremented
-
-- In the event that a **passenger** cancels a ride, the following occurs: 1. Only the driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`. - An example of a notification received by the driver is the following:
-  `{ viewed: false, _id: 5e6534144a54ab39342752d0, username: 'driverUsername', msg: 'passenger1 has cancelled your ride', date: 2020-03-08T18:06:12.834Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } }` 2. The passenger who cancelled is removed from the ride, and a new spot is freed up. 3. The passenger who cancelled receive the following penalty: - `ridesCancelled` property is incremented
->>>>>>> origin/master
 
 **body**
 

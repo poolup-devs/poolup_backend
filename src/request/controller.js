@@ -1,6 +1,19 @@
 const Request = require("./request").Request;
 const mongoose = require("mongoose");
 
+// getRequestInfo gets the information of a specified request
+const getRequestInfo = (requestID, callback) => {
+  let query = { _id: requestID };
+
+  Request.find(query, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
 // getSenderRequests gets a sender's requests based on status
 const getSenderRequests = (senderID, status, callback) => {
   let query = {};
@@ -9,12 +22,8 @@ const getSenderRequests = (senderID, status, callback) => {
     query = { senderID: senderID };
   } else if (status == "visible") {
     query = {
-      $and: [
-        { senderID: senderID },
-        {
-          $nor: [{ status: "archived" }]
-        }
-      ]
+      senderID: senderID,
+      archived: false
     };
   } else {
     query = { senderID: senderID, status: status };
@@ -29,28 +38,19 @@ const getSenderRequests = (senderID, status, callback) => {
   });
 };
 
-// getRecepientRequests gets Recepient requests based off status
-const getRecepientRequests = (recepientID, status, callback) => {
+// getrecipientRequests gets recipient requests based off status
+const getRecipientRequests = (recipientID, status, callback) => {
   let query = {};
 
   if (status == "all") {
-    query = { recepientID: recepientID };
+    query = { recipientID: recipientID };
   } else if (status == "visible") {
     query = {
-      $and: [
-        { recepientID: recepientID },
-        {
-          $or: [
-            { status: "pending" },
-            { status: "denied" },
-            { status: "cancelled" },
-            { status: "approved" }
-          ]
-        }
-      ]
+      recipientID: recipientID,
+      archived: false
     };
   } else {
-    query = { recepientID: recepientID, status: status };
+    query = { recipientID: recipientID, status: status };
   }
 
   Request.find(query, (err, result) => {
@@ -64,20 +64,14 @@ const getRecepientRequests = (recepientID, status, callback) => {
 
 // createRequest creates a new request from the specified user with
 // regards about the specified ride
-const createRequest = (
-  rideID,
-  senderID,
-  recepientID,
-  luggage,
-  msg,
-  callback
-) => {
+const createRequest = (requestInfo, callback) => {
   newRequest = {
-    rideID: rideID,
-    senderID: senderID,
-    recepientID: recepientID,
-    luggage: luggage,
-    msg: msg,
+    rideID: requestInfo.rideID,
+    senderID: requestInfo.senderID,
+    recipientID: requestInfo.recipientID,
+    carryOn: requestInfo.carryOn,
+    luggage: requestInfo.luggage,
+    msg: requestInfo.msg,
     date: new Date()
   };
 
@@ -100,7 +94,9 @@ const approveRequest = (requestID, callback) => {
     if (findErr) {
       callback(findErr, null);
     } else {
-      if (findResult.status != "pending") {
+      if (findResult.archived) {
+        callback("Ride has already been archived");
+      } else if (findResult.status !== "pending") {
         callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(
@@ -130,7 +126,9 @@ const cancelRequest = (requestID, callback) => {
     if (findErr) {
       callback(findErr, null);
     } else {
-      if (findResult.status != "pending") {
+      if (findResult.archived) {
+        callback("Ride has already been archived");
+      } else if (findResult.status !== "pending") {
         callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(
@@ -160,7 +158,9 @@ const denyRequest = (requestID, callback) => {
     if (findErr) {
       callback(findErr, null);
     } else {
-      if (findResult.status != "pending") {
+      if (findResult.archived) {
+        callback("Ride has already been archived");
+      } else if (findResult.status !== "pending") {
         callback("Ride has already been " + findResult.status, null);
       } else {
         Request.findOneAndUpdate(
@@ -180,10 +180,25 @@ const denyRequest = (requestID, callback) => {
   });
 };
 
-// archiveRequest sets a specified request status to 'archived'
+// archiveRequest sets a specified request archived field to true
 const archiveRequest = (requestID, callback) => {
   const filter = { _id: requestID };
-  const update = { $set: { status: "archived" } };
+  const update = { $set: { archived: true } };
+  const options = { new: true };
+
+  Request.findOneAndUpdate(filter, update, options, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+};
+
+// archiveRequest sets a specified request archived field to false
+const unarchiveRequest = (requestID, callback) => {
+  const filter = { _id: requestID };
+  const update = { $set: { archived: false } };
   const options = { new: true };
 
   Request.findOneAndUpdate(filter, update, options, (err, result) => {
@@ -197,7 +212,7 @@ const archiveRequest = (requestID, callback) => {
 
 // deleteRequest deletes a specified request from the database
 const deleteRequest = (requestID, callback) => {
-  Request.deleteOne({ requestID }, (err, result) => {
+  Request.deleteOne({ _id: requestID }, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
@@ -206,13 +221,37 @@ const deleteRequest = (requestID, callback) => {
   });
 };
 
+// decrementRemindCount decrements the reminders count by one
+const decrementRemindCount = (requestID, callback) => {
+  console.log(requestID);
+  const filter = { _id: requestID };
+  const update = { $inc: { reminders: -1 } };
+  const options = { new: true };
+
+  Request.findOneAndUpdate(
+    filter,
+    update,
+    options,
+    (updateErr, updateResult) => {
+      if (updateErr) {
+        callback(updateErr, null);
+      } else {
+        callback(null, updateResult);
+      }
+    }
+  );
+};
+
 module.exports = {
-  getRecepientRequests,
+  getRequestInfo,
+  getRecipientRequests,
   getSenderRequests,
   createRequest,
   approveRequest,
   cancelRequest,
   denyRequest,
   archiveRequest,
-  deleteRequest
+  unarchiveRequest,
+  deleteRequest,
+  decrementRemindCount
 };

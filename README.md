@@ -12,6 +12,51 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 # Setup
 
+1. [Local Environment Setup](#local-environment-setup)
+2. [Local Development Setup](#local-development-setup)
+3. [Npm Scripts](#npm-scripts)
+4. [Additional Tools](#additional-tools)
+5. [Directory Structure](#directory-structure)
+
+---
+
+## Local Environment Setup
+
+1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
+2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
+3. Install all used packages and dependencies using:
+   > npm install
+4. To connect to the development s3 bucket, run:
+
+   > npm run setup
+
+   This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
+
+   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
+
+5. Install mongoDB by following installation guides from:
+   Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
+   Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
+
+   This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
+   For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
+
+6. Optional: Initialize the database with default objects.
+
+   > npm run init_db
+
+   This REMOVES existing database collections and populates them with default objects.
+
+---
+
+## Local Development Setup
+
+1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
+2. Open another terminal and run `npm run dev` in the home directory; this starts the backend application with nodemon
+3. The local backend development port is set to 3000, now use Postman to test API endpoints. Look at [Using Postman](#using-postman) for instructions.
+
+---
+
 ## NPM Scripts
 
 1. Starting the NodeJS app
@@ -51,47 +96,9 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 ---
 
-## Local Environment Setup
-
-1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
-2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
-3. Install all used packages and dependencies using:
-   > npm install
-4. To connect to the development s3 bucket, run:
-
-   > npm run setup
-
-   This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
-
-   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
-
-5. Install mongoDB by following installation guides from:
-   Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
-   Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
-
-   This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
-   For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
-
-6. Optional: Initialize the database with default objects.
-
-   > npm run init_db
-
-   This REMOVES existing database collections and populates them with default objects.
-
----
-
-## Local Development Setup
-
-1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
-2. Open another terminal and run `npm run dev` in the home directory; this starts the backend application with nodemon
-3. The local backend development port is set to 3000, now use Postman to test API endpoints.
-
----
-
 ## Additional Tools
 
-1. Install Postman to test backend REST APIs
-   Here's a link to a sample set of HTTP requests w/Postman: press the import button on upper left, and use the url https://www.getpostman.com/collections/bcd0df61c8abfc805865
+1. Download and install Postman to test backend REST APIs
 2. Install Robo 3T for mongoDB GUI and create a new connection to the DB using port 27017, the default mongoDB port
 
 ---
@@ -108,10 +115,13 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 |   package.json
 |   README.md
 |   setup.js
+|   docker-compose.yml
 |
 +---config
-|       dev.env
-|       test.env
+|       .env-cmdrc
++---dockerfiles
+|       main
+|       mongo_seed
 |
 +---src
 |   |   app.js
@@ -138,6 +148,11 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 |   |       controller.js
 |   |       index.js
 |   |       ride.js
+|   |
+|   +---stripe
+|   |   |    index.js
+|   |   +----tool
+|   |           driver-info-validation.js
 |   |
 |   +---user
 |   |       controller.js
@@ -186,11 +201,9 @@ Explain potential conflicts that may arise with the current code base, issues th
 
 Additional Comment
 
-## Using Postman
-
 ## Using POSTMAN
 
-We use a single account that is shared by everyone. Ask for PoolUp's dev gmail credential, login, and use the collection located in it.
+We use a single account that is shared by everyone (b/c we're broke). Ask for PoolUp's dev gmail credential, login, and use the collection located in it.
 
 **Creating a Postman Request**
 
@@ -226,6 +239,23 @@ For all API requests after login, the bearer token must be included in headers f
 
 There must be a white space between the string "Bearer" and the token string
 
+## Scheduling Tasks
+All scheduled tasks should be in /tasks/scheduledTasks.js, with unit tests in /tests/tasks/scheduledTasks.test.js
+Operations
+-  `void scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)`
+	- Schedules a task to *run once*, X hours after a certain date
+		-  **uniqueTaskName**: uniquely identify the task in the case you ever need to cancel the task
+		-  **task**: function pointer of the task to schedule
+		-  **date**: JavaScript Date object
+		-  **hours**: number of hours after specified date
+-  `cancelTasksAssociatedWithRide(rideId)`
+	- Clean up all tasks associated with a ride
+	- This will clean up tasks named with the following format: **taskFunctionName:{rideId}**
+		- ex: **updateCompletedRidesTask:{rideId}** or **promptLeaveAReviewTask:{rideId}**
+	- This can be used to clean up scheduled email reminders and web notifications for rides that have been cancellled 
+-  `bool cancelTask(taskName)`
+	- Cancel a task, returns a Promise that resolves into a boolean value 
+
 ## Models & API Endpoints Documentation
 
 Models:
@@ -235,6 +265,7 @@ Models:
 3. [Noti](#noti-model)
 4. [Review](#review-model)
 5. [Request](#request-model)
+6. [Stripe](#stripe-model)
 
 ---
 
@@ -242,23 +273,24 @@ Models:
 
 ### Schema
 
-| column              | type    | required | properties                    |        
-| ------------------- | ------- | -------- | ----------------------------- | 
-| name                | String  | Yes      |                               | 
-| email               | String  | Yes      |                               |                        
-| username            | String  | Yes      |                               |                        
-| password            | String  | Yes      |                               |                       
-| phoneNumber         | String  |          |                               |                        
-| picUrl              | String  |          |                               |                        
-| picType             | String  |          |                               |                        
-| verified            | Boolean | Yes      |                               |  
-| createdAt           | Date    |          |                               |
-| aboutMe             | String  |          |                               |
-| school              | String  |          |                               |
-| ridesCancelled      | Number  |          |                               |
-| ridesCompleted      | Number  |          |                               |
-| rating              | Object  |          | sumOfAllRatings, totalRatings |                           
-
+| column         | type    | required | properties                                                   |
+| -------------- | ------- | -------- | ------------------------------------------------------------ |
+| name           | String  | Yes      |                                                              |
+| email          | String  | Yes      |                                                              |
+| username       | String  | Yes      |                                                              |
+| password       | String  | Yes      |                                                              |
+| phoneNumber    | String  |          |                                                              |
+| picUrl         | String  |          |                                                              |
+| picType        | String  |          |                                                              |
+| verified       | Boolean | Yes      |                                                              |
+| createdAt      | Date    |          |                                                              |
+| aboutMe        | String  |          |                                                              |
+| school         | String  |          |                                                              |
+| ridesCancelled | Number  |          |                                                              |
+| ridesCompleted | Number  |          |                                                              |
+| rating         | Object  |          | sumOfAllRatings, totalRatings                                |
+| stripe         | Object  |          | accountID, customerID                                        |
+| driver         | Object  |          | licensePlate, vehicleMakeModel, driversLicense, vehicleColor |
 
 ### API Endpoints
 
@@ -281,6 +313,7 @@ Models:
 | /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
 | /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
 | /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |
+| /users/driverStatus          | GET         | [Check if a user is a driver](#check-if-driver)                    |
 
 ---
 
@@ -316,25 +349,14 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
 POST request
 
 - Must provide an email, username, and password.
-- Validates the information inputted by the user by following several requirements, as outlined below. 
-	- For each unmet requirement, an error message is returned in the response body. 
-		1. **Username is not unique** -> "A verified account already exists with this username!"
-		2. **Email is not unique** -> "An account already exists with this email!"
-		3. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!"
-		4. **Email is not a student email** -> "Not an .edu email address!"
-		5. **Signing up with the credentials of an unverified account** -> "You must verify this account by checking your email!"
-		6. **Password too short** -> "Password must be at least 8 characters long!"  
+- Validates the information inputted by the user by following several requirements, as outlined below. - For each unmet requirement, an error message is returned in the response body. 1. **Username is not unique** -> "A verified account already exists with this username!" 2. **Email is not unique** -> "An account already exists with this email!" 3. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!" 4. **Email is not a student email** -> "Not an .edu email address!" 5. **Signing up with the credentials of an unverified account** -> "You must verify this account by checking your email!" 6. **Password too short** -> "Password must be at least 8 characters long!"
 
 - Sends a confirmation email containing the following link: https://bruinpool.io/users/verify?token=TOKENATTACHEDHERE. The user must activate within **30 minutes** after signing up, or they must signup again.
-- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. 
-	- To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school 
-        - The associations can be stored in a JSON file and imported periodically to the database via the mongoexport command 
-		- Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"} 
-            - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu" 
+- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. - To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school - The associations can be stored in a JSON file and imported periodically to the database via the mongoexport command - Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"} - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu"
 - A default profile pic of Bruinbear with random color is assigned
-  
 
 **Body**
+
 ```
 {
 	"email": "user@ucla.edu"
@@ -343,6 +365,7 @@ POST request
     "name": "First Last"
 }
 ```
+
 **return value**
 
 201 Created if all requirements are met and a verification email was successfully sent.
@@ -350,11 +373,13 @@ POST request
 500 status if a requirement is not met or if the verification email could not be sent, along with an error message.
 
 Example of error message:
+
 ```
 {
 	error: "Could not send verification email!"
 }
 ```
+
 ---
 
 ### Email Verification
@@ -622,67 +647,144 @@ none required
 
 ---
 
-### Get rating 
-GET request 
+### Get rating
+
+GET request
+
 - Get the rating of a user
 
 **params/body**
-- username 
 
-**example** 
+- username
+
+**example**
+
 - localhost:3000/users/get-rating?username=elin4046
 
-**return value** 
-- An object containing the property averageRating, which is a floating point that is truncated to two decimal points, eg. 2.50 
+**return value**
+
+- An object containing the property averageRating, which is a floating point that is truncated to two decimal points, eg. 2.50
+
 ```
 {
     "averageRating": 2.50
 }
 ```
+
 ---
 
-### Get school 
-GET request 
-- Get the user's school
-- The user's school is parsed during sign-up by referencing the Schools collection. For more details, reference the sign-up endpoint. 
+### Check if Driver
+
+GET request
+
+- Check if a user is a driver
 
 **params/body**
-- username 
 
-**example** 
-- localhost:3000/users/get-rating?username=elin4046
+```
+none
+```
 
-**return value** 
-- An object containing the field ``school``. If the school cannot be determined from the email, the ``school`` field will be set to null. 
+**example**
+
+- localhost:3000/users/driverStatus
+
+**return value**
+
+- An object containing a boolean
+- If true then the user is a driver, else they are not.
+
 ```
 {
-    "school": "UCLA"
+    "isDriver": true
 }
 ```
 
 ---
 
-### Update about me 
+### Get rating
 
-PATCH request 
-- Update the logged in user's about me description 
+GET request
+
+- Get the rating of a user
+
+**params/body**
+
+- username
+
+**example**
+
+- localhost:3000/users/get-rating?username=elin4046
+
+**return value**
+
+- An object containing the property averageRating, which is a floating point that is truncated to two decimal points, eg. 2.50
+
+```
+
+{
+"averageRating": 2.50
+}
+
+```
+
+---
+
+### Get school
+
+GET request
+
+- Get the user's school
+- The user's school is parsed during sign-up by referencing the Schools collection. For more details, reference the sign-up endpoint.
+
+**params/body**
+
+- username
+
+**example**
+
+- localhost:3000/users/get-rating?username=elin4046
+
+**return value**
+
+- An object containing the field `school`. If the school cannot be determined from the email, the `school` field will be set to null.
+
+```
+
+{
+"school": "UCLA"
+}
+
+```
+
+---
+
+### Update about me
+
+PATCH request
+
+- Update the logged in user's about me description
 
 **body**
+
 - aboutMe
 
 ```
+
 {
-    "aboutMe": "This is my new about me description!"
+"aboutMe": "This is my new about me description!"
 }
+
 ```
 
-**example** 
-- localhost:3000/users/updateAboutMe 
+**example**
 
+- localhost:3000/users/updateAboutMe
 
-**return value** 
-- 200 status if successful 
-- 500 status if a database error occurs while updating: 'Could not find user in database when updating about me.' 
+**return value**
+
+- 200 status if successful
+- 500 status if a database error occurs while updating: 'Could not find user in database when updating about me.'
 
 Returns the user document containing the updated aboutMe property
 
@@ -693,16 +795,13 @@ Returns the user document containing the updated aboutMe property
 GET request
 
 - Get all of a user's public information
-- Returns the following user properties:
-	- ``name, school, aboutMe, rating, ridesCompleted, ridesCancelled, picUrl, picType``
-- Any properties that are not defined are not included; for example, if a user has not received any reviews yet, the ``rating`` property cannot be computed and subsequently will not be returned 
+- Returns the following user properties: - `name, school, aboutMe, rating, ridesCompleted, ridesCancelled, picUrl, picType`
+- Any properties that are not defined are not included; for example, if a user has not received any reviews yet, the `rating` property cannot be computed and subsequently will not be returned
 
-- Additional Note: 
-	- ``ridesCompleted`` automatically updates 2 hours after a ride containing at least one passenger begins
-		- Drivers will receive a **completed ride** for each passenger dropped off
-		- Passengers will receive a single **completed ride** after a carpooling session 
-		
+- Additional Note: - `ridesCompleted` automatically updates 2 hours after a ride containing at least one passenger begins - Drivers will receive a **completed ride** for each passenger dropped off - Passengers will receive a single **completed ride** after a carpooling session
+
 **query**
+
 - username
 
 **example**
@@ -713,18 +812,22 @@ GET request
 
 - 200 status if successful
 - 404 status with an error message if the user could not be found
+
 ```
+
 {
-	"picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
-	"picType": "png",
-	"name": "First Last",
-	"school": "UCLA",
-	"rating": "3.33",
-	"ridesCompleted": 3,
-	"ridesCancelled": 1,
-	"aboutMe": "This is my about me!"
+    "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
+    "picType": "png",
+    "name": "First Last",
+    "school": "UCLA",
+    "rating": "3.33",
+    "ridesCompleted": 3,
+    "ridesCancelled": 1,
+    "aboutMe": "This is my about me!"
 }
+
 ```
+
 ---
 
 ### Ride Model
@@ -743,6 +846,18 @@ GET request
 | seats**(remaining)** | Number | Yes      |
 | detail               | String |          |
 | passengers           | Array  |          |
+| instantBook          | Object |          |
+
+<br>
+
+| instantBook           | type    | required |
+| --------------------- | ------- | -------- |
+| enabled               | Boolean | yes      |
+| specificPickUpDropOff | Boolean |          |
+| smokingAllowed        | Boolean |          |
+| noPetsAllowed         | Boolean |          |
+| singleCarryOn         | Boolean |          |
+| singleLuggage         | Boolean |          |
 
 ### API Endpoints
 
@@ -776,12 +891,14 @@ if FILTER IS UNDEFINED, returns ALL available drives sorted in date/time
 filter Schema:
 
 ```
+
     {
         "from": "CITY",
         "to": "CITY",
         "date_from": "TIMERANGE_START",
         "date_to": "TIMERANGE_END"
     }
+
 ```
 
 For both "from" and "to" fields, if the field is undefined it is ignored from the filter;
@@ -794,36 +911,44 @@ For "date_from" and "date_to" fields, if either is undefined the filter is set t
 URL syntax:
 
 ```
-localhost:3000/rides/matching-rides?filter={"from": "Irvine",  "to" : "Los Angeles", "date_from": "2019-09-10T00:00:00.000Z", "date_to":"2019-09-12T00:00:00.000Z"}
+
+localhost:3000/rides/matching-rides?filter={"from": "Irvine", "to" : "Los Angeles", "date_from": "2019-09-10T00:00:00.000Z", "date_to":"2019-09-12T00:00:00.000Z"}
+
 ```
 
 Get all rides from Irvine to Los Angeles between 8:00 AM to 9:30 AM on 2019-09-13
 
 ```
+
     {
         "from": "Irvine",
         "to": "Los Angeles",
         "date_from": "2019-09-13T08:00:00.000Z",
         "date_to": "2019-09-13T09:30:00.000Z"
     }
+
 ```
 
 Get all rides from Irvine to anywhere between 8:00 AM to 9:30 AM on 2019-09-13
 
 ```
+
     {
         "from": "Irvine",
         "date_from": "2019-09-13T08:00:00.000Z",
         "date_to": "2019-09-13T09:30:00.000Z"
     }
+
 ```
 
 Get all rides from Irvine to anywhere anytime (after the current timestamp, of course)
 
 ```
+
     {
         "from": "Irvine"
     }
+
 ```
 
 localhost:3000/rides/matching-rides?filter=
@@ -833,6 +958,7 @@ localhost:3000/rides/matching-rides?filter=
 200 status
 
 ```
+
 [
     {
         "passengers": [],
@@ -863,6 +989,7 @@ localhost:3000/rides/matching-rides?filter=
         "__v": 0
     }
 ]
+
 ```
 
 ---
@@ -963,27 +1090,29 @@ localhost:3000/rides/drives-upcoming?pageNum=0&username=bin315a1
 
 POST request
 
-- Creates a new ride document. 
-- Schedules a task to occur two hours after the start of a ride that updates the driver and passenger's ``ridesCompleted`` property. 
+- Creates a new ride document.
+- Schedules a task to occur two hours after the start of a ride that updates the driver and passenger's `ridesCompleted` property.
 
 **body**
 
 a new ride object:
 
 ```
+
 {
-	"rideInfo": {
-		"ownerEmail": "bin315a1@gmail.com",
-		"ownerUsername": "bin315a1",
-		"from": "Irvine",
-		"to": "Los Angeles",
-		"date": "2019-07-30",
-		"price": "20",
-		"seats": 4,
-		"detail": "Third test for post",
-		"passengers": []
-	}
+    "rideInfo": {
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-07-30",
+        "price": "20",
+        "seats": 4,
+        "detail": "Third test for post",
+        "passengers": []
+    }
 }
+
 ```
 
 **return value**
@@ -991,6 +1120,7 @@ a new ride object:
 201 status
 
 ```
+
 {
     "passengers": [],
     "_id": "5d55b5721e78951430fdcc66",
@@ -1002,8 +1132,9 @@ a new ride object:
     "price": "10",
     "seats": 4,
     "detail": "before today's date",
-    "__v": 0
+    "_v": 0
 }
+
 ```
 
 ---
@@ -1017,8 +1148,9 @@ PUT request
 The ride object that the user is trying to join:
 
 ```
+
 {
-	"ride" : {
+    "ride" : {
         "passengers": [],
         "_id": "5d505ed15482ec4e38597cdb",
         "ownerEmail": "bin315a1@gmail.com",
@@ -1030,10 +1162,10 @@ The ride object that the user is trying to join:
         "price": "20",
         "seats": 4,
         "detail": "Third test for post",
-        "__v": 0
-
+        "_v": 0
     }
 }
+
 ```
 
 **return value**
@@ -1041,6 +1173,7 @@ The ride object that the user is trying to join:
 200 status with the same ride object joined
 
 ```
+
 {
     "passengers": [
         "bin315a1"
@@ -1057,6 +1190,7 @@ The ride object that the user is trying to join:
     "detail": "Third test for post",
     "__v": 0
 }
+
 ```
 
 ---
@@ -1120,59 +1254,119 @@ PUT request
 
 - `ride`: ride object that the logged in user is trying to cancel
 - `cancellationReason`: String when the user selects from a drop-down of cancellation reasons
-- `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver
-	- optional field, omit from body if user does not type any message into the form
+- `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver - optional field, omit from body if user does not type any message into the form
+
 ```
+
 {
-	"ride": {
-		"_id" : "5e649bba9e2f6d3570e88462",
-		"passengers" : [
-			"user1"
-		],
-		"ownerEmail" : "user2@g.ucla.edu.com",
-		"ownerUsername" : "user2",
-		"ownerPhoneNumber" : "1231231234",
-		"from" : "Los Angeles",
-		"to" : "Irvine",
-		"date" : "2020-03-05T08:00:00.000Z",
-		"price" : "20",
-		"seats" : 4,
-		"detail" : "rider1_past, driver2_past",
-		"_v" : 0
-	},
-	"messageToDriver": "Sorry for cancelling!",
-	"cancellationReason": "Change of travel plans"
+    "ride": {
+        "_id" : "5e649bba9e2f6d3570e88462",
+        "passengers" : [
+            "user1" 
+        ],
+        "ownerEmail" : "user2@g.ucla.edu.com",
+        "ownerUsername" : "user2",
+        "ownerPhoneNumber" : "1231231234",
+        "from" : "Los Angeles",
+        "to" : "Irvine",
+        "date" : "2020-03-05T08:00:00.000Z",
+        "price" : "20",
+        "seats" : 4,
+        "detail" : "rider1_past, driver2_past",
+        "_v" : 0
+    },
+    "messageToDriver": "Sorry for cancelling!",
+    "cancellationReason": "Change of travel plans"
 }
+
 ```
 
 **return value**
 
-- 200 status, with a short **description of the event** that occurred.
-	- For example, the following Strings are possible return values:
-		- "Driver cancelled ride without penalty because there were no passengers."
-		- "Driver cancelled ride and received a penalty because there were passengers."
-		- "Passenger cancelled ride and received a penalty."
-- 500 status, with an object containing ``error`` property.
-	- For example, the following errors are possible messages:
-		- "Ride does not exist in database!"
-		- "User is not a driver or passenger of this ride."
+- 200 status, with a short **description of the event** that occurred. - For example, the following Strings are possible return values: - "Driver cancelled ride without penalty because there were no passengers." - "Driver cancelled ride and received a penalty because there were passengers." - "Passenger cancelled ride and received a penalty."
+- 500 status, with an object containing `error` property. - For example, the following errors are possible messages: - "Ride does not exist in database!" - "User is not a driver or passenger of this ride."
 
---- 
+---
+
+**return value**
+
+200 status, with a short description of the event that occurred.
+
+For example, the following events are possible return values:
+
+1. "Driver cancelled ride without penalty because there were no passengers."
+2. "Driver cancelled ride and received a penalty because there were passengers."
+3. "Passenger cancelled ride and received a penalty."
+
+500 status, with an object containing `error` property.
+
+For example, the following errors are possible messages:
+
+1. "Ride does not exist in database!"
+2. "User is not a driver or passenger of this ride."
+
+---
+
+### Delete a ride
+
+DELETE request
+
+**body**
+
+The ride object that the user is trying to delete (The ride object's owner has to be the logged in user):
+
+```
+
+{
+    "ride" : {
+        "passengers": [
+            "bin315a1"
+        ],
+        "_id": "5d505f0d5482ec4e38597cdd",
+        "ownerEmail": "bin315a1@gmail.com",
+        "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": "2019-08-30T00:00:00.000Z",
+        "price": "20",
+        "seats": 4,
+        "detail": "Second test for post",
+        "__v": 0
+    }
+}
+
+```
+
+**return value**
+
+200 status with a debrief of action:
+
+```
+
+    {
+        "n": 1,
+        "ok": 1,
+        "deletedCount": 1
+    }
+
+```
+
+---
 
 ### Noti Model
 
 ### Schema
 
-| column               | type    | required | description                                        |
-| -------------------- | ------- | -------- | ---------------------------------------------------|
-| username             | String  | Yes      |                                                    |
-| email                | String  | Yes      |                                                    |
-| msg                  | String  | Yes      |                                                    |
-| senderPhoneNumber    | String  |          |                                                    |
-| senderEmail          | String  | Yes      |                                                    |
-| viewed               | Boolean | Yes      |                                                    |
-| additionalProperties | Mixed   |          | fields specific to the type of notification        |
-
+| column               | type    | required | description                                 |
+| -------------------- | ------- | -------- | ------------------------------------------- |
+| username             | String  | Yes      |                                             |
+| email                | String  | Yes      |                                             |
+| msg                  | String  | Yes      |                                             |
+| senderPhoneNumber    | String  |          |                                             |
+| senderEmail          | String  | Yes      |                                             |
+| viewed               | Boolean | Yes      |                                             |
+| additionalProperties | Mixed   |          | fields specific to the type of notification |
 
 ### API Endpoints
 
@@ -1197,6 +1391,7 @@ none needed
 200 status
 
 ```
+
 [
     {
         "viewed": false,
@@ -1217,6 +1412,7 @@ none needed
         "__v": 0
     }
 ]
+
 ```
 
 ---
@@ -1230,11 +1426,13 @@ POST request
 **body**
 
 ```
+
 {
     msg: <message>,
     senderPhoneNumber: <String>,
     senderEmail: <String>
 }
+
 ```
 
 **return value**
@@ -1260,57 +1458,68 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 200 status
 
 ```
+
 {
     "n": 9,
     "nModified": 2,
     "ok": 1
 }
+
 ```
---- 
+
+---
+
 ### Review Model
 
 ### Schema
 
-| property               | type     | required | 
-| --------------------   | -------- | -------- |
-| *reviewerUsername*     | String   | Yes      | 
-| *revieweeUsername*     | String   | Yes      |  
-| *rideId*               | ObjectId | Yes      | 
-| datePosted             | Date     |          | 
-| rating                 | Number   |          | 
-| comment                | String   |          | 
-| isDeclined             | Boolean  |          | 
+| property           | type     | required |
+| ------------------ | -------- | -------- |
+| _reviewerUsername_ | String   | Yes      |
+| _revieweeUsername_ | String   | Yes      |
+| _rideId_           | ObjectId | Yes      |
+| datePosted         | Date     |          |
+| rating             | Number   |          |
+| comment            | String   |          |
+| isDeclined         | Boolean  |          |
 
-* Italicized properties uniquely identify a Review document
-* A Review document describes whether a reviewer chooses to review a reviewee, and if so, provides the details of the review
-* Details on whether the users are drivers or riders in a carpooling session are abstracted 
+- Italicized properties uniquely identify a Review document
+- A Review document describes whether a reviewer chooses to review a reviewee, and if so, provides the details of the review
+- Details on whether the users are drivers or riders in a carpooling session are abstracted
 
 ---
+
 ### API Endpoints
 
-| url                                    | HTTP Method | description                                                         
-| -------------------------------------- | ----------- | ------------
-| /reviews                               | POST        | [Add a review ](#add-review)         
-| /reviews                               | GET         | [Get all of a user's reviews](#get-all-reviews)
-| /reviews/decline-review                | POST        | [Decline to review a user](#decline-to-review)
-| /reviews/get-eligible-users-to-review  | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review)       
+| url                                   | HTTP Method | description                                                         |
+| ------------------------------------- | ----------- | ------------------------------------------------------------------- |
+| /reviews                              | POST        | [Add a review ](#add-review)                                        |
+| /reviews                              | GET         | [Get all of a user's reviews](#get-all-reviews)                     |
+| /reviews/decline-review               | POST        | [Decline to review a user](#decline-to-review)                      |
+| /reviews/get-eligible-users-to-review | GET         | [Get list of usernames to review](#get-list-of-usernames-to-review) |
 
 ---
+
 ### Add Review
+
 POST request
+
 - Add a review using the currently logged in account as the reviewer
 
-**params/body** 
-- Required fields: revieweeUsername, rideId, and rating 
-```
-    {
-        "revieweeUsername": "elin4046", 
-        "rideId": "507f1f77bcf86cd799439011", 
-        "rating": 1, 
-        "comment": "Driver arrived really late and was super rude!"
-    }
+**params/body**
+
+- Required fields: revieweeUsername, rideId, and rating
+
 ```
 
+    {
+        "revieweeUsername": "elin4046",
+        "rideId": "507f1f77bcf86cd799439011",
+        "rating": 1,
+        "comment": "Driver arrived really late and was super rude!"
+    }
+
+```
 
 **return value**
 
@@ -1318,37 +1527,47 @@ POST request
 - 500 status code w/ database errors or in the case of duplicate reviews
 
 ```
+
 {
-	"isDeclined": false,
-	"_id": "5e1e997e67eae745e865a233",
-	"reviewerUsername": "admin", 
-	"revieweeUsername": "elin4046",
-	"rideId": "507f1f77bcf86cd799439011",
-	"rating": 1,
-	"comment": "Driver arrived really late and was super rude!",
-	"datePosted": "2020-01-15T04:47:58.738Z",
-	"__v": 0
+    "isDeclined": false,
+    "_id": "5e1e997e67eae745e865a233",
+    "reviewerUsername": "admin",
+    "revieweeUsername": "elin4046",
+    "rideId": "507f1f77bcf86cd799439011",
+    "rating": 1,
+    "comment": "Driver arrived really late and was super rude!",
+    "datePosted": "2020-01-15T04:47:58.738Z",
+    "__v": 0
 }
+
 ```
 
 ---
+
 ### Get all reviews
-GET request 
-- Get all reviews received by a user with pagination beginning with 0  
 
-**params/body** 
+GET request
 
-username, pageNum 
+- Get all reviews received by a user with pagination beginning with 0
+
+GET request
+
+- Get all reviews received by a user
+
+**params/body**
+
+username, pageNum
 
 **example**
 
 localhost:3000/reviews?username=elin4046
 
-**return value** 
+**return value**
 
-- 200 status code - A list of review documents made to the user, empty [] if none exist. 
+- 200 status code - A list of review documents made to the user, empty [] if none exist.
 
 ```
+
 [
     {
         "isDeclined": false,
@@ -1373,54 +1592,380 @@ localhost:3000/reviews?username=elin4046
         "__v": 0
     }
 ]
+
 ```
 
 ---
-### Decline to review 
-POST request
-- Indicate the currently logged in user's decision to not review another user after being prompted to do so 
-- This is important to prevent any further notifications 
 
-**params/body** 
-- revieweeUsername and the ride's rideId 
+### Decline to review
+
+POST request
+
+- Indicate the currently logged in user's decision to not review another user after being prompted to do so
+- This is important to prevent any further notifications
+
+**params/body**
+
+- revieweeUsername and the ride's rideId
 
 **example**
 
 ```
+
 {
-	"revieweeUsername": "john_smith",  
-	"rideId": "507f191e810c19729de860ea"
+    "revieweeUsername": "john_smith",
+    "rideId": "507f191e810c19729de860ea"
 }
+
 ```
 
-**return value** 
-- 200 status code w/ data on the newly created Review document
-- 500 status code w/ database errors or in the case of duplicate declines 
-
 ---
+
 ### Get list of usernames to review
-GET request 
+
+GET request
+
 - Get a list of usernames that may be reviewed using the currently logged in account
-- For example: 
-	- If a user was a driver in their latest carpooling session, the request will return the usernames of each of his/her passengers 
-	- If a user was a passenger in their latest carpooling session, the request will return the username of the driver 
-	- If a user has previously **declined** an opportunity to review a passenger, that passenger's username will not be returned 
+- For example: - If a user was a driver in their latest carpooling session, the request will return the usernames of each of his/her passengers - If a user was a passenger in their latest carpooling session, the request will return the username of the driver - If a user has previously **declined** an opportunity to review a passenger, that passenger's username will not be returned
 
 **params/body**
-- none required 
 
-**return value** 
-- An object containing a list of eligible usernames and the latest carpooling session's rideId, if there exists one.
-	- rideId is a necessary property to uniquely identify a Review document 
+- none required
+
+**return value**
+
+- An object containing a list of eligible usernames and the latest carpooling session's rideId, if there exists one. - rideId is a necessary property to uniquely identify a Review document
+
+```
+
+{
+    "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"],
+    "rideId": "507f191e810c19729de860ea"
+}
+
+```
+
+---
+
+### Request Model
+
+### Schema
+
+| column      | type     | required | properties |
+| ----------- | -------- | -------- | ---------- |
+| rideID      | ObjectID | Yes      |            |
+| senderID    | String   | Yes      |            |
+| recipientID | String   | Yes      |            |
+| status      | String   | Yes      |            |
+| archived    | Boolean  | Yes      |            |
+| reminders   | Number   | No       |            |
+| carryOn     | Number   | No       |            |
+| luggage     | Number   | No       |            |
+| msg         | String   | No       |            |
+| date        | Date     | No       |            |
+
+### API Endpoints
+
+| url                | HTTP Method | description                               |
+| ------------------ | ----------- | ----------------------------------------- |
+| /request/info      | GET         | [Request Information](#request-info)      |
+| /request/remind    | GET         | [Remind Driver](#remind-driver)           |
+| /request/sender    | GET         | [Sender Requests](#sender-requests)       |
+| /request/recipient | GET         | [Recipient Requests](#recipient-requests) |
+| /request/new       | POST        | [Create New Request](#create-request)     |
+| /request/approve   | PUT         | [Approve Request](#approve-request)       |
+| /request/cancel    | PUT         | [Cancel Request](#cancel-request)         |
+| /request/deny      | PUT         | [Deny Request](#deny-request)             |
+| /request/archive   | PUT         | [Archive Request](#archive-request)       |
+| /request/delete    | DELETE      | [Delete Request](#delete-request)         |
+
+### Statuses
+
+- Pending: This status reflects the state where a rider has requested a ride, and the driver has yet to respond
+- Approved: This status reflects the state where a driver has approved an already existing user's request
+- Denied: This status reflects the state where a driver has denied an already existing user's request
+- Cancelled: This status reflects the state where a rider has cancelled his initial request
+
+### Request Info
+
+Request Info
+
+- Get a Request's information
+
+**query params**
+
+```
+
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure, 404 if no matching request was found
+
+---
+
+### Remind Driver
+
+Remind Driver
+
+- Reminds a Driver to Approve the request
+
+**query params**
+
+```
+
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure, 404 if no matching request was found
+
+---
+
+### Sender Requests
+
+GET request
+
+- Get a sender's requests with the given status
+
+**query params**
+
+```
+
+    senderID: <String>,
+    status: <String>,
+    // senderID is the username to get that user's requests that they sent
+    // status value of "all" returns all status types,
+    // "visible" displays everything but archived requests
+
+```
+
+**return value**
+
+200 ok status with data of all matching requests, 500 error if failure
+
+---
+
+### Recipient Requests
+
+GET request
+
+- Get a recipient's requests with the given status
+
+**query params**
 
 ```
 {
-    "usernamesToReview": ["elin4046", "michaelSB", "bin315a1"],
-	"rideId": "507f191e810c19729de860ea"
+    recipientID: <String>,
+    status: <String>,
+    // recipientID is the username to get requests that other users sent to this user
+    // status value of "all" returns all status types,
+    // "visible" displays everything but archived requests
+}
+```
+
+**return value**
+
+200 ok status with data of all matching requests, 500 error if failure
+
+---
+
+### Create Request
+
+POST request
+
+- Create a request
+
+**body**
+
+```
+{
+    senderID: <String>,
+    rideID: <String>,
+    recipientID: <String>,
+    msg: <String>
+}
+```
+
+**return value**
+
+200 created status with the request id for later use, 500 error if failure
+
+---
+
+### Approve Request
+
+PUT request
+
+- Change the status of a request to "approved"
+
+**query params (req.body.params.<field>)**
+
+```
+
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure such as if unsuccessful
+
+---
+
+### Deny Request
+
+PUT request
+
+- Change the status of a request to "denied"
+
+**query params (req.body.params.<field>)**
+
+```
+
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure such as if the ride is already "archived" or "cancelled"
+
+---
+
+### Cancel Request
+
+PUT request
+
+- Change the status of a request to "cancelled"
+
+**query params (req.body.params.<field>)**
+
+```
+
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure such as if the ride is already "archived" or "denied"
+
+---
+
+### Archive Request
+
+PUT request
+
+- Change the status of a request to "archived"
+
+**query params (req.body.params.<field>)**
+
+```
+
+    requestID = <String>
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure
+
+---
+
+### Delete Request
+
+Delete Request
+
+- Deletes a request
+
+**body**
+
+```
+
+{
+requestID = <String>
+}
+
+```
+
+**return value**
+
+201 status if successful, 500 error if failure, 404 if no matching request was found
+
+---
+
+### Stripe Model
+
+### API Endpoints
+
+| url                 | HTTP Method | description                                                                                                          |
+| ------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| /stripe/token       | GET         | [Process Stripe account authoriation code and complete driver onboarding](#Process-Stripe-Account-Authoriation-Code) |
+| /stripe/driver/auth | POST        | [Prepare for redirect to Stripe express account signup](#Prepare-for-redirect-to-stripe)                             |
+
+---
+
+### Process Stripe Account Authoriation Code
+
+GET request
+
+- This endpoint is called by Stripe after a user completes the stripe account signup process. The token is used to make a request to Stripe get the user's Stripe Account Id.
+- The driver's information (phone number, drivers license, license plate, vehicle model) was stored in a cookie when /stripe/driver/auth was called and the user's page was redirected to Stripe. This information, along with the Stripe account Id, is then stored in the database for the user that is logged in.
+- More information on this process can be found on Stripe's documentation: https://stripe.com/docs/connect/express-accounts
+
+**body**
+
+```
+
+{
+    "token": "ac_GwlrGacQIGKsSlSBdhis7vBHq7GKqiH4",
+    "state": "csjf6b4g1ft"
+}
+
+```
+
+**return value**
+
+```
+{
+    redirectUrl: "https://connect.stripe.com/express/oauth/authorize?client_id={CLIENT_ID}&state={STATE_VALUE}&stripe_user[email]=user@example.com"
 }
 ```
 
 ---
+
+### Prepare for Redirect to Stripe
+
+POST request
+
+- Accepts the drivers info (phone number, drivers license, license plate, vehicle model), stores it in a cookie, and returns a URL that is used to redirect to Stripe's account setup.
+
+**params**
+
+```
+{
+    phoneNumber: "8054036772",
+    licensePlate: "csjf6b4g1ft",
+    vehicleMakeModel: "Toyota Rav4,
+    driversLicense: "Y9922030",
+    vehicleColor: "Red"
+}
+```
+
+**return value**
+
+- On Success
+  - Redirects page to /driver/my-drives
+- On Error
+  - Redirects page to /driver
+
+---
+
 # Deployment
 
 ## Deployment Instructions

@@ -249,14 +249,15 @@ Models:
 
 | column         | type    | required | properties                                                   |
 | -------------- | ------- | -------- | ------------------------------------------------------------ |
-| name           | String  | Yes      |                                                              |
+| firstName      | String  | Yes      |                                                              |
+| lastName       | String  | Yes      |                                                              |
 | email          | String  | Yes      |                                                              |
 | username       | String  | Yes      |                                                              |
 | password       | String  | Yes      |                                                              |
 | phoneNumber    | String  |          |                                                              |
 | picUrl         | String  |          |                                                              |
 | picType        | String  |          |                                                              |
-| verified       | Boolean | Yes      |                                                              |
+| isRegistered   | Boolean | Yes      |                                                              |
 | createdAt      | Date    |          |                                                              |
 | aboutMe        | String  |          |                                                              |
 | school         | String  |          |                                                              |
@@ -272,8 +273,8 @@ Models:
 | ---------------------------- | ----------- | ------------------------------------------------------------------ |
 | /users/login                 | POST        | [User Login](#user-login)                                          |
 | /users/signup                | POST        | [User Signup](#user-signup)                                        |
-| /users/verify                | GET         | [Send a verification Email for signup](#email-verification)        |
-| /users/emailValidation       | GET         | [Validation/usability of Email](#email-validation)                 |
+| /users/sendVerificationEmail | GET         | [Send a verification email to signup](#send-verification-email)    |
+| /users/verify                | GET         | [Verify an email](#email-verification)                             |
 | /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
 | /users/phoneNumberValidation | GET         | [Validation/usability of a phone number](#phone-number-validation) |
 | /users/upload-profile-pic    | PATCH       | [upload a user profile image](#upload-profile-image)               |
@@ -285,6 +286,7 @@ Models:
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
 | /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
 | /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
+| /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                   |
 | /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
 | /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |
 | /users/driverStatus          | GET         | [Check if a user is a driver](#check-if-driver)                    |
@@ -322,37 +324,86 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
 
 POST request
 
-- Must provide an email, username, and password.
-- Validates the information inputted by the user by following several requirements, as outlined below. - For each unmet requirement, an error message is returned in the response body. 1. **Username is not unique** -> "A verified account already exists with this username!" 2. **Email is not unique** -> "An account already exists with this email!" 3. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!" 4. **Email is not a student email** -> "Not an .edu email address!" 5. **Signing up with the credentials of an unverified account** -> "You must verify this account by checking your email!" 6. **Password too short** -> "Password must be at least 8 characters long!"
-
-- Sends a confirmation email containing the following link: https://bruinpool.io/users/verify?token=TOKENATTACHEDHERE. The user must activate within **30 minutes** after signing up, or they must signup again.
-- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. - To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school - The associations can be stored in a JSON file and imported periodically to the database via the mongoexport command - Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"} - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu"
+- Permanently registers an account in the database and returns an authentication token. 
+- Must provide an email, first name, last name, and password of at least 8 digits. 
+- The `username` property is updated by parsing the email. 
+- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. 
+    - To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school 
+    - The associations are stored in a JSON file in /setup/schoolEmails.json and imported periodically to the database via the init_db command. 
+        - Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"} 
+        - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu"
 - A default profile pic of Bruinbear with random color is assigned
 
 **Body**
 
 ```
 {
-	"email": "user@ucla.edu"
-	"username":"exampleUsername",
-	"password": "examplePassword",
-    "name": "First Last"
+	"email": "elin0467@g.ucla.edu",
+    "firstName": "Evan", 
+    "lastName": "Lin", 
+	"password": "password"
 }
 ```
 
 **return value**
-
-201 Created if all requirements are met and a verification email was successfully sent.
-
-500 status if a requirement is not met or if the verification email could not be sent, along with an error message.
-
-Example of error message:
-
-```
 {
-	error: "Could not send verification email!"
+    "registeredUser": {
+        "stripe": {
+            "customerID": "",
+            "accountID": ""
+        },
+        "driver": {
+            "isDriver": false,
+            "licensePlate": "",
+            "vehicleMakeModel": "",
+            "driversLicense": "",
+            "vehicleColor": ""
+        },
+        "rating": {
+            "sumOfAllRatings": 0,
+            "totalRatings": 0
+        },
+        "picType": "png",
+        "isRegistered": true,
+        "createdAt": "2020-04-12T20:13:40.851Z",
+        "ridesCancelled": 0,
+        "ridesCompleted": 0,
+        "_id": "5e93769a95c105385c0ccd9b",
+        "email": "elin0467@g.ucla.edu",
+        "__v": 0,
+        "firstName": "Evan",
+        "lastName": "Lin",
+        "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+        "school": "UCLA",
+        "username": "elin0467"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImVsaW4wNDY3IiwiaWF0IjoxNTg2NzIyNTA0LCJleHAiOjE1ODY4MDg5MDR9.SgNf9XUOUBMuTfRuw4LgOTTRbw04_8rFD7ng87-ax7U"
 }
-```
+
+201 Created if the user was successfully registered into the database. 
+500 status if there was a database error while registering the user, or if the user skipped the email verification step. 
+
+---
+
+### Send Verification Email 
+
+GET request 
+
+This request first verifies whether the email is valid, returning an error message if not. It uses the following criteria to determine validity: 
+1. **Email is not unique** -> "An account already exists with this email!" 
+2. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!" 
+3. **Email is not a student email** -> "Not an .edu email address!"
+4. **Email is associated with a registered account** -> "A registered account already exists with this email!"
+**
+If the email is valid, the endpoint sends a verification email to the user. 
+This endpoint can be called multiple times to resend the verification email. 
+
+**params**
+email address 
+
+**return value** 
+200 response if the email was sent
+500 reponse otherwise, with the error message attached 
 
 ---
 
@@ -360,7 +411,8 @@ Example of error message:
 
 GET request
 
-This is different from an "Email VALIDATION", since this is "verifying" that the user has the email that it claims to have
+A URL containing this endpoint is sent to the user when they receive the verification email. You do not need to manually call this endpoint. 
+The database stores the user's email for 30 minutes until the user completes account registration. 
 
 **params**
 
@@ -372,41 +424,7 @@ localhost:3000/users/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpb
 
 **return value**
 
-200 status, returns a redirection to https://bruinpool.io/login where the user can now login with the verified email & password
-
----
-
-### Email Validation
-
-Get request
-
-**params**
-
-email
-
-**example**
-
-localhost:3000/users/emailValidation?email=bin315a1@g.ucla.edu
-
-**return value**
-
-200 status, array of user objects with that email
-
-```
-[
-    {
-        "driverList": [],
-        "riderList": [],
-        "verified": true,
-        "_id": "5d55af9f4c5458138f2efa85",
-        "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
-        "username": "bin315a1",
-        "name": "Han",
-        "email": "bin315a1@g.ucla.edu",
-        "__v": 0
-    }
-]
-```
+200 status, returns a redirection to https://poolup.co/signup/3 to proceed with Account Information registration. 
 
 ---
 
@@ -431,7 +449,7 @@ localhost:3000/users/usernameValidation?username=bin315a1
     {
         "driverList": [],
         "riderList": [],
-        "verified": true,
+        "isRegistered": true,
         "_id": "5d55af9f4c5458138f2efa85",
         "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
         "username": "bin315a1",
@@ -466,6 +484,8 @@ localhost:3000/users/phoneNumberValidation?phoneNumber=1231231234
 
 PATCH request
 
+Upload a profile picture for the currently logged in user. 
+
 **Body**
 
 ```
@@ -482,7 +502,7 @@ PATCH request
 {
     "driverList": [],
     "riderList": [],
-    "verified": true,
+    "isRegistered": true,
     "_id": "5d55af9f4c5458138f2efa85",
     "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     "username": "bin315a1",
@@ -730,6 +750,24 @@ GET request
 }
 
 ```
+
+---
+### Get about me 
+
+GET request
+
+- Return a user's about me description, returns {} if one does not exist 
+
+**query** 
+username 
+
+**example**
+localhost:3000/users/get-about-me?username=elin4046
+
+
+**return value** 
+200 if successful 
+500 to indicate database error 
 
 ---
 
@@ -1066,6 +1104,7 @@ POST request
 
 - Creates a new ride document.
 - Schedules a task to occur two hours after the start of a ride that updates the driver and passenger's `ridesCompleted` property.
+- Schedules a task that occurs 12 hours after the start of the ride to send web notifications to leave reviews.
 
 **body**
 
@@ -1556,7 +1595,7 @@ GET request
             driver: [Object],
             rating: [Object],
             picType: 'png',
-            verified: false,
+            isRegistered: false,
             createdAt: 2020-04-08T05:47:55.927Z,
             ridesCancelled: 0,
             ridesCompleted: 0,
@@ -1569,7 +1608,7 @@ GET request
             driver: [Object],
             rating: [Object],
             picType: 'png',
-            verified: false,
+            isRegistered: false,
             createdAt: 2020-04-08T05:47:55.927Z,
             ridesCancelled: 0,
             ridesCompleted: 0,

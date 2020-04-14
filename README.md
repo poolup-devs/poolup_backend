@@ -11,6 +11,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Lead Bac
 4. [Deployment](#deployment) - Temporarily Deprecated
 
 # Setup
+
 After the Local Environment Setup, using **Docker Commands** is advised for application setup & running the application.
 
 1. [Local Environment Setup](#local-environment-setup)
@@ -20,8 +21,6 @@ After the Local Environment Setup, using **Docker Commands** is advised for appl
 5. [Directory Structure](#directory-structure)
 
 ---
-
-
 
 ## Local Development Setup (for additional reference)
 
@@ -212,6 +211,7 @@ For all API requests after login, the bearer token must be included in headers f
 | Authorization | Bearer [Auth token] |
 
 There must be a white space between the string "Bearer" and the token string
+
 
 ## Scheduling Tasks
 All scheduled tasks should be in /tasks/scheduledTasks.js, with unit tests in /tests/tasks/scheduledTasks.test.js
@@ -873,18 +873,20 @@ GET request
 
 ### API Endpoints
 
-| url                       | HTTP Method | description                                                               |
-| ------------------------- | ----------- | ------------------------------------------------------------------------- |
-| /rides/matching-rides     | GET         | [Get List of Available future Rides](#get-list-of-available-future-rides) |
-| /rides/user-rides-history | GET         | [Get ANOTHER USER's ride history](#get-another-users-ride-history)        |
-| /rides/my-rides-history   | GET         | [Get MY ride history](#get-my-ride-history)                               |
-| /rides/my-rides-upcoming  | GET         | [Get MY ride upcoming](#get-my-ride-upcoming)                             |
-| /rides/drives-history     | GET         | [Get a user's (OTHER'S AND MINE) drive history](#get-drive-history)       |
-| /rides/drives-upcoming    | GET         | [Get a user's (OTHER'S AND MINE) upcoming drives](#get-upcoming-drives)   |
-| /rides/post-ride          | POST        | [Post a Ride](#post-a-ride)                                               |
-| /rides/join-ride          | PUT         | [Join a Ride](#join-a-ride)                                               |
-| /rides/cancel-ride        | PUT         | [Cancel a Ride](#cancel-a-ride)                                           |
-| /rides/delete-ride        | DELETE      | [Delete a ride](#delete-a-ride)                                           |
+| url                         | HTTP Method | description                                                               |
+| --------------------------- | ----------- | ------------------------------------------------------------------------- |
+| /rides/matching-rides       | GET         | [Get List of Available future Rides](#get-list-of-available-future-rides) |
+| /rides/user-rides-history   | GET         | [Get ANOTHER USER's ride history](#get-another-users-ride-history)        |
+| /rides/my-rides-history     | GET         | [Get MY ride history](#get-my-ride-history)                               |
+| /rides/my-rides-upcoming    | GET         | [Get MY ride upcoming](#get-my-ride-upcoming)                             |
+| /rides/drives-history       | GET         | [Get a user's (OTHER'S AND MINE) drive history](#get-drive-history)       |
+| /rides/drives-upcoming      | GET         | [Get a user's (OTHER'S AND MINE) upcoming drives](#get-upcoming-drives)   |
+| /rides/post-ride            | POST        | [Post a Ride](#post-a-ride)                                               |
+| /rides/join-ride            | PUT         | [Join a Ride](#join-a-ride)                                               |
+| /rides/cancel-ride          | PUT         | [Cancel a Ride](#cancel-a-ride)                                           |
+| /rides/delete-ride          | DELETE      | [Delete a ride](#delete-a-ride)                                           |
+| /rides/getAvailableCities   | GET         | [Get available cities](#get-available-cities)                             |
+| /rides/getAvailableCounties | GET         | [Get available counties](#get-available-counties)                         |
 
 - Note: all get ride apis (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
 
@@ -1234,7 +1236,7 @@ PUT request
     "ride": {
         "_id" : "5e649bba9e2f6d3570e88462",
         "passengers" : [
-            "user1" 
+            "user1"
         ],
         "ownerEmail" : "user2@g.ucla.edu.com",
         "ownerUsername" : "user2",
@@ -1415,6 +1417,48 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 
 ---
 
+### Get available cities
+
+GET request
+
+**return value**
+
+200 status with a list of available cities that drivers can use to post a ride:
+
+```
+
+[
+    "cityA",
+    "cityB",
+    ...
+    "cityZ"
+]
+
+```
+
+---
+
+### Get available counties
+
+GET request
+
+**return value**
+
+200 status with a list of available counties that riders can use to search for a ride:
+
+```
+
+[
+    "countyA",
+    "countyB",
+    ...
+    "countyC"
+]
+
+```
+
+---
+
 ### Review Model
 
 ### Schema
@@ -1437,13 +1481,12 @@ modifies the "viewed"(set as false by default) field of all notificationsof the 
 
 ### API Endpoints
 
-| url                                   | HTTP Method | description                                                         |
-| ------------------------------------- | ----------- | ------------------------------------------------------------------- |
-| /reviews                              | POST        | [Add a review ](#add-review)                                        |
-| /reviews                              | GET         | [Get all of a user's reviews](#get-all-reviews)                     |
-| /reviews/decline-review               | POST        | [Decline to review a user](#decline-to-review)                      |
+| url                                   | HTTP Method | description                                                 |
+| ------------------------------------- | ----------- | ----------------------------------------------------------- |
+| /reviews                              | POST        | [Add a review ](#add-review)                                |
+| /reviews                              | GET         | [Get all of a user's reviews](#get-all-reviews)             |
+| /reviews/decline-review               | POST        | [Decline to review a user](#decline-to-review)              |
 | /reviews/get-eligible-users-to-review | GET         | [Get list of users to review](#get-list-of-users-to-review) |
-
 
 ---
 
@@ -1572,19 +1615,19 @@ POST request
 
 GET request
 
-- Get a list of users that the currently logged in user can leave reviews by specifying a rideId 
-- For example: 
-    - If a user was a driver in the ride, the request will return each of his/her passengers's user documents 
-    - If a user was a passenger in the ride, the request will return the driver's user document 
-    - If a user has previously **declined** an opportunity to review a passenger, that passenger's user information will not be returned. After 7 days of being notified to leave a review, the user automatically declines to review a passenger if he has not reviewed yet. 
+- Get a list of users that the currently logged in user can leave reviews by specifying a rideId
+- For example:
+  - If a user was a driver in the ride, the request will return each of his/her passengers's user documents
+  - If a user was a passenger in the ride, the request will return the driver's user document
+  - If a user has previously **declined** an opportunity to review a passenger, that passenger's user information will not be returned. After 7 days of being notified to leave a review, the user automatically declines to review a passenger if he has not reviewed yet.
 
 **params/body**
 
-- rideId as a query 
+- rideId as a query
 
 **return value**
 
-- An object containing a list of eligible usernames for review. These usernames can be used to query for additional information, such as profile picture. 
+- An object containing a list of eligible usernames for review. These usernames can be used to query for additional information, such as profile picture.
 
 ```
 

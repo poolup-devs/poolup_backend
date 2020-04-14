@@ -97,7 +97,7 @@ router.put("/rides/join-ride", checkAuth, (req, res) => {
       res.sendStatus(500);
     } else if (data.length === 0) {
       res.status(404).send({
-        message: "ERROR: The ride is full"
+        message: "ERROR: The ride is full",
       });
     } else {
       res.status(200).send(data);
@@ -141,6 +141,25 @@ router.get("/rides/ride-details", checkAuth, (req, res) => {
       res.status(200).send(data);
     }
   });
+});
+
+// Get List of Cities
+router.get("/rides/getAvailableCities", (req, res) => {
+  const places = require("./places.json");
+
+  let cities = Object.values(places);
+  var merged = [].concat.apply([], cities);
+
+  res.status(200).json(merged);
+});
+
+// Get List of Counties
+router.get("/rides/getAvailableCounties", (req, res) => {
+  const places = require("./places.json");
+
+  let counties = Object.keys(places);
+
+  res.status(200).json(counties);
 });
 
 module.exports = router;

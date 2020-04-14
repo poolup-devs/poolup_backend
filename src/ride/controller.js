@@ -2,35 +2,60 @@ const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
 const scheduler = require("../tasks/scheduler");
-const scheduledTasks = require('../tasks/scheduledTasks');
+const scheduledTasks = require("../tasks/scheduledTasks");
 
 ///////////////////////////////////////////////////////////////
 ///////////GET RIDES///////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
 
 const getMatchingRides = (filter_, pageNum, callback) => {
+  const places = require("./places.json");
+
   if (filter_) {
     filter_ = JSON.parse(filter_);
     let filter = {};
+    let fromCitiesQuery = [];
+    let toCitiesQuery = [];
+    let dateQuery = {};
+
     if (filter_.from) {
-      filter.from = filter_.from;
+      let cities = places[filter_.from];
+
+      for (var city of cities) {
+        fromCitiesQuery.push({ from: city });
+      }
     }
+
     if (filter_.to) {
-      filter.to = filter_.to;
+      let cities = places[filter_.to];
+
+      for (var city of cities) {
+        toCitiesQuery.push({ to: city });
+      }
     }
+
     if (filter_.date_from && filter_.date_to) {
-      filter.date = {
-        $gte: filter_.date_from,
-        $lte: filter_.date_to
+      dateQuery = {
+        date: {
+          $gte: filter_.date_from,
+          $lte: filter_.date_to,
+        },
       };
     } else {
-      filter.date = {
-        $gte: new Date()
+      dateQuery = {
+        date: {
+          $gte: new Date(),
+        },
       };
     }
 
+    filter = {
+      $and: [{ $or: fromCitiesQuery }, { $or: toCitiesQuery }, dateQuery],
+    };
+
     Ride.find(filter, (err, result) => {
       if (err) {
+        console.log(err);
         callback(err, null);
       } else {
         callback(null, result);
@@ -141,10 +166,20 @@ const postRide = (rideInfo, callback) => {
       callback(err, null);
     } else {
       // Schedule a job that updates the number of completed rides for each user in the carpool that will occur 2 hours after the carpool begins
-      scheduler.scheduleTaskHoursAfterDate(`updateCompletedRidesTask.${result._id}`, scheduledTasks.updateCompletedRidesTask(result._id), rideInfo.date, 2)
+      scheduler.scheduleTaskHoursAfterDate(
+        `updateCompletedRidesTask.${result._id}`,
+        scheduledTasks.updateCompletedRidesTask(result._id),
+        rideInfo.date,
+        2
+      );
 
-      // Schedule a job that prompts users in the ride to leave reviews 12 hours after carpool begins 
-      scheduler.scheduleTaskHoursAfterDate(`createNotiToLeaveReviewTask.${result._id}`, scheduledTasks.createNotiToLeaveReviewTask(result._id), rideInfo.date, 12)
+      // Schedule a job that prompts users in the ride to leave reviews 12 hours after carpool begins
+      scheduler.scheduleTaskHoursAfterDate(
+        `createNotiToLeaveReviewTask.${result._id}`,
+        scheduledTasks.createNotiToLeaveReviewTask(result._id),
+        rideInfo.date,
+        12
+      );
       callback(null, result);
     }
   });
@@ -160,7 +195,7 @@ const joinRide = async (
   const noti = {
     username: ownerUsername,
     msg: `${passengerUsername} has joined your ride`,
-    date: new Date()
+    date: new Date(),
   };
   Ride.findOneAndUpdate(
     { _id: ride_id, seats: { $gte: 1 } },
@@ -194,11 +229,11 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
     // Driver cancellation
     if (username === cancelledRideDoc.ownerUsername) {
       // Notify all passengers that the ride has been cancelled
-      cancelledRideDoc.passengers.forEach(async passengerUsername => {
+      cancelledRideDoc.passengers.forEach(async (passengerUsername) => {
         let noti = await Noti.create({
           username: passengerUsername,
           msg: `${username} has cancelled your ride`,
-          date: new Date()
+          date: new Date(),
         });
         // Update schema-less property: additionalProperties
         noti.additionalProperties = { cancellationReason: cancellationReason };
@@ -208,7 +243,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
 
       // Delete the ride
       await Ride.deleteOne({ _id: rideId });
-      scheduler.cancelTasksAssociatedWithRide(rideId)
+      scheduler.cancelTasksAssociatedWithRide(rideId);
       // There are no passengers in the ride, so the driver can freely cancel without penalties
       if (cancelledRideDoc.passengers.length === 0) {
         return resolve(
@@ -229,13 +264,13 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       let noti = await Noti.create({
         username: cancelledRideDoc.ownerUsername,
         msg: `${username} has cancelled your ride`,
-        date: new Date()
+        date: new Date(),
       });
       // Update schema-less property: additionalProperties
       // If messageToDriver was not specified, the field will be set to null
       noti.additionalProperties = {
         cancellationReason: cancellationReason,
-        messageToDriver: messageToDriver
+        messageToDriver: messageToDriver,
       };
       noti.markModified("additionalProperties");
       await noti.save();
@@ -283,5 +318,5 @@ module.exports = {
   joinRide,
   cancelRide,
   rideDelete,
-  rideDetails
+  rideDetails,
 };

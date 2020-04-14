@@ -383,9 +383,8 @@ POST request
 }
 ```
 
-201 Created if the user was successfully registered into the database. 
-
-500 status if there was a database error while registering the user, or if the user skipped the email verification step. 
+- 201 Created if the user was successfully registered into the database. 
+- 500 status if there was a database error while registering the user, or if the user skipped the email verification step. 
 
 ---
 
@@ -410,9 +409,8 @@ email
 
 **return value** 
 
-200 response if the email was sent
-
-500 reponse otherwise, with the error message attached 
+- 200 response if the email was sent
+- 500 reponse otherwise, with the error message attached 
 
 ---
 
@@ -433,7 +431,7 @@ localhost:3000/users/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpb
 
 **return value**
 
-200 status, returns a redirection to https://poolup.co/signup/3 to proceed with Account Information registration. 
+- 200 status, returns a redirection to https://poolup.co/signup/3 to proceed with Account Information registration. 
 
 ---
 
@@ -451,7 +449,7 @@ localhost:3000/users/usernameValidation?username=bin315a1
 
 **return value**
 
-200 status, array of user objects with that username
+- 200 status, array of user objects with that username
 
 ```
 [

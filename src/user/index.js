@@ -95,6 +95,17 @@ router.get("/users/usernameValidation", (req, res) => {
   });
 });
 
+//Validate User Email
+router.get("/users/emailValidation", (req, res) => {
+  db.findUserByEmail(req.query.email, (err, data) => {
+    if (err) {
+      res.sendStatus(500);
+    } else {
+      res.status(200).send(data);
+    }
+  })
+})
+
 //Validate User Phonenumber
 router.get("/users/phoneNumberValidation", (req, res) => {
   db.findUserByPhoneNumber(req.query.phoneNumber, (err, data) => {

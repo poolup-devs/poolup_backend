@@ -14,77 +14,16 @@ const userDB = require("../user/controller.js");
 const TransferDB = require("./transfer/controller.js");
 const driverValidation = require("./tool/driver-info-validation.js");
 
-// Called when Stripe redirects from the account setup
-router.get("/stripe/token", (req, res) => {
-  // Check that the session exists
-  if (!req.session.username || !req.session.driverInfo) {
-    console.log("Cookie containing driver info is missing");
-    res.status(500).redirect("http://localhost:3006/driver");
-    return;
-  }
-
-  // Check state value in cookie to make sure it matches previous state
-  if (req.session.state != req.query.state) {
-    console.log("Stripe state does not match session state.");
-    res.status(500).redirect("http://localhost:3006/driver");
-    return;
-  }
-
-  try {
-    // Post the authorization code to Stripe to complete the Express onboarding flow
-    stripe.oauth
-      .token({
-        grant_type: "authorization_code",
-        code: req.query.code
-      })
-      .then(function(response) {
-        if (response.error) {
-          throw response.error;
-        }
-
-        const driverInfo = {
-          username: req.session.username,
-          phoneNumber: req.session.driverInfo.phoneNumber,
-          licensePlate: req.session.driverInfo.licensePlate,
-          vehicleMakeModel: req.session.driverInfo.vehicleMakeModel,
-          driversLicense: req.session.driverInfo.driversLicense,
-          vehicleColor: req.session.driverInfo.vehicleColor,
-          stripeAccountID: response.stripe_user_id
-        };
-
-        // Update the model and store the Stripe account ID in the datastore:
-        // this Stripe account ID will be used to issue payouts to the driver
-        userDB.addUserDriverInfo(driverInfo, (err, data) => {
-          if (err) {
-            throw err;
-          }
-
-          // Redirect to the Driver onboarding page
-          res.redirect("http://localhost:3006/driver/my-drives");
-        });
-      })
-      .catch(error => {
-        throw error;
-      });
-  } catch (err) {
-    console.log(err);
-    res.status(500).redirect("http://localhost:3006/driver");
-    return;
-  }
-});
-
-// Redirect to Stripe Express for driver payment setup
-router.post("/stripe/driver/auth", checkAuth, (req, res) => {
+router.post("/driver/create", (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
 
   userDB.findUserByUsername(authUsername, (err, data) => {
     if (err) {
       res.status(500).json({
-        error: err
+        error: err,
       });
       return;
     }
-
     //Get the user info from the database request
     const userInfo = data[0];
 
@@ -92,58 +31,43 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
     // If they do then that means they already registered as a drive
     if (userInfo.driver.isDriver) {
       res.status(400).json({
-        error: "User is already registered as a driver"
+        error: "User is already registered as a driver",
       });
       return;
     }
 
-    // The username needs to be retreived when stripe redirects
-    // back to /stripe/token after the oAuth is complete
-    req.session.username = authUsername;
-
     const driverInfo = {
+      username: authUsername,
       phoneNumber: req.body.phoneNumber,
       licensePlate: req.body.licensePlate,
       vehicleMakeModel: req.body.vehicleMakeModel,
       driversLicense: req.body.driversLicense,
-      vehicleColor: req.body.vehicleColor
+      vehicleColor: req.body.vehicleColor,
     };
 
     // Check that all the fields of the driverInfo object are populated
     if (!driverValidation.containsDriverInfo(driverInfo)) {
       console.log("Invalid driver info");
-      res.json(400, {
-        error: "Invalid driver information; check that all fields are populated"
+      res.status(400).json({
+        error:
+          "Invalid driver information; check that all fields are populated",
       });
       return;
     }
 
-    // Save the driver info to the session, it will be retrieved once stripe
-    // redirects back to PoolUp
-    req.session.driverInfo = driverInfo;
+    // Update the model and store the Stripe account ID in the datastore:
+    // this Stripe account ID will be used to issue payouts to the driver
+    userDB.addUserDriverInfo(driverInfo, (err, data) => {
+      if (err) {
+        console.log(err);
+        res.status(400).json({
+          error: "Unable to create driver account",
+        });
+      }
 
-    //Generate a random string as `state` to protect from CSRF and include it in the session
-    req.session.state = Math.random()
-      .toString(36)
-      .slice(2);
-
-    // Populate the parameters that will be sent in the Stripe redirect. They will
-    // be used to autopopulate some of the fields in the Stripe Express setup
-    parameters = {
-      client_id: process.env.STRIPE_CLIENT_ID,
-      state: req.session.state,
-      "stripe_user[business_type]": "individual",
-      "stripe_user[email]": userInfo.email,
-      "stripe_user[phone_number]": driverInfo.phoneNumber,
-      "stripe_user[product_description]": "PoolUp Driver"
-    };
-
-    res.status(200).json({
-      redirectUrl:
-        "https://connect.stripe.com/express/oauth/authorize?" +
-        querystring.stringify(parameters)
+      res.sendStatus(200);
+      return;
     });
-    return;
   });
 });
 
@@ -162,9 +86,9 @@ router.post("/stripe/account", (req, res) => {
       type: "custom",
       country: country,
       email: email,
-      requested_capabilities: ["card_payments", "transfers"]
+      requested_capabilities: ["card_payments", "transfers"],
     },
-    function(err, customer) {
+    function (err, customer) {
       if (err) {
         res.status(500).json({ error: err });
       } else {
@@ -178,9 +102,9 @@ router.post("/stripe/account", (req, res) => {
 router.post("/stripe/customer", (req, res) => {
   stripe.customer.create(
     {
-      description: "Some Customer"
+      description: "Some Customer",
     },
-    function(err, customer) {
+    function (err, customer) {
       if (err) {
         res.status(500).json({ error: err });
       } else {
@@ -233,11 +157,11 @@ router.post("/stripe/create-payment-intent", (req, res) => {
             metadata: {
               rideID: rideID,
               riderUsername: riderUsername,
-              driverStripeAcct: driver.stripe.accountID
+              driverStripeAcct: driver.stripe.accountID,
             },
-            receipt_email: rider.email
+            receipt_email: rider.email,
           },
-          function(err, paymentIntent) {
+          function (err, paymentIntent) {
             if (err) {
               console.log(err);
               res.status(500).json({ error: err });
@@ -314,7 +238,7 @@ router.get("/stripe/test", async (req, res) => {
       amount: 100,
       rideID: "",
       destination: "cus_GcWwbWaTlAojQS",
-      customerUsername: "adf"
+      customerUsername: "adf",
     });
     // const test = await TransferDB.checkExpired();
     res.send(test).status(200);

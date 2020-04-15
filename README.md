@@ -273,6 +273,7 @@ Models:
 | ---------------------------- | ----------- | ------------------------------------------------------------------ |
 | /users/login                 | POST        | [User Login](#user-login)                                          |
 | /users/signup                | POST        | [User Signup](#user-signup)                                        |
+| /users/emailValidation       | GET         | [Validation/usability of Email](#email-validation)                 |
 | /users/sendVerificationEmail | GET         | [Send a verification email to signup](#send-verification-email)    |
 | /users/verify                | GET         | [Verify an email](#email-verification)                             |
 | /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
@@ -319,6 +320,8 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
     "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImJpbjMxNWExIiwiaWF0IjoxNTY1ODk2NzQzLCJleHAiOjE1NjU5MDAzNDN9.OLcXkfZWrTDo4r_VXK9sjOh7pa5--E1wRs7r0X-mK0I"
 }
 ```
+
+----
 
 ### User Signup
 
@@ -387,6 +390,21 @@ POST request
 - 500 status if there was a database error while registering the user, or if the user skipped the email verification step. 
 
 ---
+
+### Email Validation
+
+GET request 
+
+**params**
+- email 
+
+**example** 
+- localhost:3000/users/emailValidation?email=bin315a1@g.ucla.edu
+
+**return value**
+- 200 status, array of user objects with that email
+
+
 
 ### Send Verification Email 
 

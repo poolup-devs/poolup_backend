@@ -148,7 +148,7 @@ router.get("/rides/getAvailableCities", (req, res) => {
   const places = require("./places.json");
 
   let cities = Object.values(places);
-  var merged = [].concat.apply([], cities);
+  var merged = [].concat.apply([], cities).sort();
 
   res.status(200).json(merged);
 });
@@ -157,7 +157,7 @@ router.get("/rides/getAvailableCities", (req, res) => {
 router.get("/rides/getAvailableCounties", (req, res) => {
   const places = require("./places.json");
 
-  let counties = Object.keys(places);
+  let counties = Object.keys(places).sort();
 
   res.status(200).json(counties);
 });

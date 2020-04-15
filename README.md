@@ -338,14 +338,16 @@ POST request
 
 ```
 {
-	"email": "elin0467@g.ucla.edu",
+    "email": "elin0467@g.ucla.edu",
     "firstName": "Evan", 
     "lastName": "Lin", 
-	"password": "password"
+    "password": "password"
 }
 ```
 
 **return value**
+
+```
 {
     "registeredUser": {
         "stripe": {
@@ -379,9 +381,10 @@ POST request
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImVsaW4wNDY3IiwiaWF0IjoxNTg2NzIyNTA0LCJleHAiOjE1ODY4MDg5MDR9.SgNf9XUOUBMuTfRuw4LgOTTRbw04_8rFD7ng87-ax7U"
 }
+```
 
-201 Created if the user was successfully registered into the database. 
-500 status if there was a database error while registering the user, or if the user skipped the email verification step. 
+- 201 Created if the user was successfully registered into the database. 
+- 500 status if there was a database error while registering the user, or if the user skipped the email verification step. 
 
 ---
 
@@ -394,16 +397,20 @@ This request first verifies whether the email is valid, returning an error messa
 2. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!" 
 3. **Email is not a student email** -> "Not an .edu email address!"
 4. **Email is associated with a registered account** -> "A registered account already exists with this email!"
-**
+
+
 If the email is valid, the endpoint sends a verification email to the user. 
+
 This endpoint can be called multiple times to resend the verification email. 
 
 **params**
-email address 
+
+email 
 
 **return value** 
-200 response if the email was sent
-500 reponse otherwise, with the error message attached 
+
+- 200 response if the email was sent
+- 500 reponse otherwise, with the error message attached 
 
 ---
 
@@ -424,7 +431,7 @@ localhost:3000/users/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpb
 
 **return value**
 
-200 status, returns a redirection to https://poolup.co/signup/3 to proceed with Account Information registration. 
+- 200 status, returns a redirection to https://poolup.co/signup/3 to proceed with Account Information registration. 
 
 ---
 
@@ -442,7 +449,7 @@ localhost:3000/users/usernameValidation?username=bin315a1
 
 **return value**
 
-200 status, array of user objects with that username
+- 200 status, array of user objects with that username
 
 ```
 [
@@ -583,7 +590,7 @@ password
 
 ```
 {
-	"password" : "password"
+    "password" : "password"
 }
 ```
 
@@ -605,7 +612,7 @@ newPassword
 
 ```
 {
-	"newPassword" : "password"
+    "newPassword" : "password"
 }
 ```
 
@@ -675,9 +682,7 @@ GET request
 
 **params/body**
 
-```
 none
-```
 
 **example**
 
@@ -717,7 +722,7 @@ GET request
 ```
 
 {
-"averageRating": 2.50
+    "averageRating": 2.50
 }
 
 ```
@@ -746,7 +751,7 @@ GET request
 ```
 
 {
-"school": "UCLA"
+    "school": "UCLA"
 }
 
 ```
@@ -784,7 +789,7 @@ PATCH request
 ```
 
 {
-"aboutMe": "This is my new about me description!"
+    "aboutMe": "This is my new about me description!"
 }
 
 ```
@@ -1218,17 +1223,45 @@ PUT request
 
 - In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs: 1. The ride is removed from the Ride collection. 2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
 
-- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs: 1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`. - An example of a notification received by a passenger in the ride is the following:
-  `{ viewed: false, _id: 5e6532be23cf21496470c042, username: 'passenger1', msg: 'driverUsername has cancelled your ride', date: 2020-03-08T18:00:30.136Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling' } }` 2. The ride is removed from the Ride collection. 3. The driver receives the following penalty: - `ridesCancelled` property is incremented
-
-- In the event that a **passenger** cancels a ride, the following occurs: 1. Only the driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`. - An example of a notification received by the driver is the following:
-  `{ viewed: false, _id: 5e6534144a54ab39342752d0, username: 'driverUsername', msg: 'passenger1 has cancelled your ride', date: 2020-03-08T18:06:12.834Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } }` 2. The passenger who cancelled is removed from the ride, and a new spot is freed up. 3. The passenger who cancelled receive the following penalty: - `ridesCancelled` property is incremented
+- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs: 
+1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`. 
+    - An example of a notification received by a passenger in the ride is the following:
+  ```
+  {
+    viewed: false, 
+    _id: 5e6532be23cf21496470c042, 
+    username: 'passenger1', 
+    msg: 'driverUsername has cancelled your ride', 
+    date: 2020-03-08T18:00:30.136Z, 
+    __v: 0, 
+    additionalProperties: { cancellationReason: 'No longer traveling' } 
+  }
+  ```
+2. The ride is removed from the Ride collection. 3. The driver receives the following penalty: - `ridesCancelled` property is incremented
+- In the event that a **passenger** cancels a ride, the following occurs: 
+    1. Only the driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`. 
+    - An example of a notification received by the driver is the following:
+    ```
+    { 
+        viewed: false, 
+        _id: 5e6534144a54ab39342752d0, 
+        username: 'driverUsername', 
+        msg: 'passenger1 has cancelled your ride', 
+        date: 2020-03-08T18:06:12.834Z, 
+        __v: 0, 
+        additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } 
+    }
+    ``` 
+    2. The passenger who cancelled is removed from the ride, and a new spot is freed up. 
+    3. The passenger who cancelled receive the following penalty: 
+        - `ridesCancelled` property is incremented
 
 **body**
 
 - `ride`: ride object that the logged in user is trying to cancel
 - `cancellationReason`: String when the user selects from a drop-down of cancellation reasons
-- `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver - optional field, omit from body if user does not type any message into the form
+- `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver 
+    - optional field, omit from body if user does not type any message into the form
 
 ```
 
@@ -1714,9 +1747,9 @@ Request Info
 **query params**
 
 ```
-
+{
     requestID = <String>
-
+}
 ```
 
 **return value**

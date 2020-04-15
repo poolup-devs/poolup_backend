@@ -92,7 +92,7 @@ const sendVerificationEmail = (email) => {
         const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, { expiresIn: 60*30 });
         if (process.env.MODE === "STAGING") {
           var url =
-            "localhost:" + process.env.PORT + "/users/verify?token=" + token;
+            "localhost:" + process.env.PORT + `/users/verify?email=${email}&token=${token}`;
           var verificationEmail = {
             to: email,
             from: "pool-up@outlook.com",

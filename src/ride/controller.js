@@ -11,14 +11,14 @@ const scheduledTasks = require("../tasks/scheduledTasks");
 const getMatchingRides = (filter_, pageNum, callback) => {
   const places = require("./places.json");
 
-  if (filter_) {
+  if (filter_ && Object.keys(filter_).length > 0) {
     filter_ = JSON.parse(filter_);
     let filter = {};
     let fromCitiesQuery = [];
     let toCitiesQuery = [];
     let dateQuery = {};
 
-    if (filter_.from) {
+    if (filter_.from && places[filter_.from] !== undefined) {
       let cities = places[filter_.from];
 
       for (var city of cities) {
@@ -26,7 +26,7 @@ const getMatchingRides = (filter_, pageNum, callback) => {
       }
     }
 
-    if (filter_.to) {
+    if (filter_.to && places[filter_.to] !== undefined) {
       let cities = places[filter_.to];
 
       for (var city of cities) {
@@ -49,10 +49,23 @@ const getMatchingRides = (filter_, pageNum, callback) => {
       };
     }
 
-    filter = {
-      $and: [{ $or: fromCitiesQuery }, { $or: toCitiesQuery }, dateQuery],
-    };
+    filter = dateQuery;
 
+    if (toCitiesQuery.length > 0 && fromCitiesQuery.length === 0) {
+      filter = {
+        $and: [{ $or: toCitiesQuery }, dateQuery],
+      };
+    } else if (toCitiesQuery.length === 0 && fromCitiesQuery.length > 0) {
+      filter = {
+        $and: [{ $or: fromCitiesQuery }, dateQuery],
+      };
+    } else if (toCitiesQuery.length > 0 && fromCitiesQuery.length > 0) {
+      filter = {
+        $and: [{ $or: fromCitiesQuery }, { $or: toCitiesQuery }, dateQuery],
+      };
+    }
+
+    console.log(filter);
     Ride.find(filter, (err, result) => {
       if (err) {
         console.log(err);
@@ -276,7 +289,10 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       await noti.save();
 
       // Remove the passenger from the list of passengers and free up a spot
-      await Ride.updateOne({_id: rideId}, {$pull: { passengers: username }, $inc: {seats: 1}})
+      await Ride.updateOne(
+        { _id: rideId },
+        { $pull: { passengers: username }, $inc: { seats: 1 } }
+      );
 
       // Increment the user's number of cancelled rides
       await User.updateOne({ username }, { $inc: { ridesCancelled: 1 } });

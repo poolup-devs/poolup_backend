@@ -1741,8 +1741,8 @@ GET request
 | column      | type     | required | properties |
 | ----------- | -------- | -------- | ---------- |
 | rideID      | ObjectID | Yes      |            |
-| senderID    | String   | Yes      |            |
-| recipientID | String   | Yes      |            |
+| requesterUsername    | String   | Yes      |            |
+| requesteeUsername | String   | Yes      |            |
 | status      | String   | Yes      |            |
 | archived    | Boolean  | Yes      |            |
 | reminders   | Number   | No       |            |
@@ -1757,8 +1757,8 @@ GET request
 | ------------------ | ----------- | ----------------------------------------- |
 | /request/info      | GET         | [Request Information](#request-info)      |
 | /request/remind    | GET         | [Remind Driver](#remind-driver)           |
-| /request/sender    | GET         | [Sender Requests](#sender-requests)       |
-| /request/recipient | GET         | [Recipient Requests](#recipient-requests) |
+| /request/requester    | GET         | [Requester Requests](#requester-requests)       |
+| /request/requestee | GET         | [Requestee Requests](#requestee-requests) |
 | /request/new       | POST        | [Create New Request](#create-request)     |
 | /request/approve   | PUT         | [Approve Request](#approve-request)       |
 | /request/cancel    | PUT         | [Cancel Request](#cancel-request)         |
@@ -1813,19 +1813,19 @@ Remind Driver
 
 ---
 
-### Sender Requests
+### Requester Requests
 
 GET request
 
-- Get a sender's requests with the given status
+- Get a requester's requests with the given status
 
 **query params**
 
 ```
 
-    senderID: <String>,
+    requesterUsername: <String>,
     status: <String>,
-    // senderID is the username to get that user's requests that they sent
+    // requesterUsername is the username to get that user's requests that they sent
     // status value of "all" returns all status types,
     // "visible" displays everything but archived requests
 
@@ -1837,19 +1837,19 @@ GET request
 
 ---
 
-### Recipient Requests
+### Requestee Requests
 
 GET request
 
-- Get a recipient's requests with the given status
+- Get a requestee's requests with the given status
 
 **query params**
 
 ```
 {
-    recipientID: <String>,
+    requesteeUsername: <String>,
     status: <String>,
-    // recipientID is the username to get requests that other users sent to this user
+    // requesteeUsername is the username to get requests that other users sent to this user
     // status value of "all" returns all status types,
     // "visible" displays everything but archived requests
 }
@@ -1871,9 +1871,9 @@ POST request
 
 ```
 {
-    senderID: <String>,
+    requesterUsername: <String>,
     rideID: <String>,
-    recipientID: <String>,
+    requesteeUsername: <String>,
     msg: <String>
 }
 ```

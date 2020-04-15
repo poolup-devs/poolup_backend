@@ -1,11 +1,21 @@
 const mongoose = require("mongoose");
 
 const requestSchema = mongoose.Schema({
-  rideID: mongoose.Types.ObjectId,
-  senderID: String,
-  recipientID: String,
+  rideID: {
+    type: mongoose.Types.ObjectId,
+    required: true
+  },
+  requesterUsername: {
+    type: String,
+    required: true
+  },
+  requesteeUsername: {
+    type: String,
+    required: true
+  },
   status: {
     type: String,
+    enum: ['pending', 'approved', 'denied', 'cancelled'],
     default: "pending"
   },
   archived: {

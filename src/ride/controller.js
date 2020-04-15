@@ -236,7 +236,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       let affectedUsers = cancelledRideDoc.passengers;
       const associatedRequests = await Request.find({rideID: rideId});
       for (request of associatedRequests) {
-        affectedUsers.push(request.senderID);
+        affectedUsers.push(request.requesterUsername);
       }
 
       // Notify all passengers/ requesters that the ride has been cancelled

@@ -1,8 +1,9 @@
-const mongoose = requre("mongoose");
+const mongoose = require("mongoose");
 const request = require('supertest');
 
 require("../../src/db/mongoose");
 const db = require("../../src/request/controller.js")
+const rideDB = require("../../src/ride/controller.js")
 
 const Request = require("../../src/request/request").Request
 const Ride = require('../../src/ride/ride').Ride
@@ -11,15 +12,11 @@ const jwt = require("jsonwebtoken");
 
 const app = require('../../src/app')
 
-describe("Testing request controller methods", () => {
-
+describe("Testing request model controllers", () => {
     const curr_date = new Date();
-    const future_date = new Date();
-    future_date.setDate(future_date.getDate() + 100)
-    const past_date = new Date();
-    past_date.setDate(past_date.getDate() - 100)
-
-    const userList = [
+    let future_date = new Date();
+    future_date.setDate(future_date.getDate() + 100);
+    const userObj_driver = 
         {
             isRegistered: true, 
             password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
@@ -27,7 +24,8 @@ describe("Testing request controller methods", () => {
             firstName: "driver1",
             email: "driver1-noreply@g.ucla.edu",
             picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
-        },
+        }
+    const userObj_rider1 =
         {
             isRegistered: true, 
             password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
@@ -35,7 +33,8 @@ describe("Testing request controller methods", () => {
             firstName: "rider1",
             email: "rider2@g.ucla.edu",
             picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
-        }, 
+        }
+    const userObj_rider2 = 
         {
             isRegistered: true, 
             password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
@@ -44,121 +43,244 @@ describe("Testing request controller methods", () => {
             email: "rider2@g.ucla.edu",
             picUrl: "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_pink.png",
         }
-    ]
 
-    const rideList = [
-        {
-            "ownerEmail": "driver1@g.ucla.edu",
-            "ownerUsername": "driver1",
-            "ownerPhoneNumber": "1231231234",
-            "from": "Irvine",
-            "to": "Los Angeles",
-            "date": future_date.toDateString(),
-            "price": "20",
-            "seats": 4,
-            "detail": "driver1_future",
-            "passengers": ["rider1"]
-        }
-    ]
+    const rideObj_1 = {
+        "ownerEmail": userObj_driver.email,
+        "ownerUsername": userObj_driver.username,
+        "ownerPhoneNumber": userObj_driver.phoneNumber,
+        "from": "Irvine",
+        "to": "Los Angeles",
+        "date": future_date.toDateString(),
+        "price": "20",
+        "seats": 4,
+        "detail": "driver1_future",
+        "passengers": [userObj_rider1.username]
+    }
+
 
     beforeEach( async() => {
-        await User.create(userList);
+        await User.create(userObj_driver);
+        await User.create(userObj_rider1);
+        await User.create(userObj_rider2);
+
         return;
     });
+
     afterEach( async () => {
         await User.deleteMany();
-        await Request.deleteMany();
         return;
-    })
+    });
 
-    describe("Test createRequest method", () => {
-        const ride1 = await Ride.findOne({ownerUsername: "driver1"});
-        const requestObj = {
-            rideID: ride1._id,
-            requesterUsername: "rider2",
-            requesteeUsername: "driver1",
-            date: new Date()
-        }
-
-        beforeEach( async() => {
-            await Ride.create(rideList);
-            db.createRequest(requestObj);
-        })
+    describe("Testing Request Creation", () => {
         afterEach( async() => {
             await Ride.deleteMany();
             await Request.deleteMany();
-            return;
         })
 
-        test("If a user is already in the ride, they cannot make a request for that ride", async(done) => {
-
+        test("Request for that ride has already been made", async () => {
+            const ride_1 = await Ride.create(rideObj_1);
+            const requestObj_rider2 = {
+                rideID: ride_1._id,
+                requesterUsername: "rider2",
+                requesteeUsername: "driver1",
+                date: new Date()
+            }
+            try {
+                await db.createRequest(requestObj_rider2);
+                await db.createRequest(requestObj_rider2);
+            } catch(err) {
+                expect(err).toBe("A request has already been created for this ride")
+            }
         })
-
-        test("When a request is pending, requester cannot make another request for the same ride", async (done) => {
-
+        test("Requester's already approved to be in the ride", async () => {
+            const ride_1 = await Ride.create(rideObj_1);
+            const requestObj_rider1 = {
+                rideID: ride_1._id,
+                requesterUsername: "rider1",
+                requesteeUsername: "driver1",
+                date: new Date()
+            }
+            try {
+                await db.createRequest(requestObj_rider1)
+            } catch(err) {
+                expect(err).toBe("The user is already in this ride")
+            }
         })
+        test("Driver cancels the ride while there are pending requests", async () => {
+            const ride_1 = await Ride.create(rideObj_1);
+            const requestObj_rider2 = {
+                rideID: ride_1._id,
+                requesterUsername: "rider2",
+                requesteeUsername: "driver1",
+                date: new Date()
+            }
+            await db.createRequest(requestObj_rider2);
+            let requestsInDB = await Request.find();
+            expect(requestsInDB.length).toBe(1);
 
-        test("If the ride is cancelled while the request is pending, the request is deleted", async (done) => {
-
+            await rideDB.cancelRide(ride_1._id, ride_1.ownerUsername,"","");
+            requestsInDB = await Request.find();
+            expect(requestsInDB.length).toBe(0);
         })
     })
 
-    describe("Test updateStatus method", () => {
-        const ride1 = await Ride.findOne({ownerUsername: "driver1"});
-        const requestObj = {
-            rideID: ride1._id,
-            requesterUsername: "rider2",
-            requesteeUsername: "driver1",
-            date: new Date()
-        }
-        // const request1 = await db.createRequest()
-        beforeEach( async() => {
-            await Ride.create(rideList);
-            db.createRequest(requestObj);
-        })
-        afterEach( async() => {
-            await Ride.deleteMany();
-            await Request.deleteMany();
-            return;
-        })
-        
-        describe("Testing accepted status cases", () => {
-            await db.updateRequestStatus(...)
-            test("Testing accepted request", async (done) => {
-            
-            })
-            test("Calling statusUpdate method to a request that had been accepted (requester is in the ride)", async (done) => {
-            
-            })
-        })
-        describe("Testing denied status cases", () => {
-            db.updateRequestStatus(...)
-            test("Testing deny request", async (done) => {
-            
-            })
-            test("Calling statusUpdate method to a request that had been denied", async (done) => {
-            
-            })
-        })
-        describe("Testing cancelled status cases", () => {
-            db.updateRequestStatus(...)
-            test("Testing cancelled request", async (done) => {
-            
-            })
-            test("Calling statusUpdate method to a request that had been cancelled", async (done) => {
-            
-            })
-        })
+    describe("Testing Status Update cases", () => {
 
-        describe ("Testing archived cases", () => {
-            db.archiveRequest(...)
-            test("Calling statusUpdate method to a request that had been archived", async (done) => {
-            
+        describe("Testing Request Approval", () => {
+            afterEach( async() => {
+                await Ride.deleteMany();
+                await Request.deleteMany();
             })
 
-            test("Archived requests aren't 'visible' by both requester and requestee", async (done) => {
+            test("Testing basic approval case", async() => {
+                let ride_1 = await Ride.create(rideObj_1);
+                const requestObj_rider2 = {
+                    rideID: ride_1._id,
+                    requesterUsername: "rider2",
+                    requesteeUsername: "driver1",
+                    date: new Date()
+                }
+                let request_rider2 = await db.createRequest(requestObj_rider2);
+                request_rider2 = await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "approved");
+                ride_1 = await Ride.findById(ride_1._id);
 
+                expect(request_rider2.status).toBe("approved");
+                expect(ride_1.passengers.length).toBe(2);
             })
+            test("Attempt to approve a request that's either archived or is not pending", async() => {
+                let ride_1 = await Ride.create(rideObj_1);
+                const requestObj_rider2 = {
+                    rideID: ride_1._id,
+                    requesterUsername: "rider2",
+                    requesteeUsername: "driver1",
+                    date: new Date()
+                }
+                let request_rider2 = await db.createRequest(requestObj_rider2);
+                request_rider2 = await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "denied");
+
+                try {
+                    await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "approved");
+                } catch(err) {
+                    expect(err).toBe("Ride has already been denied")
+                }
+
+                await db.archiveRequest(request_rider2._id);
+                try {
+                    await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "approved");
+                } catch(err) {
+                    expect(err).toBe("Ride has already been archived")
+                }
+            })
+        })
+        describe("Testing Request Denial", () => {
+            afterEach( async() => {
+                await Ride.deleteMany();
+                await Request.deleteMany();
+            })
+
+            test("Testing basic denial case", async () => {
+                let ride_1 = await Ride.create(rideObj_1);
+                const requestObj_rider2 = {
+                    rideID: ride_1._id,
+                    requesterUsername: "rider2",
+                    requesteeUsername: "driver1",
+                    date: new Date()
+                }
+                let request_rider2 = await db.createRequest(requestObj_rider2);
+                request_rider2 = await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "denied");
+                ride_1 = await Ride.findById(ride_1._id);
+
+                expect(request_rider2.status).toBe("denied");
+                expect(ride_1.passengers.length).toBe(1);                
+            })
+            test("Attempt to deny a request that's either archived or is not pending", async() => {
+                let ride_1 = await Ride.create(rideObj_1);
+                const requestObj_rider2 = {
+                    rideID: ride_1._id,
+                    requesterUsername: "rider2",
+                    requesteeUsername: "driver1",
+                    date: new Date()
+                }
+                let request_rider2 = await db.createRequest(requestObj_rider2);
+                request_rider2 = await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "approved");
+
+                try {
+                    await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "denied");
+                } catch(err) {
+                    expect(err).toBe("Ride has already been approved")
+                }
+
+                await db.archiveRequest(request_rider2._id);
+                try {
+                    await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "denied");
+                } catch(err) {
+                    expect(err).toBe("Ride has already been archived")
+                }
+            })
+        })  
+        describe("Testing Request Cancellation", () => {
+            afterEach( async() => {
+                await Ride.deleteMany();
+                await Request.deleteMany();
+            })
+
+            test("Testing basic cancellation case", async () => {
+                let ride_1 = await Ride.create(rideObj_1);
+                const requestObj_rider2 = {
+                    rideID: ride_1._id,
+                    requesterUsername: "rider2",
+                    requesteeUsername: "driver1",
+                    date: new Date()
+                }
+                let request_rider2 = await db.createRequest(requestObj_rider2);
+                request_rider2 = await db.updateRequestStatus(request_rider2._id, request_rider2.requesterUsername, "cancelled");
+                
+                expect(request_rider2.status).toBe("cancelled");
+                expect(ride_1.passengers.length).toBe(1);
+            })
+            test("Attempt to cancel a request that's either archived or is not pending", async() => {
+                let ride_1 = await Ride.create(rideObj_1);
+                const requestObj_rider2 = {
+                    rideID: ride_1._id,
+                    requesterUsername: "rider2",
+                    requesteeUsername: "driver1",
+                    date: new Date()
+                }
+                let request_rider2 = await db.createRequest(requestObj_rider2);
+
+                try {
+                    await db.updateRequestStatus(request_rider2._id, request_rider2.requesterUsername, "cancelled");
+                } catch(err) {
+                    expect(err).toBe("Ride has already been denied")
+                }
+
+                await db.archiveRequest(request_rider2._id);
+                try {
+                    await db.updateRequestStatus(request_rider2._id, request_rider2.requesterUsername, "cancelled");
+                } catch(err) {
+                    expect(err).toBe("Ride has already been archived")
+                }
+            })
+        })  
+    })
+
+    describe("Testing reminders", ()=> {
+        test("Decrementing below zero", async() => {
+            let ride_1 = await Ride.create(rideObj_1);
+                const requestObj_rider2 = {
+                    rideID: ride_1._id,
+                    requesterUsername: "rider2",
+                    requesteeUsername: "driver1",
+                    date: new Date()
+                }
+            let request_rider2 = await db.createRequest(requestObj_rider2);
+            
+            await db.decrementRemindCount(request_rider2._id, request_rider2.requesteeUsername);
+            try {
+                await db.decrementRemindCount(request_rider2._id, request_rider2.requesteeUsername);
+            } catch(err) {
+                expect(err).toBe("Reminder count is already less than 1")
+            }
         })
     })
 })

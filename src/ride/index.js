@@ -149,7 +149,7 @@ router.get("/rides/getAvailableCities", (req, res) => {
 
   let cities = Object.values(places);
   var merged = [].concat.apply([], cities).sort();
-  console.log(merged);
+
   res.status(200).json(merged);
 });
 

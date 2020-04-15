@@ -69,14 +69,29 @@ router.get("/users/verify", async (req, res) => {
     const userEmail = jwt.verify(req.query.token, JWT_EMAIL_KEY);
     await db.verifyEmail(userEmail.email)
     // Redirect to register the user's name and password 
-    res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + `/signup/3?email=${userEmail.email}`)
+    if (process.env.MODE === "STAGING") {
+      res.redirect(302, process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`)
+    }
+    else {
+      res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + `/signup/3?email=${userEmail.email}`)
+    }
   } 
   catch (err) {
     if (err.name === 'TokenExpiredError') {
-      res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + `/signup/2/expired?email=${req.query.email}`)
+      if (process.env.MODE === "STAGING") {
+        res.redirect(302, process.env.FRONT_END_URL + `/signup/2/expired?email=${req.query.email}`)
+      }
+      else {
+        res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + `/signup/2/expired?email=${req.query.email}`)
+      }
     }
     else if (err.name == 'AccountAlreadyRegistered') {
-      res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/login")
+      if (process.env.MODE === "STAGING") {
+        res.redirect(302, process.env.FRONT_END_URL + "/login")
+      }
+      else {
+        res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/login")
+      }
     }
     else {
       res.status(401).send(err);

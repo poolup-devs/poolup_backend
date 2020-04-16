@@ -1438,6 +1438,7 @@ The ride object that the user is trying to delete (The ride object's owner has t
 
 ### Leave a review notifications 
 These notifications are automatically sent to the driver and all of his passengers 12 hours after the ride begins. 
+When a user clicks on this notification, instead of being redirected to a page, a form appears for them to fill out.
 
 The "Leave a review" notification contains the following additionalProperties: `rideId` and `usersToReview`. 
 - The `usersToReview` property contains an array of users that can be reviewed for the recipient of the notification. 
@@ -1450,7 +1451,6 @@ The "Leave a review" notification contains the following additionalProperties: `
     "date" : ISODate("2020-04-16T20:49:53.010Z"),
     "username" : "user1",
     "msg" : "Leave a review for your passengers, user2 and user3.",
-    "redirectPath" : "/driver/my-drives",
     "__v" : 0,
     "additionalProperties" : {
         "rideId" : ObjectId("5e98c4bdd1f2f342c4e30c93"),
@@ -1470,6 +1470,7 @@ The "Leave a review" notification contains the following additionalProperties: `
         ]
     }
 }
+
 ```
 ---
 

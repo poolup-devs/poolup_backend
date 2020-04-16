@@ -44,7 +44,6 @@ const createNotiToLeaveReviewTask = (rideId) => {
         username: driverUsername, 
         msg, 
         date: new Date(),
-        redirectPath: process.env.MY_DRIVES_PATH
       })
       // Update schema-less property: additionalProperties to contain rideId and usersToReview
       notiToDriver.additionalProperties = {rideId, usersToReview: passengerInfo};
@@ -61,7 +60,6 @@ const createNotiToLeaveReviewTask = (rideId) => {
           username: passengerUsername, 
           msg: `Leave a review for your driver, ${driverInfo.firstName}.`, 
           date: new Date(),
-          redirectPath: process.env.MY_RIDES_PATH
         })
         // Update schema-less property: additionalProperties to contain rideId and driverInfo
         notiToPassenger.additionalProperties = {rideId, usersToReview: [driverInfo]};

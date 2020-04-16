@@ -40,7 +40,10 @@ const createNotiToLeaveReviewTask = (rideId) => {
       // Send a notification to the driver to review their passengers 
       const msg = await formatPassengerReviewMessage(passengerFirstNames)
       await Noti.create({
-        username: driverUsername, msg, redirectPath: process.env.MY_DRIVES_PATH
+        username: driverUsername, 
+        msg, 
+        date: new Date(),
+        redirectPath: process.env.MY_DRIVES_PATH
       })
 
       // Passengers each receive a notification to review driver
@@ -51,6 +54,7 @@ const createNotiToLeaveReviewTask = (rideId) => {
         await Noti.create({
           username: passengerUsername, 
           msg: `Leave a review for your driver, ${driverName}.`, 
+          date: new Date(),
           redirectPath: process.env.MY_RIDES_PATH
         })
 

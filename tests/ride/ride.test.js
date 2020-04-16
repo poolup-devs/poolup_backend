@@ -93,7 +93,7 @@ describe("Testing Ride endpoints", () => {
                 username: 'driverUsername', 'msg': 'passenger1 has cancelled your ride'
             }))
             expect(driverNoti.additionalProperties).toEqual({cancellationReason: 'Other', messageToDriver: "Sorry I can't make it!!!"})
-
+            
             // Check whether passenger was removed from ride 
             const cancelledRide = await Ride.findOne({ownerUsername: ride.ownerUsername}).lean()
             expect(cancelledRide.seats).toBe(1)

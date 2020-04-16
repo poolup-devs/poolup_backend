@@ -1,18 +1,16 @@
-# PoolUp Backend - main
+# PoolUp Backend
 
 ### api.poolup.co
 
 This is the backend code repository for PoolUp: made with NodeJS, Express, and MongoDB w/ Mongoose.
-For additional guidence/help, email bin315a1@g.ucla.edu or your current Lead Backend Manager.
+For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineering Manager.
 
 1. [Setup](#setup)
 2. [Dev-Rules](#dev-rules)
 3. [Documentation](#documentation)
-4. [Deployment](#deployment) - Temporarily Deprecated
+4. [Deployment](#deployment)
 
 # Setup
-
-After the Local Environment Setup, using **Docker Commands** is advised for application setup & running the application.
 
 1. [Local Environment Setup](#local-environment-setup)
 2. [Local Development Setup](#local-development-setup)
@@ -22,7 +20,36 @@ After the Local Environment Setup, using **Docker Commands** is advised for appl
 
 ---
 
-## Local Development Setup (for additional reference)
+## Local Environment Setup
+
+1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
+2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
+3. Install all used packages and dependencies using:
+   > npm install
+4. To connect to the development s3 bucket, run:
+
+   > npm run setup
+
+   This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
+
+   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
+
+5. Install mongoDB by following installation guides from:
+   Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
+   Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
+
+   This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
+   For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
+
+6. Optional: Initialize the database with default objects.
+
+   > npm run init_db
+
+   This REMOVES existing database collections and populates them with default objects.
+
+---
+
+## Local Development Setup
 
 1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
 2. Open another terminal and run `npm run dev` in the home directory; this starts the backend application with nodemon
@@ -1239,40 +1266,54 @@ PUT request
 
 - Whether the logged in user is a driver or a passenger in the ride is abstracted away.
 
-- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs: 1. The ride is removed from the Ride collection. 2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
+- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs:
+	1. The ride is removed from the Ride collection.
+	2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
 
-- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs: 
-1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`. 
-    - An example of a notification received by a passenger in the ride is the following:
-  ```
-  {
-    viewed: false, 
-    _id: 5e6532be23cf21496470c042, 
-    username: 'passenger1', 
-    msg: 'driverUsername has cancelled your ride', 
-    date: 2020-03-08T18:00:30.136Z, 
-    __v: 0, 
-    additionalProperties: { cancellationReason: 'No longer traveling' } 
-  }
-  ```
-2. The ride is removed from the Ride collection. 3. The driver receives the following penalty: - `ridesCancelled` property is incremented
-- In the event that a **passenger** cancels a ride, the following occurs: 
-    1. Only the driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`. 
-    - An example of a notification received by the driver is the following:
-    ```
-    { 
-        viewed: false, 
-        _id: 5e6534144a54ab39342752d0, 
-        username: 'driverUsername', 
-        msg: 'passenger1 has cancelled your ride', 
-        date: 2020-03-08T18:06:12.834Z, 
-        __v: 0, 
-        additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } 
-    }
-    ``` 
-    2. The passenger who cancelled is removed from the ride, and a new spot is freed up. 
-    3. The passenger who cancelled receive the following penalty: 
-        - `ridesCancelled` property is incremented
+  
+- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs:
+	1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`.
+		- An example of a notification received by a passenger in the ride is the following:
+			```
+			{
+				viewed: false,
+				_id: 5e6532be23cf21496470c042,
+				username: 'passenger1',
+				msg: 'driverUsername has cancelled your ride',
+				senderEmail: 'driverUsername@ucla.edu',
+				date: 2020-03-08T18:00:30.136Z,
+				__v: 0,
+				additionalProperties: {
+					cancellationReason: 'No longer traveling'
+				}
+			}
+			```
+	2. The ride is removed from the Ride collection.
+	3. The driver receives the following penalty:
+		-  `ridesCancelled` property is incremented
+
+- In the event that a **passenger** cancels a ride, the following occurs:
+	1. The driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`.
+		- An example of a notification received by the driver is the following:
+			```
+			{
+				viewed: false,
+				_id: 5e6534144a54ab39342752d0,
+				username: 'driverUsername',
+				msg: 'passenger1 has cancelled your ride',
+				senderEmail: 'passenger1@ucla.edu',
+				date: 2020-03-08T18:06:12.834Z,
+				__v: 0,
+					additionalProperties: {
+						cancellationReason: 'No longer traveling',
+						messageToDriver: "Sorry I can't make it!!!"
+					}
+			}
+			```
+    2. All other passengers, if any, are notified about the cancellation. This notification ONLY includes the additional property: `cancellationReason`.  
+	3. The passenger who cancelled is removed from the ride, and a new spot is freed up.
+	4. The passenger who cancelled receive the following penalty:
+		-  `ridesCancelled` property is incremented
 
 **body**
 
@@ -1395,43 +1436,44 @@ The ride object that the user is trying to delete (The ride object's owner has t
 
 | url                      | HTTP Method | description                                                         |
 | ------------------------ | ----------- | ------------------------------------------------------------------- |
-| /notis/get-driverNotis   | GET         | [Get the notification for driver](#get-driver-notification)         |
-| /notis/create-driverNoti | POST        | [Create a new notification for driver](#create-driver-notification) |
-| /notis/view-driverNoti   | PUT         | [Modify a notification for driver](#view-driver-notification)       |
+| /notis/noti   | GET         | [Get user's notifications](#get-user's-notifications)         |
+| /notis/view  | PUT         | [View the notification](#view-the-notification)       |
 
 ---
 
-### Get Driver Notification
+### Get user's notifications
 
 GET request
 
-**params/body**
+**params (query) **
 
-none needed
+- pageNum
+
+pageNum begins from 1
 
 **return value**
 
-200 status
+200 status; result is sorted in 
 
 ```
 
 [
     {
         "viewed": false,
-        "_id": "5d55bb66261da0092430c990",
-        "username": "bin315a1",
-        "msg": "bin315a1 has joined your ride",
-        "senderEmail": "bin315a1@g.ucla.edu",
-        "date": "2019-08-15T20:07:02.242Z",
+        "date": "2020-04-16T07:00:00.000Z",
+        "_id": "5e98a118f345007baf648195",
+        "username": "user1",
+        "msg": "user2 is requesting a spot on your trip from Irvine to Los Angeles",
+        "redirectPath": "/driver/my-drives",
         "__v": 0
     },
     {
         "viewed": false,
-        "_id": "5d55bb485457802c949bb8f4",
-        "username": "bin315a1",
-        "msg": "bin315a1 has joined your ride",
-        "senderEmail": "bin315a1@g.ucla.edu",
-        "date": "2019-08-15T20:06:32.716Z",
+        "date": "2020-04-16T07:00:00.000Z",
+        "_id": "5e98a118f345007baf648196",
+        "username": "user1",
+        "msg": "user3 is requesting a spot on your trip from Irvine to Los Angeles",
+        "redirectPath": "/driver/my-drives",
         "__v": 0
     }
 ]
@@ -1440,28 +1482,45 @@ none needed
 
 ---
 
-### View Driver Notification
+### View The Notification
 
 PUT request
 
 - After a notification is viewed, it is deleted after a **week**
 
-**params/body**
+**body**
 
-none needed
+```
+{
+	"notiInfo": {
+        "viewed": false,
+        "date": "2020-04-16T07:00:00.000Z",
+        "_id": "5e98a8f2fca8f77f5fd2b653",
+        "username": "user1",
+        "msg": "user4 has accepted your ride request",
+        "redirectPath": "/rider/my-rides",
+        "__v": 0
+    }
+}
+```
 
 **return value**
 
-modifies the "viewed"(set as false by default) field of all notificationsof the user as true, the "nModified" field shows how many noti objects have been set as seen
+modifies the passed notification object to be viewed, adds the "viewedAt" field
 
 200 status
 
 ```
 
 {
-    "n": 9,
-    "nModified": 2,
-    "ok": 1
+    "viewed": true,
+    "date": "2020-04-16T07:00:00.000Z",
+    "_id": "5e98a8f2fca8f77f5fd2b653",
+    "username": "user1",
+    "msg": "user4 has accepted your ride request",
+    "redirectPath": "/rider/my-rides",
+    "__v": 0,
+    "viewedAt": "2020-04-16T18:57:30.390Z"
 }
 
 ```
@@ -1724,8 +1783,8 @@ GET request
 | column      | type     | required | properties |
 | ----------- | -------- | -------- | ---------- |
 | rideID      | ObjectID | Yes      |            |
-| senderID    | String   | Yes      |            |
-| recipientID | String   | Yes      |            |
+| requesterUsername    | String   | Yes      |            |
+| requesteeUsername | String   | Yes      |            |
 | status      | String   | Yes      |            |
 | archived    | Boolean  | Yes      |            |
 | reminders   | Number   | No       |            |
@@ -1740,14 +1799,13 @@ GET request
 | ------------------ | ----------- | ----------------------------------------- |
 | /request/info      | GET         | [Request Information](#request-info)      |
 | /request/remind    | GET         | [Remind Driver](#remind-driver)           |
-| /request/sender    | GET         | [Sender Requests](#sender-requests)       |
-| /request/recipient | GET         | [Recipient Requests](#recipient-requests) |
+| /request/requester    | GET         | [Requester Requests](#requester-requests)       |
+| /request/requestee | GET         | [Requestee Requests](#requestee-requests) |
 | /request/new       | POST        | [Create New Request](#create-request)     |
 | /request/approve   | PUT         | [Approve Request](#approve-request)       |
 | /request/cancel    | PUT         | [Cancel Request](#cancel-request)         |
 | /request/deny      | PUT         | [Deny Request](#deny-request)             |
 | /request/archive   | PUT         | [Archive Request](#archive-request)       |
-| /request/delete    | DELETE      | [Delete Request](#delete-request)         |
 
 ### Statuses
 
@@ -1772,7 +1830,7 @@ Request Info
 
 **return value**
 
-201 status if successful, 500 error if failure, 404 if no matching request was found
+200 status if successful
 
 ---
 
@@ -1792,23 +1850,23 @@ Remind Driver
 
 **return value**
 
-201 status if successful, 500 error if failure, 404 if no matching request was found
+200 status if successful
 
 ---
 
-### Sender Requests
+### Requester Requests
 
 GET request
 
-- Get a sender's requests with the given status
+- Get a requester's requests with the given status
 
 **query params**
 
 ```
 
-    senderID: <String>,
+    requesterUsername: <String>,
     status: <String>,
-    // senderID is the username to get that user's requests that they sent
+    // requesterUsername is the username to get that user's requests that they sent
     // status value of "all" returns all status types,
     // "visible" displays everything but archived requests
 
@@ -1816,23 +1874,23 @@ GET request
 
 **return value**
 
-200 ok status with data of all matching requests, 500 error if failure
+200 ok status with data of all matching requests
 
 ---
 
-### Recipient Requests
+### Requestee Requests
 
 GET request
 
-- Get a recipient's requests with the given status
+- Get a requestee's requests with the given status
 
 **query params**
 
 ```
 {
-    recipientID: <String>,
+    requesteeUsername: <String>,
     status: <String>,
-    // recipientID is the username to get requests that other users sent to this user
+    // requesteeUsername is the username to get requests that other users sent to this user
     // status value of "all" returns all status types,
     // "visible" displays everything but archived requests
 }
@@ -1840,7 +1898,7 @@ GET request
 
 **return value**
 
-200 ok status with data of all matching requests, 500 error if failure
+200 ok status with data of all matching requests
 
 ---
 
@@ -1854,16 +1912,22 @@ POST request
 
 ```
 {
-    senderID: <String>,
+    requesterUsername: <String>,
     rideID: <String>,
-    recipientID: <String>,
+    requesteeUsername: <String>,
     msg: <String>
 }
 ```
 
 **return value**
 
-200 created status with the request id for later use, 500 error if failure
+201 created status with the request id for later use
+
+```
+    {
+        requestID: <request id here>
+    }
+```
 
 ---
 
@@ -1883,7 +1947,7 @@ PUT request
 
 **return value**
 
-201 status if successful, 500 error if failure such as if unsuccessful
+200 status if successful
 
 ---
 
@@ -1903,7 +1967,7 @@ PUT request
 
 **return value**
 
-201 status if successful, 500 error if failure such as if the ride is already "archived" or "cancelled"
+200 status if successful
 
 ---
 
@@ -1923,7 +1987,7 @@ PUT request
 
 **return value**
 
-201 status if successful, 500 error if failure such as if the ride is already "archived" or "denied"
+200 status if successful
 
 ---
 
@@ -1943,29 +2007,7 @@ PUT request
 
 **return value**
 
-201 status if successful, 500 error if failure
-
----
-
-### Delete Request
-
-Delete Request
-
-- Deletes a request
-
-**body**
-
-```
-
-{
-requestID = <String>
-}
-
-```
-
-**return value**
-
-201 status if successful, 500 error if failure, 404 if no matching request was found
+200 status if successful
 
 ---
 

@@ -1412,43 +1412,44 @@ The ride object that the user is trying to delete (The ride object's owner has t
 
 | url                      | HTTP Method | description                                                         |
 | ------------------------ | ----------- | ------------------------------------------------------------------- |
-| /notis/get-driverNotis   | GET         | [Get the notification for driver](#get-driver-notification)         |
-| /notis/create-driverNoti | POST        | [Create a new notification for driver](#create-driver-notification) |
-| /notis/view-driverNoti   | PUT         | [Modify a notification for driver](#view-driver-notification)       |
+| /notis/noti   | GET         | [Get user's notifications](#get-user's-notifications)         |
+| /notis/view  | PUT         | [View the notification](#view-the-notification)       |
 
 ---
 
-### Get Driver Notification
+### Get user's notifications
 
 GET request
 
-**params/body**
+**params (query) **
 
-none needed
+- pageNum
+
+pageNum begins from 1
 
 **return value**
 
-200 status
+200 status; result is sorted in 
 
 ```
 
 [
     {
         "viewed": false,
-        "_id": "5d55bb66261da0092430c990",
-        "username": "bin315a1",
-        "msg": "bin315a1 has joined your ride",
-        "senderEmail": "bin315a1@g.ucla.edu",
-        "date": "2019-08-15T20:07:02.242Z",
+        "date": "2020-04-16T07:00:00.000Z",
+        "_id": "5e98a118f345007baf648195",
+        "username": "user1",
+        "msg": "user2 is requesting a spot on your trip from Irvine to Los Angeles",
+        "redirectPath": "/driver/my-drives",
         "__v": 0
     },
     {
         "viewed": false,
-        "_id": "5d55bb485457802c949bb8f4",
-        "username": "bin315a1",
-        "msg": "bin315a1 has joined your ride",
-        "senderEmail": "bin315a1@g.ucla.edu",
-        "date": "2019-08-15T20:06:32.716Z",
+        "date": "2020-04-16T07:00:00.000Z",
+        "_id": "5e98a118f345007baf648196",
+        "username": "user1",
+        "msg": "user3 is requesting a spot on your trip from Irvine to Los Angeles",
+        "redirectPath": "/driver/my-drives",
         "__v": 0
     }
 ]
@@ -1457,28 +1458,45 @@ none needed
 
 ---
 
-### View Driver Notification
+### View The Notification
 
 PUT request
 
 - After a notification is viewed, it is deleted after a **week**
 
-**params/body**
+**body**
 
-none needed
+```
+{
+	"notiInfo": {
+        "viewed": false,
+        "date": "2020-04-16T07:00:00.000Z",
+        "_id": "5e98a8f2fca8f77f5fd2b653",
+        "username": "user1",
+        "msg": "user4 has accepted your ride request",
+        "redirectPath": "/rider/my-rides",
+        "__v": 0
+    }
+}
+```
 
 **return value**
 
-modifies the "viewed"(set as false by default) field of all notificationsof the user as true, the "nModified" field shows how many noti objects have been set as seen
+modifies the passed notification object to be viewed, adds the "viewedAt" field
 
 200 status
 
 ```
 
 {
-    "n": 9,
-    "nModified": 2,
-    "ok": 1
+    "viewed": true,
+    "date": "2020-04-16T07:00:00.000Z",
+    "_id": "5e98a8f2fca8f77f5fd2b653",
+    "username": "user1",
+    "msg": "user4 has accepted your ride request",
+    "redirectPath": "/rider/my-rides",
+    "__v": 0,
+    "viewedAt": "2020-04-16T18:57:30.390Z"
 }
 
 ```

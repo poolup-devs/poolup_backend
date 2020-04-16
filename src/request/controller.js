@@ -6,7 +6,8 @@ const mongoose = require("mongoose");
 
 const Error = require("../utils/error-model")
 
-const MY_REQUESTS_PATH = process.env.MY_REQUESTS_PATH;
+const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
+const MY_RIDES_PATH = process.env.MY_RIDES_PATH;
 const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
 
 // getRequestInfo gets the information of a specified request
@@ -126,7 +127,7 @@ const createRequest = async (requestInfo) => {
         username: newRequest.requesteeUsername,
         msg: `${newRequest.requesterUsername} is requesting a spot on your trip from ${ride_res.from} to ${ride_res.to}`,
         date: new Date(),
-        redirectPath: MY_REQUESTS_PATH
+        redirectPath: MY_DRIVES_PATH
       });
       return resolve(request_new);
     } catch(err) {
@@ -168,9 +169,9 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             await Ride.findByIdAndUpdate({_id: request_upd.rideID}, {$addToSet: {passengers: request_upd.requesterUsername}}, {new: true});
             await Noti.create({
               username: request_upd.requesterUsername,
-              msg: `${user.username} has accepted you ride request`,
+              msg: `${user.username} has accepted your ride request`,
               date: new Date(),
-              redirectPath: MY_REQUESTS_PATH
+              redirectPath: MY_RIDES_PATH
             });
             break;
           }
@@ -182,7 +183,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
               username: request_upd.requesterUsername,
               msg: `Your request to join ${user.username}'s ride has been denied`,
               date: new Date(),
-              redirectPath: SEARCH_RIDES_PATH
+              redirectPath: MY_RIDES_PATH
             });
             break;
           }
@@ -191,9 +192,9 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             request_upd = await Request.findOneAndUpdate(filter, update, options);
             await Noti.create({
               username: request_upd.requesteeUsername,
-              msg: `${request_upd.requesterUsername}'s request for your ride has been cancelled`,
+              msg: `${request_upd.requesterUsername}'s request for your ride has been withdrawn`,
               date: new Date(),
-              redirectPath: SEARCH_RIDES_PATH
+              redirectPath: MY_DRIVES_PATH
             });
             break;
           }
@@ -315,6 +316,5 @@ module.exports = {
   updateRequestStatus,
   archiveRequest,
   unarchiveRequest,
-  // deleteRequest,
   decrementRemindCount
 };

@@ -1,54 +1,36 @@
 const Noti = require("./noti").Noti;
 
-const getUnviewedNoti = async (username) => {
+const Error = require("../utils/error-model")
+
+const getAllUserNoti = async (username, pageNum) => {
+  const pageLimit = 10;
   return new Promise( async (resolve, reject) => {
     try {
-      const res = await Noti.find({ username, viewed: false }).sort({date: -1});
+      const res = await Noti.find({ username }).sort({date: -1}).skip((Number(pageNum)-1)*pageLimit).limit(pageLimit);
       return resolve(res);
     } catch(err) {
-      return reject(err)
+      return reject(Error(500));
     }
   })
-  // Noti.find({ username, viewed: false }, (err, result) => {
-  //   if (err) {
-  //     callback(err, null);
-  //   } else {
-  //     callback(null, result);
-  //   }
-  // })
-  //   .sort({ _id: -1 })
-  //   .limit(8);
 };
 
-const updateNoti = async (notiInfo) => {
+const viewNoti = async (notiInfo) => {
   return new Promise( async (resolve, reject) => {
     try {
       const res = await Noti.findByIdAndUpdate(
         { _id: notiInfo._id },
-        { $set: { viewed: true, viewedAt: new Date() }}
+        { $set: { viewed: true, viewedAt: new Date() }},
+        {new: true}
       );
-
+      
       return resolve(res);
     } catch (err) {
-      return reject(err);
+      return reject(Error(500));
     }
   });
-  // Noti.updateMany(
-  //   { username },
-  //   { $set: { viewed: true, viewedAt: new Date() } },
-  //   (err, result) => {
-  //     if (err) {
-  //       callback(err, null);
-  //     } else {
-  //       callback(null, result);
-  //     }
-  //   }
-  // )
-  //   .sort({ _id: -1 })
-  //   .limit(8);
 };
 
 module.exports = {
-  getUnviewedNoti,
-  updateNoti
+  getAllUserNoti,
+  viewNoti
 };

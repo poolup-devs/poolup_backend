@@ -6,7 +6,7 @@ const scheduler = require("../tasks/scheduler");
 const scheduledTasks = require("../tasks/scheduledTasks");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
-const MY_RIDES_PATH = process.env.MY_RIDES_PATH;
+const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
 
 ///////////////////////////////////////////////////////////////
 ///////////GET RIDES///////////////////////////////////////////
@@ -200,6 +200,7 @@ const joinRide = async (
     username: ownerUsername,
     msg: `${passengerUsername} has joined your ride`,
     date: new Date(),
+    redirectPath: MY_DRIVES_PATH
   };
   Ride.findOneAndUpdate(
     { _id: ride_id, seats: { $gte: 1 } },
@@ -245,7 +246,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
           username: passengerUsername,
           msg: `${username} has cancelled your ride`,
           date: new Date(),
-          redirectPath: MY_RIDES_PATH
+          redirectPath: SEARCH_RIDES_PATH
         });
         // Update schema-less property: additionalProperties
         noti.additionalProperties = { cancellationReason: cancellationReason };

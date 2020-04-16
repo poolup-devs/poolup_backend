@@ -44,13 +44,13 @@ describe("Testing noti model controllers", () => {
     test("Testing viewing notifications", async () => {
         const notiObj_arr = [notiObj_3, notiObj_1, notiObj_2];
         const res_notiNewArr = await Noti.create(notiObj_arr)
-        const res_notiSorted = await db.getUnviewedNoti(userObj_1.username);
+        const res_notiSorted = await db.getAllUserNoti(userObj_1.username,1);
         res_notiNewArr.sort((a,b) => { return  ((a.date < b.date) ? 1 : -1)})
 
         expect(res_notiNewArr.map(n => n.date)).toEqual(res_notiSorted.map(n => n.date));
 
-        await db.updateNoti(res_notiNewArr[0]);
-        const res_unviewedNoti = await db.getUnviewedNoti(userObj_1.username);
-        expect(res_unviewedNoti.length).toBe(2)
+        await db.viewNoti(res_notiNewArr[0]);
+        const res_unviewedNoti = await db.getAllUserNoti(userObj_1.username);
+        expect(res_unviewedNoti.length).toBe(3)
     })
 })

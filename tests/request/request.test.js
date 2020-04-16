@@ -8,6 +8,7 @@ const rideDB = require("../../src/ride/controller.js")
 const Request = require("../../src/request/request").Request
 const Ride = require('../../src/ride/ride').Ride
 const User = require('../../src/user/user').User
+const Noti = require("../../src/noti/noti").Noti
 const jwt = require("jsonwebtoken");
 
 const app = require('../../src/app')
@@ -75,6 +76,7 @@ describe("Testing request model controllers", () => {
         afterEach( async() => {
             await Ride.deleteMany();
             await Request.deleteMany();
+            await Noti.deleteMany();
         })
 
         test("Request for that ride has already been made", async () => {
@@ -91,6 +93,8 @@ describe("Testing request model controllers", () => {
             } catch(err) {
                 expect(err).toBe("A request has already been created for this ride")
             }
+            const res_noti = await Noti.find();
+            expect(res_noti.length).toBe(1);
         })
         test("Requester's already approved to be in the ride", async () => {
             const ride_1 = await Ride.create(rideObj_1);
@@ -121,6 +125,9 @@ describe("Testing request model controllers", () => {
             await rideDB.cancelRide(ride_1._id, ride_1.ownerUsername,"","");
             requestsInDB = await Request.find();
             expect(requestsInDB.length).toBe(0);
+
+            const res_noti = await Noti.find();
+            expect(res_noti.length).toBe(3);
         })
     })
 
@@ -130,6 +137,7 @@ describe("Testing request model controllers", () => {
             afterEach( async() => {
                 await Ride.deleteMany();
                 await Request.deleteMany();
+                await Noti.deleteMany();
             })
 
             test("Testing basic approval case", async() => {
@@ -146,6 +154,9 @@ describe("Testing request model controllers", () => {
 
                 expect(request_rider2.status).toBe("approved");
                 expect(ride_1.passengers.length).toBe(2);
+
+                const res_noti = await Noti.find();
+                expect(res_noti.length).toBe(2);
             })
             test("Attempt to approve a request that's either archived or is not pending", async() => {
                 let ride_1 = await Ride.create(rideObj_1);
@@ -170,12 +181,16 @@ describe("Testing request model controllers", () => {
                 } catch(err) {
                     expect(err).toBe("Ride has already been archived")
                 }
+
+                const res_noti = await Noti.find();
+                expect(res_noti.length).toBe(2);
             })
         })
         describe("Testing Request Denial", () => {
             afterEach( async() => {
                 await Ride.deleteMany();
                 await Request.deleteMany();
+                await Noti.deleteMany();
             })
 
             test("Testing basic denial case", async () => {
@@ -191,7 +206,10 @@ describe("Testing request model controllers", () => {
                 ride_1 = await Ride.findById(ride_1._id);
 
                 expect(request_rider2.status).toBe("denied");
-                expect(ride_1.passengers.length).toBe(1);                
+                expect(ride_1.passengers.length).toBe(1);       
+
+                const res_noti = await Noti.find();
+                expect(res_noti.length).toBe(2);         
             })
             test("Attempt to deny a request that's either archived or is not pending", async() => {
                 let ride_1 = await Ride.create(rideObj_1);
@@ -216,12 +234,16 @@ describe("Testing request model controllers", () => {
                 } catch(err) {
                     expect(err).toBe("Ride has already been archived")
                 }
+
+                const res_noti = await Noti.find();
+                expect(res_noti.length).toBe(2);
             })
         })  
         describe("Testing Request Cancellation", () => {
             afterEach( async() => {
                 await Ride.deleteMany();
                 await Request.deleteMany();
+                await Noti.deleteMany();
             })
 
             test("Testing basic cancellation case", async () => {
@@ -237,6 +259,9 @@ describe("Testing request model controllers", () => {
                 
                 expect(request_rider2.status).toBe("cancelled");
                 expect(ride_1.passengers.length).toBe(1);
+
+                const res_noti = await Noti.find();
+                expect(res_noti.length).toBe(2);
             })
             test("Attempt to cancel a request that's either archived or is not pending", async() => {
                 let ride_1 = await Ride.create(rideObj_1);
@@ -260,11 +285,19 @@ describe("Testing request model controllers", () => {
                 } catch(err) {
                     expect(err).toBe("Ride has already been archived")
                 }
+
+                const res_noti = await Noti.find();
+                expect(res_noti.length).toBe(2);
             })
         })  
     })
 
     describe("Testing reminders", ()=> {
+        afterEach( async() => {
+            await Ride.deleteMany();
+            await Request.deleteMany();
+            await Noti.deleteMany();
+        })
         test("Decrementing below zero", async() => {
             let ride_1 = await Ride.create(rideObj_1);
                 const requestObj_rider2 = {

@@ -12,7 +12,6 @@ const getRequestInfo = async (requestID) => {
   let query = { _id: requestID };
   return new Promise(async (resolve, reject) => {
     try {
-      console.log("here")
       const res = await Request.findById(query);
       return resolve(res);
     } catch(err) {
@@ -38,7 +37,6 @@ const getRequesterRequests = (requesterUsername, status) => {
   return new Promise(async (resolve, reject) => {
     try {
       const res = await Request.find(query);
-      console.log(res)
       return resolve(res);
     } catch(err) {
       return reject(err);

@@ -9,28 +9,66 @@ const scheduledTasks = require("../tasks/scheduledTasks");
 ///////////////////////////////////////////////////////////////
 
 const getMatchingRides = (filter_, pageNum, callback) => {
-  if (filter_) {
+  const places = require("./places.json");
+
+  if (filter_ && Object.keys(filter_).length > 0) {
     filter_ = JSON.parse(filter_);
     let filter = {};
-    if (filter_.from) {
-      filter.from = filter_.from;
+    let fromCitiesQuery = [];
+    let toCitiesQuery = [];
+    let dateQuery = {};
+
+    if (filter_.from && places[filter_.from] !== undefined) {
+      let cities = places[filter_.from];
+
+      for (var city of cities) {
+        fromCitiesQuery.push({ from: city });
+      }
     }
-    if (filter_.to) {
-      filter.to = filter_.to;
+
+    if (filter_.to && places[filter_.to] !== undefined) {
+      let cities = places[filter_.to];
+
+      for (var city of cities) {
+        toCitiesQuery.push({ to: city });
+      }
     }
+
     if (filter_.date_from && filter_.date_to) {
-      filter.date = {
-        $gte: filter_.date_from,
-        $lte: filter_.date_to,
+      dateQuery = {
+        date: {
+          $gte: filter_.date_from,
+          $lte: filter_.date_to,
+        },
       };
     } else {
-      filter.date = {
-        $gte: new Date(),
+      dateQuery = {
+        date: {
+          $gte: new Date(),
+        },
       };
     }
 
+    filter = dateQuery;
+
+    if (toCitiesQuery.length > 0 && fromCitiesQuery.length === 0) {
+      filter = {
+        $and: [{ $or: toCitiesQuery }, dateQuery],
+      };
+    } else if (toCitiesQuery.length === 0 && fromCitiesQuery.length > 0) {
+      filter = {
+        $and: [{ $or: fromCitiesQuery }, dateQuery],
+      };
+    } else if (toCitiesQuery.length > 0 && fromCitiesQuery.length > 0) {
+      filter = {
+        $and: [{ $or: fromCitiesQuery }, { $or: toCitiesQuery }, dateQuery],
+      };
+    }
+
+    console.log(filter);
     Ride.find(filter, (err, result) => {
       if (err) {
+        console.log(err);
         callback(err, null);
       } else {
         callback(null, result);
@@ -283,12 +321,10 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       await noti.save();
 
       // Remove the passenger from the list of passengers and free up a spot
-      cancelledRideDoc.passengers.splice(
-        cancelledRideDoc.passengers.indexOf(username),
-        1
+      await Ride.updateOne(
+        { _id: rideId },
+        { $pull: { passengers: username }, $inc: { seats: 1 } }
       );
-      cancelledRideDoc.seats++;
-      await cancelledRideDoc.save();
 
       // Increment the user's number of cancelled rides
       await User.updateOne({ username }, { $inc: { ridesCancelled: 1 } });

@@ -95,7 +95,11 @@ router.put("/rides/join-ride", checkAuth, (req, res) => {
   // Add User to ride
   db.joinRide(ride.ownerUsername, ride._id, authUsername, (err, data) => {
     if (err) {
-      res.sendStatus(500).json({ error: err });
+      res.sendStatus(500);
+    } else if (data.length === 0) {
+      res.status(404).send({
+        message: "ERROR: The ride is full",
+      });
     } else {
       res.status(200).send(data);
     }
@@ -139,6 +143,25 @@ router.get("/rides/ride-details", (req, res) => {
       res.status(200).send(data);
     }
   });
+});
+
+// Get List of Cities
+router.get("/rides/getAvailableCities", (req, res) => {
+  const places = require("./places.json");
+
+  let cities = Object.values(places);
+  var merged = [].concat.apply([], cities).sort();
+
+  res.status(200).json(merged);
+});
+
+// Get List of Counties
+router.get("/rides/getAvailableCounties", (req, res) => {
+  const places = require("./places.json");
+
+  let counties = Object.keys(places).sort();
+
+  res.status(200).json(counties);
 });
 
 module.exports = router;

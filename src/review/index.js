@@ -22,7 +22,7 @@ router.post("/reviews", checkAuth, async (req, res) => {
 router.post("/reviews/decline-review", checkAuth, async (req, res) => {
     try {
         const loggedInUser = tokenParser(req.headers.authorization).username
-        const declinedReview = await db.declineReview(loggedInUser, req.body.revieweeUsername, req.body.rideId)
+        const declinedReview = await db.declineReview(req.body.rideId, loggedInUser, req.body.revieweeUsername)
         res.status(200).send(declinedReview) 
     }
     catch(e) {

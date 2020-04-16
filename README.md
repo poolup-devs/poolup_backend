@@ -300,6 +300,7 @@ Models:
 | ---------------------------- | ----------- | ------------------------------------------------------------------ |
 | /users/login                 | POST        | [User Login](#user-login)                                          |
 | /users/signup                | POST        | [User Signup](#user-signup)                                        |
+| /users/emailValidation       | GET         | [Validation/usability of Email](#email-validation)                 |
 | /users/sendVerificationEmail | GET         | [Send a verification email to signup](#send-verification-email)    |
 | /users/verify                | GET         | [Verify an email](#email-verification)                             |
 | /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
@@ -347,6 +348,8 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
 }
 ```
 
+----
+
 ### User Signup
 
 POST request
@@ -365,14 +368,16 @@ POST request
 
 ```
 {
-	"email": "elin0467@g.ucla.edu",
+    "email": "elin0467@g.ucla.edu",
     "firstName": "Evan", 
     "lastName": "Lin", 
-	"password": "password"
+    "password": "password"
 }
 ```
 
 **return value**
+
+```
 {
     "registeredUser": {
         "stripe": {
@@ -406,11 +411,27 @@ POST request
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImVsaW4wNDY3IiwiaWF0IjoxNTg2NzIyNTA0LCJleHAiOjE1ODY4MDg5MDR9.SgNf9XUOUBMuTfRuw4LgOTTRbw04_8rFD7ng87-ax7U"
 }
+```
 
-201 Created if the user was successfully registered into the database. 
-500 status if there was a database error while registering the user, or if the user skipped the email verification step. 
+- 201 Created if the user was successfully registered into the database. 
+- 500 status if there was a database error while registering the user, or if the user skipped the email verification step. 
 
 ---
+
+### Email Validation
+
+GET request 
+
+**params**
+- email 
+
+**example** 
+- localhost:3000/users/emailValidation?email=bin315a1@g.ucla.edu
+
+**return value**
+- 200 status, array of user objects with that email
+
+
 
 ### Send Verification Email 
 
@@ -421,16 +442,20 @@ This request first verifies whether the email is valid, returning an error messa
 2. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!" 
 3. **Email is not a student email** -> "Not an .edu email address!"
 4. **Email is associated with a registered account** -> "A registered account already exists with this email!"
-**
+
+
 If the email is valid, the endpoint sends a verification email to the user. 
+
 This endpoint can be called multiple times to resend the verification email. 
 
 **params**
-email address 
+
+email 
 
 **return value** 
-200 response if the email was sent
-500 reponse otherwise, with the error message attached 
+
+- 200 response if the email was sent
+- 500 reponse otherwise, with the error message attached 
 
 ---
 
@@ -451,7 +476,7 @@ localhost:3000/users/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpb
 
 **return value**
 
-200 status, returns a redirection to https://poolup.co/signup/3 to proceed with Account Information registration. 
+- 200 status, returns a redirection to https://poolup.co/signup/3 to proceed with Account Information registration. 
 
 ---
 
@@ -469,7 +494,7 @@ localhost:3000/users/usernameValidation?username=bin315a1
 
 **return value**
 
-200 status, array of user objects with that username
+- 200 status, array of user objects with that username
 
 ```
 [
@@ -610,7 +635,7 @@ password
 
 ```
 {
-	"password" : "password"
+    "password" : "password"
 }
 ```
 
@@ -632,7 +657,7 @@ newPassword
 
 ```
 {
-	"newPassword" : "password"
+    "newPassword" : "password"
 }
 ```
 
@@ -702,9 +727,7 @@ GET request
 
 **params/body**
 
-```
 none
-```
 
 **example**
 
@@ -744,7 +767,7 @@ GET request
 ```
 
 {
-"averageRating": 2.50
+    "averageRating": 2.50
 }
 
 ```
@@ -773,7 +796,7 @@ GET request
 ```
 
 {
-"school": "UCLA"
+    "school": "UCLA"
 }
 
 ```
@@ -811,7 +834,7 @@ PATCH request
 ```
 
 {
-"aboutMe": "This is my new about me description!"
+    "aboutMe": "This is my new about me description!"
 }
 
 ```
@@ -1296,7 +1319,8 @@ PUT request
 
 - `ride`: ride object that the logged in user is trying to cancel
 - `cancellationReason`: String when the user selects from a drop-down of cancellation reasons
-- `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver - optional field, omit from body if user does not type any message into the form
+- `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver 
+    - optional field, omit from body if user does not type any message into the form
 
 ```
 
@@ -1799,9 +1823,9 @@ Request Info
 **query params**
 
 ```
-
+{
     requestID = <String>
-
+}
 ```
 
 **return value**

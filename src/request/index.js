@@ -12,16 +12,8 @@ router.get("/request/info", checkAuth, async (req, res) => {
     const data = await db.getRequestInfo(requestID);
     res.status(200).json({requests: data});
   } catch(err) {
-    res.status(500).json({ errorMsg: err });
+    res.status(err.status).send(err.message);
   }
-
-  // db.getRequestInfo(requestID, (err, data) => {
-  //   if (err) {
-  //     res.status(500).json({ errorMsg: err });
-  //   } else {
-  //     res.status(200).json({ requests: data });
-  //   }
-  // });
 });
 
 // Get a requester's requests
@@ -33,7 +25,7 @@ router.get("/request/requester", checkAuth, async (req, res) => {
     const data = await db.getRequesterRequests(requesterUsername, status);
     res.status(200).json({ requests: data });
   } catch (err) {
-    res.status(500).json({ errorMsg: err });
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -46,7 +38,7 @@ router.get("/request/requestee", checkAuth, async (req, res) => {
     const data = await db.getRequesteeRequests(requesteeUsername, status);
     res.status(200).json({ requests: data });
   } catch(err) {
-    res.status(500).json({ errorMsg: err });
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -54,9 +46,9 @@ router.get("/request/requestee", checkAuth, async (req, res) => {
 router.post("/request/new", checkAuth, async (req, res) => {
   try {
     const data = await db.createRequest(req.body);
-    res.status(200).json({requestID: data._id})
+    res.status(201).json({requestID: data._id})
   } catch(err) {
-    res.status(500).json({ errorMsg: err });
+    res.status(err.status).send(err.message)
   }
 });
 
@@ -69,7 +61,7 @@ router.put("/request/approve", checkAuth, async (req, res) => {
     await db.updateRequestStatus(requestID, authUsername, "approved");
     res.sendStatus(200);
   } catch(err) {
-    res.status(500).json({ errorMsg: err });
+    res.status(err.status).send(err.message)
   }
 });
 
@@ -82,7 +74,7 @@ router.put("/request/cancel", checkAuth, async (req, res) => {
     await db.updateRequestStatus(requestID, authUsername, "cancelled");
     res.sendStatus(200);
   } catch(err) {
-    res.status(500).json({ errorMsg: err });
+    res.status(err.status).send(err.message)
   }
 });
 
@@ -95,7 +87,7 @@ router.put("/request/deny", checkAuth, async (req, res) => {
     await db.updateRequestStatus(requestID, authUsername, "denied");
     res.sendStatus(200);
   } catch(err) {
-    res.status(500).json({ errorMsg: err });
+    res.status(err.status).send(err.message)
   }
 });
 
@@ -107,7 +99,7 @@ router.put("/request/archive", checkAuth, async (req, res) => {
     await db.archiveRequest(requestID);
     res.sendStatus(200);
   } catch(err) {
-    res.status(500).json({ errorMsg: err });
+    res.status(err.status).send(err.message)
   }
 });
 
@@ -119,25 +111,9 @@ router.put("/request/unarchive", checkAuth, async (req, res) => {
     await db.unarchiveRequest(requestID);
     res.sendStatus(200);
   } catch(err) {
-    res.status(500).json({ errorMsg: err });
+    res.status(err.status).send(err.message)
   }
 });
-
-// Delete a specified request
-// router.delete("/request/delete", checkAuth, async (req, res) => {
-//   const requestID = req.body.requestID;
-
-//   try {
-//     const data = await db.deleteRequest(requestID);
-//     if(data.deletedCount == 0) {
-//       res.status(404).json({ errorMsg: "Request with id: " + requestID + " not found." });
-//     } else {
-//       res.sendStatus(200);
-//     }
-//   } catch(err) {
-//     res.status(500).json({ errorMsg: err });
-//   }
-// });
 
 // Remind a Receiver
 router.get("/request/remind", checkAuth, async (req, res) => {
@@ -148,17 +124,8 @@ router.get("/request/remind", checkAuth, async (req, res) => {
     await db.decrementRemindCount(requestID, authUsername);
     res.sendStatus(200);
   } catch(err) {
-    res.status(500).json({ errorMsg: err });
+    res.status(err.status).send(err.message);
   }
-
-  // // reduce reminders value by 1
-  // db.decrementRemindCount(requestID, (err, data) => {
-  //   if (err) {
-  //     res.status(500).json({ errorMsg: err });
-  //   }
-  //   console.log(data);
-  //   res.sendStatus(200);
-  // });
 });
 
 module.exports = router;

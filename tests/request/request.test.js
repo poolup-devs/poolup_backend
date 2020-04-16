@@ -91,7 +91,7 @@ describe("Testing request model controllers", () => {
                 await db.createRequest(requestObj_rider2);
                 await db.createRequest(requestObj_rider2);
             } catch(err) {
-                expect(err).toBe("A request has already been created for this ride")
+                expect(err.message).toBe("A request has already been created for this ride")
             }
             const res_noti = await Noti.find();
             expect(res_noti.length).toBe(1);
@@ -107,7 +107,7 @@ describe("Testing request model controllers", () => {
             try {
                 await db.createRequest(requestObj_rider1)
             } catch(err) {
-                expect(err).toBe("The user is already in this ride")
+                expect(err.message).toBe("The user is already in this ride")
             }
         })
         test("Driver cancels the ride while there are pending requests", async () => {
@@ -172,14 +172,14 @@ describe("Testing request model controllers", () => {
                 try {
                     await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "approved");
                 } catch(err) {
-                    expect(err).toBe("Ride has already been denied")
+                    expect(err.message).toBe("Ride has already been denied")
                 }
 
                 await db.archiveRequest(request_rider2._id);
                 try {
                     await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "approved");
                 } catch(err) {
-                    expect(err).toBe("Ride has already been archived")
+                    expect(err.message).toBe("Ride has already been archived")
                 }
 
                 const res_noti = await Noti.find();
@@ -225,14 +225,14 @@ describe("Testing request model controllers", () => {
                 try {
                     await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "denied");
                 } catch(err) {
-                    expect(err).toBe("Ride has already been approved")
+                    expect(err.message).toBe("Ride has already been approved")
                 }
 
                 await db.archiveRequest(request_rider2._id);
                 try {
                     await db.updateRequestStatus(request_rider2._id, request_rider2.requesteeUsername, "denied");
                 } catch(err) {
-                    expect(err).toBe("Ride has already been archived")
+                    expect(err.message).toBe("Ride has already been archived")
                 }
 
                 const res_noti = await Noti.find();
@@ -276,14 +276,14 @@ describe("Testing request model controllers", () => {
                 try {
                     await db.updateRequestStatus(request_rider2._id, request_rider2.requesterUsername, "cancelled");
                 } catch(err) {
-                    expect(err).toBe("Ride has already been denied")
+                    expect(err.message).toBe("Ride has already been denied")
                 }
 
                 await db.archiveRequest(request_rider2._id);
                 try {
                     await db.updateRequestStatus(request_rider2._id, request_rider2.requesterUsername, "cancelled");
                 } catch(err) {
-                    expect(err).toBe("Ride has already been archived")
+                    expect(err.message).toBe("Ride has already been archived")
                 }
 
                 const res_noti = await Noti.find();
@@ -312,7 +312,7 @@ describe("Testing request model controllers", () => {
             try {
                 await db.decrementRemindCount(request_rider2._id, request_rider2.requesteeUsername);
             } catch(err) {
-                expect(err).toBe("Reminder count is already less than 1")
+                expect(err.message).toBe("Reminder count is already less than 1")
             }
         })
     })

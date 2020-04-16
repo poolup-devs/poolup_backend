@@ -1764,7 +1764,6 @@ GET request
 | /request/cancel    | PUT         | [Cancel Request](#cancel-request)         |
 | /request/deny      | PUT         | [Deny Request](#deny-request)             |
 | /request/archive   | PUT         | [Archive Request](#archive-request)       |
-| /request/delete    | DELETE      | [Delete Request](#delete-request)         |
 
 ### Statuses
 
@@ -1789,7 +1788,7 @@ Request Info
 
 **return value**
 
-201 status if successful, 500 error if failure, 404 if no matching request was found
+200 status if successful
 
 ---
 
@@ -1809,7 +1808,7 @@ Remind Driver
 
 **return value**
 
-201 status if successful, 500 error if failure, 404 if no matching request was found
+200 status if successful
 
 ---
 
@@ -1833,7 +1832,7 @@ GET request
 
 **return value**
 
-200 ok status with data of all matching requests, 500 error if failure
+200 ok status with data of all matching requests
 
 ---
 
@@ -1857,7 +1856,7 @@ GET request
 
 **return value**
 
-200 ok status with data of all matching requests, 500 error if failure
+200 ok status with data of all matching requests
 
 ---
 
@@ -1880,7 +1879,13 @@ POST request
 
 **return value**
 
-200 created status with the request id for later use, 500 error if failure
+201 created status with the request id for later use
+
+```
+    {
+        requestID: <request id here>
+    }
+```
 
 ---
 
@@ -1900,7 +1905,7 @@ PUT request
 
 **return value**
 
-201 status if successful, 500 error if failure such as if unsuccessful
+200 status if successful
 
 ---
 
@@ -1920,7 +1925,7 @@ PUT request
 
 **return value**
 
-201 status if successful, 500 error if failure such as if the ride is already "archived" or "cancelled"
+200 status if successful
 
 ---
 
@@ -1940,7 +1945,7 @@ PUT request
 
 **return value**
 
-201 status if successful, 500 error if failure such as if the ride is already "archived" or "denied"
+200 status if successful
 
 ---
 
@@ -1960,29 +1965,7 @@ PUT request
 
 **return value**
 
-201 status if successful, 500 error if failure
-
----
-
-### Delete Request
-
-Delete Request
-
-- Deletes a request
-
-**body**
-
-```
-
-{
-requestID = <String>
-}
-
-```
-
-**return value**
-
-201 status if successful, 500 error if failure, 404 if no matching request was found
+200 status if successful
 
 ---
 

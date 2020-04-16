@@ -1426,18 +1426,20 @@ The ride object that the user is trying to delete (The ride object's owner has t
 
 | column               | type    | required | description                                 |
 | -------------------- | ------- | -------- | ------------------------------------------- |
-| username             | String  | Yes      |                                             |
-| email                | String  | Yes      |                                             |
-| msg                  | String  | Yes      |                                             |
+| username             | String  | Yes      | user receiving message                      |
+| msg                  | String  | Yes      | message to be displayed                     |
+| redirectPath         | String  |          | path to redirect when clicked               |
 | viewed               | Boolean | Yes      |                                             |
+| viewedAt             | Date    | Yes      |                                             |
+| date                 | Date    | Yes      |                                             |
 | additionalProperties | Mixed   |          | fields specific to the type of notification |
 
 ### API Endpoints
 
 | url                      | HTTP Method | description                                                         |
 | ------------------------ | ----------- | ------------------------------------------------------------------- |
-| /notis/noti   | GET         | [Get user's notifications](#get-user's-notifications)         |
-| /notis/view  | PUT         | [View the notification](#view-the-notification)       |
+| /notis/noti  | GET       | [Get user's notifications](#get-user's-notifications)                             |
+| /notis/view  | PUT       | [View the notification](#view-the-notification)                                   |
 
 ---
 

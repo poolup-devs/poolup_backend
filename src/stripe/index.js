@@ -35,9 +35,9 @@ router.get("/stripe/token", (req, res) => {
     stripe.oauth
       .token({
         grant_type: "authorization_code",
-        code: req.query.code
+        code: req.query.code,
       })
-      .then(function(response) {
+      .then(function (response) {
         if (response.error) {
           throw response.error;
         }
@@ -49,7 +49,7 @@ router.get("/stripe/token", (req, res) => {
           vehicleMakeModel: req.session.driverInfo.vehicleMakeModel,
           driversLicense: req.session.driverInfo.driversLicense,
           vehicleColor: req.session.driverInfo.vehicleColor,
-          stripeAccountID: response.stripe_user_id
+          stripeAccountID: response.stripe_user_id,
         };
 
         // Update the model and store the Stripe account ID in the datastore:
@@ -63,7 +63,7 @@ router.get("/stripe/token", (req, res) => {
           res.redirect("http://localhost:3006/driver/my-drives");
         });
       })
-      .catch(error => {
+      .catch((error) => {
         throw error;
       });
   } catch (err) {
@@ -80,7 +80,7 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
   userDB.findUserByUsername(authUsername, (err, data) => {
     if (err) {
       res.status(500).json({
-        error: err
+        error: err,
       });
       return;
     }
@@ -92,7 +92,7 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
     // If they do then that means they already registered as a drive
     if (userInfo.driver.isDriver) {
       res.status(400).json({
-        error: "User is already registered as a driver"
+        error: "User is already registered as a driver",
       });
       return;
     }
@@ -106,14 +106,15 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
       licensePlate: req.body.licensePlate,
       vehicleMakeModel: req.body.vehicleMakeModel,
       driversLicense: req.body.driversLicense,
-      vehicleColor: req.body.vehicleColor
+      vehicleColor: req.body.vehicleColor,
     };
 
     // Check that all the fields of the driverInfo object are populated
     if (!driverValidation.containsDriverInfo(driverInfo)) {
       console.log("Invalid driver info");
       res.json(400, {
-        error: "Invalid driver information; check that all fields are populated"
+        error:
+          "Invalid driver information; check that all fields are populated",
       });
       return;
     }
@@ -123,9 +124,7 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
     req.session.driverInfo = driverInfo;
 
     //Generate a random string as `state` to protect from CSRF and include it in the session
-    req.session.state = Math.random()
-      .toString(36)
-      .slice(2);
+    req.session.state = Math.random().toString(36).slice(2);
 
     // Populate the parameters that will be sent in the Stripe redirect. They will
     // be used to autopopulate some of the fields in the Stripe Express setup
@@ -135,13 +134,13 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
       "stripe_user[business_type]": "individual",
       "stripe_user[email]": userInfo.email,
       "stripe_user[phone_number]": driverInfo.phoneNumber,
-      "stripe_user[product_description]": "PoolUp Driver"
+      "stripe_user[product_description]": "PoolUp Driver",
     };
 
     res.status(200).json({
       redirectUrl:
         "https://connect.stripe.com/express/oauth/authorize?" +
-        querystring.stringify(parameters)
+        querystring.stringify(parameters),
     });
     return;
   });
@@ -162,9 +161,9 @@ router.post("/stripe/account", (req, res) => {
       type: "custom",
       country: country,
       email: email,
-      requested_capabilities: ["card_payments", "transfers"]
+      requested_capabilities: ["card_payments", "transfers"],
     },
-    function(err, customer) {
+    function (err, customer) {
       if (err) {
         res.status(500).json({ error: err });
       } else {
@@ -176,11 +175,11 @@ router.post("/stripe/account", (req, res) => {
 
 // Create Customer
 router.post("/stripe/customer", (req, res) => {
-  stripe.customer.create(
+  stripe.customers.create(
     {
-      description: "Some Customer"
+      description: "Some Customer",
     },
-    function(err, customer) {
+    function (err, customer) {
       if (err) {
         res.status(500).json({ error: err });
       } else {
@@ -208,14 +207,14 @@ router.post("/stripe/create-payment-intent", (req, res) => {
     }
 
     // Get Rider Details
-    userDB.getUserInfo(riderUsername, (err, rider) => {
+    userDB.findUserByUsername(riderUsername, (err, rider) => {
       if (err) {
         res.status(500).json({ error: err });
         return;
       }
 
       // Get Driver Details
-      userDB.getUserInfo(ride.ownerUsername, (err, driver) => {
+      userDB.findUserByUsername(ride.ownerUsername, (err, driver) => {
         if (err) {
           res.status(500).json({ error: err });
           return;
@@ -233,11 +232,11 @@ router.post("/stripe/create-payment-intent", (req, res) => {
             metadata: {
               rideID: rideID,
               riderUsername: riderUsername,
-              driverStripeAcct: driver.stripe.accountID
+              driverStripeAcct: driver.stripe.accountID,
             },
-            receipt_email: rider.email
+            receipt_email: rider.email,
           },
-          function(err, paymentIntent) {
+          function (err, paymentIntent) {
             if (err) {
               console.log(err);
               res.status(500).json({ error: err });
@@ -314,7 +313,7 @@ router.get("/stripe/test", async (req, res) => {
       amount: 100,
       rideID: "",
       destination: "cus_GcWwbWaTlAojQS",
-      customerUsername: "adf"
+      customerUsername: "adf",
     });
     // const test = await TransferDB.checkExpired();
     res.send(test).status(200);

@@ -21,6 +21,9 @@
     
     "MY_RIDES_PATH": "/rider/my-rides",
     "MY_DRIVES_PATH": "/driver/my-drives"
+
+    "DEV_EMAIL": <INSERT DEV EMAIL HERE>, 
+    "DEV_PASSWORD": <INSERT DEV EMAIL PASSWORD HERE>
   },
   "test": {
     "MONGODB_URL": "mongodb://localhost/poolup-test"

@@ -1453,18 +1453,60 @@ The ride object that the user is trying to delete (The ride object's owner has t
 
 | column               | type    | required | description                                 |
 | -------------------- | ------- | -------- | ------------------------------------------- |
-| username             | String  | Yes      |                                             |
-| email                | String  | Yes      |                                             |
-| msg                  | String  | Yes      |                                             |
+| username             | String  | Yes      | user receiving message                      |
+| msg                  | String  | Yes      | message to be displayed                     |
+| redirectPath         | String  |          | path to redirect when clicked               |
 | viewed               | Boolean | Yes      |                                             |
+| viewedAt             | Date    | Yes      |                                             |
+| date                 | Date    | Yes      |                                             |
 | additionalProperties | Mixed   |          | fields specific to the type of notification |
+
+---
+
+### Leave a review notifications 
+These notifications are automatically sent to the driver and all of his passengers 12 hours after the ride begins. 
+When a user clicks on this notification, instead of being redirected to a page, a form appears for them to fill out.
+
+The "Leave a review" notification contains the following additionalProperties: `rideId` and `usersToReview`. 
+- The `usersToReview` property contains an array of users that can be reviewed for the recipient of the notification. 
+
+- For example, a driver who rode with two passengers, user2 and user3, would receive the following notification. 
+``` 
+{
+    "_id" : ObjectId("5e98c4f1d1f2f342c4e30c94"),
+    "viewed" : false,
+    "date" : ISODate("2020-04-16T20:49:53.010Z"),
+    "username" : "user1",
+    "msg" : "Leave a review for your passengers, user2 and user3.",
+    "__v" : 0,
+    "additionalProperties" : {
+        "rideId" : ObjectId("5e98c4bdd1f2f342c4e30c93"),
+        "usersToReview" : [ 
+            {
+                "username" : "user2",
+                "firstName" : "user2",
+                "picUrl" : "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_pink.png",
+                "picType" : "png"
+            }, 
+            {
+                "username" : "user3",
+                "firstName" : "user3",
+                "picUrl" : "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_purple.png",
+                "picType" : "png"
+            }
+        ]
+    }
+}
+
+```
+---
 
 ### API Endpoints
 
 | url                      | HTTP Method | description                                                         |
 | ------------------------ | ----------- | ------------------------------------------------------------------- |
-| /notis/noti   | GET         | [Get user's notifications](#get-user's-notifications)         |
-| /notis/view  | PUT         | [View the notification](#view-the-notification)       |
+| /notis/noti  | GET       | [Get user's notifications](#get-user's-notifications)                             |
+| /notis/view  | PUT       | [View the notification](#view-the-notification)                                   |
 
 ---
 

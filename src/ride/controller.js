@@ -346,17 +346,16 @@ const rideDetails = (_id, callback) => {
 const addDriverInfoToRides = (rides) => {
   return new Promise(async (resolve, reject) => {
     try {
-      let matchingRides = JSON.parse(JSON.stringify(rides))
-      for (i = 0; i < matchingRides.length; i++) {
-        const driver = await User.findOne({username: matchingRides[i].ownerUsername}); 
+      let modifiedRides = JSON.parse(JSON.stringify(rides))
+      for (i = 0; i < modifiedRides.length; i++) {
+        const driver = await User.findOne({username: modifiedRides[i].ownerUsername}); 
         const {picUrl, picType, firstName, lastName} = driver; 
-        matchingRides[i].picUrl = picUrl; 
-        matchingRides[i].picType = picType; 
-        matchingRides[i].firstName = firstName; 
-        matchingRides[i].lastName = lastName; 
+        modifiedRides[i].picUrl = picUrl; 
+        modifiedRides[i].picType = picType; 
+        modifiedRides[i].firstName = firstName; 
+        modifiedRides[i].lastName = lastName; 
       }
-      console.log(matchingRides)
-      resolve(matchingRides) 
+      resolve(modifiedRides) 
     }
     catch(e) {
       reject(e) 

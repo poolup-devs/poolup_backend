@@ -74,15 +74,7 @@ const getMatchingRides = (filter_, pageNum, callback) => {
         console.log(err);
         callback(err, null);
       } else {
-        let matchingRides = JSON.parse(JSON.stringify(result))
-        for (i = 0; i < matchingRides.length; i++) {
-          const driver = await User.findOne({username: matchingRides[i].ownerUsername}); 
-          const {picUrl, picType, firstName, lastName} = driver; 
-          matchingRides[i].picUrl = picUrl; 
-          matchingRides[i].picType = picType; 
-          matchingRides[i].firstName = firstName; 
-          matchingRides[i].lastName = lastName; 
-        }
+        const matchingRides = await addDriverInfoToRides(result)
         callback(null, matchingRides);
       }
     })
@@ -94,15 +86,7 @@ const getMatchingRides = (filter_, pageNum, callback) => {
       if (err) {
         callback(err, null);
       } else {
-        let matchingRides = JSON.parse(JSON.stringify(result))
-        for (i = 0; i < matchingRides.length; i++) {
-          const driver = await User.findOne({username: matchingRides[i].ownerUsername}); 
-          const {picUrl, picType, firstName, lastName} = driver; 
-          matchingRides[i].picUrl = picUrl; 
-          matchingRides[i].picType = picType; 
-          matchingRides[i].firstName = firstName; 
-          matchingRides[i].lastName = lastName; 
-        }
+        const matchingRides = await addDriverInfoToRides(result)
         callback(null, matchingRides);
       }
     })
@@ -115,11 +99,12 @@ const getMatchingRides = (filter_, pageNum, callback) => {
 const getRideHistory = (username, callback) => {
   Ride.find(
     { passengers: username, date: { $lt: new Date() } },
-    (err, result) => {
+    async (err, result) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        const rideHistory = await addDriverInfoToRides(result)
+        callback(null, rideHistory);
       }
     }
   )
@@ -130,11 +115,12 @@ const getRideHistory = (username, callback) => {
 const getMyRideHistory = (authUsername, pageNum, callback) => {
   Ride.find(
     { passengers: authUsername, date: { $lt: new Date() } },
-    (err, result) => {
+    async (err, result) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        const rideHistory = await addDriverInfoToRides(result)
+        callback(null, rideHistory);
       }
     }
   )
@@ -146,11 +132,12 @@ const getMyRideHistory = (authUsername, pageNum, callback) => {
 const getMyRideUpcoming = (authUsername, callback) => {
   Ride.find(
     { passengers: authUsername, date: { $gte: new Date() } },
-    (err, result) => {
+    async (err, result) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        const ridesUpcoming = await addDriverInfoToRides(result)
+        callback(null, ridesUpcoming);
       }
     }
   )
@@ -194,8 +181,8 @@ const getDriveUpcoming = (username, pageNum, callback) => {
     .limit(3);
 };
 
-const postRide = (rideInfo, callback) => {
-  Ride.create(rideInfo, (err, result) => {
+const postRide = async (rideInfo, callback) => {
+  Ride.create(rideInfoWithDriverInfo, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
@@ -260,7 +247,6 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       return reject("Ride does not exist in database!");
     }
 
-    // const user = await User.findOne({ username });
     // Driver cancellation
     if (username === cancelledRideDoc.ownerUsername) {
       let affectedUsers = cancelledRideDoc.passengers;
@@ -355,6 +341,28 @@ const rideDetails = (_id, callback) => {
     }
   });
 };
+
+// Helper method to add driver information to each ride in a list of rides 
+const addDriverInfoToRides = (rides) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let matchingRides = JSON.parse(JSON.stringify(rides))
+      for (i = 0; i < matchingRides.length; i++) {
+        const driver = await User.findOne({username: matchingRides[i].ownerUsername}); 
+        const {picUrl, picType, firstName, lastName} = driver; 
+        matchingRides[i].picUrl = picUrl; 
+        matchingRides[i].picType = picType; 
+        matchingRides[i].firstName = firstName; 
+        matchingRides[i].lastName = lastName; 
+      }
+      console.log(matchingRides)
+      resolve(matchingRides) 
+    }
+    catch(e) {
+      reject(e) 
+    }
+  })
+}
 
 module.exports = {
   getMatchingRides,

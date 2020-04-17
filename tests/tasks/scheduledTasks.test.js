@@ -56,23 +56,50 @@ describe("Testing leave a review notification", () => {
         await Review.deleteMany({})
     }) 
     test("Testing whether drivers and passengers receive proper notifications to leave a review", async () => {
-        let driver = await User.create({firstName: 'Sarah', username: 'driverUsername'})
-        let passenger1 = await User.create({firstName: 'John', username: 'passenger1'})
-        let passenger2 = await User.create({firstName: 'Aiden', username: 'passenger2'})
+        let driver = await User.create({firstName: 'Sarah', username: 'driverUsername', picUrl: 'driver_pic.png', picType: 'png'})
+        let passenger1 = await User.create({firstName: 'John', username: 'passenger1', picUrl: 'passenger1_pic.png', picType: 'png'})
+        let passenger2 = await User.create({firstName: 'Aiden', username: 'passenger2', picUrl: 'passenger2_pic.png', picType: 'png'})
         const ride = await Ride.create({ownerUsername: "driverUsername", passengers: ['passenger1', 'passenger2'], seats: 0})
         await scheduledTasks.createNotiToLeaveReviewTask(ride._id)()
 
-        expect(await Noti.findOne({username: ride.ownerUsername})).toEqual(expect.objectContaining({
-            username: driver.username, msg: "Leave a review for your passengers, John and Aiden.", redirectPath: process.env.MY_DRIVES_PATH
+        const driverNoti = await Noti.findOne({username: ride.ownerUsername})
+        expect(driverNoti).toEqual(expect.objectContaining({
+            username: driver.username, msg: "Leave a review for your passengers, John and Aiden.", redirectPath: process.env.MY_DRIVES_PATH 
         }))
-
-        expect(await Noti.findOne({username: passenger1.username})).toEqual(expect.objectContaining({
+        // Check additional properties in the driver notification 
+        expect(driverNoti.additionalProperties.rideId.toString()).toBe(ride._id.toString())
+        expect(driverNoti.additionalProperties.usersToReview).toEqual(expect.arrayContaining([
+            expect.objectContaining({
+                username: passenger1.username, firstName: passenger1.firstName, picUrl: passenger1.picUrl, picType: passenger1.picType
+            }),
+            expect.objectContaining({
+                username: passenger2.username, firstName: passenger2.firstName, picUrl: passenger2.picUrl, picType: passenger2.picType
+            })
+        ]))
+        
+        const passenger1Noti = await Noti.findOne({username: passenger1.username})
+        expect(passenger1Noti).toEqual(expect.objectContaining({
             username: passenger1.username, msg: "Leave a review for your driver, Sarah.", redirectPath: process.env.MY_RIDES_PATH
         }))
+        // Check additional properties in passenger one's notification 
+        expect(passenger1Noti.additionalProperties.rideId.toString()).toBe(ride._id.toString())
+        expect(passenger1Noti.additionalProperties.usersToReview).toEqual(expect.arrayContaining([
+            expect.objectContaining({
+                username: driver.username, firstName: driver.firstName, picUrl: driver.picUrl, picType: driver.picType
+            })
+        ]))
 
-        expect(await Noti.findOne({username: passenger2.username})).toEqual(expect.objectContaining({
+        const passenger2Noti = await Noti.findOne({username: passenger2.username})
+        expect(passenger2Noti).toEqual(expect.objectContaining({
             username: passenger2.username, msg: "Leave a review for your driver, Sarah.", redirectPath: process.env.MY_RIDES_PATH
         }))
+        // Check additional properties in passenger one's notification 
+        expect(passenger2Noti.additionalProperties.rideId.toString()).toBe(ride._id.toString())
+        expect(passenger2Noti.additionalProperties.usersToReview).toEqual(expect.arrayContaining([
+            expect.objectContaining({
+                username: driver.username, firstName: driver.firstName, picUrl: driver.picUrl, picType: driver.picType
+            })
+        ]))
     })
 
     test("Testing whether an expiry task is created for every review that can be sent out", async () => {

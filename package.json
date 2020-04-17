@@ -23,7 +23,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@sendgrid/mail": "^6.4.0",
     "aws-sdk": "^2.486.0",
     "bluebird": "^3.5.5",
     "body-parser": "^1.19.0",

@@ -27,7 +27,7 @@ const sendEmail = async (mailOptions) => {
 }
 
 // Dynamically load an HTML email template with specified values 
-const loadTemplate = (templateName, context, callback) => {
+const loadTemplate = (templateName, context) => {
   return new Promise((resolve, reject) => {
     const template_dir = path.join(__dirname, 'email_templates')
     let email = new Email({views: {root: template_dir}});

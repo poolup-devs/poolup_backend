@@ -239,6 +239,7 @@ For all API requests after login, the bearer token must be included in headers f
 
 There must be a white space between the string "Bearer" and the token string
 
+---
 
 ## Scheduling Tasks
 All scheduled tasks should be in /tasks/scheduledTasks.js, with unit tests in /tests/tasks/scheduledTasks.test.js
@@ -257,6 +258,35 @@ Operations
 -  `bool cancelTask(taskName)`
 	- Cancel a task, returns a Promise that resolves into a boolean value 
 
+
+---
+
+# Sending Emails
+Emails are sent using nodemailer and rendered dynamically using handlebars. 
+The email templates can be found at /src/utils/email/email_templates. 
+
+There exists helper methods in /src/utils/email/email.js that can be used to send out emails: 
+- `sendEmail(mailOptions)`
+    - Sends an email, currently using poolup.devs@gmail.com 
+        - **mailOptions**: object containing basic email properties, including from, to, subject, and html email template 
+            - ```
+              {
+                from: '"PoolUp" <poolup.devs@gmail.com>', 
+                to: email, 
+                subject: '[PoolUp] Please verify your PoolUp account', 
+                html: emailTemplate
+              }
+             ```
+- `loadTemplate(templateFileName, context)`
+    - Dynamically loads an email template, substituting values
+        - **templateFileName**: name of the file in email_templates directory, eg. "email_verification.hbs" 
+        - **context**: object containing variable substitutions 
+            - ``` 
+              { 
+                  verificationLink: "http://localhost:3000/verify?..." 
+              }
+              ```
+              
 ## Models & API Endpoints Documentation
 
 Models:

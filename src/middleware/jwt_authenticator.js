@@ -10,7 +10,7 @@ const jwtAuth = (req, res, next) => {
     next();
   } catch (error) {
     return res.status(401).json({
-      message: "ERROR: Auth failed"
+      message: "ERROR: Auth failed",
     });
   }
 };

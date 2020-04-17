@@ -28,12 +28,13 @@ router.post("/users/login", async (req, res) => {
     if (req.body.password) {
       req.body.password = sha256(req.body.password);
     }
-    const user = await db.login(req.body.email, req.body.password)
-    const token = jwt.sign({ username: user.username }, JWT_SECRET_KEY, { expiresIn: "24h"})
-    res.status(200).send({authToken: token})
-  }
-  catch(e) {
-    res.status(401).send({message: e}) 
+    const user = await db.login(req.body.email, req.body.password);
+    const token = jwt.sign({ username: user.username }, JWT_SECRET_KEY, {
+      expiresIn: "24h",
+    });
+    res.status(200).send({ authToken: token });
+  } catch (e) {
+    res.status(401).send({ message: e });
   }
 });
 
@@ -42,58 +43,75 @@ router.post("/users/signup", async (req, res) => {
   try {
     // Validate form information
     if (await db.isValidPassword(req.body.password)) {
-      // Update the verified user's information with account information 
+      // Update the verified user's information with account information
       const registeredUser = await db.signup(req.body);
-      const token = jwt.sign({ username: registeredUser.username }, JWT_SECRET_KEY, { expiresIn: "24h"})
-      res.status(201).send({registeredUser, token}) 
+      const token = jwt.sign(
+        { username: registeredUser.username },
+        JWT_SECRET_KEY,
+        { expiresIn: "24h" }
+      );
+      res.status(201).send({ registeredUser, token });
     }
   } catch (e) {
     res.status(500).send({ error: e });
   }
 });
 
-// Send verification email 
+// Send verification email
 router.get("/users/sendVerificationEmail", async (req, res) => {
   try {
-    await db.sendVerificationEmail(req.query.email)
-    res.status(200).send("Verification email sent successfully.")
+    await db.sendVerificationEmail(req.query.email);
+    res.status(200).send("Verification email sent successfully.");
+  } catch (e) {
+    res.status(500).send(e);
   }
-  catch(e) {
-    res.status(500).send(e)
-  }
-})
+});
 
 // Verify Email
 router.get("/users/verify", async (req, res) => {
   try {
     const userEmail = jwt.verify(req.query.token, JWT_EMAIL_KEY);
-    await db.verifyEmail(userEmail.email)
-    // Redirect to register the user's name and password 
+    await db.verifyEmail(userEmail.email);
+    // Redirect to register the user's name and password
     if (process.env.MODE === "STAGING") {
-      res.redirect(302, process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`)
+      res.redirect(
+        302,
+        process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`
+      );
+    } else {
+      res.redirect(
+        302,
+        "https://" +
+          process.env.PRODUCTION_DOMAIN_URL +
+          `/signup/3?email=${userEmail.email}`
+      );
     }
-    else {
-      res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + `/signup/3?email=${userEmail.email}`)
-    }
-  } 
-  catch (err) {
-    if (err.name === 'TokenExpiredError') {
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
       if (process.env.MODE === "STAGING") {
-        res.redirect(302, process.env.FRONT_END_URL + `/signup/2/expired?email=${req.query.email}`)
+        res.redirect(
+          302,
+          process.env.FRONT_END_URL +
+            `/signup/2/expired?email=${req.query.email}`
+        );
+      } else {
+        res.redirect(
+          302,
+          "https://" +
+            process.env.PRODUCTION_DOMAIN_URL +
+            `/signup/2/expired?email=${req.query.email}`
+        );
       }
-      else {
-        res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + `/signup/2/expired?email=${req.query.email}`)
-      }
-    }
-    else if (err.name == 'AccountAlreadyRegistered') {
+    } else if (err.name == "AccountAlreadyRegistered") {
       if (process.env.MODE === "STAGING") {
-        res.redirect(302, process.env.FRONT_END_URL + "/login")
+        res.redirect(302, process.env.FRONT_END_URL + "/login");
+      } else {
+        res.redirect(
+          302,
+          "https://" + process.env.PRODUCTION_DOMAIN_URL + "/login"
+        );
       }
-      else {
-        res.redirect(302, "https://" + process.env.PRODUCTION_DOMAIN_URL + "/login")
-      }
-    }
-    else {
+    } else {
       res.status(401).send(err);
     }
   }
@@ -118,8 +136,8 @@ router.get("/users/emailValidation", (req, res) => {
     } else {
       res.status(200).send(data);
     }
-  })
-})
+  });
+});
 
 //Validate User Phonenumber
 router.get("/users/phoneNumberValidation", (req, res) => {
@@ -147,7 +165,7 @@ router.get("/users/my-info", checkAuth, (req, res) => {
 //Get a User's Info
 router.get("/users/info", checkAuth, (req, res) => {
   const userName = req.query.username;
-  db.getUserInfo(userName, (err, data) => {
+  db.findUserByUsername(userName, (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else {
@@ -171,7 +189,7 @@ router.patch("/users/upload-profile-pic", checkAuth, (req, res) => {
       const allowedFileType = ["jpg", "jpeg", "heic", "png"];
       if (!type || !allowedFileType.includes(type.ext)) {
         return res.status(400).send({
-          message: "ERROR: file type must be of: jpg, jpeg, heic, or png"
+          message: "ERROR: file type must be of: jpg, jpeg, heic, or png",
         });
       }
 
@@ -300,16 +318,15 @@ router.patch("/users/changePassword", checkAuth, (req, res) => {
   });
 });
 
-// Get about me 
+// Get about me
 router.get("/users/get-about-me", async (req, res) => {
   try {
-    const aboutMe = await db.getAboutMe(req.query.username) 
-    res.status(200).send({aboutMe})
+    const aboutMe = await db.getAboutMe(req.query.username);
+    res.status(200).send({ aboutMe });
+  } catch (e) {
+    res.status(500).send(e);
   }
-  catch(e) {
-    res.status(500).send(e) 
-  }
-})
+});
 
 // Update About Me
 router.patch("/users/updateAboutMe", checkAuth, async (req, res) => {

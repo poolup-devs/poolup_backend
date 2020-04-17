@@ -69,7 +69,6 @@ const getMatchingRides = (filter_, pageNum, callback) => {
       };
     }
 
-    console.log(filter);
     Ride.find(filter, (err, result) => {
       if (err) {
         console.log(err);
@@ -213,7 +212,7 @@ const joinRide = async (
     username: ownerUsername,
     msg: `${passengerUsername} has joined your ride`,
     date: new Date(),
-    redirectPath: MY_DRIVES_PATH
+    redirectPath: MY_DRIVES_PATH,
   };
   Ride.findOneAndUpdate(
     { _id: ride_id, seats: { $gte: 1 } },
@@ -235,7 +234,6 @@ const joinRide = async (
   );
 };
 
-
 // Cancel a ride, whether the user was a driver or passenger
 const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
   return new Promise(async (resolve, reject) => {
@@ -248,7 +246,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
     // Driver cancellation
     if (username === cancelledRideDoc.ownerUsername) {
       let affectedUsers = cancelledRideDoc.passengers;
-      const associatedRequests = await Request.find({rideID: rideId});
+      const associatedRequests = await Request.find({ rideID: rideId });
       for (request of associatedRequests) {
         affectedUsers.push(request.requesterUsername);
       }
@@ -259,7 +257,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
           username: passengerUsername,
           msg: `${username} has cancelled your ride`,
           date: new Date(),
-          redirectPath: SEARCH_RIDES_PATH
+          redirectPath: SEARCH_RIDES_PATH,
         });
         // Update schema-less property: additionalProperties
         noti.additionalProperties = { cancellationReason: cancellationReason };
@@ -268,7 +266,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       });
 
       // Delete all the requests
-      await Request.deleteMany({rideID: rideId})
+      await Request.deleteMany({ rideID: rideId });
 
       // Delete the ride
       await Ride.deleteOne({ _id: rideId });
@@ -294,7 +292,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
         username: cancelledRideDoc.ownerUsername,
         msg: `${username} has cancelled your ride`,
         date: new Date(),
-        redirectPath: MY_DRIVES_PATH
+        redirectPath: MY_DRIVES_PATH,
       });
       // Update schema-less property: additionalProperties
       // If messageToDriver was not specified, the field will be set to null

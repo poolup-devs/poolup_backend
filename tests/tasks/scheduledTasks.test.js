@@ -64,7 +64,7 @@ describe("Testing leave a review notification", () => {
 
         const driverNoti = await Noti.findOne({username: ride.ownerUsername})
         expect(driverNoti).toEqual(expect.objectContaining({
-            username: driver.username, msg: "Leave a review for your passengers, John and Aiden.", redirectPath: process.env.MY_DRIVES_PATH 
+            username: driver.username, msg: "Leave a review for your passengers, John and Aiden."
         }))
         // Check additional properties in the driver notification 
         expect(driverNoti.additionalProperties.rideId.toString()).toBe(ride._id.toString())
@@ -79,7 +79,7 @@ describe("Testing leave a review notification", () => {
         
         const passenger1Noti = await Noti.findOne({username: passenger1.username})
         expect(passenger1Noti).toEqual(expect.objectContaining({
-            username: passenger1.username, msg: "Leave a review for your driver, Sarah.", redirectPath: process.env.MY_RIDES_PATH
+            username: passenger1.username, msg: "Leave a review for your driver, Sarah."
         }))
         // Check additional properties in passenger one's notification 
         expect(passenger1Noti.additionalProperties.rideId.toString()).toBe(ride._id.toString())
@@ -91,7 +91,7 @@ describe("Testing leave a review notification", () => {
 
         const passenger2Noti = await Noti.findOne({username: passenger2.username})
         expect(passenger2Noti).toEqual(expect.objectContaining({
-            username: passenger2.username, msg: "Leave a review for your driver, Sarah.", redirectPath: process.env.MY_RIDES_PATH
+            username: passenger2.username, msg: "Leave a review for your driver, Sarah."
         }))
         // Check additional properties in passenger one's notification 
         expect(passenger2Noti.additionalProperties.rideId.toString()).toBe(ride._id.toString())

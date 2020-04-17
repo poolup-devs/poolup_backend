@@ -149,7 +149,7 @@ const getMyRideUpcoming = (authUsername, callback) => {
 ///////////GET Drives//////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
 
-const getDriveHistory = (username, callback) => {
+const getDriveHistory = (username, pageNum, callback) => {
   Ride.find(
     { ownerUsername: username, date: { $lt: new Date() } },
     async (err, result) => {

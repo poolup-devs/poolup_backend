@@ -1025,32 +1025,58 @@ localhost:3000/rides/matching-rides?filter=
 
 [
     {
-        "passengers": [],
-        "_id": "5d505ed15482ec4e38597cdb",
-        "ownerEmail": "bin315a1@gmail.com",
-        "ownerUsername": "bin315a1",
+        "instantBook": {
+            "enabled": false,
+            "specificPickUpDropOff": true,
+            "smokingAllowed": false,
+            "noPetsAllowed": false,
+            "singleCarryOn": false,
+            "singleLuggage": false
+        },
+        "passengers": [
+            "user2"
+        ],
+        "_id": "5e994d575f233007f86b3b6d",
+        "ownerEmail": "user1@g.ucla.edu",
+        "ownerUsername": "user1",
         "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
-        "date": "2019-09-11T00:00:00.000Z",
+        "date": "2020-04-18T07:00:00.000Z",
         "price": "20",
         "seats": 4,
-        "detail": "Third test for post",
-        "__v": 0
+        "detail": "driver1_future",
+        "__v": 0,
+        "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
+        "picType": "png",
+        "firstName": "user1"
     },
     {
-        "passengers": [],
-        "_id": "5d505f005482ec4e38597cdc",
-        "ownerEmail": "bin315a1@gmail.com",
-        "ownerUsername": "bin315a1",
+        "instantBook": {
+            "enabled": false,
+            "specificPickUpDropOff": true,
+            "smokingAllowed": false,
+            "noPetsAllowed": false,
+            "singleCarryOn": false,
+            "singleLuggage": false
+        },
+        "passengers": [
+            "user1"
+        ],
+        "_id": "5e994d575f233007f86b3b6f",
+        "ownerEmail": "user4@g.ucla.edu",
+        "ownerUsername": "user4",
         "ownerPhoneNumber": "1231231234",
-        "from": "Irvine",
-        "to": "Los Angeles",
-        "date": "2019-09-13T00:00:00.000Z",
+        "from": "Los Angeles",
+        "to": "Irvine",
+        "date": "2020-04-18T07:00:00.000Z",
         "price": "20",
         "seats": 4,
-        "detail": "First test for post",
-        "__v": 0
+        "detail": "rider1_future",
+        "__v": 0,
+        "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png",
+        "picType": "png",
+        "firstName": "user4"
     }
 ]
 

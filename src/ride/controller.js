@@ -156,7 +156,8 @@ const getDriveHistory = (username, callback) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        const driveHistory = await addDriverInfoToRides(result)
+        callback(null, driveHistory);
       }
     }
   )
@@ -172,7 +173,8 @@ const getDriveUpcoming = (username, pageNum, callback) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        const upcomingDrives = await addDriverInfoToRides(result)
+        callback(null, upcomingDrives);
       }
     }
   )

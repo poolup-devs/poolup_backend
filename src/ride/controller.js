@@ -69,24 +69,41 @@ const getMatchingRides = (filter_, pageNum, callback) => {
       };
     }
 
-    console.log(filter);
-    Ride.find(filter, (err, result) => {
+    Ride.find(filter, async (err, result) => {
       if (err) {
         console.log(err);
         callback(err, null);
       } else {
-        callback(null, result);
+        let matchingRides = JSON.parse(JSON.stringify(result))
+        for (i = 0; i < matchingRides.length; i++) {
+          const driver = await User.findOne({username: matchingRides[i].ownerUsername}); 
+          const {picUrl, picType, firstName, lastName} = driver; 
+          matchingRides[i].picUrl = picUrl; 
+          matchingRides[i].picType = picType; 
+          matchingRides[i].firstName = firstName; 
+          matchingRides[i].lastName = lastName; 
+        }
+        callback(null, matchingRides);
       }
     })
       .sort({ date: 1 })
       .skip(pageNum * 10)
       .limit(10);
   } else {
-    Ride.find({ date: { $gte: new Date() } }, (err, result) => {
+    Ride.find({ date: { $gte: new Date() } }, async (err, result) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        let matchingRides = JSON.parse(JSON.stringify(result))
+        for (i = 0; i < matchingRides.length; i++) {
+          const driver = await User.findOne({username: matchingRides[i].ownerUsername}); 
+          const {picUrl, picType, firstName, lastName} = driver; 
+          matchingRides[i].picUrl = picUrl; 
+          matchingRides[i].picType = picType; 
+          matchingRides[i].firstName = firstName; 
+          matchingRides[i].lastName = lastName; 
+        }
+        callback(null, matchingRides);
       }
     })
       .sort({ date: 1 })

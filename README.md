@@ -261,7 +261,7 @@ Operations
 
 ---
 
-# Sending Emails
+## Sending Email Notifications 
 Emails are sent using nodemailer and rendered dynamically using handlebars. 
 The email templates can be found at /src/utils/email/email_templates. 
 
@@ -269,24 +269,21 @@ There exists helper methods in /src/utils/email/email.js that can be used to sen
 - `sendEmail(mailOptions)`
     - Sends an email, currently using poolup.devs@gmail.com 
         - **mailOptions**: object containing basic email properties, including from, to, subject, and html email template 
-            - ```
+            ```
               {
                 from: '"PoolUp" <poolup.devs@gmail.com>', 
                 to: email, 
                 subject: '[PoolUp] Please verify your PoolUp account', 
                 html: emailTemplate
               }
-             ```
+            ```
 - `loadTemplate(templateFileName, context)`
     - Dynamically loads an email template, substituting values
         - **templateFileName**: name of the file in email_templates directory, eg. "email_verification.hbs" 
         - **context**: object containing variable substitutions 
-            - ``` 
-              { 
-                  verificationLink: "http://localhost:3000/verify?..." 
-              }
-              ```
-              
+
+--- 
+
 ## Models & API Endpoints Documentation
 
 Models:

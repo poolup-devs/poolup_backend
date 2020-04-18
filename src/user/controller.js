@@ -17,12 +17,12 @@ const sha256 = require("sha256");
 
 const login = async (email, password) => {
   return new Promise(async (resolve, reject) => {
-    const user = await User.findOne({email, password}) 
+    const user = await User.findOne({ email, password });
     if (!user) {
-      return reject("User with email and password not found.") 
+      return reject("User with email and password not found.");
     }
-    return resolve(user)
-  })
+    return resolve(user);
+  });
 };
 
 const checkAvailability = (email, username, callback) => {
@@ -35,23 +35,31 @@ const checkAvailability = (email, username, callback) => {
   });
 };
 
-const signup = async userInfo => {
+const signup = async (userInfo) => {
   return new Promise(async (resolve, reject) => {
-    // Required properties 
-    const requiredProperties = ['firstName', 'lastName', 'password', 'email']
-    // Field validation 
-    if (!requiredProperties.every(property => userInfo.hasOwnProperty(property))) {
-      return reject("Not all required fields were specified.") 
+    // Required properties
+    const requiredProperties = ["firstName", "lastName", "password", "email"];
+    // Field validation
+    if (
+      !requiredProperties.every((property) => userInfo.hasOwnProperty(property))
+    ) {
+      return reject("Not all required fields were specified.");
     }
     try {
-      // Create a user document containing a hashed password with username and school fields parsed from email 
+      // Create a user document containing a hashed password with username and school fields parsed from email
       userInfo.password = sha256(userInfo.password);
       userInfo.school = await parseSchoolFromEmail(userInfo.email);
-      userInfo.username = userInfo.email.split('@')[0] 
-      userInfo.isRegistered = true       
-      const newlyRegisteredUser = await User.findOneAndUpdate({email: userInfo.email}, userInfo, {new: true});
+      userInfo.username = userInfo.email.split("@")[0];
+      userInfo.isRegistered = true;
+      const newlyRegisteredUser = await User.findOneAndUpdate(
+        { email: userInfo.email },
+        userInfo,
+        { new: true }
+      );
       if (!newlyRegisteredUser) {
-        return reject("User did not verify email before inputting account information.")
+        return reject(
+          "User did not verify email before inputting account information."
+        );
       }
       User.setRandomBruinBear(newlyRegisteredUser.username);
 
@@ -62,31 +70,33 @@ const signup = async userInfo => {
       stripe.customers.create(
         {
           email: newlyRegisteredUser.email,
-          name: newlyRegisteredUser.firstName + " " + newlyRegisteredUser.lastName
+          name:
+            newlyRegisteredUser.firstName + " " + newlyRegisteredUser.lastName,
         },
-        function(err, customer) {
+        function (err, customer) {
           // asynchronously called
           if (err) {
             console.log("Failed to create Stripe Customer: ", err);
           } else {
             newlyRegisteredUser.stripe.customerID = customer.id;
+            resolve(newlyRegisteredUser);
           }
         }
       );
-      resolve(newlyRegisteredUser);
+    } catch (e) {
+      console.log(e);
     }
-    catch (e) {
-      console.log(e)
-    }
-  })
-}
+  });
+};
 
 const sendVerificationEmail = (email) => {
   return new Promise(async (resolve, reject) => {
     try {
       if (await isValidEmail(email)) {
         // Construct verification email
-        const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, { expiresIn: 60*30 });
+        const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, {
+          expiresIn: 60 * 30,
+        });
         if (process.env.MODE === "STAGING") {
           var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
         }
@@ -96,31 +106,32 @@ const sendVerificationEmail = (email) => {
         await Email.sendVerificationEmail(email, verificationUrl)
         resolve(true)
       }
+    } catch (e) {
+      reject(e);
     }
-    catch(e) {
-      reject(e) 
-    }
-  })  
-}
+  });
+};
 
-// Adds a user with a verified email to the database. 
-// The user will become permanent only once it is registered with a name and password. 
+// Adds a user with a verified email to the database.
+// The user will become permanent only once it is registered with a name and password.
 const verifyEmail = (email) => {
   return new Promise(async (resolve, reject) => {
-    const verifiedEmail = await User.findOne({email})
+    const verifiedEmail = await User.findOne({ email });
     if (!verifiedEmail) {
-      resolve(await User.create({email}))
-    }
-    else {
-      // The email has been verified but the user has not registered yet 
+      resolve(await User.create({ email }));
+    } else {
+      // The email has been verified but the user has not registered yet
       if (!verifiedEmail.isRegistered) {
-        resolve(verifiedEmail) 
-      }
-      else {
-        reject({name: "AccountAlreadyRegistered", message: "The user has already verified their email and registered their account."})
+        resolve(verifiedEmail);
+      } else {
+        reject({
+          name: "AccountAlreadyRegistered",
+          message:
+            "The user has already verified their email and registered their account.",
+        });
       }
     }
-  })
+  });
 };
 
 const findUserByEmail = (email, callback) => {
@@ -158,10 +169,17 @@ const getMyInfo = (authUsername, callback) => {
     if (err) {
       callback(err, null);
     } else if (result) {
-      const res_list = ["username", "firstName", "lastName", "email", "createdAt", "picUrl"];
+      const res_list = [
+        "username",
+        "firstName",
+        "lastName",
+        "email",
+        "createdAt",
+        "picUrl",
+      ];
       const result_ = {};
 
-      res_list.forEach(function(item) {
+      res_list.forEach(function (item) {
         result_[item] = result[item];
       });
 
@@ -169,7 +187,7 @@ const getMyInfo = (authUsername, callback) => {
     } else {
       callback(
         {
-          message: "ERROR: username not found"
+          message: "ERROR: username not found",
         },
         null
       );
@@ -209,14 +227,14 @@ const getPicUrl = (username, callback) => {
     } else if (result.length === 0) {
       callback(
         {
-          message: "ERROR: no result; potentially wrong username"
+          message: "ERROR: no result; potentially wrong username",
         },
         null
       );
     } else if (result[0].picUrl === undefined) {
       callback(
         {
-          message: "ERROR: user's profile picture undefined"
+          message: "ERROR: user's profile picture undefined",
         },
         null
       );
@@ -226,11 +244,11 @@ const getPicUrl = (username, callback) => {
   });
 };
 
-const checkIfDriver = username => {
+const checkIfDriver = (username) => {
   return new Promise(async (resolve, reject) => {
     User.findOne(
       {
-        username: username
+        username: username,
       },
       (err, result) => {
         if (err) {
@@ -258,16 +276,16 @@ const addUserDriverInfo = (driverInfo, callback) => {
     { username: driverInfo.username },
     {
       stripe: {
-        accountID: driverInfo.stripeAccountID
+        accountID: driverInfo.stripeAccountID,
       },
       driver: {
         isDriver: true,
         licensePlate: driverInfo.licensePlate,
         vehicleMakeModel: driverInfo.vehicleMakeModel,
         driversLicense: driverInfo.driversLicense,
-        vehicleColor: driverInfo.vehicleColor
+        vehicleColor: driverInfo.vehicleColor,
       },
-      phoneNumber: driverInfo.phoneNumber
+      phoneNumber: driverInfo.phoneNumber,
     },
     { new: true },
     (err, result) => {
@@ -338,16 +356,16 @@ const isValidEmail = (email) => {
       if (!emailDomain || emailDomain.tld !== "edu") {
         return reject("Not an .edu email address!");
       }
-      // A registered account exists with this email 
-      if (await User.findOne({ email: email.trim(), isRegistered: true})) {
+      // A registered account exists with this email
+      if (await User.findOne({ email: email.trim(), isRegistered: true })) {
         return reject("A registered account already exists with this email!");
       }
-      resolve(true)
+      resolve(true);
     } else {
       return reject("Not a valid email address!");
     }
-  })
-}
+  });
+};
 
 const confirmCredentials = (authUsername, password) => {
   return new Promise(async (resolve, reject) => {
@@ -381,17 +399,16 @@ const passwordReset = (authUsername, newPassword, callback) => {
 const getAboutMe = (username) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const user = await User.findOne({username})
+      const user = await User.findOne({ username });
       if (!user) {
-        reject("There does not exist a user with this username.") 
+        reject("There does not exist a user with this username.");
       }
-      resolve(user.aboutMe)
+      resolve(user.aboutMe);
+    } catch (e) {
+      reject(e);
     }
-    catch(e) {
-      reject(e) 
-    }
-  }) 
-}
+  });
+};
 
 const updateAboutMe = (authUsername, updatedAboutMe) => {
   return new Promise((resolve, reject) => {
@@ -400,27 +417,26 @@ const updateAboutMe = (authUsername, updatedAboutMe) => {
       { aboutMe: updatedAboutMe },
       { new: true }
     )
-      .then(updatedUser => {
+      .then((updatedUser) => {
         if (!updatedUser) {
           reject("Could not find user in database when updating about me.");
         }
         resolve(updatedUser);
       })
-      .catch(e => {
+      .catch((e) => {
         reject(e);
       });
   });
 };
 
 // Helper function that parses school emails to identify the school the user attends
-const parseSchoolFromEmail = schoolEmail => {
+const parseSchoolFromEmail = (schoolEmail) => {
   return new Promise((resolve, reject) => {
     emailDomain = parseDomain(schoolEmail);
     if (!emailDomain) {
       reject("Could not parse email to identify school");
     }
     Schools.findOne({ emailDomain: emailDomain.domain }, (err, result) => {
-      
       if (!result) {
         // Domain -> School not found in database, so set to null until we can add it later
         return resolve(null);
@@ -431,7 +447,7 @@ const parseSchoolFromEmail = schoolEmail => {
 };
 
 // Get the average rating of a user, aggregated from all reviews received by the user
-const getAverageRating = username => {
+const getAverageRating = (username) => {
   return new Promise(async (resolve, reject) => {
     try {
       await User.findOne({ username }, (err, user) => {
@@ -459,7 +475,7 @@ const getAverageRating = username => {
 };
 
 // Get public profile information
-const getPublicProfileInfo = username => {
+const getPublicProfileInfo = (username) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ username });
     if (!user) {
@@ -467,13 +483,13 @@ const getPublicProfileInfo = username => {
     }
     const {
       firstName,
-      lastName, 
+      lastName,
       picUrl,
       picType,
       aboutMe,
       school,
       ridesCancelled,
-      ridesCompleted
+      ridesCompleted,
     } = user;
     try {
       var rating = await getAverageRating(username);
@@ -487,11 +503,11 @@ const getPublicProfileInfo = username => {
         school,
         ridesCompleted,
         ridesCancelled,
-        aboutMe
+        aboutMe,
       });
     }
     resolve({
-      firstName, 
+      firstName,
       lastName,
       picUrl,
       picType,
@@ -499,13 +515,13 @@ const getPublicProfileInfo = username => {
       rating,
       ridesCompleted,
       ridesCancelled,
-      aboutMe
+      aboutMe,
     });
   });
 };
 
 // Get school name
-const getSchool = username => {
+const getSchool = (username) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ username });
     if (!user) {
@@ -541,5 +557,5 @@ module.exports = {
   getPublicProfileInfo,
   parseSchoolFromEmail,
   confirmCredentials,
-  getSchool
+  getSchool,
 };

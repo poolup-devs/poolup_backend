@@ -5,19 +5,23 @@ const Request = require("../request/request").Request;
 const scheduler = require("../tasks/scheduler");
 const scheduledTasks = require("../tasks/scheduledTasks");
 
+const Error = require("../utils/error-model");
+
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
 const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
 
 ///////////////////////////////////////////////////////////////
 ///////////GET RIDES///////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
-
-const getMatchingRides = (filter_, pageNum, callback) => {
+const createRideQueryFilter = (filter_) => {
   const places = require("./places.json");
-
+  let filter = {};
   if (filter_ && Object.keys(filter_).length > 0) {
-    filter_ = JSON.parse(filter_);
-    let filter = {};
+    try {
+      filter_ = JSON.parse(filter_);
+    } catch (err) {
+      return reject(Error(400, err));
+    }
     let fromCitiesQuery = [];
     let toCitiesQuery = [];
     let dateQuery = {};
@@ -54,7 +58,6 @@ const getMatchingRides = (filter_, pageNum, callback) => {
     }
 
     filter = dateQuery;
-
     if (toCitiesQuery.length > 0 && fromCitiesQuery.length === 0) {
       filter = {
         $and: [{ $or: toCitiesQuery }, dateQuery],
@@ -68,66 +71,75 @@ const getMatchingRides = (filter_, pageNum, callback) => {
         $and: [{ $or: fromCitiesQuery }, { $or: toCitiesQuery }, dateQuery],
       };
     }
-
-    Ride.find(filter, async (err, result) => {
-      if (err) {
-        console.log(err);
-        callback(err, null);
-      } else {
-        let matchingRides = JSON.parse(JSON.stringify(result))
-        for (i = 0; i < matchingRides.length; i++) {
-          const driver = await User.findOne({username: matchingRides[i].ownerUsername}); 
-          const {picUrl, picType, firstName, lastName} = driver; 
-          matchingRides[i].picUrl = picUrl; 
-          matchingRides[i].picType = picType; 
-          matchingRides[i].firstName = firstName; 
-          matchingRides[i].lastName = lastName; 
-        }
-        callback(null, matchingRides);
-      }
-    })
-      .sort({ date: 1 })
-      .skip(pageNum * 10)
-      .limit(10);
+    return filter;
   } else {
-    Ride.find({ date: { $gte: new Date() } }, async (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        let matchingRides = JSON.parse(JSON.stringify(result))
-        for (i = 0; i < matchingRides.length; i++) {
-          const driver = await User.findOne({username: matchingRides[i].ownerUsername}); 
-          const {picUrl, picType, firstName, lastName} = driver; 
-          matchingRides[i].picUrl = picUrl; 
-          matchingRides[i].picType = picType; 
-          matchingRides[i].firstName = firstName; 
-          matchingRides[i].lastName = lastName; 
-        }
-        callback(null, matchingRides);
-      }
-    })
-      .sort({ date: 1 })
-      .skip(pageNum * 10)
-      .limit(10);
+    filter = { date: { $gte: new Date() } };
+    return filter;
   }
 };
 
-const getRideHistory = (username, callback) => {
-  Ride.find(
-    { passengers: username, date: { $lt: new Date() } },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+const getMatchingRides = (filter_, pageNum) => {
+  const filter = createRideQueryFilter(filter_);
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ride_res = await Ride.find(filter)
+        .sort({ date: 1 })
+        .skip(pageNum * 10)
+        .limit(10);
+      let matchingRides = JSON.parse(JSON.stringify(ride_res));
+      for (i = 0; i < matchingRides.length; i++) {
+        const driver = await User.findOne({
+          username: matchingRides[i].ownerUsername,
+        });
+        if (driver == null) {
+          return reject(Error(500, "user of one of the rides not found"));
+        }
+        const { picUrl, picType, firstName, lastName } = driver;
+        matchingRides[i].picUrl = picUrl;
+        matchingRides[i].picType = picType;
+        matchingRides[i].firstName = firstName;
+        matchingRides[i].lastName = lastName;
       }
+      return resolve(matchingRides);
+    } catch (err) {
+      return reject(Error(500));
     }
-  )
-    .sort({ date: 1 })
-    .limit(5);
+  });
+};
+
+const getRideHistory = (username) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ride_res = await Ride.find({
+        passengers: username,
+        date: { $lt: new Date() },
+      })
+        .sort({ date: 1 })
+        .limit(5);
+      return resolve(ride_res);
+    } catch (err) {
+      return reject(Error(500));
+    }
+  });
 };
 
 const getMyRideHistory = (authUsername, pageNum, callback) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ride_res = await Ride.find({
+        passengers: authUsername,
+        date: { $lt: new Date() },
+      })
+        .sort({ date: 1 })
+        .skip(pageNum * 5)
+        .limit(5);
+      return resolve(ride_res);
+    } catch (err) {
+      return reject(Error(500));
+    }
+  });
+
   Ride.find(
     { passengers: authUsername, date: { $lt: new Date() } },
     (err, result) => {
@@ -143,113 +155,163 @@ const getMyRideHistory = (authUsername, pageNum, callback) => {
     .limit(5);
 };
 
-const getMyRideUpcoming = (authUsername, callback) => {
-  Ride.find(
-    { passengers: authUsername, date: { $gte: new Date() } },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
-      }
+const getMyRideUpcoming = (authUsername) => {
+  return new Promise(async (resovle, reject) => {
+    try {
+      const ride_res = await Ride.find({
+        passengers: authUsername,
+        date: { $gte: new Date() },
+      })
+        .sort({ date: 1 })
+        .limit(3);
+      return resolve(ride_res);
+    } catch (err) {
+      return reject(Error(500));
     }
-  )
-    .sort({ date: 1 })
-    .limit(3);
+  });
 };
 
 ///////////////////////////////////////////////////////////////
 ///////////GET Drives//////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
 
-const getDriveHistory = (username, callback) => {
-  Ride.find(
-    { ownerUsername: username, date: { $lt: new Date() } },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
-      }
+const getDriveHistory = (username) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ride_res = await Ride.find({
+        ownerUsername: username,
+        date: { $lt: new Date() },
+      })
+        .sort({ date: 1 })
+        .skip(pageNum * 10)
+        .limit(10);
+      return resolve(ride_res);
+    } catch (err) {
+      return reject(Error(500));
     }
-  )
-    .sort({ date: 1 })
-    .skip(pageNum * 10)
-    .limit(10);
+  });
 };
 
-const getDriveUpcoming = (username, pageNum, callback) => {
-  Ride.find(
-    { ownerUsername: username, date: { $gte: new Date() } },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
-      }
+const getDriveUpcoming = (username, pageNum) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ride_res = await Ride.find({
+        ownerUsername: username,
+        date: { $gte: new Date() },
+      })
+        .sort({ date: 1 })
+        .skip(pageNum * 3)
+        .limit(3);
+      return resolve(ride_res);
+    } catch (err) {
+      return reject(Error(500));
     }
-  )
-    .sort({ date: 1 })
-    .skip(pageNum * 3)
-    .limit(3);
+  });
 };
 
-const postRide = (rideInfo, callback) => {
-  Ride.create(rideInfo, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
+const postRide = (rideInfo) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ride_new = await Ride.create(rideInfo);
       // Schedule a job that updates the number of completed rides for each user in the carpool that will occur 2 hours after the carpool begins
       scheduler.scheduleTaskHoursAfterDate(
-        `updateCompletedRidesTask.${result._id}`,
-        scheduledTasks.updateCompletedRidesTask(result._id),
+        `updateCompletedRidesTask.${ride_new._id}`,
+        scheduledTasks.updateCompletedRidesTask(ride_new._id),
         rideInfo.date,
         2
       );
 
       // Schedule a job that prompts users in the ride to leave reviews 12 hours after carpool begins
       scheduler.scheduleTaskHoursAfterDate(
-        `createNotiToLeaveReviewTask.${result._id}`,
-        scheduledTasks.createNotiToLeaveReviewTask(result._id),
+        `createNotiToLeaveReviewTask.${ride_new._id}`,
+        scheduledTasks.createNotiToLeaveReviewTask(ride_new._id),
         rideInfo.date,
         12
       );
-      callback(null, result);
+      return resolve(ride_new);
+    } catch (err) {
+      return reject(Error(500));
     }
   });
+
+  // Ride.create(rideInfo, (err, result) => {
+  //   if (err) {
+  //     callback(err, null);
+  //   } else {
+  //     // Schedule a job that updates the number of completed rides for each user in the carpool that will occur 2 hours after the carpool begins
+  //     scheduler.scheduleTaskHoursAfterDate(
+  //       `updateCompletedRidesTask.${result._id}`,
+  //       scheduledTasks.updateCompletedRidesTask(result._id),
+  //       rideInfo.date,
+  //       2
+  //     );
+
+  //     // Schedule a job that prompts users in the ride to leave reviews 12 hours after carpool begins
+  //     scheduler.scheduleTaskHoursAfterDate(
+  //       `createNotiToLeaveReviewTask.${result._id}`,
+  //       scheduledTasks.createNotiToLeaveReviewTask(result._id),
+  //       rideInfo.date,
+  //       12
+  //     );
+  //     callback(null, result);
+  //   }
+  // });
 };
 
-const joinRide = async (
-  ownerUsername,
-  ride_id,
-  passengerUsername,
-  callback
-) => {
-  const passenger = await User.findOne({ username: passengerUsername });
-  const noti = {
-    username: ownerUsername,
-    msg: `${passengerUsername} has joined your ride`,
-    date: new Date(),
-    redirectPath: MY_DRIVES_PATH,
-  };
-  Ride.findOneAndUpdate(
-    { _id: ride_id, seats: { $gte: 1 } },
-    { $push: { passengers: passengerUsername }, $inc: { seats: -1 } },
-    { new: true },
-    (err1, result1) => {
-      if (err1) {
-        callback(err1, null);
-      } else {
-        Noti.create(noti, (err2, result2) => {
-          if (err2) {
-            callback(err2, null);
-          } else {
-            callback(null, result1);
-          }
-        });
+const joinRide = (ownerUsername, ride_id, passengerUsername) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const passenger = await User.findOne({ username: passengerUsername });
+      if (passenger == null) {
+        return reject(Error(404, "passenger not found"));
       }
+      const noti = {
+        username: ownerUsername,
+        msg: `${passengerUsername} has joined your ride`,
+        date: new Date(),
+        redirectPath: MY_DRIVES_PATH,
+      };
+      const ride_upd = await Ride.findOneAndUpdate(
+        { _id: ride_id, seats: { $gte: 1 } },
+        { $push: { passengers: passengerUsername }, $inc: { seats: -1 } },
+        { new: true }
+      );
+      if (ride_upd == null) {
+        return reject(
+          Error(400, "either the ride's id is not found, or the ride is full")
+        );
+      }
+      const noti_new = await Noti.create(noti);
+      return resolve(ride_upd);
+    } catch (err) {
+      return reject(Error(500));
     }
-  );
+  });
+  // const passenger = await User.findOne({ username: passengerUsername });
+  // const noti = {
+  //   username: ownerUsername,
+  //   msg: `${passengerUsername} has joined your ride`,
+  //   date: new Date(),
+  //   redirectPath: MY_DRIVES_PATH,
+  // };
+  // Ride.findOneAndUpdate(
+  //   { _id: ride_id, seats: { $gte: 1 } },
+  //   { $push: { passengers: passengerUsername }, $inc: { seats: -1 } },
+  //   { new: true },
+  //   (err1, result1) => {
+  //     if (err1) {
+  //       callback(err1, null);
+  //     } else {
+  //       Noti.create(noti, (err2, result2) => {
+  //         if (err2) {
+  //           callback(err2, null);
+  //         } else {
+  //           callback(null, result1);
+  //         }
+  //       });
+  //     }
+  //   }
+  // );
 };
 
 // Cancel a ride, whether the user was a driver or passenger
@@ -336,22 +398,16 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
   });
 };
 
-const rideDelete = (_id, callback) => {
-  Ride.deleteOne({ _id }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
-  });
-};
-
-const rideDetails = (_id, callback) => {
-  Ride.findOne({ _id }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
+const rideDetails = (_id) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ride_res = await Ride.findById(_id);
+      if (ride_res == null) {
+        return reject(Error(404, "ride not found"));
+      }
+      resolve(ride_res);
+    } catch (err) {
+      reject(Error(500));
     }
   });
 };
@@ -366,6 +422,5 @@ module.exports = {
   postRide,
   joinRide,
   cancelRide,
-  rideDelete,
   rideDetails,
 };

@@ -1,8 +1,12 @@
 const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
+const Request = require("../request/request").Request;
 const scheduler = require("../tasks/scheduler");
 const scheduledTasks = require("../tasks/scheduledTasks");
+
+const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
+const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
 
 ///////////////////////////////////////////////////////////////
 ///////////GET RIDES///////////////////////////////////////////
@@ -65,24 +69,25 @@ const getMatchingRides = (filter_, pageNum, callback) => {
       };
     }
 
-    console.log(filter);
-    Ride.find(filter, (err, result) => {
+    Ride.find(filter, async (err, result) => {
       if (err) {
         console.log(err);
         callback(err, null);
       } else {
-        callback(null, result);
+        const matchingRides = await addDriverInfoToRides(result);
+        callback(null, matchingRides);
       }
     })
       .sort({ date: 1 })
       .skip(pageNum * 10)
       .limit(10);
   } else {
-    Ride.find({ date: { $gte: new Date() } }, (err, result) => {
+    Ride.find({ date: { $gte: new Date() } }, async (err, result) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        const matchingRides = await addDriverInfoToRides(result);
+        callback(null, matchingRides);
       }
     })
       .sort({ date: 1 })
@@ -94,11 +99,12 @@ const getMatchingRides = (filter_, pageNum, callback) => {
 const getRideHistory = (username, callback) => {
   Ride.find(
     { passengers: username, date: { $lt: new Date() } },
-    (err, result) => {
+    async (err, result) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        const rideHistory = await addDriverInfoToRides(result);
+        callback(null, rideHistory);
       }
     }
   )
@@ -109,11 +115,12 @@ const getRideHistory = (username, callback) => {
 const getMyRideHistory = (authUsername, pageNum, callback) => {
   Ride.find(
     { passengers: authUsername, date: { $lt: new Date() } },
-    (err, result) => {
+    async (err, result) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        const rideHistory = await addDriverInfoToRides(result);
+        callback(null, rideHistory);
       }
     }
   )
@@ -125,11 +132,12 @@ const getMyRideHistory = (authUsername, pageNum, callback) => {
 const getMyRideUpcoming = (authUsername, callback) => {
   Ride.find(
     { passengers: authUsername, date: { $gte: new Date() } },
-    (err, result) => {
+    async (err, result) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        const ridesUpcoming = await addDriverInfoToRides(result);
+        callback(null, ridesUpcoming);
       }
     }
   )
@@ -141,14 +149,15 @@ const getMyRideUpcoming = (authUsername, callback) => {
 ///////////GET Drives//////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
 
-const getDriveHistory = (username, callback) => {
+const getDriveHistory = (username, pageNum, callback) => {
   Ride.find(
     { ownerUsername: username, date: { $lt: new Date() } },
-    (err, result) => {
+    async (err, result) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        const driveHistory = await addDriverInfoToRides(result);
+        callback(null, driveHistory);
       }
     }
   )
@@ -160,11 +169,12 @@ const getDriveHistory = (username, callback) => {
 const getDriveUpcoming = (username, pageNum, callback) => {
   Ride.find(
     { ownerUsername: username, date: { $gte: new Date() } },
-    (err, result) => {
+    async (err, result) => {
       if (err) {
         callback(err, null);
       } else {
-        callback(null, result);
+        const upcomingDrives = await addDriverInfoToRides(result);
+        callback(null, upcomingDrives);
       }
     }
   )
@@ -173,8 +183,8 @@ const getDriveUpcoming = (username, pageNum, callback) => {
     .limit(3);
 };
 
-const postRide = (rideInfo, callback) => {
-  Ride.create(rideInfo, (err, result) => {
+const postRide = async (rideInfo, callback) => {
+  Ride.create(rideInfoWithDriverInfo, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
@@ -209,6 +219,7 @@ const joinRide = async (
     username: ownerUsername,
     msg: `${passengerUsername} has joined your ride`,
     date: new Date(),
+    redirectPath: MY_DRIVES_PATH,
   };
   Ride.findOneAndUpdate(
     { _id: ride_id, seats: { $gte: 1 } },
@@ -242,11 +253,16 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       return reject("Ride does not exist in database!");
     }
 
-    const user = await User.findOne({ username });
     // Driver cancellation
     if (username === cancelledRideDoc.ownerUsername) {
-      // Notify all passengers that the ride has been cancelled
-      cancelledRideDoc.passengers.forEach(async (passengerUsername) => {
+      let affectedUsers = cancelledRideDoc.passengers;
+      const associatedRequests = await Request.find({ rideID: rideId });
+      for (request of associatedRequests) {
+        affectedUsers.push(request.requesterUsername);
+      }
+
+      // Notify all passengers/ requesters that the ride has been cancelled
+      affectedUsers.forEach(async (passengerUsername) => {
         // Refund Passenger
         await paymentHandler.refund(
           passengerUsername,
@@ -254,9 +270,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
           true,
           (err, result) => {
             if (err) {
-              res.status(500).send({ error: err });
-            } else {
-              res.status(200).send(result);
+              console.log("Refund Failed");
             }
           }
         );
@@ -265,12 +279,16 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
           username: passengerUsername,
           msg: `${username} has cancelled your ride`,
           date: new Date(),
+          redirectPath: SEARCH_RIDES_PATH,
         });
         // Update schema-less property: additionalProperties
         noti.additionalProperties = { cancellationReason: cancellationReason };
         noti.markModified("additionalProperties");
         await noti.save();
       });
+
+      // Delete all the requests
+      await Request.deleteMany({ rideID: rideId });
 
       // Delete the ride
       await Ride.deleteOne({ _id: rideId });
@@ -310,6 +328,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
         username: cancelledRideDoc.ownerUsername,
         msg: `${username} has cancelled your ride`,
         date: new Date(),
+        redirectPath: MY_DRIVES_PATH,
       });
       // Update schema-less property: additionalProperties
       // If messageToDriver was not specified, the field will be set to null
@@ -351,6 +370,28 @@ const rideDetails = (_id, callback) => {
       callback(err, null);
     } else {
       callback(null, result);
+    }
+  });
+};
+
+// Helper method to add driver information to each ride in a list of rides
+const addDriverInfoToRides = (rides) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let modifiedRides = JSON.parse(JSON.stringify(rides));
+      for (i = 0; i < modifiedRides.length; i++) {
+        const driver = await User.findOne({
+          username: modifiedRides[i].ownerUsername,
+        });
+        const { picUrl, picType, firstName, lastName } = driver;
+        modifiedRides[i].picUrl = picUrl;
+        modifiedRides[i].picType = picType;
+        modifiedRides[i].firstName = firstName;
+        modifiedRides[i].lastName = lastName;
+      }
+      resolve(modifiedRides);
+    } catch (e) {
+      reject(e);
     }
   });
 };

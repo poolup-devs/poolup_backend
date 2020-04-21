@@ -7,6 +7,14 @@ const scheduleTaskHoursAfterDate = (uniqueTaskName, task, date, hours) => {
     schedule.scheduleJob(uniqueTaskName, scheduledDate, task) 
 }
 
+
+// Schedule a task to run once, X hours after a certain date
+const scheduleTaskMinutesAfterDate = (uniqueTaskName, task, date, minutes) => {
+    var scheduledDate = new Date(date)
+    scheduledDate.setMinutes(scheduledDate.getMinutes() + minutes)      
+    schedule.scheduleJob(uniqueTaskName, scheduledDate, task) 
+}
+
 const cancelTask = (taskName) => {
     return new Promise((resolve, reject) => {
         const task = schedule.scheduledJobs[taskName]
@@ -27,6 +35,7 @@ const cancelTasksAssociatedWithRide = (rideId) => {
 
 module.exports = {
     scheduleTaskHoursAfterDate,
+    scheduleTaskMinutesAfterDate,
     cancelTask, 
     cancelTasksAssociatedWithRide
 }

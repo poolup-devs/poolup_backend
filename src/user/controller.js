@@ -1,9 +1,8 @@
 const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
-const Review = require("../review/review").Review;
 const jwt = require("jsonwebtoken");
-const sgMail = require("@sendgrid/mail");
+const Email = require("../utils/email/email");
 
 // Users require a certain minimum amount of ratings to calculate an average rating
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
@@ -79,10 +78,10 @@ const signup = async (userInfo) => {
             console.log("Failed to create Stripe Customer: ", err);
           } else {
             newlyRegisteredUser.stripe.customerID = customer.id;
+            resolve(newlyRegisteredUser);
           }
         }
       );
-      resolve(newlyRegisteredUser);
     } catch (e) {
       console.log(e);
     }
@@ -98,44 +97,12 @@ const sendVerificationEmail = (email) => {
           expiresIn: 60 * 30,
         });
         if (process.env.MODE === "STAGING") {
-          var url =
-            "localhost:" +
-            process.env.PORT +
-            `/users/verify?email=${email}&token=${token}`;
-          var verificationEmail = {
-            to: email,
-            from: "pool-up@outlook.com",
-            subject: "PoolUp: Email Verification Required",
-            text: "Here's the link",
-            html: "<br>Link for local dev: <br>" + url,
-          };
+          var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
         } else {
-          var url =
-            "restapi." +
-            process.env.PRODUCTION_DOMAIN_URL +
-            "/users/verify?token=" +
-            token;
-          var verificationEmail = {
-            to: email,
-            from: "pool-up@outlook.com",
-            templateId: "d-0d8dff79ca8e4d0e8b4b9b1b12038a62",
-            dynamic_template_data: {
-              subject: "PoolUp Email Verification",
-              name: req.body.username,
-              url: url,
-            },
-          };
+          var verificationUrl = `http://restapi.${process.env.PRODUCTION_DOMAIN_URL}/users/verify?email=${email}&token=${token}`;
         }
-
-        // Send verification email
-        sgMail
-          .send(verificationEmail)
-          .then(() => {
-            resolve(true);
-          })
-          .catch((error) => {
-            reject("Could not send verification email!");
-          });
+        await Email.sendVerificationEmail(email, verificationUrl);
+        resolve(true);
       }
     } catch (e) {
       reject(e);

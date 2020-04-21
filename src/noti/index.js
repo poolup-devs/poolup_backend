@@ -11,41 +11,28 @@ const tokenParser = require("../utils/token-parser.js");
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 //Get Noti for driver
-router.get("/notis/get-driverNotis", checkAuth, (req, res) => {
+router.get("/notis/noti", checkAuth, (req, res) => {
   const username = tokenParser(req.headers.authorization).username;
-  db.getNoti(username, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
+  return new Promise( async(resolve, reject) => {
+    try {
+      const data = await db.getAllUserNoti(username, req.query.pageNum);
       res.status(200).send(data);
+    } catch(err) {
+      res.status(err.status).send(err.message);
     }
-  });
-});
-
-//Create Noti for driver
-router.post("/notis/create-driverNoti", checkAuth, (req, res) => {
-  const username = tokenParser(req.headers.authorization).username;
-  req.body.username = username;
-  req.body.date = new Date();
-  db.createNoti(req.body, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(201).send(data);
-    }
-  });
+  })
 });
 
 //Modify Noti for driver as viewed
-router.put("/notis/view-driverNoti", checkAuth, (req, res) => {
-  const username = tokenParser(req.headers.authorization).username;
-  db.updateNoti(username, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
+router.put("/notis/view", checkAuth, (req, res) => {
+  return new Promise( async(resolve, reject) => {
+    try {
+      const data = await db.viewNoti(req.body.notiInfo);
       res.status(200).send(data);
+    } catch(err) {
+      res.status(err.status).send(err.message);
     }
-  });
+  })
 });
 
 module.exports = router;

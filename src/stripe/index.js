@@ -188,14 +188,14 @@ router.post("/stripe/create-payment-intent", (req, res) => {
     }
 
     // Get Rider Details
-    userDB.getMyInfo(riderUsername, (err, rider) => {
+    userDB.findUserByUsername(riderUsername, (err, rider) => {
       if (err) {
         res.status(500).json({ error: err });
         return;
       }
 
       // Get Driver Details
-      userDB.getMyInfo(ride.ownerUsername, (err, driver) => {
+      userDB.findUserByUsername(ride.ownerUsername, (err, driver) => {
         if (err) {
           res.status(500).json({ error: err });
           return;

@@ -30,29 +30,41 @@ const createNotiToLeaveReviewTask = (rideId) => {
     if (await isCompletedRide(rideDetails)) {
       const driverUsername = rideDetails.ownerUsername
       // Query for a list of passenger names to create driver notification 
-      let passengerFirstNames = []
+      let passengerInfo = []
       for (let i = 0; i < rideDetails.passengers.length; i++) {
         const passengerUsername = rideDetails.passengers[i]
         const passenger = await User.findOne({username: passengerUsername})
-        passengerFirstNames.push(passenger.firstName)                              
+        const {username, firstName, picUrl, picType} = passenger; 
+        passengerInfo.push({username, firstName, picUrl, picType})                              
       }
 
       // Send a notification to the driver to review their passengers 
-      const msg = await formatPassengerReviewMessage(passengerFirstNames)
-      await Noti.create({
-        username: driverUsername, msg, redirectPath: process.env.MY_DRIVES_PATH
+      const msg = await formatPassengerReviewMessage(passengerInfo.map(passenger => passenger.firstName))
+      const notiToDriver = await Noti.create({
+        username: driverUsername, 
+        msg, 
+        date: new Date(),
       })
+      // Update schema-less property: additionalProperties to contain rideId and usersToReview
+      notiToDriver.additionalProperties = {rideId, usersToReview: passengerInfo};
+      notiToDriver.markModified("additionalProperties");
+      await notiToDriver.save();
 
       // Passengers each receive a notification to review driver
-      const driverName = (await User.findOne({username: driverUsername})).firstName 
-
+      const driver = await User.findOne({username: driverUsername}).lean()
+      const {username, firstName, picUrl, picType} = driver; 
+      const driverInfo = {username, firstName, picUrl, picType} 
       for (let i = 0; i < rideDetails.passengers.length; i++) {
         const passengerUsername = rideDetails.passengers[i]
-        await Noti.create({
+        const notiToPassenger = await Noti.create({
           username: passengerUsername, 
-          msg: `Leave a review for your driver, ${driverName}.`, 
-          redirectPath: process.env.MY_RIDES_PATH
+          msg: `Leave a review for your driver, ${driverInfo.firstName}.`, 
+          date: new Date(),
         })
+        // Update schema-less property: additionalProperties to contain rideId and driverInfo
+        notiToPassenger.additionalProperties = {rideId, usersToReview: [driverInfo]};
+        notiToPassenger.markModified("additionalProperties");
+        await notiToPassenger.save();
 
         // Schedule the last day passengers and drivers have to leave reviews 
         scheduler.scheduleTaskHoursAfterDate(`expireAbilityToLeaveReviewTask.${rideId}.${driverUsername}.${passengerUsername}`, 

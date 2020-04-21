@@ -13,14 +13,16 @@
     "AWS_ACCESS_KEY_ID": <INSERT ACCESS KEY HERE>,
     "AWS_SECRET_ACCESS_KEY": <INSERT SECRET KEY HERE>,
 
-    "SENDGRID_API_KEY": <INSERT API KEY HERE>,
     "STRIPE_PUBLIC_KEY": <INSERT PUBLIC KEY HERE>,
     "STRIPE_PRIVATE_KEY": <INSERT PRIVATE KEY HERE>,
     "STRIPE_CLIENT_ID": <INSERT CLIENT ID HERE>,
     "STRIPE_WEBHOOK_SECRET": <INSERT SECRET KEY HERE>,
     
     "MY_RIDES_PATH": "/rider/my-rides",
-    "MY_DRIVES_PATH": "/driver/my-drives"
+    "MY_DRIVES_PATH": "/driver/my-drives",
+
+    "DEV_EMAIL": "poolup.devs@gmail.com", 
+    "DEV_PASSWORD": "poolup123"
   },
   "test": {
     "MONGODB_URL": "mongodb://localhost/poolup-test"

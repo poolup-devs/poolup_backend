@@ -6,7 +6,6 @@ const fileType = require("file-type");
 const fs = require("fs");
 const sha256 = require("sha256");
 const jwt = require("jsonwebtoken");
-const sgMail = require("@sendgrid/mail");
 
 const db = require("./controller.js");
 const uploadFile = require("../db/awsS3_controller.js").uploadFile;
@@ -16,11 +15,9 @@ const tokenParser = require("../utils/token-parser.js");
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const ACCEPTED_EMAIL = process.env.ACCEPTED_EMAIL;
 const STRIPE_CLIENT_ID = process.env.STRIPE_CLIENT_ID;
 
-sgMail.setApiKey(SENDGRID_API_KEY);
 
 //User Login
 router.post("/users/login", async (req, res) => {

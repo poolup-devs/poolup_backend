@@ -80,27 +80,13 @@ const createRideQueryFilter = (filter_) => {
 
 const getMatchingRides = (filter_, pageNum) => {
   const filter = createRideQueryFilter(filter_);
-
   return new Promise(async (resolve, reject) => {
     try {
       const ride_res = await Ride.find(filter)
         .sort({ date: 1 })
         .skip(pageNum * 10)
         .limit(10);
-      let matchingRides = JSON.parse(JSON.stringify(ride_res));
-      for (i = 0; i < matchingRides.length; i++) {
-        const driver = await User.findOne({
-          username: matchingRides[i].ownerUsername,
-        });
-        if (driver == null) {
-          return reject(Error(500, "user of one of the rides not found"));
-        }
-        const { picUrl, picType, firstName, lastName } = driver;
-        matchingRides[i].picUrl = picUrl;
-        matchingRides[i].picType = picType;
-        matchingRides[i].firstName = firstName;
-        matchingRides[i].lastName = lastName;
-      }
+      const matchingRides = await addDriverInfoToRides(ride_res);
       return resolve(matchingRides);
     } catch (err) {
       return reject(Error(500));
@@ -139,20 +125,6 @@ const getMyRideHistory = (authUsername, pageNum, callback) => {
       return reject(Error(500));
     }
   });
-
-  Ride.find(
-    { passengers: authUsername, date: { $lt: new Date() } },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
-      }
-    }
-  )
-    .sort({ date: 1 })
-    .skip(pageNum * 5)
-    .limit(5);
 };
 
 const getMyRideUpcoming = (authUsername) => {
@@ -164,7 +136,8 @@ const getMyRideUpcoming = (authUsername) => {
       })
         .sort({ date: 1 })
         .limit(3);
-      return resolve(ride_res);
+      const ridesUpcoming = await addDriverInfoToRides(ride_res);
+      return resolve(ridesUpcoming);
     } catch (err) {
       return reject(Error(500));
     }
@@ -185,7 +158,8 @@ const getDriveHistory = (username) => {
         .sort({ date: 1 })
         .skip(pageNum * 10)
         .limit(10);
-      return resolve(ride_res);
+      const driveHistory = await addDriverInfoToRides(ride_res);
+      return resolve(driveHistory);
     } catch (err) {
       return reject(Error(500));
     }
@@ -202,7 +176,8 @@ const getDriveUpcoming = (username, pageNum) => {
         .sort({ date: 1 })
         .skip(pageNum * 3)
         .limit(3);
-      return resolve(ride_res);
+      const upcomingDrives = await addDriverInfoToRides(ride_res);
+      return resolve(upcomingDrives);
     } catch (err) {
       return reject(Error(500));
     }
@@ -322,7 +297,6 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       return reject("Ride does not exist in database!");
     }
 
-    // const user = await User.findOne({ username });
     // Driver cancellation
     if (username === cancelledRideDoc.ownerUsername) {
       let affectedUsers = cancelledRideDoc.passengers;
@@ -408,6 +382,28 @@ const rideDetails = (_id) => {
       resolve(ride_res);
     } catch (err) {
       reject(Error(500));
+    }
+  });
+};
+
+// Helper method to add driver information to each ride in a list of rides
+const addDriverInfoToRides = (rides) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let modifiedRides = JSON.parse(JSON.stringify(rides));
+      for (i = 0; i < modifiedRides.length; i++) {
+        const driver = await User.findOne({
+          username: modifiedRides[i].ownerUsername,
+        });
+        const { picUrl, picType, firstName, lastName } = driver;
+        modifiedRides[i].picUrl = picUrl;
+        modifiedRides[i].picType = picType;
+        modifiedRides[i].firstName = firstName;
+        modifiedRides[i].lastName = lastName;
+      }
+      resolve(modifiedRides);
+    } catch (e) {
+      reject(e);
     }
   });
 };

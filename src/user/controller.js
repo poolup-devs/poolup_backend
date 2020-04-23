@@ -1,9 +1,10 @@
 const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
+const EmailToVerify = require("./emailToVerify/emailToVerify.js").EmailToVerify;
 const jwt = require("jsonwebtoken");
-const Email = require("../utils/email/email")
-
+const Email = require("../utils/email/email");
+const Error = require("../utils/error-model");
 
 // Users require a certain minimum amount of ratings to calculate an average rating
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
@@ -11,8 +12,8 @@ const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
 const mongoose = require("mongoose");
 const dataSchema = new mongoose.Schema({});
 const Schools = mongoose.model("Schools", dataSchema, "schools");
-const parseDomain = require("parse-domain");
-const isEmail = require("isemail");
+// const parseDomain = require("parse-domain");
+// const isEmail = require("isemail");
 const sha256 = require("sha256");
 
 const login = async (email, password) => {
@@ -46,21 +47,25 @@ const signup = async (userInfo) => {
       return reject("Not all required fields were specified.");
     }
     try {
+      const verifiedEmail = await EmailToVerify.find({ email: userInfo.email });
+      if (verifiedEmail == null) {
+        return reject(Error(400, "Email has not initiated verification"));
+      }
+      if (verifiedEmail.verified === false) {
+        return reject(
+          Error(
+            400,
+            "Verification email was sent, but email has not been verified"
+          )
+        );
+      }
+
       // Create a user document containing a hashed password with username and school fields parsed from email
       userInfo.password = sha256(userInfo.password);
       userInfo.school = await parseSchoolFromEmail(userInfo.email);
       userInfo.username = userInfo.email.split("@")[0];
-      userInfo.isRegistered = true;
-      const newlyRegisteredUser = await User.findOneAndUpdate(
-        { email: userInfo.email },
-        userInfo,
-        { new: true }
-      );
-      if (!newlyRegisteredUser) {
-        return reject(
-          "User did not verify email before inputting account information."
-        );
-      }
+
+      const newlyRegisteredUser = await User.create(userInfo, { new: true });
       User.setRandomBruinBear(newlyRegisteredUser.username);
 
       // Give the user a stripe id
@@ -83,53 +88,8 @@ const signup = async (userInfo) => {
           }
         }
       );
-    } catch (e) {
-      console.log(e);
-    }
-  });
-};
-
-const sendVerificationEmail = (email) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      if (await isValidEmail(email)) {
-        // Construct verification email
-        const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, {
-          expiresIn: 60 * 30,
-        });
-        if (process.env.MODE === "STAGING") {
-          var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
-        }
-        else {
-          var verificationUrl = `http://restapi.${process.env.PRODUCTION_DOMAIN_URL}/users/verify?email=${email}&token=${token}`;
-        }
-        await Email.sendVerificationEmail(email, verificationUrl)
-        resolve(true)
-      }
-    } catch (e) {
-      reject(e);
-    }
-  });
-};
-
-// Adds a user with a verified email to the database.
-// The user will become permanent only once it is registered with a name and password.
-const verifyEmail = (email) => {
-  return new Promise(async (resolve, reject) => {
-    const verifiedEmail = await User.findOne({ email });
-    if (!verifiedEmail) {
-      resolve(await User.create({ email }));
-    } else {
-      // The email has been verified but the user has not registered yet
-      if (!verifiedEmail.isRegistered) {
-        resolve(verifiedEmail);
-      } else {
-        reject({
-          name: "AccountAlreadyRegistered",
-          message:
-            "The user has already verified their email and registered their account.",
-        });
-      }
+    } catch (err) {
+      return reject(Error(500, err));
     }
   });
 };
@@ -346,27 +306,6 @@ const isValidPassword = (password) => {
   });
 };
 
-const isValidEmail = (email) => {
-  return new Promise(async (resolve, reject) => {
-    // Validate email address
-    if (isEmail.validate(email)) {
-      // Must be student email
-      const emailDomain = parseDomain(email);
-
-      if (!emailDomain || emailDomain.tld !== "edu") {
-        return reject("Not an .edu email address!");
-      }
-      // A registered account exists with this email
-      if (await User.findOne({ email: email.trim(), isRegistered: true })) {
-        return reject("A registered account already exists with this email!");
-      }
-      resolve(true);
-    } else {
-      return reject("Not a valid email address!");
-    }
-  });
-};
-
 const confirmCredentials = (authUsername, password) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -534,9 +473,6 @@ const getSchool = (username) => {
 module.exports = {
   checkAvailability,
   login,
-  verifyEmail,
-  isValidEmail,
-  sendVerificationEmail,
   findUserByEmail,
   findUserByUsername,
   findUserByPhoneNumber,

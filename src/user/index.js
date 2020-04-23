@@ -6,8 +6,14 @@ const fileType = require("file-type");
 const fs = require("fs");
 const sha256 = require("sha256");
 const jwt = require("jsonwebtoken");
+const sgMail = require("@sendgrid/mail");
 
 const db = require("./controller.js");
+const {
+  sendVerificationEmail,
+  resendVerificationEmail,
+  verifyEmail,
+} = require("./unverifiedEmail/controller.js");
 const uploadFile = require("../db/awsS3_controller.js").uploadFile;
 const deleteFile = require("../db/awsS3_controller.js").deleteFile;
 const checkAuth = require("../middleware/jwt_authenticator.js");
@@ -15,9 +21,11 @@ const tokenParser = require("../utils/token-parser.js");
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const ACCEPTED_EMAIL = process.env.ACCEPTED_EMAIL;
 const STRIPE_CLIENT_ID = process.env.STRIPE_CLIENT_ID;
 
+sgMail.setApiKey(SENDGRID_API_KEY);
 
 //User Login
 router.post("/users/login", async (req, res) => {
@@ -57,7 +65,7 @@ router.post("/users/signup", async (req, res) => {
 // Send verification email
 router.get("/users/sendVerificationEmail", async (req, res) => {
   try {
-    await db.sendVerificationEmail(req.query.email);
+    await sendVerificationEmail(req.query.email);
     res.status(200).send("Verification email sent successfully.");
   } catch (e) {
     res.status(500).send(e);
@@ -68,7 +76,7 @@ router.get("/users/sendVerificationEmail", async (req, res) => {
 router.get("/users/verify", async (req, res) => {
   try {
     const userEmail = jwt.verify(req.query.token, JWT_EMAIL_KEY);
-    await db.verifyEmail(userEmail.email);
+    await verifyEmail(userEmail.email);
     // Redirect to register the user's name and password
     if (process.env.MODE === "STAGING") {
       res.redirect(
@@ -99,7 +107,7 @@ router.get("/users/verify", async (req, res) => {
             `/signup/2/expired?email=${req.query.email}`
         );
       }
-    } else if (err.name == "AccountAlreadyRegistered") {
+    } else if (err.message == "AccountAlreadyRegistered") {
       if (process.env.MODE === "STAGING") {
         res.redirect(302, process.env.FRONT_END_URL + "/login");
       } else {
@@ -109,7 +117,7 @@ router.get("/users/verify", async (req, res) => {
         );
       }
     } else {
-      res.status(401).send(err);
+      res.status(err.status).send(err.message);
     }
   }
 });

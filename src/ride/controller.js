@@ -74,7 +74,7 @@ const getMatchingRides = (filter_, pageNum, callback) => {
         console.log(err);
         callback(err, null);
       } else {
-        const matchingRides = await addDriverInfoToRides(result)
+        const matchingRides = await addDriverInfoToRides(result);
         callback(null, matchingRides);
       }
     })
@@ -86,7 +86,7 @@ const getMatchingRides = (filter_, pageNum, callback) => {
       if (err) {
         callback(err, null);
       } else {
-        const matchingRides = await addDriverInfoToRides(result)
+        const matchingRides = await addDriverInfoToRides(result);
         callback(null, matchingRides);
       }
     })
@@ -103,7 +103,7 @@ const getRideHistory = (username, callback) => {
       if (err) {
         callback(err, null);
       } else {
-        const rideHistory = await addDriverInfoToRides(result)
+        const rideHistory = await addDriverInfoToRides(result);
         callback(null, rideHistory);
       }
     }
@@ -119,7 +119,7 @@ const getMyRideHistory = (authUsername, pageNum, callback) => {
       if (err) {
         callback(err, null);
       } else {
-        const rideHistory = await addDriverInfoToRides(result)
+        const rideHistory = await addDriverInfoToRides(result);
         callback(null, rideHistory);
       }
     }
@@ -136,7 +136,7 @@ const getMyRideUpcoming = (authUsername, callback) => {
       if (err) {
         callback(err, null);
       } else {
-        const ridesUpcoming = await addDriverInfoToRides(result)
+        const ridesUpcoming = await addDriverInfoToRides(result);
         callback(null, ridesUpcoming);
       }
     }
@@ -156,7 +156,7 @@ const getDriveHistory = (username, pageNum, callback) => {
       if (err) {
         callback(err, null);
       } else {
-        const driveHistory = await addDriverInfoToRides(result)
+        const driveHistory = await addDriverInfoToRides(result);
         callback(null, driveHistory);
       }
     }
@@ -173,7 +173,7 @@ const getDriveUpcoming = (username, pageNum, callback) => {
       if (err) {
         callback(err, null);
       } else {
-        const upcomingDrives = await addDriverInfoToRides(result)
+        const upcomingDrives = await addDriverInfoToRides(result);
         callback(null, upcomingDrives);
       }
     }
@@ -184,7 +184,7 @@ const getDriveUpcoming = (username, pageNum, callback) => {
 };
 
 const postRide = async (rideInfo, callback) => {
-  Ride.create(rideInfoWithDriverInfo, (err, result) => {
+  Ride.create(rideInfo, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
@@ -344,26 +344,27 @@ const rideDetails = (_id, callback) => {
   });
 };
 
-// Helper method to add driver information to each ride in a list of rides 
+// Helper method to add driver information to each ride in a list of rides
 const addDriverInfoToRides = (rides) => {
   return new Promise(async (resolve, reject) => {
     try {
-      let modifiedRides = JSON.parse(JSON.stringify(rides))
+      let modifiedRides = JSON.parse(JSON.stringify(rides));
       for (i = 0; i < modifiedRides.length; i++) {
-        const driver = await User.findOne({username: modifiedRides[i].ownerUsername}); 
-        const {picUrl, picType, firstName, lastName} = driver; 
-        modifiedRides[i].picUrl = picUrl; 
-        modifiedRides[i].picType = picType; 
-        modifiedRides[i].firstName = firstName; 
-        modifiedRides[i].lastName = lastName; 
+        const driver = await User.findOne({
+          username: modifiedRides[i].ownerUsername,
+        });
+        const { picUrl, picType, firstName, lastName } = driver;
+        modifiedRides[i].picUrl = picUrl;
+        modifiedRides[i].picType = picType;
+        modifiedRides[i].firstName = firstName;
+        modifiedRides[i].lastName = lastName;
       }
-      resolve(modifiedRides) 
+      resolve(modifiedRides);
+    } catch (e) {
+      reject(e);
     }
-    catch(e) {
-      reject(e) 
-    }
-  })
-}
+  });
+};
 
 module.exports = {
   getMatchingRides,

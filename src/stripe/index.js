@@ -76,7 +76,7 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
 
   userDB.getMyInfo(authUsername, (err, userInfo) => {
     if (err) {
-      res.status(500).json({
+      res.status(500).send({
         error: err,
       });
       return;
@@ -85,7 +85,7 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
     // Check if a driver already has a stripe account ID
     // If they do then that means they already registered as a drive
     if (userInfo.driver.isDriver) {
-      res.status(400).json({
+      res.status(400).send({
         error: "User is already registered as a driver",
       });
       return;
@@ -106,7 +106,7 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
     // Check that all the fields of the driverInfo object are populated
     if (!driverValidation.containsDriverInfo(driverInfo)) {
       console.log("Invalid driver info");
-      res.json(400, {
+      res.send(400, {
         error:
           "Invalid driver information; check that all fields are populated",
       });
@@ -131,7 +131,7 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
       "stripe_user[product_description]": "PoolUp Driver",
     };
 
-    res.status(200).json({
+    res.status(200).send({
       redirectUrl:
         "https://connect.stripe.com/express/oauth/authorize?" +
         querystring.stringify(parameters),
@@ -152,39 +152,23 @@ router.get("/stripe/application-fee", (req, res) => {
     .send({ applicationFee: paymentHandler.getApplicationFeePercentage() });
 });
 
-// Create Customer
-router.post("/stripe/customer", (req, res) => {
-  stripe.customers.create(
-    {
-      description: "Some Customer",
-    },
-    function (err, customer) {
-      if (err) {
-        res.status(500).json({ error: err });
-      } else {
-        res.status(200).json({ customer: customer });
-      }
-    }
-  );
-});
-
 // Create a Payment Intent
 router.post("/stripe/create-payment-intent", async (req, res) => {
-  try {
-    const rideID = req.body.rideID;
-    const requestID = req.body.requestID;
-    const riderUsername = req.body.riderUsername;
-    const currency = "usd";
+  const rideID = req.body.rideID;
+  const requestID = req.body.requestID;
+  const riderUsername = req.body.riderUsername;
+  const currency = "usd";
 
+  try {
     const clientSecret = await paymentHandler.createPaymentIntent(
       rideID,
       requestID,
       riderUsername,
       currency
     );
-    res.status(200).json({ clientSecret: clientSecret });
-  } catch (e) {
-    res.status(500).send({ error: e });
+    res.status(200).send({ clientSecret: clientSecret });
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -245,7 +229,7 @@ router.post("/stripe/webhook", async (req, res) => {
     console.log("❌ Payment failed.");
   }
 
-  res.sendStatus(200);
+  res.send(200);
 });
 
 // =====================
@@ -253,22 +237,18 @@ router.post("/stripe/webhook", async (req, res) => {
 // =====================
 
 // Trigger Payment Intent Success Flow
-router.post(
-  "/stripe/development/triggerPaymentIntentSucessful",
-  async (req, res) => {
-    try {
-      const paymentIntent = req.body;
-      await paymentHandler.handlePaymentIntentSucceeded(paymentIntent);
-      res.sendStatus(200);
-    } catch (e) {
-      console.log(e);
-      res.status(500).json({ error: e });
-    }
+router.post("/stripe/dev/triggerSuccessfulPayment", async (req, res) => {
+  try {
+    const paymentIntent = req.body;
+    await paymentHandler.handlePaymentIntentSucceeded(paymentIntent);
+    res.sendStatus(200);
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
-);
+});
 
 // Trigger Refund
-router.post("/stripe/development/triggerRefund", async (req, res) => {
+router.post("/stripe/dev/triggerRefund", async (req, res) => {
   try {
     const riderUsername = req.body.riderUsername;
     const rideID = req.body.rideID;
@@ -278,9 +258,21 @@ router.post("/stripe/development/triggerRefund", async (req, res) => {
       rideID,
       responsibleForCancellation
     );
-    res.status(200);
-  } catch (e) {
-    res.status(500).json({ error: e });
+    res.sendStatus(200);
+  } catch (err) {
+    res.status(err.status).send(err.message);
+  }
+});
+
+// Create Customer
+router.post("/stripe/dev/customer", async (req, res) => {
+  try {
+    const data = await stripe.customers.create({
+      description: "Some Customer",
+    });
+    res.status(200).send(data);
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 

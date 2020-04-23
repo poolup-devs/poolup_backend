@@ -11,14 +11,14 @@ const checkTransfer = async () => {
       expiredTransfers.forEach(async (expiredTransfer) => {
         try {
           triggerTransfer(expiredTransfer);
-        } catch (e) {
-          console.log(e);
+        } catch (err) {
+          console.log(err);
         }
       });
     }
     setTimeout(checkTransfer, 50000); // set to check every 5 mins
-  } catch (e) {
-    console.log(e);
+  } catch (err) {
+    console.log(err);
   }
 };
 

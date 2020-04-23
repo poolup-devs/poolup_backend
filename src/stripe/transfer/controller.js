@@ -1,13 +1,14 @@
 const Transfer = require("./transfer.js").Transfer;
+const Error = require("../../utils/error-model");
 
 // createTransfer: creates a new transfer object
 const createTransfer = (transferInfo) => {
   return new Promise(async (resolve, reject) => {
     try {
       const newTransfer = await new Transfer(transferInfo).save();
-      resolve(newTransfer);
-    } catch (e) {
-      reject(e);
+      return resolve(newTransfer);
+    } catch (err) {
+      return reject(Error(500), err);
     }
   });
 };
@@ -23,7 +24,7 @@ const checkExpired = () => {
       });
 
       if (transfers.length === 0) {
-        resolve(transfers);
+        return resolve(transfers);
       }
 
       transfers.forEach((transfer) => {
@@ -31,9 +32,9 @@ const checkExpired = () => {
         transfer.save();
       });
 
-      resolve(transfers);
-    } catch (e) {
-      reject();
+      return resolve(transfers);
+    } catch (err) {
+      return reject(Error(500), err);
     }
   });
 };
@@ -74,9 +75,10 @@ const updateTransferStatus = (transferID, newStatus) => {
       }
 
       // Update Status
-      await Transfer.findOneAndUpdate(filter, update, options);
-    } catch (e) {
-      reject(e);
+      const res = await Transfer.findOneAndUpdate(filter, update, options);
+      return resolve(res);
+    } catch (err) {
+      return reject(Error(500), err);
     }
   });
 };

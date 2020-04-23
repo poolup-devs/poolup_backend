@@ -153,6 +153,11 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 |   |   |    index.js
 |   |   +----tool
 |   |           driver-info-validation.js
+|   |           check-transfer.js
+|   |           payment-handler.js
+|   |   +----transfer
+|   |           controller.js
+|   |           transfer.js
 |   |
 |   +---user
 |   |       controller.js
@@ -2068,12 +2073,46 @@ PUT request
 
 ### Stripe Model
 
+### Stripe Hyperparameters
+
+- Application Fee
+
+  - The total of anything we want to add on top of base amount charged. Includes what we want in order to cover Stripe and our profit.
+  - Modify the env var: 0 < STRIPE_APPLICATION_FEE < 1 (decimal)
+
+- Flaker Limit
+
+  - Threshold to determine whether a cancellation was cancelled in advance or if it was last minute.
+  - If the user cancelled x hours before departure time, if x > FLAKER_LIMIT then it was cancelled in advance, otherwise it was cancelled last minute
+  - Modify the env var: 0 < FLAKER_LIMIT (hours)
+
+- Indecision Limit
+
+  - Riders who cancel in advance will receive a full refund, otherwise INDECISION_LIMIT determines if a rider who cancelled last minute will get a refund of partial refund.
+  - if the rider cancelled within x hours of booking and x <= INDECISION_LIMIT they get a full refund, otherwise they get a partial refund
+  - Modify the env var: 0 < INDECISION_LIMIT < FLAKER_LIMIT (minutes)
+
+- Cancellation Policy
+  - Full Refund - Service Fee in most cases except - Driver Cancellation: Full Refund - Cancelling Last Minute: Partial Refund
+    Transfers
+
+### Internal Transfer Statuses
+
+1. scheduled
+2. blocked
+3. completed
+4. refunded
+
 ### API Endpoints
 
-| url                 | HTTP Method | description                                                                                                          |
-| ------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
-| /stripe/token       | GET         | [Process Stripe account authoriation code and complete driver onboarding](#Process-Stripe-Account-Authoriation-Code) |
-| /stripe/driver/auth | POST        | [Prepare for redirect to Stripe express account signup](#Prepare-for-redirect-to-stripe)                             |
+| url                           | HTTP Method | description                                                                                                          |
+| ----------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| /stripe/token                 | GET         | [Process Stripe account authoriation code and complete driver onboarding](#Process-Stripe-Account-Authoriation-Code) |
+| /stripe/driver/auth           | POST        | [Prepare for redirect to Stripe express account signup](#Prepare-for-redirect-to-stripe)                             |
+| /stripe/public-key            | GET         | [Obtain Stripe Public Key](#obtain-stripe-public-key)                                                                |
+| /stripe/application-fee       | GET         | [Obtain latest Application Fee](#obtain-application-fee)                                                             |
+| /stripe/create-payment-intent | POST        | [Create Payment Intent](#create-payment-intent)                                                                      |
+| /stripe/webhook               | POST        | [Stripe Webhook](#stripe-webhook)                                                                                    |
 
 ---
 
@@ -2133,35 +2172,71 @@ POST request
 
 ---
 
-### Stripe Hyperparameters
+### Obtain Stripe Public Key
 
-- Application Fee
+GET request
 
-  - The total of anything we want to add on top of base amount charged. Includes what we want in order to cover Stripe and our profit.
-  - Modify the env var: 0 < STRIPE_APPLICATION_FEE < 1 (decimal)
+- Used to make direct stripe api requests
 
-- Flaker Limit
+**return value**
 
-  - Threshold to determine whether a cancellation was cancelled in advance or if it was last minute.
-  - If the user cancelled x hours before departure time, if x > FLAKER_LIMIT then it was cancelled in advance, otherwise it was cancelled last minute
-  - Modify the env var: 0 < FLAKER_LIMIT (hours)
+```
+    {
+        publicKey: <publicKey here>
+    }
+```
 
-- Indecision Limit
+---
 
-  - Riders who cancel in advance will receive a full refund, otherwise INDECISION_LIMIT determines if a rider who cancelled last minute will get a refund of partial refund.
-  - if the rider cancelled within x hours of booking and x <= INDECISION_LIMIT they get a full refund, otherwise they get a partial refund
-  - Modify the env var: 0 < INDECISION_LIMIT < FLAKER_LIMIT (minutes)
+### Obtain Application Fee
 
-- Cancellation Policy
-  - Full Refund - Service Fee in most cases except - Driver Cancellation: Full Refund - Cancelling Last Minute: Partial Refund
-    Transfers
+GET request
 
-Transfer Statuses
+- Used for stripe checkout
 
-1. scheduled
-2. blocked
-3. completed
-4. refunded
+**return value**
+
+```
+    {
+        applicationFee: <applicationFee here>
+    }
+```
+
+---
+
+### Create Payment Intent
+
+GET request
+
+- Used to create a payment intent
+
+**body**
+
+```
+{
+    rideID: <String>,
+    requestID: <String>,
+    riderUsername: <String>
+}
+```
+
+**return value**
+
+```
+    {
+        clientSecret: <clientSecret here>
+    }
+```
+
+---
+
+### Stripe Webhook
+
+POST request
+
+- Needs to be configured on Stripe Console, Stripe will send events to this endpoint, used to trigger successful payment from customer.
+
+---
 
 # Deployment
 

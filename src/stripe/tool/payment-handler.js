@@ -5,7 +5,7 @@ const userDB = require("../../user/controller.js");
 const rideDB = require("../../ride/controller.js");
 const Transfer = require("../transfer/transfer").Transfer;
 const Ride = require("../../ride/ride").Ride;
-
+const Error = require("../../utils/error-model");
 // ====================================================
 // Public Functions
 // ====================================================
@@ -16,7 +16,7 @@ const createPaymentIntent = (rideID, requestID, riderUsername, currency) => {
       // Get Ride Details
       const rideDetails = await Ride.findById(rideID);
       if (rideDetails.seats < 1) {
-        throw "Not Enough Seats In Ride";
+        return reject("Not Enough Seats In Ride");
       }
 
       // Get Rider and Driver Details
@@ -24,6 +24,7 @@ const createPaymentIntent = (rideID, requestID, riderUsername, currency) => {
       const driverDetails = await userDB.findUserByUsername(
         rideDetails.ownerUsername
       );
+
       // Calculate Application Fee and Total Amount To Charge
       const applicationFee =
         parseFloat(rideDetails.price) * getApplicationFeePercentage();
@@ -48,8 +49,8 @@ const createPaymentIntent = (rideID, requestID, riderUsername, currency) => {
       // Send Create Payment Intent Request to Stripe
       const paymentIntent = await stripe.paymentIntents.create(options);
       return resolve(paymentIntent.client_secret);
-    } catch (e) {
-      return reject(e);
+    } catch (err) {
+      return reject(Error(500), err);
     }
   });
 };
@@ -82,7 +83,7 @@ const handlePaymentIntentSucceeded = (paymentIntent) => {
       // var targetDate = new Date(rideDetails.date.getDate() + 1); // 24 hours after
       var targetDate = new Date();
 
-      await transferDB.createTransfer({
+      const transfer = await transferDB.createTransfer({
         paymentIntentID: paymentIntent.id,
         targetDate: targetDate,
         amount: rideDetails.price * 100,
@@ -96,10 +97,12 @@ const handlePaymentIntentSucceeded = (paymentIntent) => {
 
       // Set Ride Request Status to Paid not booked through instant booking
       if (requestID != "") {
-        requestDB.updateRequestStatus(requestID, riderUsername, "paid");
+        await requestDB.updateRequestStatus(requestID, riderUsername, "paid");
       }
-    } catch (e) {
-      reject(e);
+
+      return resolve();
+    } catch (err) {
+      return reject(Error(500), err);
     }
   });
 };
@@ -109,7 +112,7 @@ const triggerTransfer = (transfer) => {
     try {
       console.log("Initiating Transfer...");
       console.log(transfer);
-      await stripe.transfers.create({
+      const res = await stripe.transfers.create({
         amount: transfer.amount,
         currency: transfer.currency,
         destination: transfer.destination,
@@ -119,8 +122,9 @@ const triggerTransfer = (transfer) => {
 
       console.log("Transfer Completed");
       await transferDB.updateTransferStatus(transfer._id, "completed");
-    } catch (e) {
-      reject(e);
+      return resolve();
+    } catch (err) {
+      return reject(Error(500), err);
     }
   });
 };
@@ -150,9 +154,9 @@ const issueRefund = (riderUsername, rideID, responsibleForCancellation) => {
       // Update Transfer Status
       await transferDB.updateTransferStatus("refunded");
 
-      return resolve("Refund Successful");
-    } catch (e) {
-      return reject(e);
+      return resolve();
+    } catch (err) {
+      return reject(Error(500), err);
     }
   });
 };
@@ -216,8 +220,8 @@ const policyChecker = (transfer, responsibleForCancellation) => {
       }
 
       return resolve(params);
-    } catch (e) {
-      return reject(e);
+    } catch (err) {
+      return reject(Error(500), err);
     }
   });
 };
@@ -255,8 +259,8 @@ const didRiderCancelInAdvance = (rideID, timeCancelled) => {
       } else {
         return resolve(false);
       }
-    } catch (e) {
-      reject(e);
+    } catch (err) {
+      return reject(Error(500), err);
     }
   });
 };

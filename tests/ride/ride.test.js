@@ -14,7 +14,7 @@ describe("Testing Ride endpoints", () => {
       await User.deleteMany({});
       await Noti.deleteMany({});
     });
-    test("Expect when a user joins a ride, the user is added to the ride's list of passengers, the number of seats is decremented, and a notification is sent to the driver", async (done) => {
+    test("Expect when a user joins a ride, the user is added to the ride's list of passengers, the number of seats is decremented, and a notification is sent to the driver", async () => {
       const passenger = await User.create({ username: "passenger_2" });
       const ownerUsername = "driverUsername";
       let ride = await Ride.create({
@@ -38,7 +38,6 @@ describe("Testing Ride endpoints", () => {
           msg: "passenger_2 has joined your ride",
         })
       );
-      done();
     });
   });
 

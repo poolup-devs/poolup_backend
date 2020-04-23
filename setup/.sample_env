@@ -19,10 +19,10 @@
     "STRIPE_WEBHOOK_SECRET": <INSERT SECRET KEY HERE>,
     
     "MY_RIDES_PATH": "/rider/my-rides",
-    "MY_DRIVES_PATH": "/driver/my-drives"
+    "MY_DRIVES_PATH": "/driver/my-drives",
 
-    "DEV_EMAIL": <INSERT DEV EMAIL HERE>, 
-    "DEV_PASSWORD": <INSERT DEV EMAIL PASSWORD HERE>
+    "DEV_EMAIL": "poolup.devs@gmail.com", 
+    "DEV_PASSWORD": "poolup123"
   },
   "test": {
     "MONGODB_URL": "mongodb://localhost/poolup-test"

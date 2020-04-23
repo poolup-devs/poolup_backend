@@ -135,15 +135,9 @@ const issueRefund = (riderUsername, rideID, responsibleForCancellation) => {
       console.log("Initiating Refund...");
 
       // Immediately Block Transfer
-      await transferDB.updateTransferStatus("blocked");
-
       const query = { customerUsername: riderUsername, rideID: rideID };
-
-      // Validate Transfer
       const transferDetails = await Transfer.findOne(query);
-      if (transferDetails.status !== "scheduled") {
-        reject("Refund Failed: Transfer status is " + transfer.status);
-      }
+      await transferDB.updateTransferStatus(transferDetails._id, "blocked");
 
       // Get Appropriate Stripe Refund Options Depending on Policies
       let options = policyChecker(transfer, responsibleForCancellation);
@@ -152,7 +146,7 @@ const issueRefund = (riderUsername, rideID, responsibleForCancellation) => {
       await stripe.refunds.create(options);
 
       // Update Transfer Status
-      await transferDB.updateTransferStatus("refunded");
+      await transferDB.updateTransferStatus(transferDetails._id, "refunded");
 
       return resolve();
     } catch (err) {

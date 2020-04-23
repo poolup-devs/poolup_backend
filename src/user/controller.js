@@ -216,16 +216,16 @@ const uploadPicUrl = (username, picUrl, picType, callback) => {
   );
 };
 
-const getPicUrl = (username, callback) => {
+const getPicUrl = (username) => {
   return new Promise(async (resolve, reject) => {
     const userInfo = await findUserByUsername(username);
     if (!userInfo) {
-      reject("ERROR: no result; potentially wrong username");
+      return reject("ERROR: no result; potentially wrong username");
     } else if (userInfo.picUrl === undefined) {
-      reject("ERROR: user's profile picture undefined");
+      return reject("ERROR: user's profile picture undefined");
     }
 
-    resolve(userInfo.picUrl);
+    return resolve(userInfo.picUrl);
   });
 };
 

@@ -4,7 +4,7 @@ const User = require("../user/user").User;
 const Request = require("../request/request").Request;
 const scheduler = require("../tasks/scheduler");
 const scheduledTasks = require("../tasks/scheduledTasks");
-
+const paymentHandler = require("../stripe/tool/payment-handler");
 const Error = require("../utils/error-model");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
@@ -260,7 +260,8 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       // Notify all passengers/ requesters that the ride has been cancelled
       affectedUsers.forEach(async (passengerUsername) => {
         // Refund Passenger
-        await paymentHandler.issueRefund(passengerUsername, rideId, "driver");
+        // TODO: Write Test
+        // await paymentHandler.issueRefund(passengerUsername, rideId, "driver");
 
         let noti = await Noti.create({
           username: passengerUsername,
@@ -297,11 +298,12 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
     // Passenger cancellation
     if (cancelledRideDoc.passengers.includes(username)) {
       // Refund Passenger
-      await paymentHandler.issueRefund(
-        cancelledRideDoc.ownerUsername,
-        rideId,
-        "passenger"
-      );
+      // TODO: Write Test
+      // await paymentHandler.issueRefund(
+      //   cancelledRideDoc.ownerUsername,
+      //   rideId,
+      //   "passenger"
+      // );
 
       // Notify driver of passenger cancellation
       let noti = await Noti.create({

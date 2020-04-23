@@ -213,14 +213,13 @@ router.patch("/users/upload-profile-pic", checkAuth, (req, res) => {
 });
 
 //Get a User's Profile Image
-router.get("/users/usersPic", checkAuth, (req, res) => {
-  db.getPicUrl(req.query.username, (err, data) => {
-    if (err) {
-      res.status(500).send(err);
-    } else {
-      res.status(200).send(data);
-    }
-  });
+router.get("/users/usersPic", checkAuth, async (req, res) => {
+  try {
+    const data = await db.getPicUrl(req.query.username);
+    res.status(200).send(data);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
 
 //Update a User's info (first name, last name, or phoneNumber)

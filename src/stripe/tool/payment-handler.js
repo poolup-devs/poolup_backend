@@ -2,178 +2,224 @@ const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
 const transferDB = require("../transfer/controller.js");
 const requestDB = require("../../request/controller.js");
 const userDB = require("../../user/controller.js");
-const mongoose = require("mongoose");
 const rideDB = require("../../ride/controller.js");
 const Transfer = require("../transfer/transfer").Transfer;
 const Ride = require("../../ride/ride").Ride;
 
-const handlePaymentIntentSucceeded = (paymentIntent) => {
-  console.log("💰 Payment received!");
-  const rideID = paymentIntent.metadata["rideID"];
-  const requestID = paymentIntent.metadata["requestID"];
-  const riderUsername = paymentIntent.metadata["riderUsername"];
+// ====================================================
+// Public Functions
+// ====================================================
 
-  // Grab Ride Information
-  rideDB.rideDetails(mongoose.Types.ObjectId(rideID), (err, ride) => {
-    if (err) {
-      console.log("Ride Details Failed");
-      console.log(err);
-
-      // Cancel PaymentIntent
-      stripe.paymentIntents.cancel(paymentIntent.id, function (err, _) {
-        if (err != nil) {
-          console.log("Cancel PaymentIntent Failed");
-          console.log(err);
-        }
-      });
-
-      // TODO: Return error to frontend
-      return err;
-    }
-
-    // Add User to ride
-    rideDB.joinRide(ride.ownerUsername, rideID, riderUsername, (err, data) => {
-      if (err) {
-        console.log("Join Ride Failed", err);
-
-        // Cancel PaymentIntent
-        stripe.paymentIntents.cancel(paymentIntent.id, function (err, _) {
-          if (err != nil) {
-            console.log("Cancel PaymentIntent Failed: ", err);
-          }
-        });
-
-        // TODO: Return error to frontend
-        return err;
-      } else {
-        var targetDate = new Date(ride.date.getDate() + 1); // Triggers immediately
-
-        stripe.paymentIntents.capture(paymentIntent.id, function (
-          err,
-          paymentIntent
-        ) {
-          if (err) {
-            console.log("Capture PaymentIntent Failed: ", err);
-            return err;
-          } else {
-            userDB.getMyInfo(ride.ownerUsername, (err, driverInfo) => {
-              if (err) {
-                return err;
-              } else {
-                try {
-                  transferDB.createTransfer({
-                    paymentIntentID: paymentIntent.id,
-                    targetDate: targetDate,
-                    amount: paymentIntent.amount,
-                    rideID: rideID,
-                    destination: driverInfo.stripe.accountID,
-                    customerUsername: riderUsername,
-                  });
-                } catch (e) {
-                  console.log("DRIVER TRANSFER FAILED: ", e);
-                  return e;
-                }
-
-                try {
-                  if (requestID != "") {
-                    requestDB.paidRequest({
-                      requestID: requestID,
-                    });
-                  }
-                } catch (e) {
-                  console.log("Request set status to 'paid' FAILED: ", e);
-                  return e;
-                }
-              }
-            });
-          }
-        });
+const createPaymentIntent = (rideID, requestID, riderUsername, currency) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Get Ride Details
+      const rideDetails = await Ride.findById(rideID);
+      if (rideDetails.seats < 1) {
+        throw "Not Enough Seats In Ride";
       }
-    });
+
+      // Get Rider and Driver Details
+      const riderDetails = await userDB.findUserByUsername(riderUsername);
+      const driverDetails = await userDB.findUserByUsername(
+        rideDetails.ownerUsername
+      );
+      // Calculate Application Fee and Total Amount To Charge
+      const applicationFee =
+        parseFloat(rideDetails.price) * getApplicationFeePercentage();
+      const totalAmount = parseFloat(rideDetails.price) + applicationFee;
+
+      const options = {
+        amount: totalAmount * 100,
+        currency: currency,
+        payment_method_types: ["card"],
+        customer: riderDetails.stripe.customerID,
+        capture_method: "manual",
+        metadata: {
+          rideID: rideID,
+          requestID: requestID,
+          riderUsername: riderUsername,
+          driverStripeAcct: driverDetails.stripe.accountID,
+          applicationFee: applicationFee,
+        },
+        receipt_email: riderDetails.email,
+      };
+
+      // Send Create Payment Intent Request to Stripe
+      const paymentIntent = await stripe.paymentIntents.create(options);
+      return resolve(paymentIntent.client_secret);
+    } catch (e) {
+      return reject(e);
+    }
+  });
+};
+
+const handlePaymentIntentSucceeded = (paymentIntent) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      console.log("Payment Intent Successful");
+      console.log("Attempting to Capture Payment...");
+
+      // Grab Fields from PaymentIntent MetaData
+      const rideID = paymentIntent.metadata["rideID"];
+      const requestID = paymentIntent.metadata["requestID"];
+      const riderUsername = paymentIntent.metadata["riderUsername"];
+      const applicationFee = paymentIntent.metadata["applicationFee"];
+      const driverStripeAcct = paymentIntent.metadata["driverStripeAcct"];
+
+      // Get Ride Details
+      const rideDetails = await Ride.findById(rideID);
+
+      // Add User to Specified Ride
+      await rideDB.joinRide(rideDetails.ownerUsername, rideID, riderUsername);
+
+      // Trigger PaymentIntent Capture
+      const result = await stripe.paymentIntents.capture(paymentIntent.id);
+      console.log("💰 Payment Captured!");
+      const chargeID = result.charges.data[0].id;
+
+      // Create Transfer
+      // var targetDate = new Date(rideDetails.date.getDate() + 1); // 24 hours after
+      var targetDate = new Date();
+
+      await transferDB.createTransfer({
+        paymentIntentID: paymentIntent.id,
+        targetDate: targetDate,
+        amount: rideDetails.price * 100,
+        rideID: rideID,
+        destination: driverStripeAcct,
+        customerUsername: riderUsername,
+        applicationFee: applicationFee,
+        sourceTransaction: chargeID,
+      });
+      console.log("Transfer Created");
+
+      // Set Ride Request Status to Paid not booked through instant booking
+      if (requestID != "") {
+        requestDB.updateRequestStatus(requestID, riderUsername, "paid");
+      }
+    } catch (e) {
+      reject(e);
+    }
   });
 };
 
 const triggerTransfer = (transfer) => {
-  stripe.transfers.create(
-    {
-      amount: transfer.amount,
-      currency: transfer.currency,
-      source_transaction: transfer.paymentIntentID,
-      destination: transfer.destination,
-      transfer_group: transfer.rideID,
-    },
-    function (err, res) {
-      if (err) {
-        // TODO: Better Error Handling
-        console.log(err);
-      } else {
-        transferDB.setStatusToComplete(
-          { transferID: transfer.id },
-          (err, _) => {
-            if (err) {
-              console.log(err);
-            } else {
-              console.log("Update Successful");
+  return new Promise(async (resolve, reject) => {
+    try {
+      console.log("Initiating Transfer...");
+      console.log(transfer);
+      await stripe.transfers.create({
+        amount: transfer.amount,
+        currency: transfer.currency,
+        destination: transfer.destination,
+        transfer_group: transfer.rideID,
+        source_transaction: transfer.sourceTransaction,
+      });
 
-              // TODO: Send Transfer Success Notification
-            }
-          }
-        );
-        console.log(res);
-      }
+      console.log("Transfer Completed");
+      await transferDB.updateTransferStatus(transfer._id, "completed");
+    } catch (e) {
+      reject(e);
     }
-  );
+  });
 };
 
-const policyChecker = (transfer, driverCancelled) => {
-  let timeCancelled = Date.now();
+const issueRefund = (riderUsername, rideID, responsibleForCancellation) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      console.log("Initiating Refund...");
 
-  let params = {
-    payment_intent: transfer.paymentIntentID,
-    amount: transfer.amount,
-    refund_application_fee: false,
-  };
+      // Immediately Block Transfer
+      await transferDB.updateTransferStatus("blocked");
 
+      const query = { customerUsername: riderUsername, rideID: rideID };
+
+      // Validate Transfer
+      const transferDetails = await Transfer.findOne(query);
+      if (transferDetails.status !== "scheduled") {
+        reject("Refund Failed: Transfer status is " + transfer.status);
+      }
+
+      // Get Appropriate Stripe Refund Options Depending on Policies
+      let options = policyChecker(transfer, responsibleForCancellation);
+
+      // Issue Refund
+      await stripe.refunds.create(options);
+
+      // Update Transfer Status
+      await transferDB.updateTransferStatus("refunded");
+
+      return resolve("Refund Successful");
+    } catch (e) {
+      return reject(e);
+    }
+  });
+};
+
+const getApplicationFeePercentage = () => {
   const applicationFeePercentage =
     parseFloat(process.env.STRIPE_APPLICATION_FEE) || 0;
 
-  // Driver Cancellation
-  if (driverCancelled && applicationFeePercentage > 0) {
-    params.refund_application_fee = true;
-    return params;
+  if (applicationFeePercentage < 0 || applicationFeePercentage >= 1) {
+    applicationFeePercentage = 0;
   }
 
-  // Rider Cancellations
-  let cancelledInAdvance = didRiderCancelInAdvance(
-    transfer.rideID,
-    timeCancelled
-  );
+  return applicationFeePercentage;
+};
+// ====================================================
+// Private Functions
+// ====================================================
 
-  let bookedAndCancelledRightAfter = didRiderBookAndCancelRightAfter(
-    timeCancelled
-  );
-
-  if (!cancelledInAdvance && !bookedAndCancelledRightAfter) {
-    params.amount = Math.floor(params.amount / 2);
-
-    // Create a tramsfer for driver
+const policyChecker = (transfer, responsibleForCancellation) => {
+  return new Promise(async (resolve, reject) => {
     try {
-      triggerTransfer({
-        paymentIntentID: transfer.paymentIntentID,
-        targetDate: transfer.targetDate,
-        amount: params.amount,
-        rideID: transfer.rideID,
-        destination: transfer.driverStripeAcct,
-        customerUsername: transfer.riderUsername,
-      });
+      // Default: Full Refund - Application Fee
+      let params = {
+        payment_intent: transfer.paymentIntentID,
+        amount: transfer.amount,
+      };
+
+      // Driver Cancellation: Full Refund
+      if (responsibleForCancellation === "driver") {
+        params.amount = params.amount + transfer.applicationFee;
+        return resolve(params);
+      }
+
+      // Rider Cancellations
+      const timeCancelled = Date.now();
+
+      const cancelledInAdvance = didRiderCancelInAdvance(
+        transfer.rideID,
+        timeCancelled
+      );
+
+      const bookedAndCancelledRightAfter = didRiderBookAndCancelRightAfter(
+        timeCancelled
+      );
+
+      if (!cancelledInAdvance && !bookedAndCancelledRightAfter) {
+        // Set Partial Refund for Rider
+        params.amount = Math.floor(params.amount / 2);
+
+        // Create a Transfer with Partial Amount for Driver
+        await transferDB.createTransfer({
+          paymentIntentID: transfer.paymentIntentID,
+          targetDate: Date.now(),
+          amount: params.amount,
+          rideID: transfer.rideID,
+          destination: transfer.driverStripeAcct,
+          customerUsername: transfer.riderUsername,
+          applicationFee: transfer.applicationFee,
+          sourceTransaction: transfer.sourceTransaction,
+        });
+      }
+
+      return resolve(params);
     } catch (e) {
-      console.log("Driver Create Transfer FAILED: ", e);
+      return reject(e);
     }
-
-    return params;
-  }
-
-  return params;
+  });
 };
 
 const didRiderBookAndCancelRightAfter = (timeCancelled) => {
@@ -193,12 +239,10 @@ const didRiderBookAndCancelRightAfter = (timeCancelled) => {
 };
 
 const didRiderCancelInAdvance = (rideID, timeCancelled) => {
-  Ride.findOne(rideID, (err, ride) => {
-    if (err) {
-      console.log(err);
-      return false;
-    } else {
-      departureTime = ride.date;
+  return new Promise(async (resolve, reject) => {
+    try {
+      const rideDetails = await Ride.findOne(rideID);
+      const departureTime = rideDetails.date;
       const MS_PER_HOUR = 1000 * 60 * 60;
       let timeLeftBeforeDeparture = Math.floor(
         (departureTime - timeCancelled) / MS_PER_HOUR
@@ -207,60 +251,20 @@ const didRiderCancelInAdvance = (rideID, timeCancelled) => {
 
       // Check if its within the limit or not
       if (timeLeftBeforeDeparture > limit) {
-        return true;
+        return resolve(true);
       } else {
-        return false;
+        return resolve(false);
       }
-    }
-  });
-};
-
-const refund = (riderUsername, rideID, driverCancelled, callback) => {
-  let query = { customerUsername: riderUsername, rideID: rideID };
-
-  // Validate Transfer
-  Transfer.findOne(query, (err, transfer) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      if (transfer.status !== "scheduled") {
-        callback("Refund Failed: Transfer status is " + transfer.status, null);
-        return;
-      }
-
-      let params = policyChecker(transfer, driverCancelled);
-
-      // Issue Refund
-      stripe.refunds.create(params, function (err, refund) {
-        if (err) {
-          callback(err, null);
-        } else {
-          console.log(refund);
-          const filter = { _id: transfer._id };
-          const update = { $set: { status: "refunded" } };
-          const options = { new: true };
-
-          // Update Status
-          Transfer.findOneAndUpdate(
-            filter,
-            update,
-            options,
-            (updateErr, result) => {
-              if (updateErr) {
-                callback(updateErr, null);
-              } else {
-                callback(null, result);
-              }
-            }
-          );
-        }
-      });
+    } catch (e) {
+      reject(e);
     }
   });
 };
 
 module.exports = {
+  createPaymentIntent,
   handlePaymentIntentSucceeded,
   triggerTransfer,
-  refund,
+  issueRefund,
+  getApplicationFeePercentage,
 };

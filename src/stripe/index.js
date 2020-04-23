@@ -4,14 +4,9 @@ const router = new express.Router();
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const querystring = require("querystring");
 const tokenParser = require("../utils/token-parser.js");
-const bodyParser = require("body-parser");
-const handlePaymentIntentSucceeded = require("./tool/payment-handler.js")
-  .handlePaymentIntentSucceeded;
 
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
-const rideDB = require("../ride/controller.js");
 const userDB = require("../user/controller.js");
-const transferDB = require("./transfer/controller.js");
 const paymentHandler = require("./tool/payment-handler.js");
 const driverValidation = require("./tool/driver-info-validation.js");
 
@@ -150,6 +145,13 @@ router.get("/stripe/public-key", (req, res) => {
   res.status(200).send({ publicKey: process.env.STRIPE_PUBLIC_KEY });
 });
 
+// Send back Application Fee
+router.get("/stripe/application-fee", (req, res) => {
+  res
+    .status(200)
+    .send({ applicationFee: paymentHandler.getApplicationFeePercentage() });
+});
+
 // Create Customer
 router.post("/stripe/customer", (req, res) => {
   stripe.customers.create(
@@ -167,75 +169,23 @@ router.post("/stripe/customer", (req, res) => {
 });
 
 // Create a Payment Intent
-router.post("/stripe/create-payment-intent", (req, res) => {
-  const rideID = req.body.options.rideID;
-  const requestID = req.body.options.requestID;
-  const riderUsername = req.body.options.riderUsername;
-  const currency = "usd";
-  const applicationFeePercentage =
-    parseFloat(process.env.STRIPE_APPLICATION_FEE) || 0;
+router.post("/stripe/create-payment-intent", async (req, res) => {
+  try {
+    const rideID = req.body.rideID;
+    const requestID = req.body.requestID;
+    const riderUsername = req.body.riderUsername;
+    const currency = "usd";
 
-  // Get Ride Details
-  rideDB.rideDetails(rideID, (err, ride) => {
-    if (err) {
-      res.status(500).json({ error: err });
-      return;
-    } else if (!ride) {
-      res.status(404).json({ error: "Ride not found: " + rideID });
-      return;
-    } else if (1 > ride.seats) {
-      res.status(500).json({ error: "Not Enough Seats" });
-    }
-
-    // Get Rider Details
-    userDB.findUserByUsername(riderUsername, (err, rider) => {
-      if (err) {
-        res.status(500).json({ error: err });
-        return;
-      }
-
-      // Get Driver Details
-      userDB.findUserByUsername(ride.ownerUsername, (err, driver) => {
-        if (err) {
-          res.status(500).json({ error: err });
-          return;
-        }
-
-        const amount = ride.price * 100;
-        const applicationFee = amount * applicationFeePercentage;
-        const options = {
-          amount: amount,
-          currency: currency,
-          payment_method_types: ["card"],
-          customer: rider.stripe.customerID,
-          capture_method: "manual",
-          metadata: {
-            rideID: rideID,
-            requestID: requestID,
-            riderUsername: riderUsername,
-            driverStripeAcct: driver.stripe.accountID,
-          },
-          receipt_email: rider.email,
-          application_fee_amount: applicationFee,
-        };
-        if (applicationFee <= 0) {
-          delete options.application_fee_amount;
-        }
-
-        // Create Payment Intent
-        stripe.paymentIntents.create(options, function (err, paymentIntent) {
-          if (err) {
-            console.log(err);
-            res.status(500).json({ error: err });
-            return;
-          } else {
-            res.status(200).json({ clientSecret: paymentIntent.client_secret });
-            return;
-          }
-        });
-      });
-    });
-  });
+    const clientSecret = await paymentHandler.createPaymentIntent(
+      rideID,
+      requestID,
+      riderUsername,
+      currency
+    );
+    res.status(200).json({ clientSecret: clientSecret });
+  } catch (e) {
+    res.status(500).send({ error: e });
+  }
 });
 
 // Webhook, handles events sent from Stripe
@@ -271,7 +221,23 @@ router.post("/stripe/webhook", async (req, res) => {
 
   if (eventType === "payment_intent.succeeded") {
     // Fulfill any orders, e-mail receipts, etc
-    handlePaymentIntentSucceeded(data);
+    // Notify User
+    try {
+      await paymentHandler.handlePaymentIntentSucceeded(data);
+    } catch (e) {
+      console.log(e);
+      // Cancel Payment Intent
+      // Notify Frontend Webhook
+      // Notify User
+      // TODO what else can fail and how do we handle this
+      // Cancel PaymentIntent and
+      //  stripe.paymentIntents.cancel(paymentIntent.id, function (err, _) {
+      //   if (err != nil) {
+      //     console.log("Cancel PaymentIntent Failed");
+      //     console.log(err);
+      //   }
+      // });
+    }
   }
 
   if (eventType === "payment_intent.payment_failed") {
@@ -290,52 +256,32 @@ router.post("/stripe/webhook", async (req, res) => {
 router.post(
   "/stripe/development/triggerPaymentIntentSucessful",
   async (req, res) => {
-    const paymentIntent = req.body.paymentIntent;
-    if (paymentIntent == null) {
-      console.log("Paymentintent undefined");
-      return;
-    }
-
-    let err = handlePaymentIntentSucceeded(paymentIntent);
-    if (err != null) {
-      res.status(500).json({ error: err });
-    } else {
+    try {
+      const paymentIntent = req.body;
+      await paymentHandler.handlePaymentIntentSucceeded(paymentIntent);
       res.sendStatus(200);
+    } catch (e) {
+      console.log(e);
+      res.status(500).json({ error: e });
     }
   }
 );
 
-// Trigger Transfer
-router.post("/stripe/development/triggerTransfer", async (req, res) => {
-  const amount = req.body.amount;
-  const currency = "usd";
-  const destination = req.body.destination;
-  const rideID = req.body.rideID;
-
-  const applicationFeePercentage =
-    parseFloat(process.env.STRIPE_APPLICATION_FEE) || 0;
-  amount = amount - mount * applicationFeePercentage;
-
-  paymentHandler.triggerTransfer({
-    amount: amount,
-    currency: currency,
-    destination: destination,
-    transfer_group: rideID,
-  });
-});
-
 // Trigger Refund
 router.post("/stripe/development/triggerRefund", async (req, res) => {
-  const riderUsername = req.body.riderUsername;
-  const rideID = req.body.rideID;
-
-  paymentHandler.refund(riderUsername, rideID, true, (err, data) => {
-    if (err) {
-      res.status(500).json({ err: err });
-    } else {
-      res.status(200).json({ result: data });
-    }
-  });
+  try {
+    const riderUsername = req.body.riderUsername;
+    const rideID = req.body.rideID;
+    const responsibleForCancellation = req.body.responsibleForCancellation;
+    await paymentHandler.issueRefund(
+      riderUsername,
+      rideID,
+      responsibleForCancellation
+    );
+    res.status(200);
+  } catch (e) {
+    res.status(500).json({ error: e });
+  }
 });
 
 module.exports = router;

@@ -225,7 +225,7 @@ const getPicUrl = (username, callback) => {
       reject("ERROR: user's profile picture undefined");
     }
 
-    resolve(user.picUrl);
+    resolve(userInfo.picUrl);
   });
 };
 

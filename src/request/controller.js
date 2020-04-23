@@ -244,6 +244,24 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             });
             break;
           }
+          case "paid": {
+            if (authUsername != request_res.requesterUsername) {
+              errFlag = 401;
+              throw "Unauthorized request action: You are not the requester";
+            }
+            request_upd = await Request.findOneAndUpdate(
+              filter,
+              update,
+              options
+            );
+            await Noti.create({
+              username: request_upd.requesteeUsername,
+              msg: `${request_upd.requesterUsername}'s request for your ride has been paid`,
+              date: new Date(),
+              redirectPath: MY_DRIVES_PATH,
+            });
+            break;
+          }
           default: {
             errFlag = 400;
             throw "invalid status to update";
@@ -295,37 +313,6 @@ const isAlreadyInRide = (requestInfo) => {
       }
     } catch (err) {
       return reject(err);
-    }
-  });
-};
-
-const paidRequest = (requestID, callback) => {
-  const filter = { _id: requestID };
-  const update = { $set: { status: "paid" } };
-  const options = { new: true };
-
-  Request.findOne(filter, (findErr, findResult) => {
-    if (findErr) {
-      callback(findErr, null);
-    } else {
-      if (findResult.archived) {
-        callback("Ride has already been archived");
-      } else if (findResult.status !== "approved") {
-        callback("Ride hasn't been approved", null);
-      } else {
-        Request.findOneAndUpdate(
-          filter,
-          update,
-          options,
-          (updateErr, updateResult) => {
-            if (updateErr) {
-              callback(updateErr, null);
-            } else {
-              callback(null, updateResult);
-            }
-          }
-        );
-      }
     }
   });
 };

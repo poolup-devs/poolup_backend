@@ -88,22 +88,15 @@ router.post("/rides/post-ride", checkAuth, (req, res) => {
 });
 
 //Join a Ride manually
-router.put("/rides/join-ride", checkAuth, (req, res) => {
-  const ride = req.body.ride;
-  const authUsername = tokenParser(req.headers.authorization).username;
-
-  // Add User to ride
-  db.joinRide(ride.ownerUsername, ride._id, authUsername, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else if (data.length === 0) {
-      res.status(404).send({
-        message: "ERROR: The ride is full",
-      });
-    } else {
-      res.status(200).send(data);
-    }
-  });
+router.put("/rides/join-ride", checkAuth, async (req, res) => {
+  try {
+    const ride = req.body.ride;
+    const authUsername = tokenParser(req.headers.authorization).username;
+    updatedRide = await db.joinRide(ride.ownerUsername, ride._id, authUsername);
+    res.status(200).send(updatedRide);
+  } catch (e) {
+    res.status(500).json({ error: e });
+  }
 });
 
 //Cancel a Ride

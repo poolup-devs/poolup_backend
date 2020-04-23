@@ -373,17 +373,11 @@ describe('Testing users with verified and registered accounts', () => {
         })
     
         test("When retrieving a user's profile pic url using an invalid username, the response should be an error", done => {
-            db.getPicUrl('invalidUsername', (err, result) => {
-                expect(err).toEqual({message: "ERROR: no result; potentially wrong username"})
-                done() 
-            })
+            await db.getPicUrl('invalidUsername').expect(500);
         }) 
     
         test("When retrieving a user's profile pic url that has not been set, the response should be an error", done => {
-            db.getPicUrl(registeredUser.username, (err, result) => {
-                expect(err).toEqual({message: "ERROR: user's profile picture undefined"})
-                done() 
-            })
+            db.getPicUrl(registeredUser.username).expect(500);
         }) 
 
         test("When retrieving a user's profile pic url using a valid username, should receive it.", done => {
@@ -392,9 +386,8 @@ describe('Testing users with verified and registered accounts', () => {
                 firstName, lastName, username: 'registeredUserWithPicUrl', password, email, isRegistered, picUrl: 'testUrl'
             }) 
             registeredUserWithProfilePic.save((err) => {
-                db.getPicUrl(registeredUserWithProfilePic.username, (err, result) => {
-                    expect(result).toEqual('testUrl')
-                    done() 
+                await db.getPicUrl(registeredUserWithProfilePic.username).expect(200).then((res) => {
+                    expect(res.body).toEqual('testUrl')
                 })
             })
         })

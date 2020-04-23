@@ -184,7 +184,7 @@ const getDriveUpcoming = (username, pageNum, callback) => {
 };
 
 const postRide = async (rideInfo, callback) => {
-  Ride.create(rideInfoWithDriverInfo, (err, result) => {
+  Ride.create(rideInfo, (err, result) => {
     if (err) {
       callback(err, null);
     } else {
@@ -208,41 +208,34 @@ const postRide = async (rideInfo, callback) => {
   });
 };
 
-const joinRide = async (
-  ownerUsername,
-  ride_id,
-  passengerUsername,
-  callback
-) => {
-  const passenger = await User.findOne({ username: passengerUsername });
-  const noti = {
-    username: ownerUsername,
-    msg: `${passengerUsername} has joined your ride`,
-    date: new Date(),
-    redirectPath: MY_DRIVES_PATH,
-  };
-  Ride.findOneAndUpdate(
-    { _id: ride_id, seats: { $gte: 1 } },
-    { $push: { passengers: passengerUsername }, $inc: { seats: -1 } },
-    { new: true },
-    (update_err, update_result) => {
-      if (update_err) {
-        callback(update_err, null);
-      } else {
-        Noti.create(noti, (noti_err, _) => {
-          if (noti_err) {
-            callback(noti_err, null);
-          } else {
-            if (update_result.length == 0) {
-              callback("ERROR: Ride is already full", null);
+const joinRide = (ownerUsername, ride_id, passengerUsername) => {
+  return new Promise(async (resolve, reject) => {
+    const noti = {
+      username: ownerUsername,
+      msg: `${passengerUsername} has joined your ride`,
+      date: new Date(),
+      redirectPath: MY_DRIVES_PATH,
+    };
+
+    Ride.findOneAndUpdate(
+      { _id: ride_id, seats: { $gte: 1 } },
+      { $push: { passengers: passengerUsername }, $inc: { seats: -1 } },
+      { new: true },
+      (err1, result1) => {
+        if (err1) {
+          reject(err1);
+        } else {
+          Noti.create(noti, (err2, result2) => {
+            if (err2) {
+              reject(err2);
             } else {
-              callback(null, update_result);
+              resolve(result1);
             }
-          }
-        });
+          });
+        }
       }
-    }
-  );
+    );
+  });
 };
 
 // Cancel a ride, whether the user was a driver or passenger
@@ -264,16 +257,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       // Notify all passengers/ requesters that the ride has been cancelled
       affectedUsers.forEach(async (passengerUsername) => {
         // Refund Passenger
-        await paymentHandler.refund(
-          passengerUsername,
-          rideId,
-          true,
-          (err, result) => {
-            if (err) {
-              console.log("Refund Failed");
-            }
-          }
-        );
+        await paymentHandler.issueRefund(passengerUsername, rideId, "driver");
 
         let noti = await Noti.create({
           username: passengerUsername,
@@ -310,17 +294,10 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
     // Passenger cancellation
     if (cancelledRideDoc.passengers.includes(username)) {
       // Refund Passenger
-      await paymentHandler.refund(
+      await paymentHandler.issueRefund(
         cancelledRideDoc.ownerUsername,
         rideId,
-        false,
-        (err, result) => {
-          if (err) {
-            res.status(500).send({ error: err });
-          } else {
-            res.status(200).send(result);
-          }
-        }
+        "passenger"
       );
 
       // Notify driver of passenger cancellation
@@ -383,6 +360,7 @@ const addDriverInfoToRides = (rides) => {
         const driver = await User.findOne({
           username: modifiedRides[i].ownerUsername,
         });
+
         const { picUrl, picType, firstName, lastName } = driver;
         modifiedRides[i].picUrl = picUrl;
         modifiedRides[i].picType = picType;

@@ -110,7 +110,7 @@ const getRideHistory = (username) => {
   });
 };
 
-const getMyRideHistory = (authUsername, pageNum, callback) => {
+const getMyRideHistory = (authUsername, pageNum) => {
   return new Promise(async (resolve, reject) => {
     try {
       const ride_res = await Ride.find({
@@ -208,29 +208,6 @@ const postRide = (rideInfo) => {
       return reject(Error(500));
     }
   });
-
-  // Ride.create(rideInfo, (err, result) => {
-  //   if (err) {
-  //     callback(err, null);
-  //   } else {
-  //     // Schedule a job that updates the number of completed rides for each user in the carpool that will occur 2 hours after the carpool begins
-  //     scheduler.scheduleTaskHoursAfterDate(
-  //       `updateCompletedRidesTask.${result._id}`,
-  //       scheduledTasks.updateCompletedRidesTask(result._id),
-  //       rideInfo.date,
-  //       2
-  //     );
-
-  //     // Schedule a job that prompts users in the ride to leave reviews 12 hours after carpool begins
-  //     scheduler.scheduleTaskHoursAfterDate(
-  //       `createNotiToLeaveReviewTask.${result._id}`,
-  //       scheduledTasks.createNotiToLeaveReviewTask(result._id),
-  //       rideInfo.date,
-  //       12
-  //     );
-  //     callback(null, result);
-  //   }
-  // });
 };
 
 const joinRide = (ownerUsername, ride_id, passengerUsername) => {
@@ -262,31 +239,6 @@ const joinRide = (ownerUsername, ride_id, passengerUsername) => {
       return reject(Error(500));
     }
   });
-  // const passenger = await User.findOne({ username: passengerUsername });
-  // const noti = {
-  //   username: ownerUsername,
-  //   msg: `${passengerUsername} has joined your ride`,
-  //   date: new Date(),
-  //   redirectPath: MY_DRIVES_PATH,
-  // };
-  // Ride.findOneAndUpdate(
-  //   { _id: ride_id, seats: { $gte: 1 } },
-  //   { $push: { passengers: passengerUsername }, $inc: { seats: -1 } },
-  //   { new: true },
-  //   (err1, result1) => {
-  //     if (err1) {
-  //       callback(err1, null);
-  //     } else {
-  //       Noti.create(noti, (err2, result2) => {
-  //         if (err2) {
-  //           callback(err2, null);
-  //         } else {
-  //           callback(null, result1);
-  //         }
-  //       });
-  //     }
-  //   }
-  // );
 };
 
 // Cancel a ride, whether the user was a driver or passenger

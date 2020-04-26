@@ -7,7 +7,7 @@
     "docker-dev": "env-cmd -r ./config/.env-cmdrc -e development,development-docker nodemon src/server.js",
     "docker-init_db": "env-cmd -r ./config/.env-cmdrc -e development,development-docker node init_db.js",
     "docker-test": "env-cmd -r ./config/.env-cmdrc -e development,testing-docker jest --watch --runInBand",
-    "start": "env-cmd -r ./config/.env-cmdrc -e development node src/server.js",
+    "start": "env-cmd -r ./config/.env-cmdrc -e development,production node src/server.js",
     "dev": "env-cmd -r ./config/.env-cmdrc -e development nodemon src/server.js",
     "setup": "node ./setup/setup.js",
     "init_db": "env-cmd -r ./config/.env-cmdrc -e development node ./setup/init_db.js",

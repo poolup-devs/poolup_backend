@@ -78,7 +78,7 @@ const signup = async (userInfo) => {
             console.log("Failed to create Stripe Customer: ", err);
           } else {
             newlyRegisteredUser.stripe.customerID = customer.id;
-            resolve(newlyRegisteredUser);
+            return resolve(newlyRegisteredUser);
           }
         }
       );
@@ -102,7 +102,7 @@ const sendVerificationEmail = (email) => {
           var verificationUrl = `http://restapi.${process.env.PRODUCTION_DOMAIN_URL}/users/verify?email=${email}&token=${token}`;
         }
         await Email.sendVerificationEmail(email, verificationUrl);
-        resolve(true);
+        return resolve(true);
       }
     } catch (e) {
       reject(e);
@@ -116,13 +116,13 @@ const verifyEmail = (email) => {
   return new Promise(async (resolve, reject) => {
     const verifiedEmail = await User.findOne({ email });
     if (!verifiedEmail) {
-      resolve(await User.create({ email }));
+      return resolve(await User.create({ email }));
     } else {
       // The email has been verified but the user has not registered yet
       if (!verifiedEmail.isRegistered) {
-        resolve(verifiedEmail);
+        return resolve(verifiedEmail);
       } else {
-        reject({
+        return reject({
           name: "AccountAlreadyRegistered",
           message:
             "The user has already verified their email and registered their account.",
@@ -247,9 +247,9 @@ const checkIfDriver = (username) => {
         }
 
         if (result.driver.isDriver) {
-          resolve(true);
+          return resolve(true);
         } else {
-          resolve(false);
+          return resolve(false);
         }
       }
     );
@@ -345,7 +345,7 @@ const isValidEmail = (email) => {
       if (await User.findOne({ email: email.trim(), isRegistered: true })) {
         return reject("A registered account already exists with this email!");
       }
-      resolve(true);
+      return resolve(true);
     } else {
       return reject("Not a valid email address!");
     }
@@ -388,9 +388,9 @@ const getAboutMe = (username) => {
       if (!user) {
         reject("There does not exist a user with this username.");
       }
-      resolve(user.aboutMe);
+      return resolve(user.aboutMe);
     } catch (e) {
-      reject(e);
+      return reject(e);
     }
   });
 };
@@ -406,7 +406,7 @@ const updateAboutMe = (authUsername, updatedAboutMe) => {
         if (!updatedUser) {
           reject("Could not find user in database when updating about me.");
         }
-        resolve(updatedUser);
+        return resolve(updatedUser);
       })
       .catch((e) => {
         reject(e);
@@ -426,7 +426,7 @@ const parseSchoolFromEmail = (schoolEmail) => {
         // Domain -> School not found in database, so set to null until we can add it later
         return resolve(null);
       }
-      resolve(result._doc.school);
+      return resolve(result._doc.school);
     });
   });
 };
@@ -444,7 +444,7 @@ const getAverageRating = (username) => {
         // minimum is set to 1 (at least for now)
         if (totalRatings >= MIN_TO_DISPLAY_AVERAGE_RATING) {
           const averageRating = (sumOfAllRatings / totalRatings).toFixed(2);
-          resolve(averageRating);
+          return resolve(averageRating);
         } else {
           return reject(
             "User must have at least " +
@@ -480,7 +480,7 @@ const getPublicProfileInfo = (username) => {
       var rating = await getAverageRating(username);
     } catch (e) {
       // Ommit rating if it cannot be calculated due to not having any reviews
-      resolve({
+      return resolve({
         firstName,
         lastName,
         picUrl,
@@ -491,7 +491,7 @@ const getPublicProfileInfo = (username) => {
         aboutMe,
       });
     }
-    resolve({
+    return resolve({
       firstName,
       lastName,
       picUrl,
@@ -510,9 +510,9 @@ const getSchool = (username) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ username });
     if (!user) {
-      reject("User could not be found!");
+      return reject("User could not be found!");
     }
-    resolve(user.school);
+    return resolve(user.school);
   });
 };
 

@@ -16,13 +16,18 @@ console.log(
     " MODE"
 );
 
+console.log(
+  chalk.green("[INIT]: FRONT_END_URL: ") +
+    chalk.yellow(process.env.FRONT_END_URL)
+);
+
 // ////////////////////////////////////////
 // //TESTER
 // ////////////////////////////////////////
 
 app.get("/test-connection", (req, res) => {
   res.send({
-    status: "Connection Successful"
+    status: "Connection Successful",
   });
 });
 
@@ -32,11 +37,13 @@ app.get("/test-connection", (req, res) => {
 checkTransfer();
 
 app.get("/*", (req, res) => {
-  res.status(400).sendFile(path.join(__dirname, "/../public/index.html"), err => {
-    if (err) {
-      res.status(500).send(err);
-    }
-  });
+  res
+    .status(400)
+    .sendFile(path.join(__dirname, "/../public/index.html"), (err) => {
+      if (err) {
+        res.status(500).send(err);
+      }
+    });
 });
 
 checkS3Connection();

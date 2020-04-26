@@ -2,8 +2,7 @@ const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
 const jwt = require("jsonwebtoken");
-const Email = require("../utils/email/email")
-
+const Email = require("../utils/email/email");
 
 // Users require a certain minimum amount of ratings to calculate an average rating
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
@@ -99,12 +98,11 @@ const sendVerificationEmail = (email) => {
         });
         if (process.env.MODE === "STAGING") {
           var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
-        }
-        else {
+        } else {
           var verificationUrl = `http://restapi.${process.env.PRODUCTION_DOMAIN_URL}/users/verify?email=${email}&token=${token}`;
         }
-        await Email.sendVerificationEmail(email, verificationUrl)
-        resolve(true)
+        await Email.sendVerificationEmail(email, verificationUrl);
+        resolve(true);
       }
     } catch (e) {
       reject(e);

@@ -21,8 +21,8 @@
     "MY_RIDES_PATH": "/rider/my-rides",
     "MY_DRIVES_PATH": "/driver/my-drives",
 
-    "DEV_EMAIL": "poolup.devs@gmail.com", 
-    "DEV_PASSWORD": "poolup123"
+    "SENDGRID_USERNAME": <INSERT USERNAME HERE>", 
+    "SENDGRID_PASSWORD": "<INSERT PASSWORD HERE>"
   },
   "test": {
     "MONGODB_URL": "mongodb://localhost/poolup-test"

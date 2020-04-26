@@ -32,10 +32,10 @@ const loadTemplate = (templateName, context) => {
     email
       .render(templateName, context)
       .then((emailTemplate) => {
-        resolve(emailTemplate);
+        return resolve(emailTemplate);
       })
       .catch((err) => {
-        reject(err);
+        return reject(err);
       });
   });
 };
@@ -55,9 +55,9 @@ const sendVerificationEmail = async (email, verificationLink) => {
         subject: "[PoolUp] Please verify your PoolUp account",
         html: emailTemplate,
       };
-      resolve(await sendEmail(mailOptions));
+      return resolve(await sendEmail(mailOptions));
     } catch (e) {
-      reject(e);
+      return reject(e);
     }
   });
 };

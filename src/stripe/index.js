@@ -4,29 +4,26 @@ const router = new express.Router();
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const querystring = require("querystring");
 const tokenParser = require("../utils/token-parser.js");
-const bodyParser = require("body-parser");
-const handlePaymentIntentSucceeded = require("./tool/payment-handler.js")
-  .handlePaymentIntentSucceeded;
 
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
-const rideDB = require("../ride/controller.js");
 const userDB = require("../user/controller.js");
-const TransferDB = require("./transfer/controller.js");
+const paymentHandler = require("./tool/payment-handler.js");
 const driverValidation = require("./tool/driver-info-validation.js");
 
 // Called when Stripe redirects from the account setup
 router.get("/stripe/token", (req, res) => {
+  const FRONT_END_URL = process.env.FRONT_END_URL;
   // Check that the session exists
   if (!req.session.username || !req.session.driverInfo) {
     console.log("Cookie containing driver info is missing");
-    res.status(500).redirect("http://localhost:3006/driver");
+    res.status(500).redirect(FRONT_END_URL + "/driver");
     return;
   }
 
   // Check state value in cookie to make sure it matches previous state
   if (req.session.state != req.query.state) {
     console.log("Stripe state does not match session state.");
-    res.status(500).redirect("http://localhost:3006/driver");
+    res.status(500).redirect(FRONT_END_URL + "/driver");
     return;
   }
 
@@ -60,7 +57,7 @@ router.get("/stripe/token", (req, res) => {
           }
 
           // Redirect to the Driver onboarding page
-          res.redirect("http://localhost:3006/driver/my-drives");
+          res.redirect(FRONT_END_URL + "/driver/my-drives");
         });
       })
       .catch((error) => {
@@ -68,7 +65,7 @@ router.get("/stripe/token", (req, res) => {
       });
   } catch (err) {
     console.log(err);
-    res.status(500).redirect("http://localhost:3006/driver");
+    res.status(500).redirect(FRONT_END_URL + "/driver");
     return;
   }
 });
@@ -77,21 +74,18 @@ router.get("/stripe/token", (req, res) => {
 router.post("/stripe/driver/auth", checkAuth, (req, res) => {
   const authUsername = tokenParser(req.headers.authorization).username;
 
-  userDB.findUserByUsername(authUsername, (err, data) => {
+  userDB.getMyInfo(authUsername, (err, userInfo) => {
     if (err) {
-      res.status(500).json({
+      res.status(500).send({
         error: err,
       });
       return;
     }
 
-    //Get the user info from the database request
-    const userInfo = data[0];
-
     // Check if a driver already has a stripe account ID
     // If they do then that means they already registered as a drive
     if (userInfo.driver.isDriver) {
-      res.status(400).json({
+      res.status(400).send({
         error: "User is already registered as a driver",
       });
       return;
@@ -112,7 +106,7 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
     // Check that all the fields of the driverInfo object are populated
     if (!driverValidation.containsDriverInfo(driverInfo)) {
       console.log("Invalid driver info");
-      res.json(400, {
+      res.send(400, {
         error:
           "Invalid driver information; check that all fields are populated",
       });
@@ -137,7 +131,7 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
       "stripe_user[product_description]": "PoolUp Driver",
     };
 
-    res.status(200).json({
+    res.status(200).send({
       redirectUrl:
         "https://connect.stripe.com/express/oauth/authorize?" +
         querystring.stringify(parameters),
@@ -151,107 +145,31 @@ router.get("/stripe/public-key", (req, res) => {
   res.status(200).send({ publicKey: process.env.STRIPE_PUBLIC_KEY });
 });
 
-// Create Account
-router.post("/stripe/account", (req, res) => {
-  const country = req.body.country;
-  const email = req.body.email;
-
-  stripe.accounts.create(
-    {
-      type: "custom",
-      country: country,
-      email: email,
-      requested_capabilities: ["card_payments", "transfers"],
-    },
-    function (err, customer) {
-      if (err) {
-        res.status(500).json({ error: err });
-      } else {
-        res.status(200).json({ account: customer });
-      }
-    }
-  );
-});
-
-// Create Customer
-router.post("/stripe/customer", (req, res) => {
-  stripe.customers.create(
-    {
-      description: "Some Customer",
-    },
-    function (err, customer) {
-      if (err) {
-        res.status(500).json({ error: err });
-      } else {
-        res.status(200).json({ customer: customer });
-      }
-    }
-  );
+// Send back Application Fee
+router.get("/stripe/application-fee", (req, res) => {
+  res
+    .status(200)
+    .send({ applicationFee: paymentHandler.getApplicationFeePercentage() });
 });
 
 // Create a Payment Intent
-router.post("/stripe/create-payment-intent", (req, res) => {
+router.post("/stripe/create-payment-intent", async (req, res) => {
   const rideID = req.body.rideID;
-  const spotsToBePurchased = req.body.spotsToBePurchased;
-  const riderUsername = req.body.username;
+  const requestID = req.body.requestID;
+  const riderUsername = req.body.riderUsername;
   const currency = "usd";
 
-  // Get Ride Details
-  rideDB.rideDetails(rideID, (err, ride) => {
-    if (err) {
-      res.status(500).json({ error: err });
-      return;
-    } else if (!ride) {
-      res.status(404).json({ error: "Ride not found: " + rideID });
-      return;
-    }
-
-    // Get Rider Details
-    userDB.findUserByUsername(riderUsername, (err, rider) => {
-      if (err) {
-        res.status(500).json({ error: err });
-        return;
-      }
-
-      // Get Driver Details
-      userDB.findUserByUsername(ride.ownerUsername, (err, driver) => {
-        if (err) {
-          res.status(500).json({ error: err });
-          return;
-        }
-
-        var amount = ride.price * spotsToBePurchased * 100;
-
-        // Create Payment Intent
-        stripe.paymentIntents.create(
-          {
-            amount: amount,
-            currency: currency,
-            payment_method_types: ["card"],
-            customer: rider.stripe.customerID,
-            metadata: {
-              rideID: rideID,
-              riderUsername: riderUsername,
-              driverStripeAcct: driver.stripe.accountID,
-            },
-            receipt_email: rider.email,
-          },
-          function (err, paymentIntent) {
-            if (err) {
-              console.log(err);
-              res.status(500).json({ error: err });
-              return;
-            } else {
-              res
-                .status(200)
-                .json({ clientSecret: paymentIntent.client_secret });
-              return;
-            }
-          }
-        );
-      });
-    });
-  });
+  try {
+    const clientSecret = await paymentHandler.createPaymentIntent(
+      rideID,
+      requestID,
+      riderUsername,
+      currency
+    );
+    res.status(200).send({ clientSecret: clientSecret });
+  } catch (err) {
+    res.status(err.status).send(err.message);
+  }
 });
 
 // Webhook, handles events sent from Stripe
@@ -287,7 +205,23 @@ router.post("/stripe/webhook", async (req, res) => {
 
   if (eventType === "payment_intent.succeeded") {
     // Fulfill any orders, e-mail receipts, etc
-    handlePaymentIntentSucceeded(data);
+    // Notify User
+    try {
+      await paymentHandler.handlePaymentIntentSucceeded(data);
+    } catch (e) {
+      console.log(e);
+      // Cancel Payment Intent
+      // Notify Frontend Webhook
+      // Notify User
+      // TODO what else can fail and how do we handle this
+      // Cancel PaymentIntent and
+      //  stripe.paymentIntents.cancel(paymentIntent.id, function (err, _) {
+      //   if (err != nil) {
+      //     console.log("Cancel PaymentIntent Failed");
+      //     console.log(err);
+      //   }
+      // });
+    }
   }
 
   if (eventType === "payment_intent.payment_failed") {
@@ -295,30 +229,51 @@ router.post("/stripe/webhook", async (req, res) => {
     console.log("❌ Payment failed.");
   }
 
-  res.sendStatus(200);
+  res.send(200);
 });
 
-// Tester Endpoint
-router.get("/stripe/test", async (req, res) => {
-  try {
-    const testDate = new Date();
-    testDate.setDate(testDate.getDate() - 1);
-    const testID = "1";
-    const testoUsername = "oef";
-    const testcUsername = "asdf";
+// =====================
+// Development Endpoints
+// =====================
 
-    const test = await TransferDB.createTransfer({
-      paymentIntentID: "1234",
-      targetDate: testDate,
-      amount: 100,
-      rideID: "",
-      destination: "cus_GcWwbWaTlAojQS",
-      customerUsername: "adf",
-    });
-    // const test = await TransferDB.checkExpired();
-    res.send(test).status(200);
-  } catch (e) {
-    res.send(e).status(400);
+// Trigger Payment Intent Success Flow
+router.post("/stripe/dev/triggerSuccessfulPayment", async (req, res) => {
+  try {
+    const paymentIntent = req.body;
+    await paymentHandler.handlePaymentIntentSucceeded(paymentIntent);
+    res.sendStatus(200);
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
+
+// Trigger Refund
+router.post("/stripe/dev/triggerRefund", async (req, res) => {
+  try {
+    const riderUsername = req.body.riderUsername;
+    const rideID = req.body.rideID;
+    const responsibleForCancellation = req.body.responsibleForCancellation;
+    await paymentHandler.issueRefund(
+      riderUsername,
+      rideID,
+      responsibleForCancellation
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    res.status(err.status).send(err.message);
+  }
+});
+
+// Create Customer
+router.post("/stripe/dev/customer", async (req, res) => {
+  try {
+    const data = await stripe.customers.create({
+      description: "Some Customer",
+    });
+    res.status(200).send(data);
+  } catch (err) {
+    res.status(err.status).send(err.message);
+  }
+});
+
 module.exports = router;

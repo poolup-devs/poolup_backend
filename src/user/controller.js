@@ -2,8 +2,7 @@ const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
 const jwt = require("jsonwebtoken");
-const Email = require("../utils/email/email")
-
+const Email = require("../utils/email/email");
 
 // Users require a certain minimum amount of ratings to calculate an average rating
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
@@ -99,12 +98,11 @@ const sendVerificationEmail = (email) => {
         });
         if (process.env.MODE === "STAGING") {
           var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
-        }
-        else {
+        } else {
           var verificationUrl = `http://restapi.${process.env.PRODUCTION_DOMAIN_URL}/users/verify?email=${email}&token=${token}`;
         }
-        await Email.sendVerificationEmail(email, verificationUrl)
-        resolve(true)
+        await Email.sendVerificationEmail(email, verificationUrl);
+        resolve(true);
       }
     } catch (e) {
       reject(e);
@@ -144,13 +142,10 @@ const findUserByEmail = (email, callback) => {
   });
 };
 
-const findUserByUsername = (username, callback) => {
-  User.find({ username }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
+const findUserByUsername = (username) => {
+  return new Promise(async (resolve, reject) => {
+    userInfo = await User.findOne({ username });
+    resolve(userInfo);
   });
 };
 
@@ -176,6 +171,7 @@ const getMyInfo = (authUsername, callback) => {
         "email",
         "createdAt",
         "picUrl",
+        "stripe",
       ];
       const result_ = {};
 
@@ -220,27 +216,16 @@ const uploadPicUrl = (username, picUrl, picType, callback) => {
   );
 };
 
-const getPicUrl = (username, callback) => {
-  findUserByUsername(username, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else if (result.length === 0) {
-      callback(
-        {
-          message: "ERROR: no result; potentially wrong username",
-        },
-        null
-      );
-    } else if (result[0].picUrl === undefined) {
-      callback(
-        {
-          message: "ERROR: user's profile picture undefined",
-        },
-        null
-      );
-    } else {
-      callback(null, result[0].picUrl);
+const getPicUrl = (username) => {
+  return new Promise(async (resolve, reject) => {
+    const userInfo = await findUserByUsername(username);
+    if (!userInfo) {
+      return reject("ERROR: no result; potentially wrong username");
+    } else if (userInfo.picUrl === undefined) {
+      return reject("ERROR: user's profile picture undefined");
     }
+
+    return resolve(userInfo.picUrl);
   });
 };
 

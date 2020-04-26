@@ -153,6 +153,11 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 |   |   |    index.js
 |   |   +----tool
 |   |           driver-info-validation.js
+|   |           check-transfer.js
+|   |           payment-handler.js
+|   |   +----transfer
+|   |           controller.js
+|   |           transfer.js
 |   |
 |   +---user
 |   |       controller.js
@@ -242,47 +247,40 @@ There must be a white space between the string "Bearer" and the token string
 ---
 
 ## Scheduling Tasks
+
 All scheduled tasks should be in /tasks/scheduledTasks.js, with unit tests in /tests/tasks/scheduledTasks.test.js
 Operations
--  `void scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)`
-	- Schedules a task to *run once*, X hours after a certain date
-		-  **uniqueTaskName**: uniquely identify the task in the case you ever need to cancel the task
-		-  **task**: function pointer of the task to schedule
-		-  **date**: JavaScript Date object
-		-  **hours**: number of hours after specified date
--  `cancelTasksAssociatedWithRide(rideId)`
-	- Clean up all tasks associated with a ride
-	- This will clean up tasks named with the following format: **taskFunctionName:{rideId}**
-		- ex: **updateCompletedRidesTask:{rideId}** or **promptLeaveAReviewTask:{rideId}**
-	- This can be used to clean up scheduled email reminders and web notifications for rides that have been cancellled 
--  `bool cancelTask(taskName)`
-	- Cancel a task, returns a Promise that resolves into a boolean value 
 
+- `void scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)` - Schedules a task to _run once_, X hours after a certain date - **uniqueTaskName**: uniquely identify the task in the case you ever need to cancel the task - **task**: function pointer of the task to schedule - **date**: JavaScript Date object - **hours**: number of hours after specified date
+- `cancelTasksAssociatedWithRide(rideId)` - Clean up all tasks associated with a ride - This will clean up tasks named with the following format: **taskFunctionName:{rideId}** - ex: **updateCompletedRidesTask:{rideId}** or **promptLeaveAReviewTask:{rideId}** - This can be used to clean up scheduled email reminders and web notifications for rides that have been cancellled
+- `bool cancelTask(taskName)` - Cancel a task, returns a Promise that resolves into a boolean value
 
 ---
 
-## Sending Email Notifications 
-Emails are sent using nodemailer and rendered dynamically using handlebars. 
-The email templates can be found at /src/utils/email/email_templates. 
+## Sending Email Notifications
 
-There exists helper methods in /src/utils/email/email.js that can be used to send out emails: 
+Emails are sent using nodemailer and rendered dynamically using handlebars.
+The email templates can be found at /src/utils/email/email_templates.
+
+There exists helper methods in /src/utils/email/email.js that can be used to send out emails:
+
 - `sendEmail(mailOptions)`
-    - Sends an email, currently using poolup.devs@gmail.com 
-        - **mailOptions**: object containing basic email properties, including from, to, subject, and html email template 
-            ```
-              {
-                from: '"PoolUp" <poolup.devs@gmail.com>', 
-                to: email, 
-                subject: '[PoolUp] Please verify your PoolUp account', 
-                html: emailTemplate
-              }
-            ```
+  - Sends an email, currently using poolup.devs@gmail.com
+    - **mailOptions**: object containing basic email properties, including from, to, subject, and html email template
+      ```
+        {
+          from: '"PoolUp" <poolup.devs@gmail.com>',
+          to: email,
+          subject: '[PoolUp] Please verify your PoolUp account',
+          html: emailTemplate
+        }
+      ```
 - `loadTemplate(templateFileName, context)`
-    - Dynamically loads an email template, substituting values
-        - **templateFileName**: name of the file in email_templates directory, eg. "email_verification.hbs" 
-        - **context**: object containing variable substitutions 
+  - Dynamically loads an email template, substituting values
+    - **templateFileName**: name of the file in email_templates directory, eg. "email_verification.hbs"
+    - **context**: object containing variable substitutions
 
---- 
+---
 
 ## Models & API Endpoints Documentation
 
@@ -341,7 +339,7 @@ Models:
 | /users/my-info               | GET         | [Get my account's information](#my-info)                           |
 | /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
 | /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
-| /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                   |
+| /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                      |
 | /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
 | /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |
 | /users/driverStatus          | GET         | [Check if a user is a driver](#check-if-driver)                    |
@@ -375,20 +373,20 @@ DOES NOT require a Bearer token; after this signup, the authToken contains infor
 }
 ```
 
-----
+---
 
 ### User Signup
 
 POST request
 
-- Permanently registers an account in the database and returns an authentication token. 
-- Must provide an email, first name, last name, and password of at least 8 digits. 
-- The `username` property is updated by parsing the email. 
-- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created. 
-    - To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school 
-    - The associations are stored in a JSON file in /setup/schoolEmails.json and imported periodically to the database via the init_db command. 
-        - Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"} 
-        - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu"
+- Permanently registers an account in the database and returns an authentication token.
+- Must provide an email, first name, last name, and password of at least 8 digits.
+- The `username` property is updated by parsing the email.
+- The `school` property is updated by parsing the email. If the school cannot be identified during sign-up, the field is set to **null**, and the account will still be created.
+  - To perform email parsing, a Schools collection is assumed to exist in the database that contains the two properties: emailDomain and school
+  - The associations are stored in a JSON file in /setup/schoolEmails.json and imported periodically to the database via the init_db command.
+    - Example of JSON entry: {"emailDomain": "ucla", "school": "UCLA"}
+    - This entry identifies the school 'UCLA' for the emails: "example@g.ucla.edu" and "example@ucla.edu"
 - A default profile pic of Bruinbear with random color is assigned
 
 **Body**
@@ -396,8 +394,8 @@ POST request
 ```
 {
     "email": "elin0467@g.ucla.edu",
-    "firstName": "Evan", 
-    "lastName": "Lin", 
+    "firstName": "Evan",
+    "lastName": "Lin",
     "password": "password"
 }
 ```
@@ -440,49 +438,50 @@ POST request
 }
 ```
 
-- 201 Created if the user was successfully registered into the database. 
-- 500 status if there was a database error while registering the user, or if the user skipped the email verification step. 
+- 201 Created if the user was successfully registered into the database.
+- 500 status if there was a database error while registering the user, or if the user skipped the email verification step.
 
 ---
 
 ### Email Validation
 
-GET request 
+GET request
 
 **params**
-- email 
 
-**example** 
+- email
+
+**example**
+
 - localhost:3000/users/emailValidation?email=bin315a1@g.ucla.edu
 
 **return value**
+
 - 200 status, array of user objects with that email
 
+### Send Verification Email
 
+GET request
 
-### Send Verification Email 
+This request first verifies whether the email is valid, returning an error message if not. It uses the following criteria to determine validity:
 
-GET request 
-
-This request first verifies whether the email is valid, returning an error message if not. It uses the following criteria to determine validity: 
-1. **Email is not unique** -> "An account already exists with this email!" 
-2. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!" 
+1. **Email is not unique** -> "An account already exists with this email!"
+2. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!"
 3. **Email is not a student email** -> "Not an .edu email address!"
 4. **Email is associated with a registered account** -> "A registered account already exists with this email!"
 
+If the email is valid, the endpoint sends a verification email to the user.
 
-If the email is valid, the endpoint sends a verification email to the user. 
-
-This endpoint can be called multiple times to resend the verification email. 
+This endpoint can be called multiple times to resend the verification email.
 
 **params**
 
-email 
+email
 
-**return value** 
+**return value**
 
 - 200 response if the email was sent
-- 500 reponse otherwise, with the error message attached 
+- 500 reponse otherwise, with the error message attached
 
 ---
 
@@ -490,8 +489,8 @@ email
 
 GET request
 
-A URL containing this endpoint is sent to the user when they receive the verification email. You do not need to manually call this endpoint. 
-The database stores the user's email for 30 minutes until the user completes account registration. 
+A URL containing this endpoint is sent to the user when they receive the verification email. You do not need to manually call this endpoint.
+The database stores the user's email for 30 minutes until the user completes account registration.
 
 **params**
 
@@ -503,7 +502,7 @@ localhost:3000/users/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpb
 
 **return value**
 
-- 200 status, returns a redirection to https://poolup.co/signup/3 to proceed with Account Information registration. 
+- 200 status, returns a redirection to https://poolup.co/signup/3 to proceed with Account Information registration.
 
 ---
 
@@ -563,7 +562,7 @@ localhost:3000/users/phoneNumberValidation?phoneNumber=1231231234
 
 PATCH request
 
-Upload a profile picture for the currently logged in user. 
+Upload a profile picture for the currently logged in user.
 
 **Body**
 
@@ -829,22 +828,22 @@ GET request
 ```
 
 ---
-### Get about me 
+
+### Get about me
 
 GET request
 
-- Return a user's about me description, returns {} if one does not exist 
+- Return a user's about me description, returns {} if one does not exist
 
-**query** 
-username 
+**query**
+username
 
 **example**
 localhost:3000/users/get-about-me?username=elin4046
 
-
-**return value** 
-200 if successful 
-500 to indicate database error 
+**return value**
+200 if successful
+500 to indicate database error
 
 ---
 
@@ -1319,61 +1318,22 @@ PUT request
 
 - Whether the logged in user is a driver or a passenger in the ride is abstracted away.
 
-- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs:
-	1. The ride is removed from the Ride collection.
-	2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
+- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs: 1. The ride is removed from the Ride collection. 2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
 
-  
-- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs:
-	1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`.
-		- An example of a notification received by a passenger in the ride is the following:
-			```
-			{
-				viewed: false,
-				_id: 5e6532be23cf21496470c042,
-				username: 'passenger1',
-				msg: 'driverUsername has cancelled your ride',
-				senderEmail: 'driverUsername@ucla.edu',
-				date: 2020-03-08T18:00:30.136Z,
-				__v: 0,
-				additionalProperties: {
-					cancellationReason: 'No longer traveling'
-				}
-			}
-			```
-	2. The ride is removed from the Ride collection.
-	3. The driver receives the following penalty:
-		-  `ridesCancelled` property is incremented
+- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs: 1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`. - An example of a notification received by a passenger in the ride is the following:
+  `{ viewed: false, _id: 5e6532be23cf21496470c042, username: 'passenger1', msg: 'driverUsername has cancelled your ride', senderEmail: 'driverUsername@ucla.edu', date: 2020-03-08T18:00:30.136Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling' } }` 2. The ride is removed from the Ride collection. 3. The driver receives the following penalty: - `ridesCancelled` property is incremented
 
-- In the event that a **passenger** cancels a ride, the following occurs:
-	1. The driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`.
-		- An example of a notification received by the driver is the following:
-			```
-			{
-				viewed: false,
-				_id: 5e6534144a54ab39342752d0,
-				username: 'driverUsername',
-				msg: 'passenger1 has cancelled your ride',
-				senderEmail: 'passenger1@ucla.edu',
-				date: 2020-03-08T18:06:12.834Z,
-				__v: 0,
-					additionalProperties: {
-						cancellationReason: 'No longer traveling',
-						messageToDriver: "Sorry I can't make it!!!"
-					}
-			}
-			```
-    2. All other passengers, if any, are notified about the cancellation. This notification ONLY includes the additional property: `cancellationReason`.  
-	3. The passenger who cancelled is removed from the ride, and a new spot is freed up.
-	4. The passenger who cancelled receive the following penalty:
-		-  `ridesCancelled` property is incremented
+- In the event that a **passenger** cancels a ride, the following occurs: 1. The driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`. - An example of a notification received by the driver is the following:
+  `{ viewed: false, _id: 5e6534144a54ab39342752d0, username: 'driverUsername', msg: 'passenger1 has cancelled your ride', senderEmail: 'passenger1@ucla.edu', date: 2020-03-08T18:06:12.834Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } }`
+  2. All other passengers, if any, are notified about the cancellation. This notification ONLY includes the additional property: `cancellationReason`.
+     3. The passenger who cancelled is removed from the ride, and a new spot is freed up. 4. The passenger who cancelled receive the following penalty: - `ridesCancelled` property is incremented
 
 **body**
 
 - `ride`: ride object that the logged in user is trying to cancel
 - `cancellationReason`: String when the user selects from a drop-down of cancellation reasons
-- `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver 
-    - optional field, omit from body if user does not type any message into the form
+- `messageToDriver`: in the case of a passsenger cancellation, send a message to the driver
+  - optional field, omit from body if user does not type any message into the form
 
 ```
 
@@ -1489,15 +1449,18 @@ The ride object that the user is trying to delete (The ride object's owner has t
 
 ---
 
-### Leave a review notifications 
-These notifications are automatically sent to the driver and all of his passengers 12 hours after the ride begins. 
+### Leave a review notifications
+
+These notifications are automatically sent to the driver and all of his passengers 12 hours after the ride begins.
 When a user clicks on this notification, instead of being redirected to a page, a form appears for them to fill out.
 
-The "Leave a review" notification contains the following additionalProperties: `rideId` and `usersToReview`. 
-- The `usersToReview` property contains an array of users that can be reviewed for the recipient of the notification. 
+The "Leave a review" notification contains the following additionalProperties: `rideId` and `usersToReview`.
 
-- For example, a driver who rode with two passengers, user2 and user3, would receive the following notification. 
-``` 
+- The `usersToReview` property contains an array of users that can be reviewed for the recipient of the notification.
+
+- For example, a driver who rode with two passengers, user2 and user3, would receive the following notification.
+
+```
 {
     "_id" : ObjectId("5e98c4f1d1f2f342c4e30c94"),
     "viewed" : false,
@@ -1507,13 +1470,13 @@ The "Leave a review" notification contains the following additionalProperties: `
     "__v" : 0,
     "additionalProperties" : {
         "rideId" : ObjectId("5e98c4bdd1f2f342c4e30c93"),
-        "usersToReview" : [ 
+        "usersToReview" : [
             {
                 "username" : "user2",
                 "firstName" : "user2",
                 "picUrl" : "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_pink.png",
                 "picType" : "png"
-            }, 
+            },
             {
                 "username" : "user3",
                 "firstName" : "user3",
@@ -1525,14 +1488,15 @@ The "Leave a review" notification contains the following additionalProperties: `
 }
 
 ```
+
 ---
 
 ### API Endpoints
 
-| url                      | HTTP Method | description                                                         |
-| ------------------------ | ----------- | ------------------------------------------------------------------- |
-| /notis/noti  | GET       | [Get user's notifications](#get-user's-notifications)                             |
-| /notis/view  | PUT       | [View the notification](#view-the-notification)                                   |
+| url         | HTTP Method | description                                           |
+| ----------- | ----------- | ----------------------------------------------------- |
+| /notis/noti | GET         | [Get user's notifications](#get-user's-notifications) |
+| /notis/view | PUT         | [View the notification](#view-the-notification)       |
 
 ---
 
@@ -1548,7 +1512,7 @@ pageNum begins from 1
 
 **return value**
 
-200 status; result is sorted in 
+200 status; result is sorted in
 
 ```
 
@@ -1875,18 +1839,18 @@ GET request
 
 ### Schema
 
-| column      | type     | required | properties |
-| ----------- | -------- | -------- | ---------- |
-| rideID      | ObjectID | Yes      |            |
-| requesterUsername    | String   | Yes      |            |
+| column            | type     | required | properties |
+| ----------------- | -------- | -------- | ---------- |
+| rideID            | ObjectID | Yes      |            |
+| requesterUsername | String   | Yes      |            |
 | requesteeUsername | String   | Yes      |            |
-| status      | String   | Yes      |            |
-| archived    | Boolean  | Yes      |            |
-| reminders   | Number   | No       |            |
-| carryOn     | Number   | No       |            |
-| luggage     | Number   | No       |            |
-| msg         | String   | No       |            |
-| date        | Date     | No       |            |
+| status            | String   | Yes      |            |
+| archived          | Boolean  | Yes      |            |
+| reminders         | Number   | No       |            |
+| carryOn           | Number   | No       |            |
+| luggage           | Number   | No       |            |
+| msg               | String   | No       |            |
+| date              | Date     | No       |            |
 
 ### API Endpoints
 
@@ -1894,7 +1858,7 @@ GET request
 | ------------------ | ----------- | ----------------------------------------- |
 | /request/info      | GET         | [Request Information](#request-info)      |
 | /request/remind    | GET         | [Remind Driver](#remind-driver)           |
-| /request/requester    | GET         | [Requester Requests](#requester-requests)       |
+| /request/requester | GET         | [Requester Requests](#requester-requests) |
 | /request/requestee | GET         | [Requestee Requests](#requestee-requests) |
 | /request/new       | POST        | [Create New Request](#create-request)     |
 | /request/approve   | PUT         | [Approve Request](#approve-request)       |
@@ -1908,6 +1872,7 @@ GET request
 - Approved: This status reflects the state where a driver has approved an already existing user's request
 - Denied: This status reflects the state where a driver has denied an already existing user's request
 - Cancelled: This status reflects the state where a rider has cancelled his initial request
+- Paid: This status reflects the state where a rider has gone through the payment flow successfully. This is automatically set when the payment flow is sucessful. It also automatically archives the request.
 
 ### Request Info
 
@@ -2108,12 +2073,46 @@ PUT request
 
 ### Stripe Model
 
+### Stripe Hyperparameters
+
+- Application Fee
+
+  - The total of anything we want to add on top of base amount charged. Includes what we want in order to cover Stripe and our profit.
+  - Modify the env var: 0 < STRIPE_APPLICATION_FEE < 1 (decimal)
+
+- Flaker Limit
+
+  - Threshold to determine whether a cancellation was cancelled in advance or if it was last minute.
+  - If the user cancelled x hours before departure time, if x > FLAKER_LIMIT then it was cancelled in advance, otherwise it was cancelled last minute
+  - Modify the env var: 0 < FLAKER_LIMIT (hours)
+
+- Indecision Limit
+
+  - Riders who cancel in advance will receive a full refund, otherwise INDECISION_LIMIT determines if a rider who cancelled last minute will get a refund of partial refund.
+  - if the rider cancelled within x hours of booking and x <= INDECISION_LIMIT they get a full refund, otherwise they get a partial refund
+  - Modify the env var: 0 < INDECISION_LIMIT < FLAKER_LIMIT (minutes)
+
+- Cancellation Policy
+  - Full Refund - Service Fee in most cases except - Driver Cancellation: Full Refund - Cancelling Last Minute: Partial Refund
+    Transfers
+
+### Internal Transfer Statuses
+
+1. scheduled
+2. blocked
+3. completed
+4. refunded
+
 ### API Endpoints
 
-| url                 | HTTP Method | description                                                                                                          |
-| ------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
-| /stripe/token       | GET         | [Process Stripe account authoriation code and complete driver onboarding](#Process-Stripe-Account-Authoriation-Code) |
-| /stripe/driver/auth | POST        | [Prepare for redirect to Stripe express account signup](#Prepare-for-redirect-to-stripe)                             |
+| url                           | HTTP Method | description                                                                                                          |
+| ----------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| /stripe/token                 | GET         | [Process Stripe account authoriation code and complete driver onboarding](#Process-Stripe-Account-Authoriation-Code) |
+| /stripe/driver/auth           | POST        | [Prepare for redirect to Stripe express account signup](#Prepare-for-redirect-to-stripe)                             |
+| /stripe/public-key            | GET         | [Obtain Stripe Public Key](#obtain-stripe-public-key)                                                                |
+| /stripe/application-fee       | GET         | [Obtain latest Application Fee](#obtain-application-fee)                                                             |
+| /stripe/create-payment-intent | POST        | [Create Payment Intent](#create-payment-intent)                                                                      |
+| /stripe/webhook               | POST        | [Stripe Webhook](#stripe-webhook)                                                                                    |
 
 ---
 
@@ -2170,6 +2169,72 @@ POST request
   - Redirects page to /driver/my-drives
 - On Error
   - Redirects page to /driver
+
+---
+
+### Obtain Stripe Public Key
+
+GET request
+
+- Used to make direct stripe api requests
+
+**return value**
+
+```
+    {
+        publicKey: <publicKey here>
+    }
+```
+
+---
+
+### Obtain Application Fee
+
+GET request
+
+- Used for stripe checkout
+
+**return value**
+
+```
+    {
+        applicationFee: <applicationFee here>
+    }
+```
+
+---
+
+### Create Payment Intent
+
+GET request
+
+- Used to create a payment intent
+
+**body**
+
+```
+{
+    rideID: <String>,
+    requestID: <String>,
+    riderUsername: <String>
+}
+```
+
+**return value**
+
+```
+    {
+        clientSecret: <clientSecret here>
+    }
+```
+
+---
+
+### Stripe Webhook
+
+POST request
+
+- Needs to be configured on Stripe Console, Stripe will send events to this endpoint, used to trigger successful payment from customer.
 
 ---
 

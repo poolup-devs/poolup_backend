@@ -1,53 +1,90 @@
 const Transfer = require("./transfer.js").Transfer;
+const Error = require("../../utils/error-model");
 
-const createTransfer = (
-  targetDate,
-  amount,
-  rideID,
-  destination,
-  customerUsername
-) => {
+// createTransfer: creates a new transfer object
+const createTransfer = (transferInfo) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const newTransfer = await new Transfer({
-        targetDate,
-        amount,
-        rideID,
-        destination,
-        customerUsername,
-        date: new Date()
-      }).save();
-      resolve(newTransfer);
-    } catch (e) {
-      reject();
+      const newTransfer = await new Transfer(transferInfo).save();
+      return resolve(newTransfer);
+    } catch (err) {
+      return reject(Error(500), err);
     }
   });
 };
 
+// checkExpired: triggers transfer if scheduled transfer has expired
 const checkExpired = () => {
   return new Promise(async (resolve, reject) => {
     try {
-      await Transfer.find({
+      const transfers = await Transfer.find({
         targetDate: { $lt: new Date() },
-        expired: false
-      }).then(Transfers => {
-        if (Transfers.length === 0) {
-          resolve(Transfers);
-        }
-        const res = Transfers;
-        res.forEach(transfer => {
-          transfer.expired = true;
-          transfer.save();
-        });
-        resolve(res);
+        status: "scheduled",
+        expired: false,
       });
-    } catch (e) {
-      reject();
+
+      if (transfers.length === 0) {
+        return resolve(transfers);
+      }
+
+      transfers.forEach((transfer) => {
+        transfer.expired = true;
+        transfer.save();
+      });
+
+      return resolve(transfers);
+    } catch (err) {
+      return reject(Error(500), err);
+    }
+  });
+};
+
+// updateTransferStatus: sets the status of a transfer to a new status
+const updateTransferStatus = (transferID, newStatus) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const filter = { _id: transferID };
+      const update = { $set: { status: newStatus } };
+      const options = { new: true };
+
+      // Validate Transfer
+      const transferDetails = await Transfer.findOne(filter);
+
+      switch (transferDetails.status) {
+        case "scheduled": {
+          break;
+        }
+        case "blocked": {
+          if (newStatus === "completed") {
+            throw "Transfer needs to be in a 'scheduled' status before being able to refund or complete";
+          }
+          break;
+        }
+        case "refunded": {
+          throw "Transfer cannot be changed after refunded.";
+          break;
+        }
+        case "completed": {
+          throw "Transfer cannot be changed after completion.";
+          break;
+        }
+        default: {
+          errFlag = 400;
+          throw "Invalid Status to Update";
+        }
+      }
+
+      // Update Status
+      const res = await Transfer.findOneAndUpdate(filter, update, options);
+      return resolve(res);
+    } catch (err) {
+      return reject(Error(500), err);
     }
   });
 };
 
 module.exports = {
   checkExpired,
-  createTransfer
+  createTransfer,
+  updateTransferStatus,
 };

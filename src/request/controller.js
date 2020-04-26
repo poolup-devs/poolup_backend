@@ -244,6 +244,24 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             });
             break;
           }
+          case "paid": {
+            if (authUsername != request_res.requesterUsername) {
+              errFlag = 401;
+              throw "Unauthorized request action: You are not the requester";
+            }
+            request_upd = await Request.findOneAndUpdate(
+              filter,
+              update,
+              options
+            );
+            await Noti.create({
+              username: request_upd.requesteeUsername,
+              msg: `${request_upd.requesterUsername}'s request for your ride has been paid`,
+              date: new Date(),
+              redirectPath: MY_DRIVES_PATH,
+            });
+            break;
+          }
           default: {
             errFlag = 400;
             throw "invalid status to update";

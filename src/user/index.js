@@ -18,7 +18,6 @@ const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
 const ACCEPTED_EMAIL = process.env.ACCEPTED_EMAIL;
 const STRIPE_CLIENT_ID = process.env.STRIPE_CLIENT_ID;
 
-
 //User Login
 router.post("/users/login", async (req, res) => {
   try {
@@ -115,14 +114,13 @@ router.get("/users/verify", async (req, res) => {
 });
 
 // Validate Username
-router.get("/users/usernameValidation", (req, res) => {
-  db.findUserByUsername(req.query.username, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(200).send(data);
-    }
-  });
+router.get("/users/usernameValidation", async (req, res) => {
+  try {
+    const data = await db.findUserByUsername(req.query.username);
+    res.status(200).send(data);
+  } catch (e) {
+    res.status(500).json({ error: e });
+  }
 });
 
 //Validate User Email
@@ -160,15 +158,14 @@ router.get("/users/my-info", checkAuth, (req, res) => {
 });
 
 //Get a User's Info
-router.get("/users/info", checkAuth, (req, res) => {
-  const userName = req.query.username;
-  db.findUserByUsername(userName, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(200).send(data);
-    }
-  });
+router.get("/users/info", checkAuth, async (req, res) => {
+  try {
+    const userName = req.query.username;
+    const data = await db.findUserByUsername(userName);
+    res.status(200).send(data);
+  } catch (e) {
+    res.status(500).json({ error: e });
+  }
 });
 
 //Uploading User Profile Image
@@ -193,30 +190,22 @@ router.patch("/users/upload-profile-pic", checkAuth, (req, res) => {
       const username = tokenParser(req.headers.authorization).username;
       const fileName = `bucketFolder/${username}-pic`;
 
-      db.findUserByUsername(username, async (err, result) => {
-        if (err) return res.sendStatus(500);
-        else {
-          try {
-            await deleteFile(fileName, result.picType);
-            const data = await uploadFile(buffer, fileName, type);
+      result = await db.findUserByUsername(username);
+      await deleteFile(fileName, result.picType);
+      const data = await uploadFile(buffer, fileName, type);
 
-            db.uploadPicUrl(
-              username,
-              data.Location,
-              type.ext,
-              (err, result) => {
-                if (err) {
-                  return res.sendStatus(501);
-                } else {
-                  return res.status(200).send(result);
-                }
-              }
-            );
-          } catch (err) {
-            return res.status(500);
+      await db.uploadPicUrl(
+        username,
+        data.Location,
+        type.ext,
+        (err, result) => {
+          if (err) {
+            return res.sendStatus(501);
+          } else {
+            return res.status(200).send(result);
           }
         }
-      });
+      );
     } catch (error) {
       return res.status(400).send(error);
     }
@@ -224,14 +213,13 @@ router.patch("/users/upload-profile-pic", checkAuth, (req, res) => {
 });
 
 //Get a User's Profile Image
-router.get("/users/usersPic", checkAuth, (req, res) => {
-  db.getPicUrl(req.query.username, (err, data) => {
-    if (err) {
-      res.status(500).send(err);
-    } else {
-      res.status(200).send(data);
-    }
-  });
+router.get("/users/usersPic", checkAuth, async (req, res) => {
+  try {
+    const data = await db.getPicUrl(req.query.username);
+    res.status(200).send(data);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
 
 //Update a User's info (first name, last name, or phoneNumber)

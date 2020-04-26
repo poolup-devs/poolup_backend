@@ -1,8 +1,6 @@
 const express = require("express");
 const router = new express.Router();
 const mongoose = require("mongoose");
-
-//const Ride = require("./ride");
 const db = require("./controller.js");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
@@ -117,6 +115,7 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
       cancellationReason,
       messageToDriver
     );
+
     res.status(200).send(msg);
   } catch (e) {
     res.status(500).send({ error: e });

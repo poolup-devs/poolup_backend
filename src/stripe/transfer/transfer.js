@@ -2,28 +2,26 @@ const mongoose = require("mongoose");
 
 const TransferSchema = mongoose.Schema({
   paymentIntentID: String,
-  transferID: {
-    type: String,
-    default: ""
-  },
   status: {
     type: String,
-    default: "pending"
+    default: "scheduled",
   },
   targetDate: Date,
   amount: Number,
   currency: {
     type: String,
-    default: "usd"
+    default: "usd",
   },
   rideID: String, // Change to mongo object id
   destination: String, // Stripe Connected Account ID
   customerUsername: String,
+  applicationFee: Number,
+  sourceTransaction: String,
   expired: {
     type: Boolean,
-    default: false
+    default: false,
   },
-  date: Date
+  date: Date,
 });
 
 const Transfer = mongoose.model("Transfer", TransferSchema);

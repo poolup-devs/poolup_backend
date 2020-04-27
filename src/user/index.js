@@ -77,9 +77,7 @@ router.get("/users/verify", async (req, res) => {
     } else {
       res.redirect(
         302,
-        "https://" +
-          process.env.FRONT_END_URL +
-          `/signup/3?email=${userEmail.email}`
+        process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`
       );
     }
   } catch (err) {
@@ -93,8 +91,7 @@ router.get("/users/verify", async (req, res) => {
       } else {
         res.redirect(
           302,
-          "https://" +
-            process.env.FRONT_END_URL +
+          process.env.FRONT_END_URL +
             `/signup/2/expired?email=${req.query.email}`
         );
       }
@@ -102,7 +99,7 @@ router.get("/users/verify", async (req, res) => {
       if (process.env.MODE === "STAGING") {
         res.redirect(302, process.env.FRONT_END_URL + "/login");
       } else {
-        res.redirect(302, "https://" + process.env.FRONT_END_URL + "/login");
+        res.redirect(302, process.env.FRONT_END_URL + "/login");
       }
     } else {
       res.status(401).send(err);

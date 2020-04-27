@@ -1,31 +1,40 @@
 {
-  "development": {
-    "MODE": "STAGING",
-    "PORT": "3000",
-    "MONGODB_URL": "mongodb://localhost/poolup-dev",
-    "FRONT_END_URL": "http://localhost:3006",
-
-    "JWT_SECRET_KEY": <INSERT SECRET KEY HERE>,
-    "JWT_EMAIL_KEY": <INSERT SECRET KEY HERE>,
+  "base_config": {
+    "JWT_SECRET_KEY": "E710E73E4A6A87286F4867761FEE9ED124544B86EB8E0C22E38B90ED27035A95",
+    "JWT_EMAIL_KEY": "CFEFEE0EE518309676BD06B4A1F75F418A95E9E9E68159E70B4B729F96553608",
     "SESSION_SECRET_KEY": "test",
 
     "S3_BUCKET": "poolup-bucket-staging",
-    "AWS_ACCESS_KEY_ID": <INSERT ACCESS KEY HERE>,
-    "AWS_SECRET_ACCESS_KEY": <INSERT SECRET KEY HERE>,
+    "AWS_ACCESS_KEY_ID": "AKIAS4TN7JFAP4GNHEIY",
+    "AWS_SECRET_ACCESS_KEY": "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",
 
-    "STRIPE_PUBLIC_KEY": <INSERT PUBLIC KEY HERE>,
-    "STRIPE_PRIVATE_KEY": <INSERT PRIVATE KEY HERE>,
+    "SENDGRID_API_KEY": "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",
+    "SENDGRID_USERNAME": "bruinpool",
+    "SENDGRID_PASSWORD": "bruinpool123",
+
+    "STRIPE_PUBLIC_KEY": "pk_test_sQ2MeP1MArbLLQMCmj673vPd00GheKUsVR",
+    "STRIPE_PRIVATE_KEY": "sk_test_TflS14cSa9Wz6OZiWR5eXHrz00hTTMPE1O",
     "STRIPE_CLIENT_ID": <INSERT CLIENT ID HERE>,
-    "STRIPE_WEBHOOK_SECRET": <INSERT SECRET KEY HERE>,
+    "STRIPE_WEBHOOK_SECRET": "rk_test_muyLD29ynAm8QXndCZvJhXLE00NUfgIVWO",
     "STRIPE_APPLICATION_FEE": <Default: .1INSERT STRIPE_APPLICATION_FEE HERE>,
     "FLAKER_LIMIT": <Default: 24 INSERT FLAKER_LIMIT HERE>,
     "INDECISION_LIMIT": <Default: 30 INSERT INDECISION_LIMIT HERE>,
 
     "MY_RIDES_PATH": "/rider/my-rides",
     "MY_DRIVES_PATH": "/driver/my-drives",
-
-    "SENDGRID_USERNAME": <INSERT USERNAME HERE>", 
-    "SENDGRID_PASSWORD": "<INSERT PASSWORD HERE>"
+    "SEARCH_RIDES_PATH": "/rider"
+  },
+  "development": {
+    "MODE": "STAGING",
+    "PORT": "3000",
+    "MONGODB_URL": "mongodb://localhost/poolup-dev",
+    "FRONT_END_URL": "http://localhost:3006"
+  },
+  "production": {
+    "MODE": "PRODUCTION",
+    "PORT": "3000",
+    "MONGODB_URL": "mongodb://localhost/poolup-prod",
+    "FRONT_END_URL": "https://poolup.co"
   },
   "test": {
     "MONGODB_URL": "mongodb://localhost/poolup-test"

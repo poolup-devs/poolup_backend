@@ -97,7 +97,7 @@ const sendVerificationEmail = (email) => {
           expiresIn: 60 * 30,
         });
         if (process.env.MODE === "STAGING") {
-          var verificationUrl = `https://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
+          var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
         } else {
           var verificationUrl = `https://restapi.poolup.co/users/verify?email=${email}&token=${token}`;
         }

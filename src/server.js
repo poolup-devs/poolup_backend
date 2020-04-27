@@ -21,6 +21,10 @@ console.log(
     chalk.yellow(process.env.FRONT_END_URL)
 );
 
+console.log(
+  chalk.green("[INIT]: MONGODB_URL: ") + chalk.yellow(process.env.MONGODB_URL)
+);
+
 // ////////////////////////////////////////
 // //TESTER
 // ////////////////////////////////////////

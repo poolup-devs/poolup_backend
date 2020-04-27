@@ -1,10 +1,5 @@
 {
-  "development": {
-    "MODE": "STAGING",
-    "PORT": "3000",
-    "MONGODB_URL": "mongodb://localhost/poolup-dev",
-    "FRONT_END_URL": "http://localhost:3006",
-
+  "base_config": {
     "JWT_SECRET_KEY": <INSERT SECRET KEY HERE>,
     "JWT_EMAIL_KEY": <INSERT SECRET KEY HERE>,
     "SESSION_SECRET_KEY": "test",
@@ -13,25 +8,43 @@
     "AWS_ACCESS_KEY_ID": <INSERT ACCESS KEY HERE>,
     "AWS_SECRET_ACCESS_KEY": <INSERT SECRET KEY HERE>,
 
+    "SENDGRID_API_KEY": <INSERT SECRET KEY HERE>,
+    "SENDGRID_USERNAME": <INSERT USERNAME HERE>", 
+    "SENDGRID_PASSWORD": "<INSERT PASSWORD HERE>"
+
     "STRIPE_PUBLIC_KEY": <INSERT PUBLIC KEY HERE>,
     "STRIPE_PRIVATE_KEY": <INSERT PRIVATE KEY HERE>,
-    "STRIPE_CLIENT_ID": <INSERT CLIENT ID HERE>,
     "STRIPE_WEBHOOK_SECRET": <INSERT SECRET KEY HERE>,
+    "STRIPE_CLIENT_ID": <INSERT CLIENT ID HERE>,
+
     "STRIPE_APPLICATION_FEE": <Default: .1INSERT STRIPE_APPLICATION_FEE HERE>,
     "FLAKER_LIMIT": <Default: 24 INSERT FLAKER_LIMIT HERE>,
     "INDECISION_LIMIT": <Default: 30 INSERT INDECISION_LIMIT HERE>,
 
     "MY_RIDES_PATH": "/rider/my-rides",
     "MY_DRIVES_PATH": "/driver/my-drives",
-
-    "SENDGRID_USERNAME": <INSERT USERNAME HERE>", 
-    "SENDGRID_PASSWORD": "<INSERT PASSWORD HERE>"
+    "SEARCH_RIDES_PATH": "/rider"
+  },
+  "development": {
+    "MODE": "STAGING",
+    "PORT": "3000",
+    "MONGODB_URL": "mongodb://localhost/poolup-dev",
+    "FRONT_END_URL": "http://localhost:3006"
+  },
+  "production": {
+    "MODE": "PRODUCTION",
+    "PORT": "3000",
+    "MONGODB_URL": "mongodb://localhost/poolup-prod",
+    "FRONT_END_URL": "https://poolup.co"
   },
   "test": {
     "MONGODB_URL": "mongodb://localhost/poolup-test"
   },
   "development-docker": {
-    "MONGODB_URL":"mongodb://mongo:27017/poolup-dev"
+    "MODE": "STAGING",
+    "PORT": "3000",
+    "MONGODB_URL":"mongodb://mongo:27017/poolup-dev",
+    "FRONT_END_URL": "http://localhost:3006"
   },
   "testing-docker": {
     "MONGODB_URL":"mongodb://mongo:27017/poolup-test"

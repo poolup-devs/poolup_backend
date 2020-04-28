@@ -172,6 +172,7 @@ const getMyInfo = (authUsername, callback) => {
         "createdAt",
         "picUrl",
         "stripe",
+        "driver",
       ];
       const result_ = {};
 

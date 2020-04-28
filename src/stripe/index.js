@@ -10,6 +10,66 @@ const userDB = require("../user/controller.js");
 const paymentHandler = require("./tool/payment-handler.js");
 const driverValidation = require("./tool/driver-info-validation.js");
 
+// This endpoint is only used in the alpha version since stripe is not used
+router.post("/driver/create", (req, res) => {
+  const authUsername = tokenParser(req.headers.authorization).username;
+
+  userDB.findUserByUsername(authUsername, (err, data) => {
+    console.log(err);
+    if (err) {
+      res.status(500).json({
+        error: err,
+      });
+      return;
+    }
+    //Get the user info from the database request
+    const userInfo = data[0];
+
+    // Check if a driver already has a stripe account ID
+    // If they do then that means they already registered as a drive
+    if (userInfo.driver.isDriver) {
+      res.status(400).json({
+        error: "User is already registered as a driver",
+      });
+      return;
+    }
+
+    const driverInfo = {
+      username: authUsername,
+      phoneNumber: req.body.phoneNumber,
+      licensePlate: req.body.licensePlate,
+      vehicleMakeModel: req.body.vehicleMakeModel,
+      driversLicense: req.body.driversLicense,
+      vehicleColor: req.body.vehicleColor,
+      stripeAccountID: "",
+    };
+
+    // Check that all the fields of the driverInfo object are populated
+    if (!driverValidation.containsDriverInfo(driverInfo)) {
+      console.log("Invalid driver info");
+      res.status(400).json({
+        error:
+          "Invalid driver information; check that all fields are populated",
+      });
+      return;
+    }
+
+    // Update the model and store the Stripe account ID in the datastore:
+    // this Stripe account ID will be used to issue payouts to the driver
+    userDB.addUserDriverInfo(driverInfo, (err, data) => {
+      if (err) {
+        console.log(err);
+        res.status(400).json({
+          error: "Unable to create driver account",
+        });
+      }
+
+      res.sendStatus(200);
+      return;
+    });
+  });
+});
+
 // Called when Stripe redirects from the account setup
 router.get("/stripe/token", (req, res) => {
   const FRONT_END_URL = process.env.FRONT_END_URL;

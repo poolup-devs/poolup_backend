@@ -110,27 +110,27 @@ const sendVerificationEmail = (email) => {
   });
 };
 
-// Adds a user with a verified email to the database.
-// The user will become permanent only once it is registered with a name and password.
-const verifyEmail = (email) => {
-  return new Promise(async (resolve, reject) => {
-    const verifiedEmail = await User.findOne({ email });
-    if (!verifiedEmail) {
-      return resolve(await User.create({ email }));
-    } else {
-      // The email has been verified but the user has not registered yet
-      if (!verifiedEmail.isRegistered) {
-        return resolve(verifiedEmail);
-      } else {
-        return reject({
-          name: "AccountAlreadyRegistered",
-          message:
-            "The user has already verified their email and registered their account.",
-        });
-      }
-    }
-  });
-};
+// // Adds a user with a verified email to the database.
+// // The user will become permanent only once it is registered with a name and password.
+// const verifyEmail = (email) => {
+//   return new Promise(async (resolve, reject) => {
+//     const verifiedEmail = await User.findOne({ email });
+//     if (!verifiedEmail) {
+//       return resolve(await User.create({ email }));
+//     } else {
+//       // The email has been verified but the user has not registered yet
+//       if (!verifiedEmail.isRegistered) {
+//         return resolve(verifiedEmail);
+//       } else {
+//         return reject({
+//           name: "AccountAlreadyRegistered",
+//           message:
+//             "The user has already verified their email and registered their account.",
+//         });
+//       }
+//     }
+//   });
+// };
 
 const findUserByEmail = (email, callback) => {
   User.find({ email }, (err, result) => {
@@ -331,26 +331,26 @@ const isValidPassword = (password) => {
   });
 };
 
-const isValidEmail = (email) => {
-  return new Promise(async (resolve, reject) => {
-    // Validate email address
-    if (isEmail.validate(email)) {
-      // Must be student email
-      const emailDomain = parseDomain(email);
+// const isValidEmail = (email) => {
+//   return new Promise(async (resolve, reject) => {
+//     // Validate email address
+//     if (isEmail.validate(email)) {
+//       // Must be student email
+//       const emailDomain = parseDomain(email);
 
-      if (!emailDomain || emailDomain.tld !== "edu") {
-        return reject("Not an .edu email address!");
-      }
-      // A registered account exists with this email
-      if (await User.findOne({ email: email.trim(), isRegistered: true })) {
-        return reject("A registered account already exists with this email!");
-      }
-      return resolve(true);
-    } else {
-      return reject("Not a valid email address!");
-    }
-  });
-};
+//       if (!emailDomain || emailDomain.tld !== "edu") {
+//         return reject("Not an .edu email address!");
+//       }
+//       // A registered account exists with this email
+//       if (await User.findOne({ email: email.trim(), isRegistered: true })) {
+//         return reject("A registered account already exists with this email!");
+//       }
+//       return resolve(true);
+//     } else {
+//       return reject("Not a valid email address!");
+//     }
+//   });
+// };
 
 const confirmCredentials = (authUsername, password) => {
   return new Promise(async (resolve, reject) => {
@@ -519,8 +519,6 @@ const getSchool = (username) => {
 module.exports = {
   checkAvailability,
   login,
-  verifyEmail,
-  isValidEmail,
   sendVerificationEmail,
   findUserByEmail,
   findUserByUsername,

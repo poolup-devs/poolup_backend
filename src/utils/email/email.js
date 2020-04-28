@@ -56,8 +56,8 @@ const sendVerificationEmail = async (email, verificationLink) => {
         html: emailTemplate,
       };
       return resolve(await sendEmail(mailOptions));
-    } catch (e) {
-      return reject(e);
+    } catch (err) {
+      return reject(err);
     }
   });
 };

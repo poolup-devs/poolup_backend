@@ -1,8 +1,10 @@
 const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
+const Email = require("./email/email").Email;
 const jwt = require("jsonwebtoken");
-const Email = require("../utils/email/email");
+const EmailUtil = require("../utils/email/email");
+const Error = require("../utils/error-model");
 
 // Users require a certain minimum amount of ratings to calculate an average rating
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
@@ -13,6 +15,8 @@ const Schools = mongoose.model("Schools", dataSchema, "schools");
 const parseDomain = require("parse-domain");
 const isEmail = require("isemail");
 const sha256 = require("sha256");
+
+const isValidEmailToRegister = require("./email/utils").isValidEmailToRegister;
 
 const login = async (email, password) => {
   return new Promise(async (resolve, reject) => {
@@ -45,22 +49,29 @@ const signup = async (userInfo) => {
       return reject("Not all required fields were specified.");
     }
     try {
+      const v = await isValidEmailToRegister(userInfo.email);
+      switch (v) {
+        case 1:
+          break;
+        case -1:
+          return reject(Error(403, "Email not verified"));
+        case -2:
+          return reject(Error(403, "Email already registered"));
+        default:
+          return reject(Error(500));
+      }
+
       // Create a user document containing a hashed password with username and school fields parsed from email
       userInfo.password = sha256(userInfo.password);
       userInfo.school = await parseSchoolFromEmail(userInfo.email);
       userInfo.username = userInfo.email.split("@")[0];
       userInfo.isRegistered = true;
-      const newlyRegisteredUser = await User.findOneAndUpdate(
+      const newUser = await User.create(userInfo);
+      User.setRandomBruinBear(newUser.username);
+      await Email.updateOne(
         { email: userInfo.email },
-        userInfo,
-        { new: true }
+        { status: "registered" }
       );
-      if (!newlyRegisteredUser) {
-        return reject(
-          "User did not verify email before inputting account information."
-        );
-      }
-      User.setRandomBruinBear(newlyRegisteredUser.username);
 
       // Give the user a stripe id
       var stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
@@ -68,22 +79,21 @@ const signup = async (userInfo) => {
       // Create Customer ID
       stripe.customers.create(
         {
-          email: newlyRegisteredUser.email,
-          name:
-            newlyRegisteredUser.firstName + " " + newlyRegisteredUser.lastName,
+          email: newUser.email,
+          name: newUser.firstName + " " + newUser.lastName,
         },
         function (err, customer) {
           // asynchronously called
           if (err) {
             console.log("Failed to create Stripe Customer: ", err);
           } else {
-            newlyRegisteredUser.stripe.customerID = customer.id;
-            return resolve(newlyRegisteredUser);
+            newUser.stripe.customerID = customer.id;
+            return resolve(newUser);
           }
         }
       );
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      return reject(Error(500, err));
     }
   });
 };
@@ -101,7 +111,7 @@ const sendVerificationEmail = (email) => {
         } else {
           var verificationUrl = `https://restapi.poolup.co/users/verify?email=${email}&token=${token}`;
         }
-        await Email.sendVerificationEmail(email, verificationUrl);
+        await EmailUtil.sendVerificationEmail(email, verificationUrl);
         return resolve(true);
       }
     } catch (e) {

@@ -48,8 +48,8 @@ router.post("/users/signup", async (req, res) => {
       );
       res.status(201).send({ registeredUser, token });
     }
-  } catch (e) {
-    res.status(500).send({ error: e });
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 

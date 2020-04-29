@@ -20,6 +20,8 @@ const emailSchema = mongoose.Schema({
   },
 });
 
+emailSchema.index({ email: 1 }, { unique: true });
+
 const Email = mongoose.model("Email", emailSchema);
 
 module.exports = { Email };

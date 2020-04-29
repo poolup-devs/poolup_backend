@@ -1,78 +1,57 @@
 const Email = require("./email.js").Email;
 
 const jwt = require("jsonwebtoken");
-const parseDomain = require("parse-domain");
-const isEmail = require("isemail");
 
 const Error = require("../../utils/error-model");
 const EmailUtil = require("../../utils/email/email");
+const isValidEmailToVerify = require("./utils.js").isValidEmailToVerify;
 
 const VERIFICATION_EMAIL_EXPIRY = 60 * 30;
-
-const isValidEmailToVerify = (email) => {
-  console.log("fucks");
-  return new Promise(async (resolve, reject) => {
-    // Validate email address
-    if (!isEmail.validate(email)) {
-      return reject(Error(400, "Not a valid email address!"));
-    }
-
-    // Must be student email
-    const emailDomain = parseDomain(email);
-    if (!emailDomain || emailDomain.tld !== "edu") {
-      return reject(Error(400, "Not an .edu email address!"));
-    }
-
-    // if email is already in our email db
-    const email = await Email.findOne({ email: email.trim() });
-    if (email) {
-      if (email.status == "pre-verification") {
-        if (email.remainingResendAmount < 1) {
-          return reject(
-            Error(
-              403,
-              "Verification email has been resent too much times, reached limit (10)"
-            )
-          );
-        }
-        return resolve(true);
-      } else {
-        return reject(Error(403, "The email is already verified"));
-      }
-    }
-    return resolve(true);
-  });
-};
 
 const sendVerificationEmail = (email) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (await isValidEmailToVerify(email)) {
-        // Construct verification email
-        const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, {
-          expiresIn: 60 * 30,
-        });
-        if (process.env.MODE === "STAGING") {
-          var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
-        } else {
-          var verificationUrl = `https://restapi.poolup.co/users/verify?email=${email}&token=${token}`;
-        }
-
-        const res_email = await Email.findOne({ email });
-        if (res_email) {
-          await EmailUtil.sendVerificationEmail(email, verificationUrl);
-          Email.findByIdAndUpdate(res_email._id, {
-            $inc: { remainingResendAmount: -1 },
+      const v = await isValidEmailToVerify(email);
+      switch (v) {
+        case 1: {
+          // Construct verification email
+          const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, {
+            expiresIn: VERIFICATION_EMAIL_EXPIRY,
           });
-        } else {
-          Email.create({ email });
-          await EmailUtil.sendVerificationEmail(email, verificationUrl);
-        }
+          if (process.env.MODE === "STAGING") {
+            var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
+            console.log(verificationUrl);
+          } else {
+            var verificationUrl = `https://restapi.poolup.co/users/verify?email=${email}&token=${token}`;
+          }
 
-        return resolve(true);
+          const res_email = await Email.findOne({ email });
+          if (res_email) {
+            console.log("\n\n\n\nhere?");
+            await EmailUtil.sendVerificationEmail(email, verificationUrl);
+            await Email.findByIdAndUpdate(res_email._id, {
+              $inc: { remainingResendAmount: -1 },
+            });
+          } else {
+            await Email.create({ email });
+            await EmailUtil.sendVerificationEmail(email, verificationUrl);
+          }
+          return resolve(true);
+        }
+        case -1:
+          return reject(Error(400, "Not a valid email address"));
+        case -2:
+          return reject(Error(400, "Not an .edu email address"));
+        case -3:
+          return reject(Error(403, "Verfication email resend limit reached"));
+        case -4:
+          return reject(Error(403, "Email already verified"));
+        default: {
+          return reject(Error(500));
+        }
       }
     } catch (err) {
-      reject(err);
+      return reject(Error(500, err));
     }
   });
 };
@@ -89,10 +68,13 @@ const verifyEmail = (email) => {
       if (res_email.status != "pre-verification") {
         return reject(Error(403, `The email is in ${res_email.status} status`));
       }
-
-      await Email.findByIdAndUpdate(res_email._id, {
-        status: "pre-registration",
-      });
+      await Email.findByIdAndUpdate(
+        res_email._id,
+        {
+          status: "pre-registration",
+        },
+        { runValidators: true }
+      );
       return resolve(true);
     } catch (err) {
       return reject(Error(500, err));

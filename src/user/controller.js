@@ -256,31 +256,33 @@ const checkIfDriver = (username) => {
   });
 };
 
-const addUserDriverInfo = (driverInfo, callback) => {
-  User.findOneAndUpdate(
-    { username: driverInfo.username },
-    {
-      stripe: {
-        accountID: driverInfo.stripeAccountID,
+const addUserDriverInfo = (driverInfo) => {
+  return new Promise(async (resolve, reject) => {
+    await User.findOneAndUpdate(
+      { username: driverInfo.username },
+      {
+        stripe: {
+          accountID: driverInfo.stripeAccountID,
+        },
+        driver: {
+          isDriver: true,
+          licensePlate: driverInfo.licensePlate,
+          vehicleMakeModel: driverInfo.vehicleMakeModel,
+          driversLicense: driverInfo.driversLicense,
+          vehicleColor: driverInfo.vehicleColor,
+        },
+        phoneNumber: driverInfo.phoneNumber,
       },
-      driver: {
-        isDriver: true,
-        licensePlate: driverInfo.licensePlate,
-        vehicleMakeModel: driverInfo.vehicleMakeModel,
-        driversLicense: driverInfo.driversLicense,
-        vehicleColor: driverInfo.vehicleColor,
-      },
-      phoneNumber: driverInfo.phoneNumber,
-    },
-    { new: true },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+      { new: true },
+      (err, result) => {
+        if (err) {
+          return reject(err);
+        } else {
+          return resolve(result);
+        }
       }
-    }
-  );
+    );
+  });
 };
 
 const updateUser = (authUsername, updates, callback) => {

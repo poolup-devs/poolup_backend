@@ -22,7 +22,7 @@ const STRIPE_CLIENT_ID = process.env.STRIPE_CLIENT_ID;
 router.post("/users/login", async (req, res) => {
   try {
     if (req.body.password) {
-      req.body.password = sha256(req.body.password);
+      // req.body.password = sha256(req.body.password);
     }
     const user = await db.login(req.body.email, req.body.password);
     const token = jwt.sign({ username: user.username }, JWT_SECRET_KEY, {

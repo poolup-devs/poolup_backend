@@ -102,6 +102,7 @@ router.put("/request/archive", checkAuth, async (req, res) => {
     await db.archiveRequest(requestID);
     res.sendStatus(200);
   } catch (err) {
+    console.log("error");
     res.status(err.status).send(err.message);
   }
 });

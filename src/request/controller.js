@@ -1,4 +1,5 @@
 const Request = require("./request").Request;
+const ArchiveRequest = require("./request").ArchiveRequest;
 const User = require("../user/user").User;
 const Noti = require("../noti/noti").Noti;
 const Ride = require("../ride/ride").Ride;
@@ -320,20 +321,24 @@ const isAlreadyInRide = (requestInfo) => {
 // archiveRequest sets a specified request archived field to true
 const archiveRequest = (requestID) => {
   const filter = { _id: requestID };
-  const update = { $set: { archived: true } };
-  const options = { new: true };
+  // const update = { $set: { archived: true } };
+  // const options = { new: true };
   return new Promise(async (resolve, reject) => {
     try {
-      const request_upd = await Request.findByIdAndUpdate(
-        filter,
-        update,
-        options
-      );
-      if (request_upd == null) {
+      const request_resp = await Request.findById(filter);
+      if (request_resp == null) {
         reject(Error(404));
       }
-      return resolve(request_upd);
+
+      var archive_request_resp = JSON.stringify(request_resp);
+      delete archive_request_resp._id;
+
+      await ArchiveRequest.create(JSON.parse(archive_request_resp));
+      console.log("here");
+
+      return resolve(request_resp);
     } catch (err) {
+      console.log(err);
       return reject(Error(500));
     }
   });

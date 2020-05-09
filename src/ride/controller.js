@@ -196,6 +196,14 @@ const postRide = (rideInfo) => {
         2
       );
 
+      // Schedule a job that archives the remaining ride requests for a ride
+      scheduler.scheduleTaskHoursAfterDate(
+        `archiveRemainingRideRequests.${ride_new._id}`,
+        scheduledTasks.archiveRemainingRideRequests(ride_new._id),
+        rideInfo.date,
+        0
+      );
+
       // Schedule a job that prompts users in the ride to leave reviews 12 hours after carpool begins
       scheduler.scheduleTaskHoursAfterDate(
         `createNotiToLeaveReviewTask.${ride_new._id}`,

@@ -29,6 +29,14 @@ const updateCompletedRidesTask = (rideId) => {
   };
 };
 
+// Task to archive the remaining ride requests for a ride after it is completed
+const archiveRemainingRideRequests = (rideID) => {
+  return async function () {
+    const rideDetails = await Ride.findById(rideId);
+    console.log("Ride requests archived");
+  };
+};
+
 // Task to send a notification to all users in a ride to leave a review
 const createNotiToLeaveReviewTask = (rideId) => {
   return async function () {
@@ -170,4 +178,5 @@ module.exports = {
   createNotiToLeaveReviewTask,
   expireAbilityToLeaveReviewTask,
   formatPassengerReviewMessage, // for unit testing
+  archiveRemainingRideRequests,
 };

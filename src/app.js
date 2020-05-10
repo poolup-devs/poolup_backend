@@ -12,7 +12,7 @@ app.use(
   cors({
     origin: [process.env.FRONT_END_URL],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    credentials: true
+    credentials: true,
   })
 );
 
@@ -27,12 +27,12 @@ app.use(
     saveUninitialized: true,
     resave: true,
     cookie: {
-      maxAge: 3600000 // 1 hour in miliseconds
+      maxAge: 3600000, // 1 hour in miliseconds
     },
     store: new MongoStore({
       mongooseConnection: mongoose.connection,
-      ttl: 3600 // 1 hour in seconds
-    })
+      ttl: 3600, // 1 hour in seconds
+    }),
   })
 );
 

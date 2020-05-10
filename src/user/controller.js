@@ -78,8 +78,8 @@ const signup = async (userInfo) => {
             console.log("Failed to create Stripe Customer: ", err);
           } else {
             newlyRegisteredUser.stripe.customerID = customer.id;
-            return resolve(newlyRegisteredUser);
           }
+          return resolve(newlyRegisteredUser);
         }
       );
     } catch (e) {

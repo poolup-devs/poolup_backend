@@ -9,5 +9,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build and run tests
-        run: docker-compose -f docker-compose.integration-testing.yml up --exit-code from web
+      - name: Test
+        run: docker-compose -f docker-compose.integration-testing.yml up --exit-code-from web

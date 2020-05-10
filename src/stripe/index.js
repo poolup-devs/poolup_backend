@@ -167,6 +167,8 @@ router.post("/stripe/driver/auth", checkAuth, (req, res) => {
       "stripe_user[email]": userInfo.email,
       "stripe_user[phone_number]": driverInfo.phoneNumber,
       "stripe_user[product_description]": "PoolUp Driver",
+      "stripe_user[first_name]": userInfo.firstName,
+      "stripe_user[last_name]": userInfo.lastName,
     };
 
     res.status(200).send({

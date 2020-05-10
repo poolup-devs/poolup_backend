@@ -7,8 +7,8 @@ services:
   web:
     build:
       context: .
-      dockerfile: ./dockerfiles/main/Dockerfile
-    command: npm run docker-dev
+      dockerfile: ./dockerfiles/ci/Dockerfile
+    command: npm run ci_test
     ports:
       - 3000:3000
     depends_on:

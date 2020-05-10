@@ -12,4 +12,4 @@ jobs:
       - name: Build and run tests
       - env: $JWT_EMAIL_KEY:${{secrets.JWT_EMAIL_KEY}}
       - env: $JWT_SECRET_KEY:${{secrets.JWT_SECRET_KEY}}
-        run: docker-compose -f docker-compose.integration-testing.yml
+        run: docker-compose -f docker-compose.integration-testing.yml up --exit-code from web

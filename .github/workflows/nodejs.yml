@@ -27,4 +27,8 @@ jobs:
     - run: npm ci
     - run: npm run build --if-present
     - run: npm run setup
+    - env: $AWS_ACCESS_KEY_ID:${{secrets.AWS_ACCESS_KEY_ID}}
+    - env: $AWS_SECRET_ACCESS_KEY:${{secrets.AWS_SECRET_ACCESS_KEY}}
+    - env: $JWT_EMAIL_KEY:${{secrets.JWT_EMAIL_KEY}}
+    - env: $JWT_SECRET_KEY:${{secrets.JWT_SECRET_KEY}}
     - run: npm run ci_test

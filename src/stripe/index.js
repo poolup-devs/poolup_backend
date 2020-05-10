@@ -102,7 +102,6 @@ router.get("/stripe/token", (req, res) => {
         throw error;
       });
   } catch (err) {
-    console.log(err);
     res.status(500).redirect(FRONT_END_URL + "/driver");
     return;
   }

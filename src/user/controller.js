@@ -55,7 +55,7 @@ const signup = async (userInfo) => {
         userInfo,
         { new: true }
       ).select(
-        "email firstName isRegistered lastName password school susername"
+        "email firstName isRegistered lastName password school username"
       );
       if (!newlyRegisteredUser) {
         return reject(

@@ -120,7 +120,10 @@ describe("Testing the sign-up functionality for users without registered account
       password: "password",
       email: verifiedAccount.email,
     });
-    expect(newUser).toEqual(
+    newUserObj = newUser.toObject();
+    delete newUserObj._id;
+
+    expect(newUserObj).toEqual(
       expect.objectContaining({
         firstName: "John",
         lastName: "Smith",

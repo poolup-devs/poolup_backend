@@ -5,4 +5,4 @@ WORKDIR home/nodejs/app
 RUN npm install --production
 COPY . .
 
-CMD ["sh","-c","npm run setup  && npm install env-cmd && npm run docker-test-init_db"]
+CMD ["npm", "run", "init_db"]

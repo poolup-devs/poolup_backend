@@ -17,12 +17,6 @@ services:
       - JWT_EMAIL_KEY=${JWT_EMAIL_KEY}
       - CI=true
     depends_on:
-      - mongo_seed
+      - mongo
     volumes:
       - .:/home/nodejs/app
-  mongo_seed:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/mongo_seed/Dockerfile
-    depends_on:
-      - mongo

@@ -6,14 +6,14 @@
   "scripts": {
     "docker-dev": "env-cmd -r ./config/.env-cmdrc -e base_config,development-docker nodemon src/server.js",
     "docker-init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development-docker node init_db.js",
-    "docker-test-init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,testing-docker node init_db.js",
     "docker-test": "env-cmd -r ./config/.env-cmdrc -e development,testing-docker jest --watch --runInBand",
     "start": "env-cmd -r ./config/.env-cmdrc -e base_config,production node src/server.js",
     "dev": "env-cmd -r ./config/.env-cmdrc -e base_config,development nodemon src/server.js",
     "setup": "node ./setup/setup.js",
     "init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development node ./setup/init_db.js",
     "test": "env-cmd -r ./config/.env-cmdrc -e base_config,test jest --watch --runInBand",
-    "ci_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,testing-docker jest --verbose --runInBand --ci"
+    "ci_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,testing-docker jest --verbose --runInBand --ci",
+    "ci_init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,testing-docker node ./setup/init_db.js"
   },
   "jest": {
     "testEnvironment": "node",

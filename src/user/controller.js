@@ -1,6 +1,7 @@
 const User = require("./user").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
+const School = require("../school/school.js").School;
 const jwt = require("jsonwebtoken");
 const Email = require("../utils/email/email");
 
@@ -9,7 +10,6 @@ const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
 
 const mongoose = require("mongoose");
 const dataSchema = new mongoose.Schema({});
-const Schools = mongoose.model("Schools", dataSchema, "schools");
 const parseDomain = require("parse-domain");
 const isEmail = require("isemail");
 const sha256 = require("sha256");
@@ -425,7 +425,7 @@ const parseSchoolFromEmail = (schoolEmail) => {
     if (!emailDomain) {
       reject("Could not parse email to identify school");
     }
-    Schools.findOne({ emailDomain: emailDomain.domain }, (err, result) => {
+    School.findOne({ emailDomain: emailDomain.domain }, (err, result) => {
       if (!result) {
         // Domain -> School not found in database, so set to null until we can add it later
         return resolve(null);

@@ -12,4 +12,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["sh","-c","npm run setup && npm run init_db && npm install env-cmd && npm run ci_test"]
+CMD ["sh","-c","npm run setup && npm install env-cmd && npm run docker-init_db && npm run ci_test"]

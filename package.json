@@ -12,7 +12,7 @@
     "setup": "node ./setup/setup.js",
     "init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development node ./setup/init_db.js",
     "test": "env-cmd -r ./config/.env-cmdrc -e base_config,test jest --watch --runInBand",
-    "ci_test": "./node_modules/.bin/env-cmd -r ./config/.env-cmdrc -e development,testing-docker jest --verbose --runInBand --ci"
+    "ci_test": "ls; ./node_modules/.bin/env-cmd -r ./config/.env-cmdrc -e development,testing-docker jest --verbose --runInBand --ci"
   },
   "jest": {
     "testEnvironment": "node",
@@ -33,7 +33,7 @@
     "dotenv": "^8.0.0",
     "email-addresses": "^3.1.0",
     "email-templates": "^7.0.4",
-    "env-cmd": "^10.0.1",
+    "env-cmd": "^10.1.0",
     "express": "^4.17.1",
     "express-session": "^1.17.0",
     "file-type": "^12.0.0",

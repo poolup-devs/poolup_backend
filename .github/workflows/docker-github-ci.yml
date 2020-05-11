@@ -9,6 +9,7 @@ jobs:
     name: Testing CI
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Set up env and run containers
         env:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

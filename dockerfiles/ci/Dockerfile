@@ -9,6 +9,4 @@ COPY . .
 
 EXPOSE 3000
 
-Add start.sh /
-RUN chmod +x /start.sh
-CMD ["/start.sh"]
+CMD ["sh","-c","npm run setup && npm run ci_test"]

@@ -67,7 +67,6 @@ router.put("/request/approve", checkAuth, async (req, res) => {
 
 // Cancel a specified request
 router.put("/request/cancel", checkAuth, async (req, res) => {
-  console.log(req.body);
   const requestID = req.body.requestID;
   const authUsername = tokenParser(req.headers.authorization).username;
 
@@ -81,7 +80,6 @@ router.put("/request/cancel", checkAuth, async (req, res) => {
 
 // Deny a specified request
 router.put("/request/deny", checkAuth, async (req, res) => {
-  console.log(req.body);
   const requestID = req.body.requestID;
   const msg = req.body.msg;
   const authUsername = tokenParser(req.headers.authorization).username;

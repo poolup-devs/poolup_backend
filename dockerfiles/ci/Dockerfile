@@ -4,7 +4,7 @@ WORKDIR home/nodejs/app
 
 COPY package-lock.json .
 COPY package.json .
-RUN npm ci
+RUN npm install
 COPY . .
 
 EXPOSE 3000

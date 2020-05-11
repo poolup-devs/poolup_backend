@@ -16,6 +16,12 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_EMAIL_KEY=${JWT_EMAIL_KEY}
     depends_on:
-      - mongo
+      - mongo_seed
     volumes:
       - .:/home/nodejs/app
+  mongo_seed:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/mongo_seed/Dockerfile
+    depends_on:
+      - mongo

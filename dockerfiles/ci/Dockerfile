@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "test"]
+CMD ["npm", "run", "setup", "&&", "npm", "test"]

@@ -9,4 +9,6 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "run", "setup", "&&", "npm", "test"]
+Add start.sh /
+RUN chmod +x /start.sh
+CMD ["/start.sh"]

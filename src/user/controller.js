@@ -85,7 +85,7 @@ const signup = async (userInfo) => {
         }
       );
     } catch (e) {
-      console.log(e);
+      return reject(e);
     }
   });
 };

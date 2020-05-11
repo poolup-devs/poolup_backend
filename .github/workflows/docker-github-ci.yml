@@ -9,6 +9,7 @@ jobs:
     name: Testing CI
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Set up env and run containers
         env:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -16,4 +17,4 @@ jobs:
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           JWT_EMAIL_KEY: ${{ secrets.JWT_EMAIL_KEY }}
         run: |
-          ls; docker-compose -f docker-compose.integration-testing.yml up --build --exit-code-from web
+          docker-compose -f docker-compose.integration-testing.yml up --build --exit-code-from web

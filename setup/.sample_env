@@ -1,7 +1,7 @@
 {
   "base_config": {
-    "JWT_SECRET_KEY": "<INSERT SECRET KEY HERE>",
-    "JWT_EMAIL_KEY": "<INSERT SECRET KEY HERE>",
+    "JWT_SECRET_KEY": "1837d87064bfc7dff5e703a2b56fe9f509c276baa9e67885e66a38683c230939",
+    "JWT_EMAIL_KEY": "e9cbc691b392c71cc13c78139626c3c2e06c068d2b13722a64137c8400fd4682",
     "SESSION_SECRET_KEY": "test",
 
     "S3_BUCKET": "poolup-bucket-staging",

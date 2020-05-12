@@ -1,23 +1,23 @@
 version: "2"
 services:
-  mongo:
-    image: mongo
-    ports:
-      - 27017:27017
-  web:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/main/Dockerfile
-    command: npm run docker-dev
-    ports:
-      - 3000:3000
-    depends_on:
-      - mongo
-    volumes:
-      - .:/home/nodejs/app
-  mongo_seed:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/mongo_seed/Dockerfile
-    depends_on:
-      - mongo
+    mongo:
+        image: mongo
+        ports:
+            - 27017:27017
+    web:
+        build:
+            context: .
+            dockerfile: ./dockerfiles/main/Dockerfile
+        command: npm run docker-dev
+        ports:
+            - 3000:3000
+        depends_on:
+            - mongo
+        volumes:
+            - .:/home/nodejs/app
+    mongo_seed:
+        build: 
+            context: .
+            dockerfile: ./dockerfiles/mongo_seed/Dockerfile
+        depends_on:
+            - mongo

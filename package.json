@@ -12,13 +12,10 @@
     "setup": "node ./setup/setup.js",
     "init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development node ./setup/init_db.js",
     "test": "env-cmd -r ./config/.env-cmdrc -e base_config,test jest --watch --runInBand",
-    "ci_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,test jest --watchAll --expand --forceExit --noStackTrace --colors"
+    "ci_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,test jest --watchAll --expand --detectOpenHandle --noStackTrace --colors"
   },
   "jest": {
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "./tests/jestDefaultTimeout.js"
-    ]
+    "testEnvironment": "node"
   },
   "keywords": [],
   "author": "",

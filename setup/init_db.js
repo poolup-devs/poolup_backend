@@ -223,11 +223,11 @@ const seed = async () => {
     await rideSeed();
     await notificationSeed();
     await schoolSeed();
+    process.exit(0);
   } catch (err) {
     console.log(err);
     process.exit(1);
   }
-  return;
 };
 
 seed();

@@ -18,16 +18,17 @@ const sendVerificationEmail = (email) => {
           const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, {
             expiresIn: VERIFICATION_EMAIL_EXPIRY,
           });
-          if (process.env.MODE === "STAGING") {
+          if (
+            process.env.MODE === "STAGING" ||
+            process.env.MODE === "TESTING"
+          ) {
             var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
-            console.log(verificationUrl);
           } else {
             var verificationUrl = `https://restapi.poolup.co/users/verify?email=${email}&token=${token}`;
           }
 
           const res_email = await Email.findOne({ email });
           if (res_email) {
-            console.log("\n\n\n\nhere?");
             await EmailUtil.sendVerificationEmail(email, verificationUrl);
             await Email.findByIdAndUpdate(res_email._id, {
               $inc: { remainingResendAmount: -1 },
@@ -43,7 +44,7 @@ const sendVerificationEmail = (email) => {
         case -2:
           return reject(Error(400, "Not an .edu email address"));
         case -3:
-          return reject(Error(403, "Verfication email resend limit reached"));
+          return reject(Error(403, "Verification email resend limit reached"));
         case -4:
           return reject(Error(403, "Email already verified"));
         default: {

@@ -13,7 +13,6 @@ const mongoose = require("mongoose");
 const dataSchema = new mongoose.Schema({});
 const Schools = mongoose.model("Schools", dataSchema, "schools");
 const parseDomain = require("parse-domain");
-const isEmail = require("isemail");
 const sha256 = require("sha256");
 
 const isValidEmailToRegister = require("./email/utils").isValidEmailToRegister;
@@ -46,7 +45,7 @@ const signup = async (userInfo) => {
     if (
       !requiredProperties.every((property) => userInfo.hasOwnProperty(property))
     ) {
-      return reject("Not all required fields were specified.");
+      return reject(Error(400, "Not all required fields were specified."));
     }
     try {
       const v = await isValidEmailToRegister(userInfo.email);
@@ -97,50 +96,6 @@ const signup = async (userInfo) => {
     }
   });
 };
-
-const sendVerificationEmail = (email) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      if (await isValidEmail(email)) {
-        // Construct verification email
-        const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, {
-          expiresIn: 60 * 30,
-        });
-        if (process.env.MODE === "STAGING") {
-          var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
-        } else {
-          var verificationUrl = `https://restapi.poolup.co/users/verify?email=${email}&token=${token}`;
-        }
-        await EmailUtil.sendVerificationEmail(email, verificationUrl);
-        return resolve(true);
-      }
-    } catch (e) {
-      reject(e);
-    }
-  });
-};
-
-// // Adds a user with a verified email to the database.
-// // The user will become permanent only once it is registered with a name and password.
-// const verifyEmail = (email) => {
-//   return new Promise(async (resolve, reject) => {
-//     const verifiedEmail = await User.findOne({ email });
-//     if (!verifiedEmail) {
-//       return resolve(await User.create({ email }));
-//     } else {
-//       // The email has been verified but the user has not registered yet
-//       if (!verifiedEmail.isRegistered) {
-//         return resolve(verifiedEmail);
-//       } else {
-//         return reject({
-//           name: "AccountAlreadyRegistered",
-//           message:
-//             "The user has already verified their email and registered their account.",
-//         });
-//       }
-//     }
-//   });
-// };
 
 const findUserByEmail = (email, callback) => {
   User.find({ email }, (err, result) => {
@@ -529,7 +484,6 @@ const getSchool = (username) => {
 module.exports = {
   checkAvailability,
   login,
-  sendVerificationEmail,
   findUserByEmail,
   findUserByUsername,
   findUserByPhoneNumber,

@@ -299,25 +299,24 @@ Models:
 
 ### Schema
 
-| column         | type    | required | properties                                                   |
-| -------------- | ------- | -------- | ------------------------------------------------------------ |
-| firstName      | String  | Yes      |                                                              |
-| lastName       | String  | Yes      |                                                              |
-| email          | String  | Yes      |                                                              |
-| username       | String  | Yes      |                                                              |
-| password       | String  | Yes      |                                                              |
-| phoneNumber    | String  |          |                                                              |
-| picUrl         | String  |          |                                                              |
-| picType        | String  |          |                                                              |
-| isRegistered   | Boolean | Yes      |                                                              |
-| createdAt      | Date    |          |                                                              |
-| aboutMe        | String  |          |                                                              |
-| school         | String  |          |                                                              |
-| ridesCancelled | Number  |          |                                                              |
-| ridesCompleted | Number  |          |                                                              |
-| rating         | Object  |          | sumOfAllRatings, totalRatings                                |
-| stripe         | Object  |          | accountID, customerID                                        |
-| driver         | Object  |          | licensePlate, vehicleMakeModel, driversLicense, vehicleColor |
+| column         | type   | required | properties                                                   |
+| -------------- | ------ | -------- | ------------------------------------------------------------ |
+| firstName      | String | Yes      |                                                              |
+| lastName       | String | Yes      |                                                              |
+| email          | String | Yes      |                                                              |
+| username       | String | Yes      |                                                              |
+| password       | String | Yes      |                                                              |
+| phoneNumber    | String |          |                                                              |
+| picUrl         | String |          |                                                              |
+| picType        | String |          |                                                              |
+| createdAt      | Date   |          |                                                              |
+| aboutMe        | String |          |                                                              |
+| school         | String |          |                                                              |
+| ridesCancelled | Number |          |                                                              |
+| ridesCompleted | Number |          |                                                              |
+| rating         | Object |          | sumOfAllRatings, totalRatings                                |
+| stripe         | Object |          | accountID, customerID                                        |
+| driver         | Object |          | licensePlate, vehicleMakeModel, driversLicense, vehicleColor |
 
 ### API Endpoints
 
@@ -325,7 +324,6 @@ Models:
 | ---------------------------- | ----------- | ------------------------------------------------------------------ |
 | /users/login                 | POST        | [User Login](#user-login)                                          |
 | /users/signup                | POST        | [User Signup](#user-signup)                                        |
-| /users/emailValidation       | GET         | [Validation/usability of Email](#email-validation)                 |
 | /users/sendVerificationEmail | GET         | [Send a verification email to signup](#send-verification-email)    |
 | /users/verify                | GET         | [Verify an email](#email-verification)                             |
 | /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
@@ -443,36 +441,15 @@ POST request
 
 ---
 
-### Email Validation
-
-GET request
-
-**params**
-
-- email
-
-**example**
-
-- localhost:3000/users/emailValidation?email=bin315a1@g.ucla.edu
-
-**return value**
-
-- 200 status, array of user objects with that email
-
 ### Send Verification Email
 
 GET request
 
-This request first verifies whether the email is valid, returning an error message if not. It uses the following criteria to determine validity:
-
-1. **Email is not unique** -> "An account already exists with this email!"
-2. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!"
-3. **Email is not a student email** -> "Not an .edu email address!"
-4. **Email is associated with a registered account** -> "A registered account already exists with this email!"
+This request first verifies whether the email is valid, returning an error message if not. Validity/ return responses is as below
 
 If the email is valid, the endpoint sends a verification email to the user.
 
-This endpoint can be called multiple times to resend the verification email.
+This endpoint can be called multiple times to resend the verification email, for 10 times.
 
 **params**
 
@@ -480,8 +457,14 @@ email
 
 **return value**
 
-- 200 response if the email was sent
-- 500 reponse otherwise, with the error message attached
+Error Cases:
+
+1. **Email is not unique/ already verified** -> 403, "Email already verified"
+2. **Email is not properly formatted, according to RFC standards** -> 400, "Not a valid email address"
+3. **Email is not a student email** ->400, "Not an .edu email address"
+4. **Email resend limit is reached(10)** -> 403, "Verification email resend limit reached"
+
+else, returns 200 status
 
 ---
 

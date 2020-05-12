@@ -40,7 +40,7 @@ router.get("/users/verify", async (req, res) => {
     userEmail = jwt.verify(req.query.token, process.env.JWT_EMAIL_KEY);
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      if (process.env.MODE === "STAGING") {
+      if (process.env.MODE === "STAGING" || process.env.MODE === "TESTING") {
         return res.redirect(
           302,
           process.env.FRONT_END_URL +
@@ -60,18 +60,24 @@ router.get("/users/verify", async (req, res) => {
   try {
     await db.verifyEmail(userEmail.email);
     // Redirect to register the user's name and password
-    if (process.env.MODE === "STAGING") {
+    if (process.env.MODE === "STAGING" || process.env.MODE === "TESTING") {
       return res.redirect(
         302,
         process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`
       );
     } else {
-      return es.redirect(
+      return res.redirect(
         302,
         process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`
       );
     }
   } catch (err) {
+    if (err.message == "The email is in pre-registration status") {
+      return res.redirect(
+        302,
+        process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`
+      );
+    }
     if (err.status) {
       return res.status(err.status).send(err.message);
     }

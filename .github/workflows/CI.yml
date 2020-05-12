@@ -23,9 +23,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Node Setup
-          env:
-           CI: true
-      - run: |
+        env:
+          CI: true
+        run: |
           npm ci
           npm run setup
           npm run init_db

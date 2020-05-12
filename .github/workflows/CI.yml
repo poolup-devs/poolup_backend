@@ -27,5 +27,8 @@ jobs:
       - run: npm install
       - run: npm run setup
       - run: npm run init_db
+      - run: npm run ci_test
         env:
           CI: true
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          JWT_EMAIL_KEY: ${{ secrets.JWT_EMAIL_KEY }}

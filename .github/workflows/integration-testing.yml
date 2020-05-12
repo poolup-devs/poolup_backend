@@ -12,6 +12,7 @@ jobs:
       - name: Install & Run Unit Tests
         run: |
           npm install
+          npm run setup
           npm test
   cd:
     runs-on: ubuntu-latest

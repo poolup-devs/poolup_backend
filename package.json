@@ -11,8 +11,7 @@
     "dev": "env-cmd -r ./config/.env-cmdrc -e base_config,development nodemon src/server.js",
     "setup": "node ./setup/setup.js",
     "init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development node ./setup/init_db.js",
-    "test": "env-cmd -r ./config/.env-cmdrc -e base_config,test jest --watch --runInBand",
-    "ci_test": "env-cmd -r ./config/.env-cmdrc -e base_config,test jest --watchAll --runInBand"
+    "test": "env-cmd -r ./config/.env-cmdrc -e base_config,test jest --watch --runInBand"
   },
   "jest": {
     "testEnvironment": "node",

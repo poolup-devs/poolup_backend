@@ -15,7 +15,10 @@
     "ci_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,test jest --watchAll --verbose --detectOpenHandles --noStackTrace --colors --unhandled-rejections=strict"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "./tests/setup.js"
+    ]
   },
   "keywords": [],
   "author": "",

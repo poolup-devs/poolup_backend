@@ -1,9 +1,15 @@
-name: CI
+name: Continuous Integration and Deployment
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -32,3 +38,22 @@ jobs:
           CI: true
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           JWT_EMAIL_KEY: ${{ secrets.JWT_EMAIL_KEY }}
+
+cd:
+  runs-on: ubuntu-latest
+  needs: ci
+
+  steps:
+    - uses: actions/checkout@v1
+    - name: Docker login
+      run: docker login - u ${{ secrets.DOCKER_USER }} -p {{ secrets.DOCKER_PASSWORD }}
+    - name: Build
+      run: docker build -t api ./dockerfiles/main
+    - name: Tags
+      run: |
+        docker tag api ${{ secrets.DOCKER_USER }}/api:${{ github.sha }}
+        docker tag api ${{ secrets.DOCKER_USER }}/api:latest
+    - name: Push
+      run: |
+        docker push ${{ secrets.DOCKER_USER }}/api:${{ github.sha }}
+        docker push ${{ secrets.DOCKER_USER }}/api:latest

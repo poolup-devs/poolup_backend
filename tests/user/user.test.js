@@ -334,14 +334,14 @@ describe("Testing users with verified and registered accounts", () => {
   });
 
   describe("Testing the retrieval of user account information", () => {
-    test("When parsing an edu email, should return the school if it is in the database", async () => {
-      const ucla1 = await db.parseSchoolFromEmail("bruin@g.ucla.edu");
-      const ucla2 = await db.parseSchoolFromEmail("bruin@ucla.edu");
-      const ucsb = await db.parseSchoolFromEmail("gaucho@ucsb.edu");
-      expect(ucla1).toBe("UCLA");
-      expect(ucla2).toBe("UCLA");
-      expect(ucsb).toBe("UCSB");
-    });
+    // test("When parsing an edu email, should return the school if it is in the database", async () => {
+    //   const ucla1 = await db.parseSchoolFromEmail("bruin@g.ucla.edu");
+    //   const ucla2 = await db.parseSchoolFromEmail("bruin@ucla.edu");
+    //   const ucsb = await db.parseSchoolFromEmail("gaucho@ucsb.edu");
+    //   expect(ucla1).toBe("UCLA");
+    //   expect(ucla2).toBe("UCLA");
+    //   expect(ucsb).toBe("UCSB");
+    // });
 
     test("When parsing an edu email not found in the database, should return null", async () => {
       const invalidSchool = await db.parseSchoolFromEmail(

@@ -110,6 +110,7 @@ describe("Testing Ride endpoints", () => {
         expect(cancelledRide).toBe(null);
       } catch (e) {
         console.log(e);
+        return;
       }
     });
 
@@ -166,6 +167,7 @@ describe("Testing Ride endpoints", () => {
         await db.cancelRide(ride._id, "userNotInRide");
       } catch (e) {
         expect(e).toBeTruthy();
+        return;
       }
     });
 

@@ -1,6 +1,7 @@
 require("../src/db/mongoose");
 const chalk = require("chalk");
 
+<<<<<<< HEAD
 const User = require("../src/user/user").User;
 const Email = require("../src/user/email/email").Email;
 const Ride = require("../src/ride/ride.js").Ride;
@@ -10,6 +11,12 @@ const devCon = require("../src/user/dev_controller");
 
 // Used to execute shell commands
 var spawn = require("child_process").spawn;
+=======
+const User = require("../src/user/user.js").User;
+const Ride = require("../src/ride/ride.js").Ride;
+const Noti = require("../src/noti/noti.js").Noti;
+const School = require("../src/school/school.js").School;
+>>>>>>> d659ef277de0887ad8e5e9a80ce4b0570305e72b
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
 const MY_RIDES_PATH = process.env.MY_RIDES_PATH;
@@ -159,15 +166,27 @@ const noti_list = [
     redirectPath: MY_RIDES_PATH,
   },
 ];
+<<<<<<< HEAD
+=======
+
+const school_list = [
+  { emailDomain: "ucla", school: "UCLA" },
+  { emailDomain: "ucsb", school: "UCSB" },
+];
+>>>>>>> d659ef277de0887ad8e5e9a80ce4b0570305e72b
 
 // User Seed
 const userSeed = () => {
   return new Promise(async (resolve, reject) => {
     try {
       await User.deleteMany();
+<<<<<<< HEAD
       await Email.deleteMany();
       await devCon.dev_createRegisteredUsers(user_list);
       // await User.insertMany(user_list);
+=======
+      await User.insertMany(user_list);
+>>>>>>> d659ef277de0887ad8e5e9a80ce4b0570305e72b
     } catch (err) {
       console.log(err);
       return reject();
@@ -178,6 +197,7 @@ const userSeed = () => {
     );
     return resolve();
   });
+<<<<<<< HEAD
 };
 
 // Email Seed
@@ -198,6 +218,8 @@ const emailSeed = () => {
     }
     return resolve();
   });
+=======
+>>>>>>> d659ef277de0887ad8e5e9a80ce4b0570305e72b
 };
 
 // Ride Seed
@@ -219,6 +241,7 @@ const rideSeed = () => {
 };
 
 // Notification Seed
+<<<<<<< HEAD
 const notificationSeed = () => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -262,16 +285,41 @@ const seedSchool = () => {
       );
     }
     process.exit(exitCode);
+=======
+const notificationSeed = () => {};
+
+// Seed schools collection used to parse emails for the school the user attends
+const schoolSeed = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await School.deleteMany({});
+      await School.insertMany(school_list);
+    } catch (err) {
+      console.log(err);
+      return reject();
+    }
+    console.log(
+      chalk.green("[DB_INIT]: ") +
+        "Successfully initialized development database - School!"
+    );
+    return resolve();
+>>>>>>> d659ef277de0887ad8e5e9a80ce4b0570305e72b
   });
 };
 
 const seed = async () => {
   try {
     await userSeed();
+<<<<<<< HEAD
     // await emailSeed();
     await rideSeed();
     await notificationSeed();
     seedSchool();
+=======
+    await rideSeed();
+    await notificationSeed();
+    await schoolSeed();
+>>>>>>> d659ef277de0887ad8e5e9a80ce4b0570305e72b
   } catch (err) {
     console.log(err);
     process.exit(1);

@@ -10,6 +10,44 @@ const userDB = require("../user/controller.js");
 const paymentHandler = require("./tool/payment-handler.js");
 const driverValidation = require("./tool/driver-info-validation.js");
 
+// This endpoint is only used in the alpha version since stripe is not used
+router.post("/driver/create", async (req, res) => {
+  try {
+    const authUsername = tokenParser(req.headers.authorization).username;
+    const userDetails = await userDB.findUserByUsername(authUsername);
+
+    // Check if a driver already has a stripe account ID
+    // If they do then that means they already registered as a drive
+    if (userDetails.driver.isDriver) {
+      throw "User is already registered as a driver";
+    }
+
+    const driverInfo = {
+      username: authUsername,
+      phoneNumber: req.body.phoneNumber,
+      licensePlate: req.body.licensePlate,
+      vehicleMakeModel: req.body.vehicleMakeModel,
+      driversLicense: req.body.driversLicense,
+      vehicleColor: req.body.vehicleColor,
+      stripeAccountID: "",
+    };
+
+    // Check that all the fields of the driverInfo object are populated
+    if (!driverValidation.containsDriverInfo(driverInfo)) {
+      throw "Invalid driver information; check that all fields are populated";
+    }
+
+    // Update the model and store the Stripe account ID in the datastore:
+    // this Stripe account ID will be used to issue payouts to the driver
+    await userDB.addUserDriverInfo(driverInfo);
+    res.sendStatus(200);
+  } catch (e) {
+    res.status(400).json({
+      error: e,
+    });
+  }
+});
+
 // Called when Stripe redirects from the account setup
 router.get("/stripe/token", (req, res) => {
   const FRONT_END_URL = process.env.FRONT_END_URL;

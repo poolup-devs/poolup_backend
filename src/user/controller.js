@@ -1,17 +1,18 @@
-const User = require("./user").User;
+const User = require("./user.js").User;
 const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
 const Email = require("./email/email").Email;
 const jwt = require("jsonwebtoken");
+
 const EmailUtil = require("../utils/email/email");
 const Error = require("../utils/error-model");
+const School = require("../school/school.js").School;
 
 // Users require a certain minimum amount of ratings to calculate an average rating
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
 
 const mongoose = require("mongoose");
 const dataSchema = new mongoose.Schema({});
-const Schools = mongoose.model("Schools", dataSchema, "schools");
 const parseDomain = require("parse-domain");
 const sha256 = require("sha256");
 
@@ -89,6 +90,7 @@ const signup = async (userInfo) => {
             newUser.stripe.customerID = customer.id;
             return resolve(newUser);
           }
+          return resolve(newUser);
         }
       );
     } catch (err) {
@@ -221,31 +223,33 @@ const checkIfDriver = (username) => {
   });
 };
 
-const addUserDriverInfo = (driverInfo, callback) => {
-  User.findOneAndUpdate(
-    { username: driverInfo.username },
-    {
-      stripe: {
-        accountID: driverInfo.stripeAccountID,
+const addUserDriverInfo = (driverInfo) => {
+  return new Promise(async (resolve, reject) => {
+    await User.findOneAndUpdate(
+      { username: driverInfo.username },
+      {
+        stripe: {
+          accountID: driverInfo.stripeAccountID,
+        },
+        driver: {
+          isDriver: true,
+          licensePlate: driverInfo.licensePlate,
+          vehicleMakeModel: driverInfo.vehicleMakeModel,
+          driversLicense: driverInfo.driversLicense,
+          vehicleColor: driverInfo.vehicleColor,
+        },
+        phoneNumber: driverInfo.phoneNumber,
       },
-      driver: {
-        isDriver: true,
-        licensePlate: driverInfo.licensePlate,
-        vehicleMakeModel: driverInfo.vehicleMakeModel,
-        driversLicense: driverInfo.driversLicense,
-        vehicleColor: driverInfo.vehicleColor,
-      },
-      phoneNumber: driverInfo.phoneNumber,
-    },
-    { new: true },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+      { new: true },
+      (err, result) => {
+        if (err) {
+          return reject(err);
+        } else {
+          return resolve(result);
+        }
       }
-    }
-  );
+    );
+  });
 };
 
 const updateUser = (authUsername, updates, callback) => {
@@ -386,7 +390,7 @@ const parseSchoolFromEmail = (schoolEmail) => {
     if (!emailDomain) {
       reject("Could not parse email to identify school");
     }
-    Schools.findOne({ emailDomain: emailDomain.domain }, (err, result) => {
+    School.findOne({ emailDomain: emailDomain.domain }, (err, result) => {
       if (!result) {
         // Domain -> School not found in database, so set to null until we can add it later
         return resolve(null);

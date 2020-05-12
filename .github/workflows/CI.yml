@@ -26,6 +26,7 @@ jobs:
           mongodb-replica-set: mongodb
 
       - run: npm install
-      - run: npm test
+      - run: npm run setup
+      - run: npm run init_db
         env:
           CI: true

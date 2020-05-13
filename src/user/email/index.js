@@ -4,23 +4,6 @@ const router = new express.Router();
 const db = require("./controller.js");
 const jwt = require("jsonwebtoken");
 
-// //Validate User Email
-// router.get("/users/emailValidation", async (req, res) => {
-//   try {
-//     const data = await db.isValidEmailToVerify(req.query.email);
-//     res.status(200).send(data);
-//   } catch (err) {
-//     res.status(err.status).send(err.message);
-//   }
-//   // await db.isValidEmailToVerify(req.query.email, (err, data) => {
-//   //   if (err) {
-//   //     res.sendStatus(500);
-//   //   } else {
-//   //     res.status(200).send(data);
-//   //   }
-//   // });
-// });
-
 // Send verification email
 router.get("/users/sendVerificationEmail", async (req, res) => {
   try {
@@ -83,18 +66,6 @@ router.get("/users/verify", async (req, res) => {
     }
     return res.status(500).send(err);
   }
-  //
-  // TALK WITH JUSTIN HERE
-  ///
-  // if (err.name == "AccountAlreadyRegistered") {
-  //   if (process.env.MODE === "STAGING") {
-  //     res.redirect(302, process.env.FRONT_END_URL + "/login");
-  //   } else {
-  //     res.redirect(302, process.env.FRONT_END_URL + "/login");
-  //   }
-  // } else {
-  //   res.status(401).send(err);
-  // }
 });
 
 module.exports = router;

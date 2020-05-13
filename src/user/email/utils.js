@@ -6,61 +6,63 @@ const Error = require("../../utils/error-model");
 
 // isValidEmailToVerify -- helper function
 // return values:
-// 1 :  email can be verified
-// -1: not a valid email address
-// -2: not an .edu email address
-// -3: verification email resend limit reached
-// -4: email already verified
-// 0 : internal error
+
+// valid email
+// not a valid email address
+// not an .edu email address
+// verification email resend limit reached
+// email already verified
+
 const isValidEmailToVerify = (email) => {
   return new Promise(async (resolve, reject) => {
     try {
       // Validate email address
       if (!isEmail.validate(email)) {
-        return resolve(-1);
+        return resolve("not a valid email address");
       }
       // Must be student email
       const emailDomain = parseDomain(email);
       if (!emailDomain || emailDomain.tld !== "edu") {
-        return resolve(-2);
+        return resolve("not an .edu email address");
       }
       // if email is already in our email db
       const res_email = await Email.findOne({ email: email.trim() });
       if (res_email) {
         if (res_email.status == "pre-verification") {
           if (res_email.remainingResendAmount < 1) {
-            return resolve(-3);
+            return resolve("verification email resend limit reached");
           }
-          return resolve(1);
+          return resolve("valid email");
         } else {
-          return resolve(-4);
+          return resolve("email already verified");
         }
       }
     } catch (err) {
       return reject(err);
     }
-    return resolve(1);
+    return resolve("valid email");
   });
 };
 
 // isValidEmailToRegister -- helper function
+
 // return values:
-// 1 : email can be registered with
-// -1: email not verified
-// -2: email already registered
-// 0 : internal error
+// email can be registered
+// email not verified
+// email already registered
+
 const isValidEmailToRegister = (email) => {
   return new Promise(async (resolve, reject) => {
     try {
       const res_email = await Email.findOne({ email: email.trim() });
       if (res_email) {
         if (res_email.status == "pre-registration") {
-          return resolve(1);
+          return resolve("email can be registered");
         } else if (res_email.status == "registered") {
-          return resolve(-2);
+          return resolve("email already registered");
         }
       }
-      return resolve(-1);
+      return resolve("email not verified");
     } catch (err) {
       return reject(err);
     }

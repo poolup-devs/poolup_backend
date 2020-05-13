@@ -6,6 +6,7 @@ const app = require("../../src/app");
 const request = require("supertest");
 const db = require("../../src/ride/controller.js");
 const jwt = require("jsonwebtoken");
+const agenda = require("../../src/agenda/agenda");
 
 describe("Testing Ride endpoints", () => {
   describe("Testing when a user joins a ride", () => {
@@ -110,6 +111,7 @@ describe("Testing Ride endpoints", () => {
         expect(cancelledRide).toBe(null);
       } catch (e) {
         console.log(e);
+        return;
       }
     });
 
@@ -166,6 +168,7 @@ describe("Testing Ride endpoints", () => {
         await db.cancelRide(ride._id, "userNotInRide");
       } catch (e) {
         expect(e).toBeTruthy();
+        return;
       }
     });
 
@@ -217,4 +220,19 @@ describe("Testing Ride endpoints", () => {
         .expect(200);
     });
   });
+
+  describe("Testing posting of a new ride", () => {
+    test("After a ride is posted, check whether scheduled jobs were created following ride completion", async () => {
+      const now = new Date();
+      const ride = await db.postRide({ ownerUsername: "driverUsername", seats: 3, date: now });
+      const completedRideJob = await agenda.jobs({ name: "update number of completed rides", data: { rideId: ride._id } });
+      expect(completedRideJob.length).toBe(1);
+      const reviewNotificationJob = await agenda.jobs({ name: "send leave a review web notifications", data: { rideId: ride._id } });
+      expect(reviewNotificationJob.length).toBe(1);
+
+      // clean up the jobs 
+      await agenda.cancel({ name: 'update number of completed rides' });
+      await agenda.cancel({ name: 'send leave a review web notifications' });
+    })
+  })
 });

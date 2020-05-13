@@ -51,11 +51,11 @@ const signup = async (userInfo) => {
     try {
       const v = await isValidEmailToRegister(userInfo.email);
       switch (v) {
-        case 1:
+        case "email can be registered":
           break;
-        case -1:
+        case "email not verified":
           return reject(Error(403, "Email not verified"));
-        case -2:
+        case "email already registered":
           return reject(Error(403, "Email already registered"));
         default:
           return reject(Error(500));
@@ -85,7 +85,7 @@ const signup = async (userInfo) => {
         function (err, customer) {
           // asynchronously called
           if (err) {
-            console.log("Failed to create Stripe Customer: ", err);
+            // console.log("Failed to create Stripe Customer: ", err);
           } else {
             newUser.stripe.customerID = customer.id;
             return resolve(newUser);
@@ -209,7 +209,7 @@ const checkIfDriver = (username) => {
 
         // If username not found
         if (!result) {
-          reject(new Error("User not found"));
+          reject(Error(404, "User not found"));
           return;
         }
 

@@ -13,7 +13,7 @@ const sendVerificationEmail = (email) => {
     try {
       const v = await isValidEmailToVerify(email);
       switch (v) {
-        case 1: {
+        case "valid email": {
           // Construct verification email
           const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, {
             expiresIn: VERIFICATION_EMAIL_EXPIRY,
@@ -39,13 +39,13 @@ const sendVerificationEmail = (email) => {
           }
           return resolve(true);
         }
-        case -1:
+        case "not a valid email address":
           return reject(Error(400, "Not a valid email address"));
-        case -2:
+        case "not an .edu email address":
           return reject(Error(400, "Not an .edu email address"));
-        case -3:
+        case "verification email resend limit reached":
           return reject(Error(403, "Verification email resend limit reached"));
-        case -4:
+        case "email already verified":
           return reject(Error(403, "Email already verified"));
         default: {
           return reject(Error(500));
@@ -84,7 +84,6 @@ const verifyEmail = (email) => {
 };
 
 module.exports = {
-  isValidEmailToVerify,
   sendVerificationEmail,
   verifyEmail,
 };

@@ -1,7 +1,7 @@
 const User = require("../user/user").User;
 const Review = require("./review").Review;
 const Ride = require("../ride/ride").Ride;
-const scheduler = require("../tasks/scheduler");
+const agenda = require("../../src/agenda/agenda");
 
 // Create a new review with required properties: reviewer username, reviewee username, rating, and ride ID
 const addNewReview = (newReviewInfo) => {
@@ -53,9 +53,15 @@ const addNewReview = (newReviewInfo) => {
               reviewerUsername != driverUsername
                 ? reviewerUsername
                 : revieweeUsername;
-            scheduler.cancelTask(
-              `expireAbilityToLeaveReviewTask.${newReviewInfo.rideId}.${driverUsername}.${passengerUsername}`
-            );
+
+            await agenda.cancel({
+              name: "expire ability to leave review",
+              data: {
+                rideId: newReviewInfo.rideId,
+                driverUsername,
+                passengerUsername,
+              },
+            });
           } else {
             // Counterpart has not left their review, so create new review but leave it as unpublished
             var newReview = await Review.create(newReviewInfo);

@@ -113,26 +113,25 @@ describe("Testing the sign-up functionality for users without registered account
     }
   });
 
-  // TODO: Fix Test
-  // test("When signing up a new user, a new user should be added to the database with a firstName, username, hashed password, email, school, and isRegistered set to true.", async () => {
-  //   const newUser = await db.signup({
-  //     firstName: "John",
-  //     lastName: "Smith",
-  //     password: "password",
-  //     email: verifiedAccount.email,
-  //   });
-  //   expect(newUser).toEqual(
-  //     expect.objectContaining({
-  //       firstName: "John",
-  //       lastName: "Smith",
-  //       username: "verifiedEmail",
-  //       password: sha256("password"),
-  //       email: "verifiedEmail@ucla.edu",
-  //       school: "UCLA",
-  //       isRegistered: true,
-  //     })
-  //   );
-  // });
+  test("When signing up a new user, a new user should be added to the database with a firstName, username, hashed password, email, school, and isRegistered set to true.", async () => {
+    const newUser = await db.signup({
+      firstName: "John",
+      lastName: "Smith",
+      password: "password",
+      email: verifiedAccount.email,
+    });
+    expect(newUser).toEqual(
+      expect.objectContaining({
+        firstName: "John",
+        lastName: "Smith",
+        username: "verifiedEmail",
+        password: sha256("password"),
+        email: "verifiedEmail@ucla.edu",
+        school: "UCLA",
+        isRegistered: true,
+      })
+    );
+  });
 
   test("When sending an POST request with an unused username to /users/signup to create a new account, should expect 201 Created response.", async () => {
     await request(app)
@@ -334,15 +333,14 @@ describe("Testing users with verified and registered accounts", () => {
   });
 
   describe("Testing the retrieval of user account information", () => {
-    // TODO: Fix Test
-    // test("When parsing an edu email, should return the school if it is in the database", async () => {
-    //   const ucla1 = await db.parseSchoolFromEmail("bruin@g.ucla.edu");
-    //   const ucla2 = await db.parseSchoolFromEmail("bruin@ucla.edu");
-    //   const ucsb = await db.parseSchoolFromEmail("gaucho@ucsb.edu");
-    //   expect(ucla1).toBe("UCLA");
-    //   expect(ucla2).toBe("UCLA");
-    //   expect(ucsb).toBe("UCSB");
-    // });
+    test("When parsing an edu email, should return the school if it is in the database", async () => {
+      const ucla1 = await db.parseSchoolFromEmail("bruin@g.ucla.edu");
+      const ucla2 = await db.parseSchoolFromEmail("bruin@ucla.edu");
+      const ucsb = await db.parseSchoolFromEmail("gaucho@ucsb.edu");
+      expect(ucla1).toBe("UCLA");
+      expect(ucla2).toBe("UCLA");
+      expect(ucsb).toBe("UCSB");
+    });
 
     test("When parsing an edu email not found in the database, should return null", async () => {
       const invalidSchool = await db.parseSchoolFromEmail(
@@ -498,14 +496,13 @@ describe("Testing users with verified and registered accounts", () => {
       });
     });
 
-    // TODO: Fix Test
-    // test("When sending a PATCH request to /users/upload-profile-pic with a valid PNG image, should expect 200 response.", async () => {
-    //   await request(app)
-    //     .patch("/users/upload-profile-pic")
-    //     .set("Authorization", "Bearer " + registeredUserUsernameAuthToken)
-    //     .attach("file", "./tests/user/test_profile.png")
-    //     .expect(200);
-    // });
+    test("When sending a PATCH request to /users/upload-profile-pic with a valid PNG image, should expect 200 response.", async () => {
+      await request(app)
+        .patch("/users/upload-profile-pic")
+        .set("Authorization", "Bearer " + registeredUserUsernameAuthToken)
+        .attach("file", "./tests/user/test_profile.png")
+        .expect(200);
+    });
 
     test("When sending a PATCH request to /users/upload-profile-pic with a non-image file, should expect 400 error response.", async () => {
       await request(app)
@@ -598,26 +595,26 @@ describe("Testing users with verified and registered accounts", () => {
         );
       }
     });
-    // TODO: Fix Test
-    // test("When deleting a user, should delete all instances of that user in User, Ride, and Noti", (done) => {
-    //   const { username } = registeredUser;
-    //   Ride.create({ ownerUsername: username }).then(
-    //     Noti.create({ username }).then(
-    //       db.deleteUser(username, (err, result) => {
-    //         Ride.findOne({ ownerUsername: username }, (err, result) => {
-    //           expect(result).toEqual(null);
-    //           Noti.findOne({ username }, (err, result) => {
-    //             expect(result).toEqual(null);
-    //             User.findOne({ username }, (err, result) => {
-    //               expect(result).toEqual(null);
-    //               done();
-    //             });
-    //           });
-    //         });
-    //       })
-    //     )
-    //   );
-    // });
+
+    test("When deleting a user, should delete all instances of that user in User, Ride, and Noti", (done) => {
+      const { username } = registeredUser;
+      Ride.create({ ownerUsername: username }).then(
+        Noti.create({ username }).then(
+          db.deleteUser(username, (err, result) => {
+            Ride.findOne({ ownerUsername: username }, (err, result) => {
+              expect(result).toEqual(null);
+              Noti.findOne({ username }, (err, result) => {
+                expect(result).toEqual(null);
+                User.findOne({ username }, (err, result) => {
+                  expect(result).toEqual(null);
+                  done();
+                });
+              });
+            });
+          })
+        )
+      );
+    });
 
     test("When reseting a user's password, should update the user's password field to the new password.", (done) => {
       const newPassword = sha256("newPassword");
@@ -710,12 +707,11 @@ describe("Testing users with verified and registered accounts", () => {
         });
     });
 
-    // TODO: Fix Text
-    // test("When deleting a user while logged in with valid credentials, should return 200 response code, ", async () => {
-    //   await request(app)
-    //     .delete("/users/deleteUser")
-    //     .set("Authorization", "Bearer " + registeredUserUsernameAuthToken)
-    //     .expect(200);
-    // });
+    test("When deleting a user while logged in with valid credentials, should return 200 response code, ", async () => {
+      await request(app)
+        .delete("/users/deleteUser")
+        .set("Authorization", "Bearer " + registeredUserUsernameAuthToken)
+        .expect(200);
+    });
   });
 });

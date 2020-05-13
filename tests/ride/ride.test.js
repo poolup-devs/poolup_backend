@@ -8,6 +8,7 @@ const app = require("../../src/app");
 const request = require("supertest");
 const db = require("../../src/ride/controller.js");
 const jwt = require("jsonwebtoken");
+const agenda = require("../../src/agenda/agenda");
 
 describe("Testing Ride endpoints", () => {
   describe("Testing ride posting", () => {
@@ -33,7 +34,7 @@ describe("Testing Ride endpoints", () => {
     // Can't post a ride with different username in rideInfo and authUsername
     test("Can't post a ride with different username in rideInfo and authUsername", async () => {
       const user_obj = user_devCon.dev_createDummyUserObj("driver");
-      const user = user_devCon.dev_createRegisteredUsers([user_obj]);
+      const user = user_devCon.dev_createRegisteredUser(user_obj);
       // const username = "driver";
       // await User.create({ username: username });
       let ride = sampleRide;
@@ -251,6 +252,7 @@ describe("Testing Ride endpoints", () => {
         await db.cancelRide(ride._id, "userNotInRide");
       } catch (e) {
         expect(e).toBeTruthy();
+        return;
       }
     });
 
@@ -283,7 +285,7 @@ describe("Testing Ride endpoints", () => {
 
     test("Expect a response code of 200 when cancelling a ride as a passenger.", async () => {
       const driver_obj = user_devCon.dev_createDummyUserObj("driverUsername");
-      const driver = user_devCon.dev_createRegisteredUsers([driver_obj]);
+      const driver = user_devCon.dev_createRegisteredUser(driver_obj);
       // const driver = await User.create({
       //   username: "driverUsername",
       //   email: "driver@ucla.edu",
@@ -303,6 +305,34 @@ describe("Testing Ride endpoints", () => {
         .set("Authorization", "Bearer " + authToken)
         .send({ cancellationReason: "Change of travel plans", ride })
         .expect(200);
+    });
+  });
+
+  describe("Testing posting of a new ride", () => {
+    test("After a ride is posted, check whether scheduled jobs were created following ride completion", async () => {
+      const now = new Date();
+      const ride = await db.postRide(
+        {
+          ownerUsername: "driverUsername",
+          seats: 3,
+          date: now,
+        },
+        "driverUsername"
+      );
+      const completedRideJob = await agenda.jobs({
+        name: "update number of completed rides",
+        data: { rideId: ride._id },
+      });
+      expect(completedRideJob.length).toBe(1);
+      const reviewNotificationJob = await agenda.jobs({
+        name: "send leave a review web notifications",
+        data: { rideId: ride._id },
+      });
+      expect(reviewNotificationJob.length).toBe(1);
+
+      // clean up the jobs
+      await agenda.cancel({ name: "update number of completed rides" });
+      await agenda.cancel({ name: "send leave a review web notifications" });
     });
   });
 });

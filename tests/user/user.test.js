@@ -47,7 +47,7 @@ describe("Testing the verification of an email", () => {
 
   test("If a verified and registered user already has the same email that is being verified, should return an error", async () => {
     const verifiedUserObj = user_devCon.dev_createDummyUserObj("verfied");
-    await user_devCon.dev_createRegisteredUsers([verifiedUserObj]);
+    await user_devCon.dev_createRegisteredUser(verifiedUserObj);
     try {
       await db_email.verifyEmail(verifiedUserObj.email);
     } catch (err) {
@@ -76,7 +76,7 @@ describe("Testing the verification of an email", () => {
 
   test("If the verification link is clicked after the email has been verified and the user account for it is registered, should expect an error", async () => {
     const verifiedUserObj = user_devCon.dev_createDummyUserObj("registered");
-    await user_devCon.dev_createRegisteredUsers([verifiedUserObj]);
+    await user_devCon.dev_createRegisteredUser(verifiedUserObj);
     const token = jwt.sign(
       { email: verifiedUserObj.email },
       process.env.JWT_EMAIL_KEY,
@@ -625,26 +625,26 @@ describe("Testing users with verified and registered accounts", () => {
         );
       }
     });
-    // TODO: Fix Test
-    // test("When deleting a user, should delete all instances of that user in User, Ride, and Noti", (done) => {
-    //   const { username } = registeredUser;
-    //   Ride.create({ ownerUsername: username }).then(
-    //     Noti.create({ username }).then(
-    //       db.deleteUser(username, (err, result) => {
-    //         Ride.findOne({ ownerUsername: username }, (err, result) => {
-    //           expect(result).toEqual(null);
-    //           Noti.findOne({ username }, (err, result) => {
-    //             expect(result).toEqual(null);
-    //             User.findOne({ username }, (err, result) => {
-    //               expect(result).toEqual(null);
-    //               done();
-    //             });
-    //           });
-    //         });
-    //       })
-    //     )
-    //   );
-    // });
+
+    test("When deleting a user, should delete all instances of that user in User, Ride, and Noti", (done) => {
+      const { username } = registeredUser;
+      Ride.create({ ownerUsername: username }).then(
+        Noti.create({ username }).then(
+          db.deleteUser(username, (err, result) => {
+            Ride.findOne({ ownerUsername: username }, (err, result) => {
+              expect(result).toEqual(null);
+              Noti.findOne({ username }, (err, result) => {
+                expect(result).toEqual(null);
+                User.findOne({ username }, (err, result) => {
+                  expect(result).toEqual(null);
+                  done();
+                });
+              });
+            });
+          })
+        )
+      );
+    });
 
     test("When reseting a user's password, should update the user's password field to the new password.", (done) => {
       const newPassword = sha256("newPassword");

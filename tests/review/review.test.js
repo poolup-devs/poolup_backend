@@ -9,6 +9,7 @@ const Email = require("../../src/user/email/email").Email;
 
 const user_devCon = require("../../src/user/dev_controller");
 const jwt = require("jsonwebtoken");
+const agenda = require("../../src/agenda/agenda");
 
 const app = require("../../src/app");
 const request = require("supertest");
@@ -141,6 +142,7 @@ describe("Testing rating system operations", () => {
       await Review.deleteMany();
       await Ride.deleteMany();
     });
+
     test("A review without a required field, such as rideId, should error instead of creating the review.", async () => {
       try {
         expect.assertions(1);
@@ -192,7 +194,7 @@ describe("Testing rating system operations", () => {
       }
     });
 
-    test("When a user submits a review after his counterpart has, expect both reviews to be published and both ratings updated", async () => {
+    test("When a user submits a review after his counterpart has, expect both reviews to be published and both ratings updated. The `expire ability to leave review` job should be cancelled.", async () => {
       // Create a dummy user who receives the new review
       let firstReviewer = await User.create({ username: "driverUsername" });
       let secondReviewer = await User.create({ username: "riderUsername" });
@@ -200,18 +202,49 @@ describe("Testing rating system operations", () => {
         ownerUsername: "driverUsername",
         passengers: ["riderUsername"],
       });
+
+      // "Expire ability to leave review" job associated with this driver->passenger pair should already exist
+      // It should be cancelled after adding the new review because the reviewer's counterpart has left a review already
+      await agenda.schedule("24 hours", "expire ability to leave review", {
+        rideId: ride._id,
+        driverUsername: ride.ownerUsername,
+        passengerUsername: "riderUsername",
+      });
+      let expireReviewNotiJob = await agenda.jobs({
+        name: "expire ability to leave review",
+        data: {
+          rideId: ride._id,
+          driverUsername: ride.ownerUsername,
+          passengerUsername: "riderUsername",
+        },
+      });
+      expect(expireReviewNotiJob.length).toBe(1);
+
+      // Counterpart review
       let firstReview = await Review.create({
         reviewerUsername: firstReviewer.username,
         revieweeUsername: secondReviewer.username,
         rating: 3,
         rideId: ride._id,
       });
+
       let secondReview = await db.addNewReview({
         reviewerUsername: secondReviewer.username,
         revieweeUsername: firstReviewer.username,
         rating: 4,
         rideId: ride._id,
       });
+
+      // Cancelled the job
+      expireReviewNotiJob = await agenda.jobs({
+        name: "expire ability to leave review",
+        data: {
+          rideId: ride._id,
+          driverUsername: ride.ownerUsername,
+          passengerUsername: "riderUsername",
+        },
+      });
+      expect(expireReviewNotiJob.length).toBe(0);
 
       // Expect both reviews are published
       firstReview = await Review.findOne({
@@ -342,8 +375,7 @@ describe("Testing rating system operations", () => {
 
     test("Should correctly add a new review when properly authenticated.", async () => {
       const user_obj = user_devCon.dev_createDummyUserObj("driver");
-      const user = user_devCon.dev_createRegisteredUsers([user_obj]);
-
+      const user = await user_devCon.dev_createRegisteredUser(user_obj);
       const userAuthToken = jwt.sign(
         { username: user.username, _id: user._id },
         process.env.JWT_SECRET_KEY
@@ -404,7 +436,7 @@ describe("Testing rating system operations", () => {
 
   describe("Testing rating system API endpoints", () => {
     const user_obj = user_devCon.dev_createDummyUserObj("registeredUser");
-    const user = user_devCon.dev_createRegisteredUsers([user_obj]);
+    const user = user_devCon.dev_createRegisteredUser(user_obj);
     const userAuthToken = jwt.sign(
       { username: user.username },
       process.env.JWT_SECRET_KEY

@@ -2,10 +2,9 @@ const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
 const Request = require("../request/request").Request;
-const scheduler = require("../tasks/scheduler");
-const scheduledTasks = require("../tasks/scheduledTasks");
 const paymentHandler = require("../stripe/tool/payment-handler");
 const Error = require("../utils/error-model");
+const agenda = require("../agenda/agenda");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
 const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
@@ -195,23 +194,22 @@ const postRide = (rideInfo, authUsername) => {
           )
         );
       }
-      const ride_new = await Ride.create(rideInfo);
-      // Schedule a job that updates the number of completed rides for each user in the carpool that will occur 2 hours after the carpool begins
-      scheduler.scheduleTaskHoursAfterDate(
-        `updateCompletedRidesTask.${ride_new._id}`,
-        scheduledTasks.updateCompletedRidesTask(ride_new._id),
+      const newRide = await Ride.create(rideInfo);
+      // Schedule jobs to occur after ride completion
+      await agenda.scheduleJobHoursAfterDate(
+        "update number of completed rides",
+        { rideId: newRide._id },
         rideInfo.date,
         2
       );
-
-      // Schedule a job that prompts users in the ride to leave reviews 12 hours after carpool begins
-      scheduler.scheduleTaskHoursAfterDate(
-        `createNotiToLeaveReviewTask.${ride_new._id}`,
-        scheduledTasks.createNotiToLeaveReviewTask(ride_new._id),
+      await agenda.scheduleJobHoursAfterDate(
+        "send leave a review web notifications",
+        { rideId: newRide._id },
         rideInfo.date,
         12
       );
-      return resolve(ride_new);
+
+      return resolve(newRide);
     } catch (err) {
       return reject(Error(500, err));
     }
@@ -294,7 +292,8 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
 
       // Delete the ride
       await Ride.deleteOne({ _id: rideId });
-      scheduler.cancelTasksAssociatedWithRide(rideId);
+      await agenda.cancelJobsAssociatedWithRide(rideId);
+
       // There are no passengers in the ride, so the driver can freely cancel without penalties
       if (cancelledRideDoc.passengers.length === 0) {
         return resolve(

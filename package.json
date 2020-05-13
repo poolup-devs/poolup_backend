@@ -11,12 +11,14 @@
     "dev": "env-cmd -r ./config/.env-cmdrc -e base_config,development nodemon src/server.js",
     "setup": "node ./setup/setup.js",
     "init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development node ./setup/init_db.js",
-    "test": "env-cmd -r ./config/.env-cmdrc -e base_config,test jest --watch --runInBand"
+    "test": "env-cmd -r ./config/.env-cmdrc -e base_config,test jest --watch --runInBand",
+    "init_db_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,test node ./setup/init_db.js",
+    "ci_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,test jest --noStackTrace --colors --runInBand --forceExit"
   },
   "jest": {
     "testEnvironment": "node",
     "setupFilesAfterEnv": [
-      "./tests/jestDefaultTimeout.js"
+      "./tests/setup.js"
     ]
   },
   "keywords": [],

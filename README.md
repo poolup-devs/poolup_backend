@@ -248,12 +248,22 @@ There must be a white space between the string "Bearer" and the token string
 
 ## Scheduling Tasks
 
-All scheduled tasks should be in /tasks/scheduledTasks.js, with unit tests in /tests/tasks/scheduledTasks.test.js
-Operations
+We are using [Agenda](https://github.com/agenda/agenda), a persistent job scheduling library, to manage time-based jobs. Scheduled jobs are stored in the MongoDB database under the collection: **scheduledJobs**. Jobs are processed every 5 seconds. When a database connection is lost, Agenda attempts to reconnect indefinitely. 
 
-- `void scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)` - Schedules a task to _run once_, X hours after a certain date - **uniqueTaskName**: uniquely identify the task in the case you ever need to cancel the task - **task**: function pointer of the task to schedule - **date**: JavaScript Date object - **hours**: number of hours after specified date
-- `cancelTasksAssociatedWithRide(rideId)` - Clean up all tasks associated with a ride - This will clean up tasks named with the following format: **taskFunctionName:{rideId}** - ex: **updateCompletedRidesTask:{rideId}** or **promptLeaveAReviewTask:{rideId}** - This can be used to clean up scheduled email reminders and web notifications for rides that have been cancellled
-- `bool cancelTask(taskName)` - Cancel a task, returns a Promise that resolves into a boolean value
+To obtain an instance of agenda, require the following file: */src/agenda/agenda.js*. This instantiates the agenda object, making every job defined in */src/agenda/bindings* available to the instance. You can then use the returned object to perform any scheduling operations as defined in the NPM module. 
+
+For scalability purposes, jobs are 'defined' in */src/agenda/bindings* but have their implementation in */src/agenda/jobs*. 
+
+The following are some helper functions are defined in agenda.js that may be useful: 
+1. `agenda.scheduleJobHoursAfterDate(taskName, data, date, hoursAfterDate)`
+    - taskName: the name of the task to schedule 
+    - data: an object containing the data needed to run the task 
+    - date: initial date to add hours to 
+    - hoursAfterDate: number of hours after the passed in date 
+2. `agenda.scheduleJobMinutesAfterDate(taskName, data, date, minutesAfterDate)`
+3. `agenda.cancelJobsAssociatedWithRide(rideId)`
+    - cancels jobs associated with rideId
+    - eg. "update number of completed rides" & "send leave a review web notifications" 
 
 ---
 

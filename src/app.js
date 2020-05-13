@@ -37,6 +37,7 @@ app.use(
 );
 
 const userRouter = require("./user/index");
+const emailRouter = require("./user/email/index");
 const rideRouter = require("./ride/index");
 const notiRouter = require("./noti/index");
 const stripeRouter = require("./stripe/index");
@@ -44,6 +45,7 @@ const reviewRouter = require("./review/index");
 const requestRouter = require("./request/index");
 
 app.use(userRouter);
+app.use(emailRouter);
 app.use(rideRouter);
 app.use(notiRouter);
 app.use(stripeRouter);

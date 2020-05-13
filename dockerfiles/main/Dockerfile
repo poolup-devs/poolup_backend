@@ -6,7 +6,7 @@ FROM node:12
 
 WORKDIR home/nodejs/app
 
-COPY package*.json ./
+COPY package.json .
 RUN npm install --production
 COPY . .
 

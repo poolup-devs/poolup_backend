@@ -1,6 +1,12 @@
 name: Continuous Integration and Deployment
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   ci:
@@ -32,13 +38,6 @@ jobs:
           CI: true
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           JWT_EMAIL_KEY: ${{ secrets.JWT_EMAIL_KEY }}
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
 
 cd:
   runs-on: ubuntu-latest

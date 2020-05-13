@@ -12,7 +12,7 @@
     "setup": "node ./setup/setup.js",
     "init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development node ./setup/init_db.js",
     "test": "env-cmd -r ./config/.env-cmdrc -e base_config,test jest --watch --runInBand",
-    "ci_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,test jest --watchAll --verbose --detectOpenHandles --noStackTrace --colors --unhandled-rejections=strict"
+    "ci_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,test jest --noStackTrace --colors --runInBand --forceExit"
   },
   "jest": {
     "testEnvironment": "node",

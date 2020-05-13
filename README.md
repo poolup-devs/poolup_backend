@@ -93,9 +93,17 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
    Removes all documents in all the collections, and initializes the database with default objects.
    Currently only removes and creates from User collection.
-
 ---
 
+## Configuration
+
+Poolup API is configured via environment variables. The applicable environment variables are:
+
+Environment Variable | Description
+--- | ---
+EXAMPLE | example description
+---
+ 
 ## Additional Tools
 
 1. Download and install Postman to test backend REST APIs

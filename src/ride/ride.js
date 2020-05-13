@@ -1,15 +1,14 @@
 const mongoose = require("mongoose");
 
 const rideSchema = mongoose.Schema({
-  ownerEmail: { type: String, required: true },
-  ownerUsername: { type: String, required: true },
-  // ownerPhoneNumber: { type: String, required: true },
+  ownerEmail: String,
+  ownerUsername: String,
   ownerPhoneNumber: String,
-  from: { type: String, required: true },
-  to: { type: String, required: true },
-  date: { type: Date, default: new Date() },
-  price: { type: String, required: true },
-  seats: { type: Number, required: true },
+  from: String,
+  to: String,
+  date: Date,
+  price: String,
+  seats: Number,
   detail: String,
   passengers: Array,
   instantBook: {

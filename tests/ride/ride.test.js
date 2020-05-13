@@ -2,6 +2,8 @@ require("../../src/db/mongoose");
 const User = require("../../src/user/user").User;
 const Ride = require("../../src/ride/ride").Ride;
 const Noti = require("../../src/noti/noti").Noti;
+const Email = require("../../src/user/email/email").Email;
+const user_devCon = require("../../src/user/dev_controller");
 const app = require("../../src/app");
 const request = require("supertest");
 const db = require("../../src/ride/controller.js");
@@ -25,26 +27,28 @@ describe("Testing Ride endpoints", () => {
       await Ride.deleteMany({});
       await User.deleteMany({});
       await Noti.deleteMany({});
+      await Email.deleteMany({});
     });
 
     // Can't post a ride with different username in rideInfo and authUsername
     test("Can't post a ride with different username in rideInfo and authUsername", async () => {
-      const username = "driver";
-      await User.create({ username: username });
+      const user_obj = user_devCon.dev_createDummyUserObj("driver");
+      const user = user_devCon.dev_createRegisteredUsers([user_obj]);
+      // const username = "driver";
+      // await User.create({ username: username });
       let ride = sampleRide;
       ride.ownerUsername = "bogusUsername";
-      const newRide = await db.postRide(ride, username);
+      // const newRide = await db.postRide(ride, username);
 
-      const token = jwt.sign(
-        { email: "unverifiedEmail@ucla.edu" },
-        process.env.JWT_EMAIL_KEY,
-        { expiresIn: "24h" }
+      const userAuthToken = jwt.sign(
+        { username: user.username, _id: user._id },
+        process.env.JWT_SECRET_KEY
       );
 
       await request(app)
         .post("/rides/post-ride")
-        .send(newRide)
-        .set("Authorization", "Bearer " + token)
+        .send({ rideInfo: ride })
+        .set("Authorization", "Bearer " + userAuthToken)
         .expect(403);
     });
   });
@@ -66,6 +70,7 @@ describe("Testing Ride endpoints", () => {
       await Ride.deleteMany({});
       await User.deleteMany({});
       await Noti.deleteMany({});
+      await Email.deleteMany({});
     });
 
     test("Expect when a user joins a ride, the user is added to the ride's list of passengers, the number of seats is decremented, and a notification is sent to the driver", async () => {
@@ -76,11 +81,7 @@ describe("Testing Ride endpoints", () => {
         passengers: ["passenger_1"],
         seats: 2,
       });
-      const res = await db.joinRide(
-        ownerUsername,
-        ride._id,
-        passenger.username
-      );
+      const res = await db.joinRide(ride, passenger.username);
       expect(Array.from(res.passengers).sort()).toEqual([
         "passenger_1",
         "passenger_2",
@@ -101,7 +102,7 @@ describe("Testing Ride endpoints", () => {
       ride.ownerUsername = username;
       const newRide = await db.postRide(ride, username);
       try {
-        await db.joinRide(username, newRide._id);
+        await db.joinRide(newRide, username);
       } catch (err) {
         expect(err.message).toBe("driver of the ride cannot join the ride");
       }
@@ -118,10 +119,10 @@ describe("Testing Ride endpoints", () => {
         for (; i < newRide.seats + 3; i++) {
           const username_ = username + i;
           const user = await User.create({ username: username_ });
-          db.joinRide(newRide, user.username);
+          await db.joinRide(newRide, user.username);
         }
       } catch (err) {
-        expect(i).toBe(newRide.seats + 1);
+        expect(i).toBe(newRide.seats);
         expect(err.message).toBe("the ride is full");
       }
     });
@@ -132,6 +133,7 @@ describe("Testing Ride endpoints", () => {
       await Ride.deleteMany({});
       await User.deleteMany({});
       await Noti.deleteMany({});
+      await Email.deleteMany({});
     });
 
     test("Test cancellation of a ride with passengers as a driver", async () => {
@@ -186,17 +188,14 @@ describe("Testing Ride endpoints", () => {
         email: "driverUsername@ucla.edu",
       });
       const ride = await Ride.create({ ownerUsername: "driverUsername" });
-      try {
-        await db.cancelRide(ride._id, "driverUsername");
 
-        // Check whether ride was deleted
-        const cancelledRide = await Ride.findOne({
-          ownerUsername: ride.ownerUsername,
-        });
-        expect(cancelledRide).toBe(null);
-      } catch (e) {
-        console.log(e);
-      }
+      await db.cancelRide(ride._id, "driverUsername");
+
+      // Check whether ride was deleted
+      const cancelledRide = await Ride.findOne({
+        ownerUsername: ride.ownerUsername,
+      });
+      expect(cancelledRide).toBe(null);
     });
 
     test("Test cancellation of a ride as a passenger", async () => {
@@ -256,20 +255,21 @@ describe("Testing Ride endpoints", () => {
     });
 
     test("Expect a response code of 200 when cancelling a ride as a passenger.", async () => {
-      const passenger = await User.create({
-        username: "passenger1",
-        email: "passenger1@ucla.edu",
-      });
+      const passenger_obj = user_devCon.dev_createDummyUserObj("passenger1");
+      const passenger = await user_devCon.dev_createRegisteredUser(
+        passenger_obj
+      );
+
       const ride = await Ride.create({
         ownerUsername: "driverUsername",
         passengers: ["passenger1"],
         seats: 1,
       });
+
       const authToken = jwt.sign(
-        { username: "passenger1" },
+        { username: passenger.username, _id: passenger._id },
         process.env.JWT_SECRET_KEY
       );
-
       await request(app)
         .put("/rides/cancel-ride")
         .set("Authorization", "Bearer " + authToken)
@@ -282,17 +282,19 @@ describe("Testing Ride endpoints", () => {
     });
 
     test("Expect a response code of 200 when cancelling a ride as a passenger.", async () => {
-      const driver = await User.create({
-        username: "driverUsername",
-        email: "driver@ucla.edu",
-      });
+      const driver_obj = user_devCon.dev_createDummyUserObj("driverUsername");
+      const driver = user_devCon.dev_createRegisteredUsers([driver_obj]);
+      // const driver = await User.create({
+      //   username: "driverUsername",
+      //   email: "driver@ucla.edu",
+      // });
       const ride = await Ride.create({
-        ownerUsername: "driverUsername",
+        ownerUsername: driver.username,
         passengers: ["passenger1"],
         seats: 1,
       });
       const authToken = jwt.sign(
-        { username: "driverUsername" },
+        { username: driver.username, _id: driver._id },
         process.env.JWT_SECRET_KEY
       );
 

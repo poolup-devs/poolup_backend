@@ -8,12 +8,66 @@ const db = require("../../src/ride/controller.js");
 const jwt = require("jsonwebtoken");
 
 describe("Testing Ride endpoints", () => {
-  describe("Testing when a user joins a ride", () => {
+  describe("Testing ride posting", () => {
+    let sampleRide = {
+      ownerEmail: "idc@gmail.com",
+      ownerUsername: "",
+      from: "Here",
+      to: "There",
+      date: new Date(),
+      price: "20",
+      seats: 4,
+      detail: "Third test for post",
+      passengers: [],
+    };
+
     afterEach(async () => {
       await Ride.deleteMany({});
       await User.deleteMany({});
       await Noti.deleteMany({});
     });
+
+    // Can't post a ride with different username in rideInfo and authUsername
+    test("Can't post a ride with different username in rideInfo and authUsername", async () => {
+      const username = "driver";
+      await User.create({ username: username });
+      let ride = sampleRide;
+      ride.ownerUsername = "bogusUsername";
+      const newRide = await db.postRide(ride, username);
+
+      const token = jwt.sign(
+        { email: "unverifiedEmail@ucla.edu" },
+        process.env.JWT_EMAIL_KEY,
+        { expiresIn: "24h" }
+      );
+
+      await request(app)
+        .post("/rides/post-ride")
+        .send(newRide)
+        .set("Authorization", "Bearer " + token)
+        .expect(403);
+    });
+  });
+
+  describe("Testing when a user joins a ride", () => {
+    let sampleRide = {
+      ownerEmail: "idc@gmail.com",
+      ownerUsername: "",
+      from: "Here",
+      to: "There",
+      date: new Date(),
+      price: "20",
+      seats: 4,
+      detail: "Third test for post",
+      passengers: [],
+    };
+
+    afterEach(async () => {
+      await Ride.deleteMany({});
+      await User.deleteMany({});
+      await Noti.deleteMany({});
+    });
+
     test("Expect when a user joins a ride, the user is added to the ride's list of passengers, the number of seats is decremented, and a notification is sent to the driver", async () => {
       const passenger = await User.create({ username: "passenger_2" });
       const ownerUsername = "driverUsername";
@@ -38,6 +92,38 @@ describe("Testing Ride endpoints", () => {
           msg: "passenger_2 has joined your ride",
         })
       );
+    });
+
+    test("The Driver can't join his own ride", async () => {
+      const username = "driver";
+      await User.create({ username: username });
+      let ride = sampleRide;
+      ride.ownerUsername = username;
+      const newRide = await db.postRide(ride, username);
+      try {
+        await db.joinRide(username, newRide._id);
+      } catch (err) {
+        expect(err.message).toBe("driver of the ride cannot join the ride");
+      }
+    });
+
+    // ride is full
+    test("The ride is full", async () => {
+      const username = "rider";
+      let ride = sampleRide;
+      ride.ownerUsername = username;
+      const newRide = await db.postRide(ride, username);
+      let i = 0;
+      try {
+        for (; i < newRide.seats + 3; i++) {
+          const username_ = username + i;
+          const user = await User.create({ username: username_ });
+          db.joinRide(newRide, user.username);
+        }
+      } catch (err) {
+        expect(i).toBe(newRide.seats + 1);
+        expect(err.message).toBe("the ride is full");
+      }
     });
   });
 

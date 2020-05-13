@@ -27,7 +27,7 @@ router.get("/rides/user-rides-history", checkAuth, async (req, res) => {
 
 //Get my ride history
 router.get("/rides/my-rides-history", checkAuth, async (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
   try {
     const data = await db.getMyRideHistory(authUsername, req.query.pageNum);
     res.status(200).send(data);
@@ -38,7 +38,7 @@ router.get("/rides/my-rides-history", checkAuth, async (req, res) => {
 
 //Get my ride upcoming
 router.get("/rides/my-rides-upcoming", checkAuth, async (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
   try {
     const data = await db.getMyRideUpcoming(authUsername);
     res.status(200).send(data);
@@ -76,7 +76,13 @@ router.get("/rides/drives-upcoming", checkAuth, async (req, res) => {
 //Post a Ride
 router.post("/rides/post-ride", checkAuth, async (req, res) => {
   try {
-    const data = await db.postRide(req.body.rideInfo);
+    var authUsername = await tokenParser(req.headers.authorization);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+
+  try {
+    const data = await db.postRide(req.body.rideInfo, authUsername);
     res.status(201).send(data);
   } catch (err) {
     res.status(err.status).send(err.message);
@@ -85,11 +91,14 @@ router.post("/rides/post-ride", checkAuth, async (req, res) => {
 
 //Join a Ride manually
 router.put("/rides/join-ride", checkAuth, async (req, res) => {
-  const ride = req.body.ride;
-  const authUsername = tokenParser(req.headers.authorization).username;
+  try {
+    var authUsername = await tokenParser(req.headers.authorization);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 
   try {
-    const data = await db.joinRide(ride.ownerUsername, ride._id, authUsername);
+    const data = await db.joinRide(req.body.ride, authUsername);
     res.status(200).send(data);
   } catch (err) {
     res.status(err.status).send(err.message);
@@ -106,7 +115,7 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
     var messageToDriver = null;
   }
 
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
 
   try {
     const msg = await db.cancelRide(

@@ -353,16 +353,18 @@ const rideDetails = (_id) => {
 const addDriverInfoToRides = (rides) => {
   return new Promise(async (resolve, reject) => {
     try {
-      let modifiedRides = JSON.parse(JSON.stringify(rides));
-      for (i = 0; i < modifiedRides.length; i++) {
+      modifiedRides = [];
+      for (const ride of rides) {
         const driver = await User.findOne({
-          username: modifiedRides[i].ownerUsername,
+          username: ride.ownerUsername,
         });
+        var modifiedRide = ride.toObject();
         const { picUrl, picType, firstName, lastName } = driver;
-        modifiedRides[i].picUrl = picUrl;
-        modifiedRides[i].picType = picType;
-        modifiedRides[i].firstName = firstName;
-        modifiedRides[i].lastName = lastName;
+        modifiedRide.picUrl = picUrl;
+        modifiedRide.picType = picType;
+        modifiedRide.firstName = firstName;
+        modifiedRide.lastName = lastName;
+        modifiedRides.push(modifiedRide);
       }
       resolve(modifiedRides);
     } catch (e) {

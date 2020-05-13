@@ -36,6 +36,8 @@ jobs:
       - run: npm run ci_test
         env:
           CI: true
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          JWT_EMAIL_KEY: ${{ secrets.JWT_EMAIL_KEY }}
 
   cd:
     runs-on: ubuntu-latest

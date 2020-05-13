@@ -38,6 +38,7 @@
     "FRONT_END_URL": "https://poolup.co"
   },
   "test": {
+    "MODE": "TESTING",
     "MONGODB_URL": "mongodb://localhost/poolup-test"
   },
   "development-docker": {

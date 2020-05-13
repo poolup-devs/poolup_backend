@@ -55,9 +55,12 @@ const sendVerificationEmail = async (email, verificationLink) => {
         subject: "[PoolUp] Please verify your PoolUp account",
         html: emailTemplate,
       };
+      if (process.env.MODE === "TESTING") {
+        return resolve();
+      }
       return resolve(await sendEmail(mailOptions));
-    } catch (e) {
-      return reject(e);
+    } catch (err) {
+      return reject(err);
     }
   });
 };

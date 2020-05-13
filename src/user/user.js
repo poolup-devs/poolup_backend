@@ -3,46 +3,45 @@ const mongoose = require("mongoose");
 const userSchema = mongoose.Schema({
   // Account information
   firstName: String,
-  lastName: String, 
+  lastName: String,
   email: String,
   username: { type: String, index: true },
   password: String,
   stripe: {
     customerID: {
       type: String,
-      default: ""
+      default: "",
     },
     accountID: {
       type: String,
-      default: ""
-    }
+      default: "",
+    },
   },
   driver: {
     isDriver: {
       type: Boolean,
-      default: false
+      default: false,
     },
     licensePlate: {
       type: String,
-      default: ""
+      default: "",
     },
     vehicleMakeModel: {
       type: String,
-      default: ""
+      default: "",
     },
     driversLicense: {
       type: String,
-      default: ""
+      default: "",
     },
     vehicleColor: {
       type: String,
-      default: ""
-    }
+      default: "",
+    },
   },
   phoneNumber: String,
   picUrl: String,
   picType: { type: String, default: "png" },
-  isRegistered: { type: Boolean, default: false },
   createdAt: { type: Date, default: new Date() },
 
   // Personal information
@@ -52,11 +51,11 @@ const userSchema = mongoose.Schema({
   ridesCompleted: { type: Number, default: 0 },
   rating: {
     sumOfAllRatings: { type: Number, default: 0 },
-    totalRatings: { type: Number, default: 0 }
-  }
+    totalRatings: { type: Number, default: 0 },
+  },
 });
 
-userSchema.statics.setRandomBruinBear = function(username) {
+userSchema.statics.setRandomBruinBear = function (username) {
   const colors = ["blue", "orange", "pink", "purple", "white"];
   const default_picUrl =
     "https://poolup-bucket-deployment.s3.us-east-2.amazonaws.com/DefaultProfilePic/PoolUpLogo_" +
@@ -65,7 +64,7 @@ userSchema.statics.setRandomBruinBear = function(username) {
   return this.findOneAndUpdate(
     { username },
     { picUrl: default_picUrl },
-    function(error, result) {
+    function (error, result) {
       if (error) {
         throw new Error();
       }
@@ -75,7 +74,10 @@ userSchema.statics.setRandomBruinBear = function(username) {
 
 userSchema.index(
   { createdAt: 1 },
-  { expireAfterSeconds: 60 * 30, partialFilterExpression: { isRegistered: false } }
+  {
+    expireAfterSeconds: 60 * 30,
+    partialFilterExpression: { isRegistered: false },
+  }
 );
 
 const User = mongoose.model("User", userSchema);

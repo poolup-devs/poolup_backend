@@ -1,10 +1,13 @@
 require("../src/db/mongoose");
 const chalk = require("chalk");
 
-const User = require("../src/user/user.js").User;
+const User = require("../src/user/user").User;
+const Email = require("../src/user/email/email").Email;
 const Ride = require("../src/ride/ride.js").Ride;
-const Noti = require("../src/noti/noti.js").Noti;
+const Noti = require("../src/noti/noti").Noti;
 const School = require("../src/school/school.js").School;
+
+const devCon = require("../src/user/dev_controller");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
 const MY_RIDES_PATH = process.env.MY_RIDES_PATH;
@@ -165,7 +168,9 @@ const userSeed = () => {
   return new Promise(async (resolve, reject) => {
     try {
       await User.deleteMany();
-      await User.insertMany(user_list);
+      await Email.deleteMany();
+      await devCon.dev_createRegisteredUsers(user_list);
+      // await User.insertMany(user_list);
     } catch (err) {
       console.log(err);
       return reject();
@@ -174,6 +179,26 @@ const userSeed = () => {
       chalk.green("[DB_INIT]: ") +
         "Successfully initialized development database - User!"
     );
+    return resolve();
+  });
+};
+
+// Email Seed
+const emailSeed = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await Email.deleteMany();
+      for (u of user_list) {
+        const email_obj = {
+          email: u.email,
+          status: "registered",
+        };
+        Email.create(email_obj);
+      }
+    } catch (err) {
+      console.log(err);
+      return reject();
+    }
     return resolve();
   });
 };
@@ -197,7 +222,22 @@ const rideSeed = () => {
 };
 
 // Notification Seed
-const notificationSeed = () => {};
+const notificationSeed = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await Noti.deleteMany({});
+      await Noti.insertMany(noti_list);
+    } catch (err) {
+      console.log(err);
+      return reject();
+    }
+    console.log(
+      chalk.green("[DB_INIT]: ") +
+        "Successfully initialized development database - Noti!"
+    );
+    return resolve();
+  });
+};
 
 // Seed schools collection used to parse emails for the school the user attends
 const schoolSeed = () => {
@@ -220,6 +260,7 @@ const schoolSeed = () => {
 const seed = async () => {
   try {
     await userSeed();
+    await emailSeed();
     await rideSeed();
     await notificationSeed();
     await schoolSeed();

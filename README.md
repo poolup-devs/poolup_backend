@@ -102,7 +102,8 @@ Poolup API is configured via environment variables. The applicable environment v
 
 Environment Variable | Description
 --- | ---
-EXAMPLE | example description
+JWT_SECRET_KEY | example description
+JWT_EMAIL_KEY  | example description
 ---
  
 ## Additional Tools

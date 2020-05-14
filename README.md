@@ -1,4 +1,5 @@
 # PoolUp Backend
+![](https://github.com/poolup-devs/poolup_backend/workflows/Continuous%20Integration%20and%20Deployment/badge.svg)
 
 ### api.poolup.co
 

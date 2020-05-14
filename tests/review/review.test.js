@@ -142,14 +142,13 @@ describe("Testing rating system operations", () => {
 
     test("A review without a required field, such as rideId, should error instead of creating the review.", async () => {
       try {
-        expect.assertions(1);
         await db.addNewReview({
           reviewerUsername: "reviewer",
           revieweeUsername: "reviewee",
           rating: 2,
         });
       } catch (e) {
-        expect(e).toMatch(
+        expect(e.message).toMatch(
           "Review must contain a reviewer username, reviewee username, rating, and associated ride ID"
         );
       }
@@ -202,11 +201,22 @@ describe("Testing rating system operations", () => {
 
       // "Expire ability to leave review" job associated with this driver->passenger pair should already exist
       // It should be cancelled after adding the new review because the reviewer's counterpart has left a review already
-      await agenda.schedule("24 hours", "expire ability to leave review", { rideId: ride._id, driverUsername: ride.ownerUsername, passengerUsername: "riderUsername" });
-      let expireReviewNotiJob = await agenda.jobs({ name: "expire ability to leave review", data: { rideId: ride._id, driverUsername: ride.ownerUsername, passengerUsername: "riderUsername" } })
+      await agenda.schedule("24 hours", "expire ability to leave review", {
+        rideId: ride._id,
+        driverUsername: ride.ownerUsername,
+        passengerUsername: "riderUsername",
+      });
+      let expireReviewNotiJob = await agenda.jobs({
+        name: "expire ability to leave review",
+        data: {
+          rideId: ride._id,
+          driverUsername: ride.ownerUsername,
+          passengerUsername: "riderUsername",
+        },
+      });
       expect(expireReviewNotiJob.length).toBe(1);
 
-      // Counterpart review 
+      // Counterpart review
       let firstReview = await Review.create({
         reviewerUsername: firstReviewer.username,
         revieweeUsername: secondReviewer.username,
@@ -221,8 +231,15 @@ describe("Testing rating system operations", () => {
         rideId: ride._id,
       });
 
-      // Cancelled the job 
-      expireReviewNotiJob = await agenda.jobs({ name: "expire ability to leave review", data: { rideId: ride._id, driverUsername: ride.ownerUsername, passengerUsername: "riderUsername" } })
+      // Cancelled the job
+      expireReviewNotiJob = await agenda.jobs({
+        name: "expire ability to leave review",
+        data: {
+          rideId: ride._id,
+          driverUsername: ride.ownerUsername,
+          passengerUsername: "riderUsername",
+        },
+      });
       expect(expireReviewNotiJob.length).toBe(0);
 
       // Expect both reviews are published
@@ -258,7 +275,6 @@ describe("Testing rating system operations", () => {
       });
       expect(secondReviewer.rating.totalRatings).toBe(1);
       expect(secondReviewer.rating.sumOfAllRatings).toBe(3);
-
     });
   });
 

@@ -3,6 +3,8 @@ const Review = require("./review").Review;
 const Ride = require("../ride/ride").Ride;
 const agenda = require("../../src/agenda/agenda");
 
+const Error = require("../utils/error-model");
+
 // Create a new review with required properties: reviewer username, reviewee username, rating, and ride ID
 const addNewReview = (newReviewInfo) => {
   return new Promise(async (resolve, reject) => {
@@ -69,17 +71,23 @@ const addNewReview = (newReviewInfo) => {
           resolve(newReview);
         } else {
           reject(
-            "A review has already been made to " +
-              newReviewInfo.revieweeUsername +
-              " for this ride."
+            Error(
+              400,
+              "A review has already been made to " +
+                newReviewInfo.revieweeUsername +
+                " for this ride."
+            )
           );
         }
       }
       reject(
-        "Review must contain a reviewer username, reviewee username, rating, and associated ride ID"
+        Error(
+          400,
+          "Review must contain a reviewer username, reviewee username, rating, and associated ride ID"
+        )
       );
-    } catch (e) {
-      reject(e);
+    } catch (err) {
+      reject(Error(500, err));
     }
   });
 };
@@ -104,13 +112,16 @@ const declineReview = (rideId, reviewer, reviewee) => {
         resolve(declinedReview);
       }
       reject(
-        "User has already declined to review " +
-          reviewee +
-          " for ride: " +
-          rideId
+        Error(
+          400,
+          "User has already declined to review " +
+            reviewee +
+            " for ride: " +
+            rideId
+        )
       );
-    } catch (e) {
-      reject("Could not add the declined review to the database.");
+    } catch (err) {
+      reject(Error(500, err));
     }
   });
 };
@@ -118,16 +129,20 @@ const declineReview = (rideId, reviewer, reviewee) => {
 // Get all the publically available reviews received by a user
 const getUserReviews = (username, pageNumber) => {
   return new Promise(async (resolve, reject) => {
-    await Review.find(
-      { revieweeUsername: username, isDeclined: false, isPublished: true },
-      (err, reviews) => {
-        // if there are no reviews, return []
-        resolve(Array.from(reviews));
-      }
-    )
-      .sort({ datePosted: -1 })
-      .skip(pageNumber * 5)
-      .limit(5);
+    try {
+      await Review.find(
+        { revieweeUsername: username, isDeclined: false, isPublished: true },
+        (err, reviews) => {
+          // if there are no reviews, return []
+          resolve(Array.from(reviews));
+        }
+      )
+        .sort({ datePosted: -1 })
+        .skip(pageNumber * 5)
+        .limit(5);
+    } catch (err) {
+      reject(Error(500, err));
+    }
   });
 };
 
@@ -174,27 +189,31 @@ const getUsersToReviewForRide = (rideId, username) => {
 // Publish the review, making the view public and applying the rating changes
 const makeReviewPublic = (rideId, reviewerUsername, revieweeUsername) => {
   return new Promise(async (resolve, reject) => {
-    const review = await Review.findOne({
-      rideId,
-      reviewerUsername,
-      revieweeUsername,
-    });
-    if (review) {
-      review.isPublished = true;
-      await review.save();
+    try {
+      const review = await Review.findOne({
+        rideId,
+        reviewerUsername,
+        revieweeUsername,
+      });
+      if (review) {
+        review.isPublished = true;
+        await review.save();
 
-      await User.findOneAndUpdate(
-        { username: revieweeUsername },
-        {
-          $inc: {
-            "rating.sumOfAllRatings": review.rating,
-            "rating.totalRatings": 1,
-          },
-        }
-      );
-      resolve(review);
-    } else {
-      reject("Could not find review in the database to make public.");
+        await User.findOneAndUpdate(
+          { username: revieweeUsername },
+          {
+            $inc: {
+              "rating.sumOfAllRatings": review.rating,
+              "rating.totalRatings": 1,
+            },
+          }
+        );
+        resolve(review);
+      } else {
+        reject(Error(404, "review not found"));
+      }
+    } catch (err) {
+      reject(Error(500, err));
     }
   });
 };

@@ -11,8 +11,8 @@ router.post("/reviews", checkAuth, async (req, res) => {
     req.body["reviewerUsername"] = loggedInUser;
     const review = await db.addNewReview(req.body);
     res.status(200).send(review);
-  } catch (e) {
-    res.status(500).send({ error: e });
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -26,8 +26,8 @@ router.post("/reviews/decline-review", checkAuth, async (req, res) => {
       req.body.revieweeUsername
     );
     res.status(200).send(declinedReview);
-  } catch (e) {
-    res.status(500).send({ error: e });
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -39,8 +39,8 @@ router.get("/reviews", async (req, res) => {
       req.query.pageNum
     );
     res.status(200).send(userReviews);
-  } catch (e) {
-    res.status(500).send({ error: e });
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -56,8 +56,8 @@ router.get(
         loggedInUser
       );
       res.status(200).send({ usersToReview });
-    } catch (e) {
-      res.status(500).send({ error: e });
+    } catch (err) {
+      res.status(err.status).send(err.message);
     }
   }
 );

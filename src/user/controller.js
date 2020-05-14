@@ -22,19 +22,9 @@ const login = async (email, password) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ email, password });
     if (!user) {
-      return reject("User with email and password not found.");
+      return reject(Error(401, "User with email and password not found."));
     }
     return resolve(user);
-  });
-};
-
-const checkAvailability = (email, username, callback) => {
-  User.find({ email, username }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
   });
 };
 
@@ -99,69 +89,73 @@ const signup = async (userInfo) => {
   });
 };
 
+const findUserByUsername = (username) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const userInfo = await User.findOne({ username });
+      resolve(userInfo);
+    } catch (err) {
+      reject(Error(500, err));
+    }
+  });
+};
+
+// const findUserByPhoneNumber = (phoneNumber, callback) => {
+//   User.find({ phoneNumber }, (err, result) => {
+//     if (err) {
+//       callback(Error(500,err), null);
+//     } else {
+//       callback(null, result);
+//     }
+//   });
+// };
+
 const findUserByEmail = (email, callback) => {
   User.find({ email }, (err, result) => {
     if (err) {
-      callback(err, null);
+      callback(Error(500, err), null);
     } else {
       callback(null, result);
     }
   });
 };
 
-const findUserByUsername = (username) => {
-  return new Promise(async (resolve, reject) => {
-    userInfo = await User.findOne({ username });
-    resolve(userInfo);
-  });
-};
+// const getMyInfo = (authUsername, callback) => {
+//   User.findOne({ username: authUsername }, (err, result) => {
+//     if (err) {
+//       callback(err, null);
+//     } else if (result) {
+//       const res_list = [
+//         "username",
+//         "firstName",
+//         "lastName",
+//         "email",
+//         "createdAt",
+//         "picUrl",
+//         "stripe",
+//       ];
+//       const result_ = {};
 
-const findUserByPhoneNumber = (phoneNumber, callback) => {
-  User.find({ phoneNumber }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
-  });
-};
+//       res_list.forEach(function (item) {
+//         result_[item] = result[item];
+//       });
 
-const getMyInfo = (authUsername, callback) => {
-  User.findOne({ username: authUsername }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else if (result) {
-      const res_list = [
-        "username",
-        "firstName",
-        "lastName",
-        "email",
-        "createdAt",
-        "picUrl",
-        "stripe",
-      ];
-      const result_ = {};
-
-      res_list.forEach(function (item) {
-        result_[item] = result[item];
-      });
-
-      callback(null, result_);
-    } else {
-      callback(
-        {
-          message: "ERROR: username not found",
-        },
-        null
-      );
-    }
-  });
-};
+//       callback(null, result_);
+//     } else {
+//       callback(
+//         {
+//           message: "ERROR: username not found",
+//         },
+//         null
+//       );
+//     }
+//   });
+// };
 
 const getPicType = (username, callback) => {
   User.findOne({ username }, (err, result) => {
     if (err) {
-      callback(err, null);
+      callback(Error(500, err), null);
     } else {
       callback(null, result);
     }
@@ -175,7 +169,7 @@ const uploadPicUrl = (username, picUrl, picType, callback) => {
     { new: true },
     (err, result) => {
       if (err) {
-        callback(err, null);
+        callback(Error(500, err), null);
       } else {
         callback(null, result);
       }
@@ -187,9 +181,9 @@ const getPicUrl = (username) => {
   return new Promise(async (resolve, reject) => {
     const userInfo = await findUserByUsername(username);
     if (!userInfo) {
-      return reject("ERROR: no result; potentially wrong username");
+      return reject(Error(404, "username not found"));
     } else if (userInfo.picUrl === undefined) {
-      return reject("ERROR: user's profile picture undefined");
+      return reject(Error(500, "user's profile picture undefined"));
     }
 
     return resolve(userInfo.picUrl);
@@ -204,12 +198,12 @@ const checkIfDriver = (username) => {
       },
       (err, result) => {
         if (err) {
-          reject(err);
+          reject(Error(500, err));
         }
 
         // If username not found
         if (!result) {
-          reject(Error(404, "User not found"));
+          reject(Error(404, "user of username not found"));
           return;
         }
 
@@ -243,7 +237,7 @@ const addUserDriverInfo = (driverInfo) => {
       { new: true },
       (err, result) => {
         if (err) {
-          return reject(err);
+          return reject(Error(500, err));
         } else {
           return resolve(result);
         }
@@ -259,7 +253,7 @@ const updateUser = (authUsername, updates, callback) => {
     { new: true },
     (err, result) => {
       if (err) {
-        callback(err, null);
+        callback(Error(500, err), null);
       } else {
         callback(null, result);
       }
@@ -267,34 +261,34 @@ const updateUser = (authUsername, updates, callback) => {
   );
 };
 
-const deleteUser = (authUsername, callback) => {
-  //have to delete prof. pic in s3 TOO!!//
-  User.deleteOne({ username: authUsername }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      Ride.deleteMany({ ownerUsername: authUsername }, (err, result) => {
-        if (err) {
-          callback(err, null);
-        } else {
-          Noti.deleteMany({ username: authUsername }, (err, result) => {
-            if (err) {
-              callback(err, null);
-            } else {
-              callback(null, null);
-            }
-          });
-        }
-      });
-    }
-  });
-};
+// const deleteUser = (authUsername, callback) => {
+//   //have to delete prof. pic in s3 TOO!!//
+//   User.deleteOne({ username: authUsername }, (err, result) => {
+//     if (err) {
+//       callback(err, null);
+//     } else {
+//       Ride.deleteMany({ ownerUsername: authUsername }, (err, result) => {
+//         if (err) {
+//           callback(err, null);
+//         } else {
+//           Noti.deleteMany({ username: authUsername }, (err, result) => {
+//             if (err) {
+//               callback(err, null);
+//             } else {
+//               callback(null, null);
+//             }
+//           });
+//         }
+//       });
+//     }
+//   });
+// };
 
 const isValidPassword = (password) => {
   return new Promise(async (resolve, reject) => {
     // Password must be a minimum of 8 characters long
     if (password.length < 8) {
-      return reject("Password must be at least 8 characters long!");
+      return reject(Error(400, "Password must be at least 8 characters long!"));
     }
     return resolve(true);
   });
@@ -326,11 +320,11 @@ const confirmCredentials = (authUsername, password) => {
     try {
       const user = await User.findOne({ username: authUsername, password });
       if (!user) {
-        return resolve(null);
+        return reject(Error(401, "incorrect password"));
       }
       return resolve(user);
-    } catch (e) {
-      reject(e);
+    } catch (err) {
+      reject(Error(500, err));
     }
   });
 };
@@ -342,7 +336,7 @@ const passwordReset = (authUsername, newPassword, callback) => {
     { new: true },
     (err, result) => {
       if (err) {
-        callback(err, null);
+        callback(Error(500, err), null);
       } else {
         callback(null, result);
       }
@@ -355,11 +349,11 @@ const getAboutMe = (username) => {
     try {
       const user = await User.findOne({ username });
       if (!user) {
-        reject("There does not exist a user with this username.");
+        reject(Error(404, "There does not exist a user with this username."));
       }
       return resolve(user.aboutMe);
-    } catch (e) {
-      return reject(e);
+    } catch (err) {
+      return reject(Error(500, err));
     }
   });
 };
@@ -373,12 +367,17 @@ const updateAboutMe = (authUsername, updatedAboutMe) => {
     )
       .then((updatedUser) => {
         if (!updatedUser) {
-          reject("Could not find user in database when updating about me.");
+          reject(
+            Error(
+              404,
+              "Could not find user in database when updating about me."
+            )
+          );
         }
         return resolve(updatedUser);
       })
-      .catch((e) => {
-        reject(e);
+      .catch((err) => {
+        reject(Error(500, err));
       });
   });
 };
@@ -406,7 +405,7 @@ const getAverageRating = (username) => {
     try {
       await User.findOne({ username }, (err, user) => {
         if (!user) {
-          return reject("User does not exist in the database");
+          return reject(Error(404, "User does not exist in the database"));
         }
         const { sumOfAllRatings, totalRatings } = user.rating;
 
@@ -416,14 +415,17 @@ const getAverageRating = (username) => {
           return resolve(averageRating);
         } else {
           return reject(
-            "User must have at least " +
-              MIN_TO_DISPLAY_AVERAGE_RATING +
-              " rating(s) to display an average rating!"
+            Error(
+              400,
+              "User must have at least " +
+                MIN_TO_DISPLAY_AVERAGE_RATING +
+                " rating(s) to display an average rating!"
+            )
           );
         }
       });
-    } catch (e) {
-      return reject("Could not retrieve all reviews left for user.");
+    } catch (err) {
+      return reject(Error(500, err));
     }
   });
 };
@@ -433,7 +435,7 @@ const getPublicProfileInfo = (username) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ username });
     if (!user) {
-      reject("User could not be found!");
+      reject(Error(404, "User could not be found!"));
     }
     const {
       firstName,
@@ -479,19 +481,18 @@ const getSchool = (username) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ username });
     if (!user) {
-      return reject("User could not be found!");
+      return reject(Error(404, "User could not be found!"));
     }
     return resolve(user.school);
   });
 };
 
 module.exports = {
-  checkAvailability,
   login,
   findUserByEmail,
   findUserByUsername,
-  findUserByPhoneNumber,
-  getMyInfo,
+  // findUserByPhoneNumber,
+  // getMyInfo,
   uploadPicUrl,
   getPicType,
   getPicUrl,
@@ -499,7 +500,7 @@ module.exports = {
   checkIfDriver,
   addUserDriverInfo,
   updateUser,
-  deleteUser,
+  // deleteUser,
   isValidPassword,
   passwordReset,
   getAboutMe,

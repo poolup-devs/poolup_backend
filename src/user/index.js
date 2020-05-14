@@ -29,8 +29,8 @@ router.post("/users/login", async (req, res) => {
       expiresIn: "24h",
     });
     res.status(200).send({ authToken: token });
-  } catch (e) {
-    res.status(401).send({ message: e });
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -53,38 +53,38 @@ router.post("/users/signup", async (req, res) => {
   }
 });
 
-// Validate Username
-router.get("/users/usernameValidation", async (req, res) => {
-  try {
-    const data = await db.findUserByUsername(req.query.username);
-    res.status(200).send(data);
-  } catch (e) {
-    res.status(500).json({ error: e });
-  }
-});
+// // Validate Username
+// router.get("/users/usernameValidation", async (req, res) => {
+//   try {
+//     const data = await db.findUserByUsername(req.query.username);
+//     res.status(200).send(data);
+//   } catch (err) {
+//     res.status(err.status).json(err.message);
+//   }
+// });
 
-//Validate User Phonenumber
-router.get("/users/phoneNumberValidation", (req, res) => {
-  db.findUserByPhoneNumber(req.query.phoneNumber, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(200).send(data);
-    }
-  });
-});
+// //Validate User Phonenumber
+// router.get("/users/phoneNumberValidation", (req, res) => {
+//   db.findUserByPhoneNumber(req.query.phoneNumber, (err, data) => {
+//     if (err) {
+//       res.sendStatus(500);
+//     } else {
+//       res.status(err.status).send(err.message);
+//     }
+//   });
+// });
 
-//Get My Info
-router.get("/users/my-info", checkAuth, (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
-  db.getMyInfo(authUsername, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(200).send(data);
-    }
-  });
-});
+// //Get My Info
+// router.get("/users/my-info", checkAuth, (req, res) => {
+//   const authUsername = tokenParser(req.headers.authorization).username;
+//   db.getMyInfo(authUsername, (err, data) => {
+//     if (err) {
+//       res.sendStatus(500);
+//     } else {
+//       res.status(200).send(data);
+//     }
+//   });
+// });
 
 //Get a User's Info
 router.get("/users/info", checkAuth, async (req, res) => {
@@ -92,8 +92,8 @@ router.get("/users/info", checkAuth, async (req, res) => {
     const userName = req.query.username;
     const data = await db.findUserByUsername(userName);
     res.status(200).send(data);
-  } catch (e) {
-    res.status(500).json({ error: e });
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -129,7 +129,7 @@ router.patch("/users/upload-profile-pic", checkAuth, (req, res) => {
         type.ext,
         (err, result) => {
           if (err) {
-            return res.sendStatus(501);
+            return res.status(err.status).send(err.message);
           } else {
             return res.status(200).send(result);
           }
@@ -147,7 +147,7 @@ router.get("/users/usersPic", checkAuth, async (req, res) => {
     const data = await db.getPicUrl(req.query.username);
     res.status(200).send(data);
   } catch (err) {
-    res.status(500).send(err);
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -169,36 +169,36 @@ router.patch("/users/updateUser", checkAuth, (req, res) => {
 
   db.updateUser(authUsername, updates, (err, result) => {
     if (err) {
-      res.sendStatus(500);
+      res.status(err.status).send(err.message);
     } else {
       res.status(200).send(result); //reminder: fix this back to w/o result
     }
   });
 });
 
-//Delete a User Account
-router.delete("/users/deleteUser", checkAuth, (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
-  const fileName = `bucketFolder/${authUsername}-pic`;
-  db.getPicType(authUsername, async (err, result) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      try {
-        await deleteFile(fileName, result.picType);
-      } catch (err) {
-        return res.status(500);
-      }
-      db.deleteUser(authUsername, (err, result) => {
-        if (err) {
-          res.sendStatus(500);
-        } else {
-          res.sendStatus(200);
-        }
-      });
-    }
-  });
-});
+// //Delete a User Account
+// router.delete("/users/deleteUser", checkAuth, (req, res) => {
+//   const authUsername = tokenParser(req.headers.authorization).username;
+//   const fileName = `bucketFolder/${authUsername}-pic`;
+//   db.getPicType(authUsername, async (err, result) => {
+//     if (err) {
+//       res.status(err.status).send(err.message);
+//     } else {
+//       try {
+//         await deleteFile(fileName, result.picType);
+//       } catch (err) {
+//         return res.status(500);
+//       }
+//       db.deleteUser(authUsername, (err, result) => {
+//         if (err) {
+//           res.sendStatus(500);
+//         } else {
+//           res.sendStatus(200);
+//         }
+//       });
+//     }
+//   });
+// });
 
 //confirm credentials
 router.post("/users/checkCredentials", checkAuth, async (req, res) => {
@@ -211,9 +211,8 @@ router.post("/users/checkCredentials", checkAuth, async (req, res) => {
     } else {
       res.sendStatus(200);
     }
-  } catch (e) {
-    console.log(e);
-    res.status(500).send(e);
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -223,9 +222,7 @@ router.patch("/users/changePassword", checkAuth, (req, res) => {
   req.body.newPassword = sha256(req.body.newPassword);
   db.passwordReset(authUsername, req.body.newPassword, (err, result) => {
     if (err) {
-      res.sendStatus(500);
-    } else if (!result) {
-      res.sendStatus(401);
+      res.status(err.status).send(err.message);
     } else {
       res.sendStatus(200);
     }
@@ -237,8 +234,8 @@ router.get("/users/get-about-me", async (req, res) => {
   try {
     const aboutMe = await db.getAboutMe(req.query.username);
     res.status(200).send({ aboutMe });
-  } catch (e) {
-    res.status(500).send(e);
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -248,8 +245,8 @@ router.patch("/users/updateAboutMe", checkAuth, async (req, res) => {
   try {
     const updatedUser = await db.updateAboutMe(authUsername, req.body.aboutMe);
     res.status(200).send(updatedUser);
-  } catch (e) {
-    res.status(500).send(e);
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -258,8 +255,8 @@ router.get("/users/get-rating", async (req, res) => {
   try {
     const averageRating = await db.getAverageRating(req.query.username);
     res.status(200).send({ averageRating });
-  } catch (e) {
-    res.status(404).send({ error: e });
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -270,8 +267,8 @@ router.get("/users/driverStatus", checkAuth, async (req, res) => {
   try {
     const isDriver = await db.checkIfDriver(authUsername);
     res.status(200).send({ isDriver: isDriver });
-  } catch (e) {
-    res.status(500).send({ error: e.message });
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -280,8 +277,8 @@ router.get("/users/get-public-profile", async (req, res) => {
   try {
     const publicProfileInfo = await db.getPublicProfileInfo(req.query.username);
     res.status(200).send(publicProfileInfo);
-  } catch (e) {
-    res.status(404).send({ error: e });
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 
@@ -290,8 +287,8 @@ router.get("/users/school", async (req, res) => {
   try {
     const school = await db.getSchool(req.query.username);
     res.status(200).send({ school });
-  } catch (e) {
-    res.status(404).send({ error: e });
+  } catch (err) {
+    res.status(err.status).send(err.message);
   }
 });
 

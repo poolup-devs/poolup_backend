@@ -11,7 +11,7 @@ const options = {
     colorize: false,
     format: winston.format.combine(
       winston.format.timestamp(),
-      winston.format.json()
+      winston.format.json({ replacer: null, value: 3 })
     ),
   },
   console: {

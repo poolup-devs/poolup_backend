@@ -204,7 +204,6 @@ const checkIfDriver = (username) => {
         // If username not found
         if (!result) {
           return reject(Error(404, "user of username not found"));
-          return;
         }
 
         if (result.driver.isDriver) {

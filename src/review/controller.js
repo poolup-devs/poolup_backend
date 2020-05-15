@@ -87,7 +87,7 @@ const addNewReview = (newReviewInfo) => {
         )
       );
     } catch (err) {
-      reject(Error(500, err));
+      return reject(Error(500, err));
     }
   });
 };
@@ -121,7 +121,7 @@ const declineReview = (rideId, reviewer, reviewee) => {
         )
       );
     } catch (err) {
-      reject(Error(500, err));
+      return reject(Error(500, err));
     }
   });
 };
@@ -141,7 +141,7 @@ const getUserReviews = (username, pageNumber) => {
         .skip(pageNumber * 5)
         .limit(5);
     } catch (err) {
-      reject(Error(500, err));
+      return reject(Error(500, err));
     }
   });
 };
@@ -208,12 +208,12 @@ const makeReviewPublic = (rideId, reviewerUsername, revieweeUsername) => {
             },
           }
         );
-        resolve(review);
+        return resolve(review);
       } else {
-        reject(Error(404, "review not found"));
+        return reject(Error(404, "review not found"));
       }
     } catch (err) {
-      reject(Error(500, err));
+      return reject(Error(500, err));
     }
   });
 };

@@ -93,9 +93,9 @@ const findUserByUsername = (username) => {
   return new Promise(async (resolve, reject) => {
     try {
       const userInfo = await User.findOne({ username });
-      resolve(userInfo);
+      return resolve(userInfo);
     } catch (err) {
-      reject(Error(500, err));
+      return reject(Error(500, err));
     }
   });
 };
@@ -198,12 +198,12 @@ const checkIfDriver = (username) => {
       },
       (err, result) => {
         if (err) {
-          reject(Error(500, err));
+          return reject(Error(500, err));
         }
 
         // If username not found
         if (!result) {
-          reject(Error(404, "user of username not found"));
+          return reject(Error(404, "user of username not found"));
           return;
         }
 
@@ -324,7 +324,7 @@ const confirmCredentials = (authUsername, password) => {
       }
       return resolve(user);
     } catch (err) {
-      reject(Error(500, err));
+      return reject(Error(500, err));
     }
   });
 };
@@ -349,7 +349,9 @@ const getAboutMe = (username) => {
     try {
       const user = await User.findOne({ username });
       if (!user) {
-        reject(Error(404, "There does not exist a user with this username."));
+        return reject(
+          Error(404, "There does not exist a user with this username.")
+        );
       }
       return resolve(user.aboutMe);
     } catch (err) {
@@ -367,7 +369,7 @@ const updateAboutMe = (authUsername, updatedAboutMe) => {
     )
       .then((updatedUser) => {
         if (!updatedUser) {
-          reject(
+          return reject(
             Error(
               404,
               "Could not find user in database when updating about me."
@@ -377,7 +379,7 @@ const updateAboutMe = (authUsername, updatedAboutMe) => {
         return resolve(updatedUser);
       })
       .catch((err) => {
-        reject(Error(500, err));
+        return reject(Error(500, err));
       });
   });
 };
@@ -435,7 +437,7 @@ const getPublicProfileInfo = (username) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ username });
     if (!user) {
-      reject(Error(404, "User could not be found!"));
+      return reject(Error(404, "User could not be found!"));
     }
     const {
       firstName,

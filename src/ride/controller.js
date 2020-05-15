@@ -342,9 +342,9 @@ const rideDetails = (_id) => {
       if (ride_res == null) {
         return reject(Error(404, "ride not found"));
       }
-      resolve(ride_res);
+      return resolve(ride_res);
     } catch (err) {
-      reject(Error(500));
+      return reject(Error(500));
     }
   });
 };

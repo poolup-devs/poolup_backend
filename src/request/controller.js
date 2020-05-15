@@ -17,7 +17,7 @@ const getRequestInfo = async (requestID) => {
     try {
       const res = await Request.findById(query);
       if (res == null) {
-        reject(Error(404));
+        return reject(Error(404, "ride of ride_id not found"));
       }
       return resolve(res);
     } catch (err) {
@@ -44,7 +44,7 @@ const getRequesterRequests = (requesterUsername, status) => {
     try {
       const requesterUser = await User.find({ username: requesterUsername });
       if (requesterUser.length == 0) {
-        reject(Error(404));
+        return reject(Error(404));
       }
 
       const res = await Request.find(query);
@@ -73,7 +73,7 @@ const getRequesteeRequests = (requesteeUsername, status) => {
     try {
       const requesterUser = await User.find({ username: requesteeUsername });
       if (requesterUser.length == 0) {
-        reject(Error(404));
+        return reject(Error(404));
       }
 
       const res = await Request.find(query);
@@ -163,7 +163,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
         reject(404);
       }
     } catch (err) {
-      reject(Error(500));
+      return reject(Error(500));
     }
     try {
       let request_res = await Request.findOne(filter);
@@ -330,7 +330,7 @@ const archiveRequest = (requestID) => {
         options
       );
       if (request_upd == null) {
-        reject(Error(404));
+        return reject(Error(404));
       }
       return resolve(request_upd);
     } catch (err) {
@@ -353,7 +353,7 @@ const unarchiveRequest = (requestID) => {
         options
       );
       if (request_upd == null) {
-        reject(Error(404));
+        return reject(Error(404));
       }
       return resolve(request_upd);
     } catch (err) {

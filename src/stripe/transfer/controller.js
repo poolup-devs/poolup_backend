@@ -8,7 +8,7 @@ const createTransfer = (transferInfo) => {
       const newTransfer = await new Transfer(transferInfo).save();
       return resolve(newTransfer);
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(Error(500, err));
     }
   });
 };
@@ -34,7 +34,7 @@ const checkExpired = () => {
 
       return resolve(transfers);
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(Error(500, err));
     }
   });
 };
@@ -78,7 +78,7 @@ const updateTransferStatus = (transferID, newStatus) => {
       const res = await Transfer.findOneAndUpdate(filter, update, options);
       return resolve(res);
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(Error(500, err));
     }
   });
 };

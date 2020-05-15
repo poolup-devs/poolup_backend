@@ -14,29 +14,29 @@ const rideSchema = mongoose.Schema({
   instantBook: {
     enabled: {
       type: Boolean,
-      default: false
+      default: false,
     },
     specificPickUpDropOff: {
       type: Boolean,
-      default: true
+      default: true,
     },
     smokingAllowed: {
       type: Boolean,
-      default: false
+      default: false,
     },
     noPetsAllowed: {
       type: Boolean,
-      default: false
+      default: false,
     },
     singleCarryOn: {
       type: Boolean,
-      default: false
+      default: false,
     },
     singleLuggage: {
       type: Boolean,
-      default: false
-    }
-  }
+      default: false,
+    },
+  },
 });
 
 const Ride = mongoose.model("Ride", rideSchema);

@@ -12,7 +12,7 @@ const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 //Get Noti for driver
 router.get("/notis/noti", checkAuth, async (req, res) => {
-  const username = tokenParser(req.headers.authorization).username;
+  const username = await tokenParser(req.headers.authorization);
   try {
     const data = await db.getAllUserNoti(username, req.query.pageNum);
     res.status(200).send(data);

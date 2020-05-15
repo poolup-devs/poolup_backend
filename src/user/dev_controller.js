@@ -11,10 +11,10 @@ const User = require("./user").User;
 const Email = require("./email/email").Email;
 
 /* 
-    Create Users with verified Email
+    Create a single User with verified Email
     
     Params:
-    user_objList = {
+    user_obj = {
         password,
         username,
         firstName,
@@ -22,21 +22,49 @@ const Email = require("./email/email").Email;
         picUrl
     }
 */
-const dev_createRegisteredUsers = (user_objList) => {
+const dev_createRegisteredUser = (user_obj) => {
   return new Promise(async (resolve, reject) => {
     try {
-      await User.insertMany(user_objList);
+      user_obj.username = user_obj.email.split("@")[0];
+      const u = await User.create(user_obj);
+      await Email.create({ email: user_obj.email, status: "registered" });
+      return resolve(u);
+    } catch (err) {
+      return reject(err);
+    }
+  });
+};
+
+/* 
+    Create Multiple Users with verified Email
+    
+    Params:
+    user_objList = [{
+        password,
+        username,
+        firstName,
+        email,
+        picUrl
+    }]
+*/
+const dev_createRegisteredUsers = (user_objList) => {
+  return new Promise(async (resolve, reject) => {
+    let user_arr = [];
+    try {
       for (u of user_objList) {
+        u.username = u.email.split("@")[0];
         const email_obj = {
           email: u.email,
           status: "registered",
         };
+        const r = await User.create(u);
         await Email.create(email_obj);
+        user_arr.push(r);
       }
     } catch (err) {
       return reject(err);
     }
-    return resolve();
+    return resolve(user_arr);
   });
 };
 
@@ -59,6 +87,7 @@ const dev_createDummyUserObj = (alias) => {
 };
 
 module.exports = {
+  dev_createRegisteredUser,
   dev_createRegisteredUsers,
   dev_createDummyUserObj,
 };

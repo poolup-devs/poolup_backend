@@ -5,6 +5,9 @@ const db = require("../../src/review/controller");
 const Review = require("../../src/review/review").Review;
 const Ride = require("../../src/ride/ride").Ride;
 const User = require("../../src/user/user").User;
+const Email = require("../../src/user/email/email").Email;
+
+const user_devCon = require("../../src/user/dev_controller");
 const jwt = require("jsonwebtoken");
 const agenda = require("../../src/agenda/agenda");
 
@@ -202,11 +205,22 @@ describe("Testing rating system operations", () => {
 
       // "Expire ability to leave review" job associated with this driver->passenger pair should already exist
       // It should be cancelled after adding the new review because the reviewer's counterpart has left a review already
-      await agenda.schedule("24 hours", "expire ability to leave review", { rideId: ride._id, driverUsername: ride.ownerUsername, passengerUsername: "riderUsername" });
-      let expireReviewNotiJob = await agenda.jobs({ name: "expire ability to leave review", data: { rideId: ride._id, driverUsername: ride.ownerUsername, passengerUsername: "riderUsername" } })
+      await agenda.schedule("24 hours", "expire ability to leave review", {
+        rideId: ride._id,
+        driverUsername: ride.ownerUsername,
+        passengerUsername: "riderUsername",
+      });
+      let expireReviewNotiJob = await agenda.jobs({
+        name: "expire ability to leave review",
+        data: {
+          rideId: ride._id,
+          driverUsername: ride.ownerUsername,
+          passengerUsername: "riderUsername",
+        },
+      });
       expect(expireReviewNotiJob.length).toBe(1);
 
-      // Counterpart review 
+      // Counterpart review
       let firstReview = await Review.create({
         reviewerUsername: firstReviewer.username,
         revieweeUsername: secondReviewer.username,
@@ -221,8 +235,15 @@ describe("Testing rating system operations", () => {
         rideId: ride._id,
       });
 
-      // Cancelled the job 
-      expireReviewNotiJob = await agenda.jobs({ name: "expire ability to leave review", data: { rideId: ride._id, driverUsername: ride.ownerUsername, passengerUsername: "riderUsername" } })
+      // Cancelled the job
+      expireReviewNotiJob = await agenda.jobs({
+        name: "expire ability to leave review",
+        data: {
+          rideId: ride._id,
+          driverUsername: ride.ownerUsername,
+          passengerUsername: "riderUsername",
+        },
+      });
       expect(expireReviewNotiJob.length).toBe(0);
 
       // Expect both reviews are published
@@ -258,7 +279,6 @@ describe("Testing rating system operations", () => {
       });
       expect(secondReviewer.rating.totalRatings).toBe(1);
       expect(secondReviewer.rating.sumOfAllRatings).toBe(3);
-
     });
   });
 
@@ -277,6 +297,8 @@ describe("Testing rating system operations", () => {
     afterEach(async () => {
       await Ride.deleteMany();
       await Review.deleteMany();
+      await User.deleteMany();
+      await Email.deleteMany();
     });
     test("If a driver has not left any reviews for his passengers, should return all passengers", async () => {
       const passenger1 = await User.create({ username: "passenger_1" });
@@ -352,8 +374,10 @@ describe("Testing rating system operations", () => {
     });
 
     test("Should correctly add a new review when properly authenticated.", async () => {
+      const user_obj = user_devCon.dev_createDummyUserObj("driver");
+      const user = await user_devCon.dev_createRegisteredUser(user_obj);
       const userAuthToken = jwt.sign(
-        { username: "driver_username" },
+        { username: user.username, _id: user._id },
         process.env.JWT_SECRET_KEY
       );
       const ride = await Ride.create({
@@ -411,8 +435,10 @@ describe("Testing rating system operations", () => {
   });
 
   describe("Testing rating system API endpoints", () => {
+    const user_obj = user_devCon.dev_createDummyUserObj("registeredUser");
+    const user = user_devCon.dev_createRegisteredUser(user_obj);
     const userAuthToken = jwt.sign(
-      { username: "registeredUser" },
+      { username: user.username },
       process.env.JWT_SECRET_KEY
     );
 

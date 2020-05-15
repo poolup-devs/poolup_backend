@@ -47,7 +47,7 @@ describe("Testing the verification of an email", () => {
 
   test("If a verified and registered user already has the same email that is being verified, should return an error", async () => {
     const verifiedUserObj = user_devCon.dev_createDummyUserObj("verfied");
-    await user_devCon.dev_createRegisteredUsers([verifiedUserObj]);
+    await user_devCon.dev_createRegisteredUser(verifiedUserObj);
     try {
       await db_email.verifyEmail(verifiedUserObj.email);
     } catch (err) {
@@ -76,7 +76,7 @@ describe("Testing the verification of an email", () => {
 
   test("If the verification link is clicked after the email has been verified and the user account for it is registered, should expect an error", async () => {
     const verifiedUserObj = user_devCon.dev_createDummyUserObj("registered");
-    await user_devCon.dev_createRegisteredUsers([verifiedUserObj]);
+    await user_devCon.dev_createRegisteredUser(verifiedUserObj);
     const token = jwt.sign(
       { email: verifiedUserObj.email },
       process.env.JWT_EMAIL_KEY,

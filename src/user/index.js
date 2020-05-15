@@ -25,9 +25,13 @@ router.post("/users/login", async (req, res) => {
       req.body.password = sha256(req.body.password);
     }
     const user = await db.login(req.body.email, req.body.password);
-    const token = jwt.sign({ username: user.username }, JWT_SECRET_KEY, {
-      expiresIn: "24h",
-    });
+    const token = jwt.sign(
+      { username: user.username, _id: user._id },
+      JWT_SECRET_KEY,
+      {
+        expiresIn: "24h",
+      }
+    );
     res.status(200).send({ authToken: token });
   } catch (e) {
     res.status(401).send({ message: e });
@@ -42,7 +46,7 @@ router.post("/users/signup", async (req, res) => {
       // Update the verified user's information with account information
       const registeredUser = await db.signup(req.body);
       const token = jwt.sign(
-        { username: registeredUser.username },
+        { username: registeredUser.username, _id: registeredUser._id },
         JWT_SECRET_KEY,
         { expiresIn: "24h" }
       );
@@ -75,8 +79,8 @@ router.get("/users/phoneNumberValidation", (req, res) => {
 });
 
 //Get My Info
-router.get("/users/my-info", checkAuth, (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+router.get("/users/my-info", checkAuth, async (req, res) => {
+  const authUsername = await tokenParser(req.headers.authorization);
   db.getMyInfo(authUsername, (err, data) => {
     if (err) {
       res.sendStatus(500);
@@ -116,7 +120,7 @@ router.patch("/users/upload-profile-pic", checkAuth, (req, res) => {
         });
       }
 
-      const username = tokenParser(req.headers.authorization).username;
+      const username = await tokenParser(req.headers.authorization);
       const fileName = `bucketFolder/${username}-pic`;
 
       result = await db.findUserByUsername(username);
@@ -152,8 +156,8 @@ router.get("/users/usersPic", checkAuth, async (req, res) => {
 });
 
 //Update a User's info (first name, last name, or phoneNumber)
-router.patch("/users/updateUser", checkAuth, (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+router.patch("/users/updateUser", checkAuth, async (req, res) => {
+  const authUsername = await tokenParser(req.headers.authorization);
   const updates = {};
   if (req.body.firstName) {
     updates.firstName = req.body.firstName;
@@ -177,8 +181,8 @@ router.patch("/users/updateUser", checkAuth, (req, res) => {
 });
 
 //Delete a User Account
-router.delete("/users/deleteUser", checkAuth, (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+router.delete("/users/deleteUser", checkAuth, async (req, res) => {
+  const authUsername = await tokenParser(req.headers.authorization);
   const fileName = `bucketFolder/${authUsername}-pic`;
   db.getPicType(authUsername, async (err, result) => {
     if (err) {
@@ -202,7 +206,7 @@ router.delete("/users/deleteUser", checkAuth, (req, res) => {
 
 //confirm credentials
 router.post("/users/checkCredentials", checkAuth, async (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
   req.body.password = sha256(req.body.password);
   try {
     const result = await db.confirmCredentials(authUsername, req.body.password);
@@ -218,8 +222,8 @@ router.post("/users/checkCredentials", checkAuth, async (req, res) => {
 });
 
 //Reset Password
-router.patch("/users/changePassword", checkAuth, (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+router.patch("/users/changePassword", checkAuth, async (req, res) => {
+  const authUsername = await tokenParser(req.headers.authorization);
   req.body.newPassword = sha256(req.body.newPassword);
   db.passwordReset(authUsername, req.body.newPassword, (err, result) => {
     if (err) {
@@ -244,7 +248,7 @@ router.get("/users/get-about-me", async (req, res) => {
 
 // Update About Me
 router.patch("/users/updateAboutMe", checkAuth, async (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
   try {
     const updatedUser = await db.updateAboutMe(authUsername, req.body.aboutMe);
     res.status(200).send(updatedUser);
@@ -265,7 +269,7 @@ router.get("/users/get-rating", async (req, res) => {
 
 // Check to see if a user is registered as a driver
 router.get("/users/driverStatus", checkAuth, async (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
 
   try {
     const isDriver = await db.checkIfDriver(authUsername);

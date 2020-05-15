@@ -183,9 +183,17 @@ const getDriveUpcoming = (username, pageNum) => {
   });
 };
 
-const postRide = (rideInfo) => {
+const postRide = (rideInfo, authUsername) => {
   return new Promise(async (resolve, reject) => {
     try {
+      if (authUsername != rideInfo.ownerUsername) {
+        return reject(
+          Error(
+            403,
+            "unmatching username of the request and the logged in user"
+          )
+        );
+      }
       const newRide = await Ride.create(rideInfo);
       // Schedule jobs to occur after ride completion
       await agenda.scheduleJobHoursAfterDate(
@@ -203,38 +211,44 @@ const postRide = (rideInfo) => {
 
       return resolve(newRide);
     } catch (err) {
-      return reject(Error(500));
+      return reject(Error(500, err));
     }
   });
 };
 
-const joinRide = (ownerUsername, ride_id, passengerUsername) => {
+const joinRide = (rideInfo, passengerUsername) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const passenger = await User.findOne({ username: passengerUsername });
-      if (passenger == null) {
-        return reject(Error(404, "passenger not found"));
-      }
+      const ride_id = rideInfo._id;
+      const ownerUsername = rideInfo.ownerUsername;
       const noti = {
         username: ownerUsername,
         msg: `${passengerUsername} has joined your ride`,
         date: new Date(),
         redirectPath: MY_DRIVES_PATH,
       };
-      const ride_upd = await Ride.findOneAndUpdate(
-        { _id: ride_id, seats: { $gte: 1 } },
-        { $push: { passengers: passengerUsername }, $inc: { seats: -1 } },
+
+      const ride_res = await Ride.findById(ride_id);
+      if (!ride_res) {
+        return reject(Error(400, "ride is not found"));
+      } else if (ride_res.seats < 1) {
+        return reject(Error(400, "the ride is full"));
+      } else if (ride_res.ownerUsername == passengerUsername) {
+        return reject(Error(403, "driver of the ride cannot join the ride"));
+      } else if (ride_res.passengers.includes(passengerUsername)) {
+        return reject(Error(400, "user is already in the ride"));
+      }
+
+      const ride_upd = await Ride.findByIdAndUpdate(
+        ride_id,
+        { $addToSet: { passengers: passengerUsername }, $inc: { seats: -1 } },
         { new: true }
       );
-      if (ride_upd == null) {
-        return reject(
-          Error(400, "either the ride's id is not found, or the ride is full")
-        );
-      }
-      const noti_new = await Noti.create(noti);
+      await Noti.create(noti);
+
       return resolve(ride_upd);
     } catch (err) {
-      return reject(Error(500));
+      return reject(Error(500, err));
     }
   });
 };

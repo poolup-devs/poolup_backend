@@ -3,18 +3,29 @@ const winston = require("winston");
 const options = {
   file: {
     level: "info",
-    filename: "./logs/log_1.log",
+    filename: `./logs/${process.env.MODE}/${process.env.MODE}-log.log`,
     handleExceptions: true,
     json: true,
     maxsize: 5242880, // 5MB
     maxFiles: 5,
     colorize: false,
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.json()
+    ),
   },
   console: {
     level: "debug",
     handleExceptions: true,
     json: false,
     colorize: true,
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+      winston.format.printf(
+        (info) => `[${info.level} ${info.timestamp}] \n ${info.message}`
+      )
+    ),
   },
 };
 

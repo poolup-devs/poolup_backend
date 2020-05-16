@@ -1,9 +1,8 @@
 const express = require("express");
 const router = new express.Router();
 
-const multiparty = require("multiparty");
-const fileType = require("file-type");
-const fs = require("fs");
+// const fileType = require("file-type");
+// const fs = require("fs");
 const sha256 = require("sha256");
 const jwt = require("jsonwebtoken");
 
@@ -26,9 +25,13 @@ router.post("/users/login", async (req, res) => {
       req.body.password = sha256(req.body.password);
     }
     const user = await db.login(req.body.email, req.body.password);
-    const token = jwt.sign({ username: user.username }, JWT_SECRET_KEY, {
-      expiresIn: "24h",
-    });
+    const token = jwt.sign(
+      { username: user.username, _id: user._id },
+      JWT_SECRET_KEY,
+      {
+        expiresIn: "24h",
+      }
+    );
     res.status(200).send({ authToken: token });
   } catch (err) {
     // errResp(res, err)
@@ -44,7 +47,7 @@ router.post("/users/signup", async (req, res) => {
       // Update the verified user's information with account information
       const registeredUser = await db.signup(req.body);
       const token = jwt.sign(
-        { username: registeredUser.username },
+        { username: registeredUser.username, _id: registeredUser._id },
         JWT_SECRET_KEY,
         { expiresIn: "24h" }
       );
@@ -100,47 +103,54 @@ router.get("/users/info", checkAuth, async (req, res) => {
 });
 
 //Uploading User Profile Image
-router.patch("/users/upload-profile-pic", checkAuth, (req, res) => {
-  const form = new multiparty.Form();
-  form.parse(req, async (error, fields, files) => {
-    if (error) {
-      return res.status(400).send(error);
-    }
-    try {
-      const path = files.file[0].path;
-      const buffer = fs.readFileSync(path);
-      const type = fileType(buffer);
+router.patch("/users/upload-profile-pic", checkAuth, async (req, res) => {
+  try {
+    const authUsername = await tokenParser(req.headers.authorization);
+    const data = await db.updateProfilePic(authUsername, req);
+    res.status(200).send(data);
+  } catch (err) {
+    return errResp(res, err);
+  }
 
-      const allowedFileType = ["jpg", "jpeg", "heic", "png"];
-      if (!type || !allowedFileType.includes(type.ext)) {
-        return res.status(400).send({
-          message: "ERROR: file type must be of: jpg, jpeg, heic, or png",
-        });
-      }
+  // ///////
+  // const form = new multiparty.Form();
+  // form.parse(req, async (error, fields, files) => {
+  //   if (error) {
+  //     return errResp(res, error);
+  //   }
+  //   try {
+  //     const path = files.file[0].path;
+  //     const buffer = fs.readFileSync(path);
+  //     const type = fileType(buffer);
 
-      const username = tokenParser(req.headers.authorization).username;
-      const fileName = `bucketFolder/${username}-pic`;
+  //     const allowedFileType = ["jpg", "jpeg", "heic", "png"];
+  //     if (!type || !allowedFileType.includes(type.ext)) {
+  //       return errResp(res, new Error("wrong file type"));
+  //     }
 
-      result = await db.findUserByUsername(username);
-      await deleteFile(fileName, result.picType);
-      const data = await uploadFile(buffer, fileName, type);
+  //     const username = await tokenParser(req.headers.authorization);
+  //     const fileName = `bucketFolder/${username}-pic`;
 
-      await db.uploadPicUrl(
-        username,
-        data.Location,
-        type.ext,
-        (err, result) => {
-          if (err) {
-            return errResp(res, err);
-          } else {
-            return res.status(200).send(result);
-          }
-        }
-      );
-    } catch (error) {
-      return res.status(400).send(error);
-    }
-  });
+  //     result = await db.findUserByUsername(username);
+  //     await deleteFile(fileName, result.picType);
+  //     const data = await uploadFile(buffer, fileName, type);
+
+  //     await db.uploadPicUrl(
+  //       username,
+  //       data.Location,
+  //       type.ext,
+  //       (err, result) => {
+  //         if (err) {
+  //           return errResp(res, err);
+  //         } else {
+  //           return res.status(200).send(result);
+  //         }
+  //       }
+  //     );
+  //   } catch (error) {
+  //     return errResp(res, error);
+  //   }
+  // });
 });
 
 //Get a User's Profile Image
@@ -154,8 +164,8 @@ router.get("/users/usersPic", checkAuth, async (req, res) => {
 });
 
 //Update a User's info (first name, last name, or phoneNumber)
-router.patch("/users/updateUser", checkAuth, (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+router.patch("/users/updateUser", checkAuth, async (req, res) => {
+  const authUsername = await tokenParser(req.headers.authorization);
   const updates = {};
   if (req.body.firstName) {
     updates.firstName = req.body.firstName;
@@ -204,12 +214,12 @@ router.patch("/users/updateUser", checkAuth, (req, res) => {
 
 //confirm credentials
 router.post("/users/checkCredentials", checkAuth, async (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
   req.body.password = sha256(req.body.password);
   try {
     const result = await db.confirmCredentials(authUsername, req.body.password);
     if (!result) {
-      res.sendStatus(401);
+      errResp(res, new Error("credential failed"));
     } else {
       res.sendStatus(200);
     }
@@ -219,8 +229,8 @@ router.post("/users/checkCredentials", checkAuth, async (req, res) => {
 });
 
 //Reset Password
-router.patch("/users/changePassword", checkAuth, (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+router.patch("/users/changePassword", checkAuth, async (req, res) => {
+  const authUsername = await tokenParser(req.headers.authorization);
   req.body.newPassword = sha256(req.body.newPassword);
   db.passwordReset(authUsername, req.body.newPassword, (err, result) => {
     if (err) {
@@ -243,7 +253,7 @@ router.get("/users/get-about-me", async (req, res) => {
 
 // Update About Me
 router.patch("/users/updateAboutMe", checkAuth, async (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
   try {
     const updatedUser = await db.updateAboutMe(authUsername, req.body.aboutMe);
     res.status(200).send(updatedUser);
@@ -264,7 +274,7 @@ router.get("/users/get-rating", async (req, res) => {
 
 // Check to see if a user is registered as a driver
 router.get("/users/driverStatus", checkAuth, async (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
 
   try {
     const isDriver = await db.checkIfDriver(authUsername);

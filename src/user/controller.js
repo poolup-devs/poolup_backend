@@ -3,8 +3,12 @@ const Ride = require("../ride/ride.js").Ride;
 const Noti = require("../noti/noti.js").Noti;
 const Email = require("./email/email").Email;
 const jwt = require("jsonwebtoken");
+const multiparty = require("multiparty");
+const fs = require("fs");
+const fileType = require("file-type");
 
 const EmailUtil = require("../utils/email/email");
+const s3_db = require("../db/awsS3_controller");
 const ControllerException = require("../utils/errors/controllerException");
 const School = require("../school/school.js").School;
 
@@ -168,20 +172,76 @@ const getPicType = (username, callback) => {
   });
 };
 
-const uploadPicUrl = (username, picUrl, picType, callback) => {
-  User.findOneAndUpdate(
-    { username },
-    { picUrl, picType },
-    { new: true },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+const updateProfilePic = (authUsername, req) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // const form = new multiparty.Form();
+      // let file;
+      // // const file = await form.parse(req);
+      // form.parse(req, async (err, fields, file) => {
+      //   if (err) {
+      //     throw err;
+      //   } else {
+      //     console.log(data.file[0].path);
+      //   }
+      //   return;
+      // });
+      const parsedReqHeader = await promisfiedFormParse(req);
+      const files = parsedReqHeader.files;
+      // console.log(parsedReqHeader);
+
+      const path = files.file[0].path;
+      const buffer = fs.readFileSync(path);
+      const type = fileType(buffer);
+
+      const allowedFileType = ["jpg", "jpeg", "heic", "png"];
+      if (!type || !allowedFileType.includes(type.ext)) {
+        return reject(new ControllerException(400, "file type not allowed"));
       }
+
+      const fileName = `bucketFolder/${authUsername}-pic`;
+      const user = await User.findOne({ username: authUsername });
+      await s3_db.deleteFile(fileName, user.picType);
+      const uploadPromise = await s3_db.uploadFile(buffer, fileName, type);
+      const res = await User.findByIdAndUpdate(
+        user._id,
+        { picUrl: uploadPromise.Location, picType: type.ext },
+        { new: true }
+      );
+
+      return resolve(res);
+    } catch (err) {
+      return reject(err);
     }
-  );
+  });
 };
+
+const promisfiedFormParse = (req) => {
+  return new Promise(async (resolve, reject) => {
+    const form = new multiparty.Form();
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve({ fields: fields, files: files });
+    });
+  });
+};
+
+// const uploadPicUrl = (username, picUrl, picType, callback) => {
+//   User.findOneAndUpdate(
+//     { username },
+//     { picUrl, picType },
+//     { new: true },
+//     (err, result) => {
+//       if (err) {
+//         callback(err, null);
+//       } else {
+//         callback(null, result);
+//       }
+//     }
+//   );
+// };
 
 const getPicUrl = (username) => {
   return new Promise(async (resolve, reject) => {
@@ -514,7 +574,8 @@ module.exports = {
   findUserByUsername,
   // findUserByPhoneNumber,
   // getMyInfo,
-  uploadPicUrl,
+  // uploadPicUrl,
+  updateProfilePic,
   getPicType,
   getPicUrl,
   signup,

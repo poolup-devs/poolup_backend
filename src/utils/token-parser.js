@@ -1,15 +1,27 @@
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
+const ControllerException = require("../utils/errors/controllerException");
+// require("dotenv").config();
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
-const jwtAuth = authorization => {
-  try {
-    const token = authorization.split(" ")[1];
-    const decoded = jwt.verify(token, JWT_SECRET_KEY);
-    return decoded;
-  } catch (error) {
-    throw error;
-  }
+const User = require("../user/user").User;
+
+const getAuthUsername = (authorization) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const token = authorization.split(" ")[1];
+      const decoded = jwt.verify(token, JWT_SECRET_KEY);
+
+      const validUser = await User.findById(decoded._id);
+      if (!validUser && process.env.MODE != "TESTING") {
+        return reject(
+          new ControllerException(404, "User with the authToken not found")
+        );
+      }
+      return resolve(decoded.username);
+    } catch (err) {
+      return reject(err);
+    }
+  });
 };
 
-module.exports = jwtAuth;
+module.exports = getAuthUsername;

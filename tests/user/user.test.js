@@ -47,7 +47,7 @@ describe("Testing the verification of an email", () => {
 
   test("If a verified and registered user already has the same email that is being verified, should return an error", async () => {
     const verifiedUserObj = user_devCon.dev_createDummyUserObj("verfied");
-    await user_devCon.dev_createRegisteredUsers([verifiedUserObj]);
+    await user_devCon.dev_createRegisteredUser(verifiedUserObj);
     try {
       await db_email.verifyEmail(verifiedUserObj.email);
     } catch (err) {
@@ -76,7 +76,7 @@ describe("Testing the verification of an email", () => {
 
   test("If the verification link is clicked after the email has been verified and the user account for it is registered, should expect an error", async () => {
     const verifiedUserObj = user_devCon.dev_createDummyUserObj("registered");
-    await user_devCon.dev_createRegisteredUsers([verifiedUserObj]);
+    await user_devCon.dev_createRegisteredUser(verifiedUserObj);
     const token = jwt.sign(
       { email: verifiedUserObj.email },
       process.env.JWT_EMAIL_KEY,
@@ -468,22 +468,22 @@ describe("Testing users with verified and registered accounts", () => {
   });
 
   describe("Testing uploading/retrieval of a user's profile picture", () => {
-    test("When updating a user's profile pic, should set user's picUrl and picType", (done) => {
-      db.uploadPicUrl(
-        registeredUser.username,
-        "somePicUrl",
-        "somePicType",
-        (err, result) => {
-          expect(result).toEqual(
-            expect.objectContaining({
-              picUrl: "somePicUrl",
-              picType: "somePicType",
-            })
-          );
-          done();
-        }
-      );
-    });
+    // test("When updating a user's profile pic, should set user's picUrl and picType", (done) => {
+    //   db.uploadPicUrl(
+    //     registeredUser.username,
+    //     "somePicUrl",
+    //     "somePicType",
+    //     (err, result) => {
+    //       expect(result).toEqual(
+    //         expect.objectContaining({
+    //           picUrl: "somePicUrl",
+    //           picType: "somePicType",
+    //         })
+    //       );
+    //       done();
+    //     }
+    //   );
+    // });
 
     test("When retrieving a user's profile pic url using an invalid username, the response should be an error", async () => {
       try {
@@ -528,12 +528,18 @@ describe("Testing users with verified and registered accounts", () => {
       });
     });
 
-    test("When sending a PATCH request to /users/upload-profile-pic with a valid PNG image, should expect 200 response.", async () => {
+    test("When sending a PATCH request to /users/upload-profile-pic with a valid PNG image, should expect 200 response and stored correct picUrl and picType", async () => {
       await request(app)
         .patch("/users/upload-profile-pic")
         .set("Authorization", "Bearer " + registeredUserUsernameAuthToken)
         .attach("file", "./tests/user/test_profile.png")
-        .expect(200);
+        .expect(200)
+        .then((res) => {
+          expect(JSON.parse(res.text).picUrl).toEqual(
+            "https://poolup-bucket-staging.s3.us-east-2.amazonaws.com/bucketFolder/registeredUser-pic.png"
+          );
+          expect(JSON.parse(res.text).picType).toEqual("png");
+        });
     });
 
     test("When sending a PATCH request to /users/upload-profile-pic with a non-image file, should expect 400 error response.", async () => {
@@ -543,9 +549,7 @@ describe("Testing users with verified and registered accounts", () => {
         .attach("file", "./tests/user/user.test.js") // improper image file
         .expect(400)
         .then((res) => {
-          expect(res.body.message).toEqual(
-            "ERROR: file type must be of: jpg, jpeg, heic, or png"
-          );
+          expect(res.text).toEqual("file type not allowed");
         });
     });
 

@@ -199,6 +199,10 @@ const emailSeed = () => {
       console.log(err);
       return reject();
     }
+    console.log(
+      chalk.green("[DB_INIT]: ") +
+        "Successfully initialized development database - Email!"
+    );
     return resolve();
   });
 };
@@ -215,7 +219,7 @@ const rideSeed = () => {
     }
     console.log(
       chalk.green("[DB_INIT]: ") +
-        "Successfully initialized development database - User!"
+        "Successfully initialized development database - Ride!"
     );
     return resolve();
   });

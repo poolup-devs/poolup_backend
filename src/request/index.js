@@ -56,7 +56,7 @@ router.post("/request/new", checkAuth, async (req, res) => {
 // Approve a request
 router.put("/request/approve", checkAuth, async (req, res) => {
   const requestID = req.body.requestID;
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
 
   try {
     await db.updateRequestStatus(requestID, authUsername, "approved");
@@ -70,7 +70,7 @@ router.put("/request/approve", checkAuth, async (req, res) => {
 router.put("/request/cancel", checkAuth, async (req, res) => {
   console.log(req.body);
   const requestID = req.body.requestID;
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
 
   try {
     await db.updateRequestStatus(requestID, authUsername, "cancelled");
@@ -85,7 +85,7 @@ router.put("/request/deny", checkAuth, async (req, res) => {
   console.log(req.body);
   const requestID = req.body.requestID;
   const msg = req.body.msg;
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
 
   try {
     await db.updateRequestStatus(requestID, authUsername, "denied");
@@ -122,7 +122,7 @@ router.put("/request/unarchive", checkAuth, async (req, res) => {
 // Remind a Receiver
 router.get("/request/remind", checkAuth, async (req, res) => {
   const requestID = req.query.requestID;
-  const authUsername = tokenParser(req.headers.authorization).username;
+  const authUsername = await tokenParser(req.headers.authorization);
 
   try {
     await db.decrementRemindCount(requestID, authUsername);

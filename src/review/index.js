@@ -8,7 +8,7 @@ const errResp = require("../utils/errors/errResponse");
 // Add a new review using currently logged in account
 router.post("/reviews", checkAuth, async (req, res) => {
   try {
-    const loggedInUser = tokenParser(req.headers.authorization).username;
+    const loggedInUser = await tokenParser(req.headers.authorization);
     req.body["reviewerUsername"] = loggedInUser;
     const review = await db.addNewReview(req.body);
     res.status(200).send(review);
@@ -20,7 +20,7 @@ router.post("/reviews", checkAuth, async (req, res) => {
 // Add a review that indicates a user has declined to review another user for a particular ride
 router.post("/reviews/decline-review", checkAuth, async (req, res) => {
   try {
-    const loggedInUser = tokenParser(req.headers.authorization).username;
+    const loggedInUser = await tokenParser(req.headers.authorization);
     const declinedReview = await db.declineReview(
       req.body.rideId,
       loggedInUser,
@@ -51,7 +51,7 @@ router.get(
   checkAuth,
   async (req, res) => {
     try {
-      const loggedInUser = tokenParser(req.headers.authorization).username;
+      const loggedInUser = await tokenParser(req.headers.authorization);
       const usersToReview = await db.getUsersToReviewForRide(
         req.query.rideId,
         loggedInUser

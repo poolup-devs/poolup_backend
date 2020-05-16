@@ -127,7 +127,7 @@ const getMyRideHistory = (authUsername, pageNum) => {
 };
 
 const getMyRideUpcoming = (authUsername) => {
-  return new Promise(async (resovle, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const ride_res = await Ride.find({
         passengers: authUsername,

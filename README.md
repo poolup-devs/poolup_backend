@@ -26,12 +26,18 @@ Tech Stack: NodeJS: Express, MongoDB: Mongoose
 
 - [Docker](https://www.docker.com/)
 - [Visual Studio Code](https://code.visualstudio.com/)
+  - Extensions:
+    - ms-vscode-remote.vscode-remote-extensionpack
+    - ms-vscode-remote.remote-wsl
+    - ms-vscode-remote.remote-ssh-edit
+    - ms-vscode-remote.remote-ssh
+    - ms-vscode-remote.remote-containers
 
 ### Environment Set Up
 
-- Open project folder in a [devcontainer](https://code.visualstudio.com/docs/remote/containers) by opening Visual Studio Code's command palette and executing `Remote-Containers: Open Folder in Container...`. For more information about our devcontainer look at .`devcontainer.json`.
-- Start the api with `npm run docker-dev`
-- Access the api at `http://localhost:3000`
+- Open project folder in a [devcontainer](https://code.visualstudio.com/docs/remote/containers) by opening Visual Studio Code's command palette and executing `Remote-Containers: Open Folder in Container...`. For more information about our devcontainer look at .`devcontainer.json`
+- Start the API with `npm run docker-dev`
+- Access the API at `http://localhost:3000`
 
 ---
 
@@ -972,7 +978,7 @@ GET request
 | /rides/getAvailableCities   | GET         | [Get available cities](#get-available-cities)                             |
 | /rides/getAvailableCounties | GET         | [Get available counties](#get-available-counties)                         |
 
-- Note: all get ride apis (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
+- Note: all get ride APIs (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
 
 ---
 
@@ -2184,7 +2190,7 @@ POST request
 
 GET request
 
-- Used to make direct stripe api requests
+- Used to make direct stripe API requests
 
 **return value**
 

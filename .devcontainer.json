@@ -1,0 +1,19 @@
+// See https://aka.ms/vscode-remote/devcontainer.json for format details.
+{
+  "name": "Poolup API",
+  // The order of the files is important since later fiels override previous ones
+  "dockerComposeFile": ["docker-compose.yml"],
+  "service": "web",
+  "workspaceFolder": "/home/nodejs/app",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash",
+    "editor.formatOnSave": true
+  },
+  "appPort": [3000],
+  // Add the IDs of extensions you want installed when the container is created in the array below.
+  "extensions": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "christian-kohler.npm-intellisense"
+  ]
+}

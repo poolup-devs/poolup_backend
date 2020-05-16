@@ -3,6 +3,7 @@ const router = new express.Router();
 const db = require("./controller");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
+const errResp = require("../utils/errors/errResponse");
 
 // Add a new review using currently logged in account
 router.post("/reviews", checkAuth, async (req, res) => {
@@ -12,7 +13,7 @@ router.post("/reviews", checkAuth, async (req, res) => {
     const review = await db.addNewReview(req.body);
     res.status(200).send(review);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -27,7 +28,7 @@ router.post("/reviews/decline-review", checkAuth, async (req, res) => {
     );
     res.status(200).send(declinedReview);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -40,7 +41,7 @@ router.get("/reviews", async (req, res) => {
     );
     res.status(200).send(userReviews);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -57,7 +58,7 @@ router.get(
       );
       res.status(200).send({ usersToReview });
     } catch (err) {
-      res.status(err.status).send(err.message);
+      errResp(res, err);
     }
   }
 );

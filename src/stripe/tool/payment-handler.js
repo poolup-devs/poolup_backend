@@ -5,7 +5,6 @@ const userDB = require("../../user/controller.js");
 const rideDB = require("../../ride/controller.js");
 const Transfer = require("../transfer/transfer").Transfer;
 const Ride = require("../../ride/ride").Ride;
-const Error = require("../../utils/error-model");
 // ====================================================
 // Public Functions
 // ====================================================

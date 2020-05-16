@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const db = require("./controller.js");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
+const errResp = require("../utils/errors/errResponse");
 
 //Get List of Available/ future Rides
 router.get("/rides/matching-rides", async (req, res) => {
@@ -11,7 +12,7 @@ router.get("/rides/matching-rides", async (req, res) => {
     const data = await db.getMatchingRides(req.query.filter, req.query.pageNum);
     return res.status(200).send(data);
   } catch (err) {
-    return res.status(err.status).send(err.message);
+    return errResp(res, err);
   }
 });
 
@@ -21,7 +22,7 @@ router.get("/rides/user-rides-history", checkAuth, async (req, res) => {
     const data = await db.getRideHistory(req.query.username);
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -32,7 +33,7 @@ router.get("/rides/my-rides-history", checkAuth, async (req, res) => {
     const data = await db.getMyRideHistory(authUsername, req.query.pageNum);
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -43,7 +44,7 @@ router.get("/rides/my-rides-upcoming", checkAuth, async (req, res) => {
     const data = await db.getMyRideUpcoming(authUsername);
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -56,7 +57,7 @@ router.get("/rides/drives-history", checkAuth, async (req, res) => {
     );
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -69,7 +70,7 @@ router.get("/rides/drives-upcoming", checkAuth, async (req, res) => {
     );
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -79,7 +80,7 @@ router.post("/rides/post-ride", checkAuth, async (req, res) => {
     const data = await db.postRide(req.body.rideInfo);
     res.status(201).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -92,7 +93,7 @@ router.put("/rides/join-ride", checkAuth, async (req, res) => {
     const data = await db.joinRide(ride.ownerUsername, ride._id, authUsername);
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -130,7 +131,7 @@ router.get("/rides/ride-details", checkAuth, async (req, res) => {
     const data = await db.rideDetails(mongoose.Types.ObjectId(rideID));
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 

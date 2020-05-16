@@ -1,5 +1,4 @@
 const Transfer = require("./transfer.js").Transfer;
-const Error = require("../../utils/error-model");
 
 // createTransfer: creates a new transfer object
 const createTransfer = (transferInfo) => {

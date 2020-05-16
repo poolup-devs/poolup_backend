@@ -12,6 +12,7 @@ const uploadFile = require("../db/awsS3_controller.js").uploadFile;
 const deleteFile = require("../db/awsS3_controller.js").deleteFile;
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
+const errResp = require("../utils/errors/errResponse");
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
@@ -30,7 +31,8 @@ router.post("/users/login", async (req, res) => {
     });
     res.status(200).send({ authToken: token });
   } catch (err) {
-    res.status(err.status).send(err.message);
+    // res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 

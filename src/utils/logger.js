@@ -1,5 +1,29 @@
 const winston = require("winston");
 
+const customLevel = {
+  levels: {
+    error: 0,
+    warn: 1,
+    exception: 2,
+    info: 3,
+    http: 4,
+    verbose: 5,
+    debug: 6,
+    silly: 7,
+  },
+  colors: {
+    error: "redBG",
+    exception: "magenta",
+    warn: "yellow",
+    info: "green",
+    http: "blue",
+    verbose: "grey",
+    debug: "cyan",
+    silly: "gray",
+  },
+};
+
+winston.addColors(customLevel.colors);
 const options = {
   file: {
     level: "info",
@@ -34,6 +58,7 @@ const logger = winston.createLogger({
     new winston.transports.File(options.file),
     new winston.transports.Console(options.console),
   ],
+  levels: customLevel.levels,
   exitOnError: false,
 });
 

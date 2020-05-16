@@ -3,7 +3,7 @@ const Review = require("./review").Review;
 const Ride = require("../ride/ride").Ride;
 const agenda = require("../../src/agenda/agenda");
 
-const Error = require("../utils/error-model");
+const ControllerException = require("../utils/errors/controllerException");
 
 // Create a new review with required properties: reviewer username, reviewee username, rating, and ride ID
 const addNewReview = (newReviewInfo) => {
@@ -71,7 +71,7 @@ const addNewReview = (newReviewInfo) => {
           resolve(newReview);
         } else {
           reject(
-            Error(
+            new ControllerException(
               400,
               "A review has already been made to " +
                 newReviewInfo.revieweeUsername +
@@ -81,13 +81,13 @@ const addNewReview = (newReviewInfo) => {
         }
       }
       reject(
-        Error(
+        new ControllerException(
           400,
           "Review must contain a reviewer username, reviewee username, rating, and associated ride ID"
         )
       );
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -112,7 +112,7 @@ const declineReview = (rideId, reviewer, reviewee) => {
         resolve(declinedReview);
       }
       reject(
-        Error(
+        new ControllerException(
           400,
           "User has already declined to review " +
             reviewee +
@@ -121,7 +121,7 @@ const declineReview = (rideId, reviewer, reviewee) => {
         )
       );
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -141,7 +141,7 @@ const getUserReviews = (username, pageNumber) => {
         .skip(pageNumber * 5)
         .limit(5);
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -210,10 +210,10 @@ const makeReviewPublic = (rideId, reviewerUsername, revieweeUsername) => {
         );
         return resolve(review);
       } else {
-        return reject(Error(404, "review not found"));
+        return reject(new ControllerException(404, "review not found"));
       }
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };

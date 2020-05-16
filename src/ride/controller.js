@@ -3,7 +3,7 @@ const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
 const Request = require("../request/request").Request;
 const paymentHandler = require("../stripe/tool/payment-handler");
-const Error = require("../utils/error-model");
+const ControllerException = require("../utils/errors/controllerException");
 const agenda = require("../agenda/agenda");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
@@ -19,7 +19,7 @@ const createRideQueryFilter = (filter_) => {
     try {
       filter_ = JSON.parse(filter_);
     } catch (err) {
-      return reject(Error(400, err));
+      return reject(err);
     }
     let fromCitiesQuery = [];
     let toCitiesQuery = [];
@@ -88,7 +88,7 @@ const getMatchingRides = (filter_, pageNum) => {
       const matchingRides = await addDriverInfoToRides(ride_res);
       return resolve(matchingRides);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -104,7 +104,7 @@ const getRideHistory = (username) => {
         .limit(5);
       return resolve(ride_res);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -121,7 +121,7 @@ const getMyRideHistory = (authUsername, pageNum) => {
         .limit(5);
       return resolve(ride_res);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -138,7 +138,7 @@ const getMyRideUpcoming = (authUsername) => {
       const ridesUpcoming = await addDriverInfoToRides(ride_res);
       return resolve(ridesUpcoming);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -160,7 +160,7 @@ const getDriveHistory = (username) => {
       const driveHistory = await addDriverInfoToRides(ride_res);
       return resolve(driveHistory);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -178,7 +178,7 @@ const getDriveUpcoming = (username, pageNum) => {
       const upcomingDrives = await addDriverInfoToRides(ride_res);
       return resolve(upcomingDrives);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -203,7 +203,7 @@ const postRide = (rideInfo) => {
 
       return resolve(newRide);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -211,9 +211,10 @@ const postRide = (rideInfo) => {
 const joinRide = (ownerUsername, ride_id, passengerUsername) => {
   return new Promise(async (resolve, reject) => {
     try {
+      // TODO: weird username validation here
       const passenger = await User.findOne({ username: passengerUsername });
       if (passenger == null) {
-        return reject(Error(404, "passenger not found"));
+        return reject(new ControllerException(404, "username not found"));
       }
       const noti = {
         username: ownerUsername,
@@ -228,13 +229,16 @@ const joinRide = (ownerUsername, ride_id, passengerUsername) => {
       );
       if (ride_upd == null) {
         return reject(
-          Error(400, "either the ride's id is not found, or the ride is full")
+          new ControllerException(
+            400,
+            "either the ride's id is not found, or the ride is full"
+          )
         );
       }
       const noti_new = await Noti.create(noti);
       return resolve(ride_upd);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -340,11 +344,11 @@ const rideDetails = (_id) => {
     try {
       const ride_res = await Ride.findById(_id);
       if (ride_res == null) {
-        return reject(Error(404, "ride not found"));
+        return reject(new ControllerException(404, "ride not found"));
       }
       return resolve(ride_res);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };

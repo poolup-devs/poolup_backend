@@ -4,13 +4,16 @@ const router = new express.Router();
 const db = require("./controller.js");
 const jwt = require("jsonwebtoken");
 
+const errResp = require("../../utils/errors/errResponse");
+
 // Send verification email
 router.get("/users/sendVerificationEmail", async (req, res) => {
   try {
     await db.sendVerificationEmail(req.query.email);
     res.status(200).send("Verification email sent successfully.");
   } catch (err) {
-    res.status(err.status).send(err.message);
+    // res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 

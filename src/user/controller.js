@@ -5,7 +5,7 @@ const Email = require("./email/email").Email;
 const jwt = require("jsonwebtoken");
 
 const EmailUtil = require("../utils/email/email");
-const Error = require("../utils/error-model");
+const ControllerException = require("../utils/errors/controllerException");
 const School = require("../school/school.js").School;
 
 // Users require a certain minimum amount of ratings to calculate an average rating
@@ -22,7 +22,9 @@ const login = async (email, password) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ email, password });
     if (!user) {
-      return reject(Error(401, "User with email and password not found."));
+      return reject(
+        new ControllerException(401, "User with email and password not found.")
+      );
     }
     return resolve(user);
   });
@@ -36,7 +38,9 @@ const signup = async (userInfo) => {
     if (
       !requiredProperties.every((property) => userInfo.hasOwnProperty(property))
     ) {
-      return reject(Error(400, "Not all required fields were specified."));
+      return reject(
+        new ControllerException(400, "Not all required fields were specified.")
+      );
     }
     try {
       const v = await isValidEmailToRegister(userInfo.email);
@@ -44,11 +48,13 @@ const signup = async (userInfo) => {
         case "email can be registered":
           break;
         case "email not verified":
-          return reject(Error(403, "Email not verified"));
+          return reject(new ControllerException(401, "Email not verified"));
         case "email already registered":
-          return reject(Error(403, "Email already registered"));
+          return reject(
+            new ControllerException(400, "Email already registered")
+          );
         default:
-          return reject(Error(500));
+          return reject(new ControllerException(400, "email case error"));
       }
 
       // Create a user document containing a hashed password with username and school fields parsed from email
@@ -84,7 +90,7 @@ const signup = async (userInfo) => {
         }
       );
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -95,7 +101,7 @@ const findUserByUsername = (username) => {
       const userInfo = await User.findOne({ username });
       return resolve(userInfo);
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -113,7 +119,7 @@ const findUserByUsername = (username) => {
 const findUserByEmail = (email, callback) => {
   User.find({ email }, (err, result) => {
     if (err) {
-      callback(Error(500, err), null);
+      callback(err, null);
     } else {
       callback(null, result);
     }
@@ -155,7 +161,7 @@ const findUserByEmail = (email, callback) => {
 const getPicType = (username, callback) => {
   User.findOne({ username }, (err, result) => {
     if (err) {
-      callback(Error(500, err), null);
+      callback(err, null);
     } else {
       callback(null, result);
     }
@@ -169,7 +175,7 @@ const uploadPicUrl = (username, picUrl, picType, callback) => {
     { new: true },
     (err, result) => {
       if (err) {
-        callback(Error(500, err), null);
+        callback(err, null);
       } else {
         callback(null, result);
       }
@@ -181,9 +187,11 @@ const getPicUrl = (username) => {
   return new Promise(async (resolve, reject) => {
     const userInfo = await findUserByUsername(username);
     if (!userInfo) {
-      return reject(Error(404, "username not found"));
+      return reject(new ControllerException(404, "username not found"));
     } else if (userInfo.picUrl === undefined) {
-      return reject(Error(500, "user's profile picture undefined"));
+      return reject(
+        new ControllerException(400, "user's profile picture undefined")
+      );
     }
 
     return resolve(userInfo.picUrl);
@@ -198,12 +206,14 @@ const checkIfDriver = (username) => {
       },
       (err, result) => {
         if (err) {
-          return reject(Error(500, err));
+          return reject(err);
         }
 
         // If username not found
         if (!result) {
-          return reject(Error(404, "user of username not found"));
+          return reject(
+            new ControllerException(404, "user of username not found")
+          );
         }
 
         if (result.driver.isDriver) {
@@ -236,7 +246,7 @@ const addUserDriverInfo = (driverInfo) => {
       { new: true },
       (err, result) => {
         if (err) {
-          return reject(Error(500, err));
+          return reject(err);
         } else {
           return resolve(result);
         }
@@ -252,7 +262,7 @@ const updateUser = (authUsername, updates, callback) => {
     { new: true },
     (err, result) => {
       if (err) {
-        callback(Error(500, err), null);
+        callback(err, null);
       } else {
         callback(null, result);
       }
@@ -287,7 +297,12 @@ const isValidPassword = (password) => {
   return new Promise(async (resolve, reject) => {
     // Password must be a minimum of 8 characters long
     if (password.length < 8) {
-      return reject(Error(400, "Password must be at least 8 characters long!"));
+      return reject(
+        new ControllerException(
+          400,
+          "Password must be at least 8 characters long!"
+        )
+      );
     }
     return resolve(true);
   });
@@ -319,11 +334,11 @@ const confirmCredentials = (authUsername, password) => {
     try {
       const user = await User.findOne({ username: authUsername, password });
       if (!user) {
-        return reject(Error(401, "incorrect password"));
+        return reject(new ControllerException(401, "incorrect password"));
       }
       return resolve(user);
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -335,7 +350,7 @@ const passwordReset = (authUsername, newPassword, callback) => {
     { new: true },
     (err, result) => {
       if (err) {
-        callback(Error(500, err), null);
+        callback(err, null);
       } else {
         callback(null, result);
       }
@@ -349,12 +364,15 @@ const getAboutMe = (username) => {
       const user = await User.findOne({ username });
       if (!user) {
         return reject(
-          Error(404, "There does not exist a user with this username.")
+          new ControllerException(
+            404,
+            "There does not exist a user with this username."
+          )
         );
       }
       return resolve(user.aboutMe);
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -369,7 +387,7 @@ const updateAboutMe = (authUsername, updatedAboutMe) => {
       .then((updatedUser) => {
         if (!updatedUser) {
           return reject(
-            Error(
+            new ControllerException(
               404,
               "Could not find user in database when updating about me."
             )
@@ -378,7 +396,7 @@ const updateAboutMe = (authUsername, updatedAboutMe) => {
         return resolve(updatedUser);
       })
       .catch((err) => {
-        return reject(Error(500, err));
+        return reject(err);
       });
   });
 };
@@ -406,7 +424,9 @@ const getAverageRating = (username) => {
     try {
       await User.findOne({ username }, (err, user) => {
         if (!user) {
-          return reject(Error(404, "User does not exist in the database"));
+          return reject(
+            new ControllerException(404, "User does not exist in the database")
+          );
         }
         const { sumOfAllRatings, totalRatings } = user.rating;
 
@@ -416,7 +436,7 @@ const getAverageRating = (username) => {
           return resolve(averageRating);
         } else {
           return reject(
-            Error(
+            new ControllerException(
               400,
               "User must have at least " +
                 MIN_TO_DISPLAY_AVERAGE_RATING +
@@ -426,7 +446,7 @@ const getAverageRating = (username) => {
         }
       });
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -436,7 +456,7 @@ const getPublicProfileInfo = (username) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ username });
     if (!user) {
-      return reject(Error(404, "User could not be found!"));
+      return reject(new ControllerException(404, "User could not be found!"));
     }
     const {
       firstName,
@@ -482,7 +502,7 @@ const getSchool = (username) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ username });
     if (!user) {
-      return reject(Error(404, "User could not be found!"));
+      return reject(new ControllerException(404, "User could not be found!"));
     }
     return resolve(user.school);
   });

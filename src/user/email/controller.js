@@ -2,7 +2,7 @@ const Email = require("./email.js").Email;
 
 const jwt = require("jsonwebtoken");
 
-const Error = require("../../utils/error-model");
+const ControllerException = require("../../utils/errors/controllerException");
 const EmailUtil = require("../../utils/email/email");
 const isValidEmailToVerify = require("./utils.js").isValidEmailToVerify;
 
@@ -40,19 +40,28 @@ const sendVerificationEmail = (email) => {
           return resolve(true);
         }
         case "not a valid email address":
-          return reject(Error(400, "Not a valid email address"));
+          return reject(
+            new ControllerException(400, "Not a valid email address")
+          );
         case "not an .edu email address":
-          return reject(Error(400, "Not an .edu email address"));
+          return reject(
+            new ControllerException(400, "Not an .edu email address")
+          );
         case "verification email resend limit reached":
-          return reject(Error(403, "Verification email resend limit reached"));
+          return reject(
+            new ControllerException(
+              400,
+              "Verification email resend limit reached"
+            )
+          );
         case "email already verified":
-          return reject(Error(403, "Email already verified"));
+          return reject(new ControllerException(400, "Email already verified"));
         default: {
-          return reject(Error(500));
+          return reject(new ControllerException(400, "email case error"));
         }
       }
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -64,10 +73,15 @@ const verifyEmail = (email) => {
     try {
       const res_email = await Email.findOne({ email });
       if (!res_email) {
-        return reject(Error(404, "Email not found"));
+        return reject(new ControllerException(404, "Email not found"));
       }
       if (res_email.status != "pre-verification") {
-        return reject(Error(403, `The email is in ${res_email.status} status`));
+        return reject(
+          new ControllerException(
+            403,
+            `The email is in ${res_email.status} status`
+          )
+        );
       }
       await Email.findByIdAndUpdate(
         res_email._id,
@@ -78,7 +92,7 @@ const verifyEmail = (email) => {
       );
       return resolve(true);
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };

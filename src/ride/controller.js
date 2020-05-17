@@ -3,7 +3,7 @@ const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
 const Request = require("../request/request").Request;
 const paymentHandler = require("../stripe/tool/payment-handler");
-const Error = require("../utils/error-model");
+const ControllerException = require("../utils/errors/controllerException");
 const agenda = require("../agenda/agenda");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
@@ -19,7 +19,7 @@ const createRideQueryFilter = (filter_) => {
     try {
       filter_ = JSON.parse(filter_);
     } catch (err) {
-      return reject(Error(400, err));
+      return reject(err);
     }
     let fromCitiesQuery = [];
     let toCitiesQuery = [];
@@ -88,7 +88,7 @@ const getMatchingRides = (filter_, pageNum) => {
       const matchingRides = await addDriverInfoToRides(ride_res);
       return resolve(matchingRides);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -104,7 +104,7 @@ const getRideHistory = (username) => {
         .limit(5);
       return resolve(ride_res);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -121,7 +121,7 @@ const getMyRideHistory = (authUsername, pageNum) => {
         .limit(5);
       return resolve(ride_res);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -138,7 +138,7 @@ const getMyRideUpcoming = (authUsername) => {
       const ridesUpcoming = await addDriverInfoToRides(ride_res);
       return resolve(ridesUpcoming);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -160,7 +160,7 @@ const getDriveHistory = (username) => {
       const driveHistory = await addDriverInfoToRides(ride_res);
       return resolve(driveHistory);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -178,7 +178,7 @@ const getDriveUpcoming = (username, pageNum) => {
       const upcomingDrives = await addDriverInfoToRides(ride_res);
       return resolve(upcomingDrives);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -188,7 +188,7 @@ const postRide = (rideInfo, authUsername) => {
     try {
       if (authUsername != rideInfo.ownerUsername) {
         return reject(
-          Error(
+          new ControllerException(
             403,
             "unmatching username of the request and the logged in user"
           )
@@ -211,7 +211,7 @@ const postRide = (rideInfo, authUsername) => {
 
       return resolve(newRide);
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -230,13 +230,20 @@ const joinRide = (rideInfo, passengerUsername) => {
 
       const ride_res = await Ride.findById(ride_id);
       if (!ride_res) {
-        return reject(Error(400, "ride is not found"));
+        return reject(new ControllerException(400, "ride is not found"));
       } else if (ride_res.seats < 1) {
-        return reject(Error(400, "the ride is full"));
+        return reject(new ControllerException(400, "the ride is full"));
       } else if (ride_res.ownerUsername == passengerUsername) {
-        return reject(Error(403, "driver of the ride cannot join the ride"));
+        return reject(
+          new ControllerException(
+            403,
+            "driver of the ride cannot join the ride"
+          )
+        );
       } else if (ride_res.passengers.includes(passengerUsername)) {
-        return reject(Error(400, "user is already in the ride"));
+        return reject(
+          new ControllerException(400, "user is already in the ride")
+        );
       }
 
       const ride_upd = await Ride.findByIdAndUpdate(
@@ -248,7 +255,7 @@ const joinRide = (rideInfo, passengerUsername) => {
 
       return resolve(ride_upd);
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -354,11 +361,11 @@ const rideDetails = (_id) => {
     try {
       const ride_res = await Ride.findById(_id);
       if (ride_res == null) {
-        return reject(Error(404, "ride not found"));
+        return reject(new ControllerException(404, "ride not found"));
       }
-      resolve(ride_res);
+      return resolve(ride_res);
     } catch (err) {
-      reject(Error(500));
+      return reject(err);
     }
   });
 };

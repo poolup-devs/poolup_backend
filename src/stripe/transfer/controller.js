@@ -1,5 +1,4 @@
 const Transfer = require("./transfer.js").Transfer;
-const Error = require("../../utils/error-model");
 
 // createTransfer: creates a new transfer object
 const createTransfer = (transferInfo) => {
@@ -8,7 +7,7 @@ const createTransfer = (transferInfo) => {
       const newTransfer = await new Transfer(transferInfo).save();
       return resolve(newTransfer);
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(err);
     }
   });
 };
@@ -34,7 +33,7 @@ const checkExpired = () => {
 
       return resolve(transfers);
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(err);
     }
   });
 };
@@ -78,7 +77,7 @@ const updateTransferStatus = (transferID, newStatus) => {
       const res = await Transfer.findOneAndUpdate(filter, update, options);
       return resolve(res);
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(err);
     }
   });
 };

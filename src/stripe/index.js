@@ -9,6 +9,7 @@ const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
 const userDB = require("../user/controller.js");
 const paymentHandler = require("./tool/payment-handler.js");
 const driverValidation = require("./tool/driver-info-validation.js");
+const errResp = require("../utils/errors/errResponse");
 
 // This endpoint is only used in the alpha version since stripe is not used
 router.post("/driver/create", async (req, res) => {
@@ -206,7 +207,7 @@ router.post("/stripe/create-payment-intent", async (req, res) => {
     );
     res.status(200).send({ clientSecret: clientSecret });
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -281,7 +282,7 @@ router.post("/stripe/dev/triggerSuccessfulPayment", async (req, res) => {
     await paymentHandler.handlePaymentIntentSucceeded(paymentIntent);
     res.sendStatus(200);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -298,7 +299,7 @@ router.post("/stripe/dev/triggerRefund", async (req, res) => {
     );
     res.sendStatus(200);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -310,7 +311,7 @@ router.post("/stripe/dev/customer", async (req, res) => {
     });
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 

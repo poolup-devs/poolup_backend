@@ -2,7 +2,6 @@ const Email = require("./email.js").Email;
 
 const parseDomain = require("parse-domain");
 const isEmail = require("isemail");
-const Error = require("../../utils/error-model");
 
 // isValidEmailToVerify -- helper function
 // return values:

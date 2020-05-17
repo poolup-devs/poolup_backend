@@ -349,27 +349,24 @@ Models:
 
 ### API Endpoints
 
-| url                          | HTTP Method | description                                                        |
-| ---------------------------- | ----------- | ------------------------------------------------------------------ |
-| /users/login                 | POST        | [User Login](#user-login)                                          |
-| /users/signup                | POST        | [User Signup](#user-signup)                                        |
-| /users/sendVerificationEmail | GET         | [Send a verification email to signup](#send-verification-email)    |
-| /users/verify                | GET         | [Verify an email](#email-verification)                             |
-| /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
-| /users/phoneNumberValidation | GET         | [Validation/usability of a phone number](#phone-number-validation) |
-| /users/upload-profile-pic    | PATCH       | [upload a user profile image](#upload-profile-image)               |
-| /users/usersPic              | GET         | [Get a user's profile image](#get-profile-image)                   |
-| /users/updateUser            | PATCH       | [Update a user's name or phonenumber](#update-user)                |
-| /users/deleteUser            | DELETE      | [Delete a user account](#delete-user)                              |
-| /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
-| /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
-| /users/my-info               | GET         | [Get my account's information](#my-info)                           |
-| /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
-| /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
-| /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                      |
-| /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
-| /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |
-| /users/driverStatus          | GET         | [Check if a user is a driver](#check-if-driver)                    |
+| url                          | HTTP Method | description                                                     |
+| ---------------------------- | ----------- | --------------------------------------------------------------- |
+| /users/login                 | POST        | [User Login](#user-login)                                       |
+| /users/signup                | POST        | [User Signup](#user-signup)                                     |
+| /users/sendVerificationEmail | GET         | [Send a verification email to signup](#send-verification-email) |
+| /users/verify                | GET         | [Verify an email](#email-verification)                          |
+| /users/upload-profile-pic    | PATCH       | [upload a user profile image](#upload-profile-image)            |
+| /users/usersPic              | GET         | [Get a user's profile image](#get-profile-image)                |
+| /users/updateUser            | PATCH       | [Update a user's name or phonenumber](#update-user)             |
+| /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential) |
+| /users/changePassword        | PATCH       | [Change a user's password](#change-password)                    |
+| /users/my-info               | GET         | [Get my account's information](#my-info)                        |
+| /users/get-rating            | GET         | [Get a user's rating](#get-rating)                              |
+| /users/get-school            | GET         | [Get a user's school](#get-school)                              |
+| /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                   |
+| /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                             |
+| /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)      |
+| /users/driverStatus          | GET         | [Check if a user is a driver](#check-if-driver)                 |
 
 ---
 
@@ -515,58 +512,6 @@ localhost:3000/users/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpb
 **return value**
 
 - 200 status, returns a redirection to https://poolup.co/signup/3 to proceed with Account Information registration.
-
----
-
-### Username Validation
-
-GET request
-
-**params**
-
-username
-
-**example**
-
-localhost:3000/users/usernameValidation?username=bin315a1
-
-**return value**
-
-- 200 status, array of user objects with that username
-
-```
-[
-    {
-        "driverList": [],
-        "riderList": [],
-        "isRegistered": true,
-        "_id": "5d55af9f4c5458138f2efa85",
-        "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
-        "username": "bin315a1",
-        "name": "Han",
-        "email": "bin315a1@g.ucla.edu",
-        "__v": 0
-    }
-]
-```
-
----
-
-### Phone Number Validation
-
-GET request
-
-**params**
-
-phoneNumber
-
-**example**
-
-localhost:3000/users/phoneNumberValidation?phoneNumber=1231231234
-
-**return value**
-
-200 status, array of user objects with that phoneNumber
 
 ---
 

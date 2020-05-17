@@ -20,9 +20,7 @@ const login = async (email, password) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ email, password });
     if (!user) {
-      return reject(
-        new ControllerException(401, "User with email and password not found.")
-      );
+      return reject(new ControllerException(401, "User with email and password not found."));
     }
     return resolve(user);
   });
@@ -33,12 +31,8 @@ const signup = async (userInfo) => {
     // Required properties
     const requiredProperties = ["firstName", "lastName", "password", "email"];
     // Field validation
-    if (
-      !requiredProperties.every((property) => userInfo.hasOwnProperty(property))
-    ) {
-      return reject(
-        new ControllerException(400, "Not all required fields were specified.")
-      );
+    if (!requiredProperties.every((property) => userInfo.hasOwnProperty(property))) {
+      return reject(new ControllerException(400, "Not all required fields were specified."));
     }
     try {
       const v = await isValidEmailToRegister(userInfo.email);
@@ -48,9 +42,7 @@ const signup = async (userInfo) => {
         case "email not verified":
           return reject(new ControllerException(401, "Email not verified"));
         case "email already registered":
-          return reject(
-            new ControllerException(400, "Email already registered")
-          );
+          return reject(new ControllerException(400, "Email already registered"));
         default:
           return reject(new ControllerException(400, "email case error"));
       }
@@ -62,10 +54,7 @@ const signup = async (userInfo) => {
       userInfo.isRegistered = true;
       const newUser = await User.create(userInfo);
       User.setRandomBruinBear(newUser.username);
-      await Email.updateOne(
-        { email: userInfo.email },
-        { status: "registered" }
-      );
+      await Email.updateOne({ email: userInfo.email }, { status: "registered" });
 
       // Give the user a stripe id
       var stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
@@ -175,9 +164,7 @@ const getPicUrl = (username) => {
     if (!userInfo) {
       return reject(new ControllerException(404, "username not found"));
     } else if (userInfo.picUrl === undefined) {
-      return reject(
-        new ControllerException(400, "user's profile picture undefined")
-      );
+      return reject(new ControllerException(400, "user's profile picture undefined"));
     }
 
     return resolve(userInfo.picUrl);
@@ -197,9 +184,7 @@ const checkIfDriver = (username) => {
 
         // If username not found
         if (!result) {
-          return reject(
-            new ControllerException(404, "user of username not found")
-          );
+          return reject(new ControllerException(404, "user of username not found"));
         }
 
         if (result.driver.isDriver) {
@@ -242,30 +227,20 @@ const addUserDriverInfo = (driverInfo) => {
 };
 
 const updateUser = (authUsername, updates, callback) => {
-  User.findOneAndUpdate(
-    { username: authUsername },
-    updates,
-    { new: true },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
-      }
+  User.findOneAndUpdate({ username: authUsername }, updates, { new: true }, (err, result) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, result);
     }
-  );
+  });
 };
 
 const isValidPassword = (password) => {
   return new Promise(async (resolve, reject) => {
     // Password must be a minimum of 8 characters long
     if (password.length < 8) {
-      return reject(
-        new ControllerException(
-          400,
-          "Password must be at least 8 characters long!"
-        )
-      );
+      return reject(new ControllerException(400, "Password must be at least 8 characters long!"));
     }
     return resolve(true);
   });
@@ -306,10 +281,7 @@ const getAboutMe = (username) => {
       const user = await User.findOne({ username });
       if (!user) {
         return reject(
-          new ControllerException(
-            404,
-            "There does not exist a user with this username."
-          )
+          new ControllerException(404, "There does not exist a user with this username.")
         );
       }
       return resolve(user.aboutMe);
@@ -321,18 +293,11 @@ const getAboutMe = (username) => {
 
 const updateAboutMe = (authUsername, updatedAboutMe) => {
   return new Promise((resolve, reject) => {
-    User.findOneAndUpdate(
-      { username: authUsername },
-      { aboutMe: updatedAboutMe },
-      { new: true }
-    )
+    User.findOneAndUpdate({ username: authUsername }, { aboutMe: updatedAboutMe }, { new: true })
       .then((updatedUser) => {
         if (!updatedUser) {
           return reject(
-            new ControllerException(
-              404,
-              "Could not find user in database when updating about me."
-            )
+            new ControllerException(404, "Could not find user in database when updating about me.")
           );
         }
         return resolve(updatedUser);
@@ -366,9 +331,7 @@ const getAverageRating = (username) => {
     try {
       await User.findOne({ username }, (err, user) => {
         if (!user) {
-          return reject(
-            new ControllerException(404, "User does not exist in the database")
-          );
+          return reject(new ControllerException(404, "User does not exist in the database"));
         }
         const { sumOfAllRatings, totalRatings } = user.rating;
 
@@ -454,9 +417,6 @@ module.exports = {
   login,
   findUserByEmail,
   findUserByUsername,
-  // findUserByPhoneNumber,
-  // getMyInfo,
-  // uploadPicUrl,
   updateProfilePic,
   getPicType,
   getPicUrl,
@@ -464,7 +424,6 @@ module.exports = {
   checkIfDriver,
   addUserDriverInfo,
   updateUser,
-  // deleteUser,
   isValidPassword,
   passwordReset,
   getAboutMe,

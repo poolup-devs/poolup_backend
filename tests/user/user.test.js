@@ -401,30 +401,6 @@ describe("Testing users with verified and registered accounts", () => {
         });
     });
 
-    // test("When requesting account information using a valid username, response should return an object with properties: username, firstName, lastName, email, createdAt, and picUrl", (done) => {
-    //   db.getMyInfo(registeredUser.username, (err, result) => {
-    //     expect(err).toEqual(null);
-    //     const { username, firstName, lastName, email, picUrl } = registeredUser;
-    //     expect(result).toEqual(
-    //       expect.objectContaining({
-    //         username,
-    //         firstName,
-    //         lastName,
-    //         email,
-    //         picUrl,
-    //       })
-    //     );
-    //     done();
-    //   });
-    // });
-    // test("When requesting account information using an invalid username, the response should be an error", (done) => {
-    //   db.getMyInfo("invalidUsername", (err, result) => {
-    //     expect(err).toEqual({ message: "ERROR: username not found" });
-    //     expect(result).toEqual(null);
-    //     done();
-    //   });
-    // });
-
     test("When updating a user's name or phone number, should set the corresponding user's name and phone number fields", (done) => {
       const updates = {
         phoneNumber: "1231231234",
@@ -452,23 +428,6 @@ describe("Testing users with verified and registered accounts", () => {
   });
 
   describe("Testing uploading/retrieval of a user's profile picture", () => {
-    // test("When updating a user's profile pic, should set user's picUrl and picType", (done) => {
-    //   db.uploadPicUrl(
-    //     registeredUser.username,
-    //     "somePicUrl",
-    //     "somePicType",
-    //     (err, result) => {
-    //       expect(result).toEqual(
-    //         expect.objectContaining({
-    //           picUrl: "somePicUrl",
-    //           picType: "somePicType",
-    //         })
-    //       );
-    //       done();
-    //     }
-    //   );
-    // });
-
     test("When retrieving a user's profile pic url using an invalid username, the response should be an error", async () => {
       try {
         expect.assertions(1);
@@ -543,20 +502,6 @@ describe("Testing users with verified and registered accounts", () => {
   });
 
   describe("Testing validation of user properties, such as username or email", () => {
-    // test("When sending an GET request to /users/usernameValidation with a valid username associated with an account, should expect 200 response.", async () => {
-    //   await request(app)
-    //     .get("/users/usernameValidation")
-    //     .query({ username: registeredUser.username })
-    //     .expect(200);
-    // });
-
-    // test("When sending an GET request to /users/phoneNumberValidation with a valid phone number associated with an account, should expect 200 response.", async () => {
-    //   await request(app)
-    //     .get("/users/phoneNumberValidation")
-    //     .query({ phoneNumber: registeredUser.phoneNumber })
-    //     .expect(200);
-    // });
-
     test("When successfully confirming password credentials using a valid password during a user session, should return 200 response code", async () => {
       await request(app)
         .post("/users/checkCredentials")
@@ -605,26 +550,6 @@ describe("Testing users with verified and registered accounts", () => {
         expect(e.message).toBe("Could not find user in database when updating about me.");
       }
     });
-
-    // test("When deleting a user, should delete all instances of that user in User, Ride, and Noti", (done) => {
-    //   const { username } = registeredUser;
-    //   Ride.create({ ownerUsername: username }).then(
-    //     Noti.create({ username }).then(
-    //       db.deleteUser(username, (err, result) => {
-    //         Ride.findOne({ ownerUsername: username }, (err, result) => {
-    //           expect(result).toEqual(null);
-    //           Noti.findOne({ username }, (err, result) => {
-    //             expect(result).toEqual(null);
-    //             User.findOne({ username }, (err, result) => {
-    //               expect(result).toEqual(null);
-    //               done();
-    //             });
-    //           });
-    //         });
-    //       })
-    //     )
-    //   );
-    // });
 
     test("When reseting a user's password, should update the user's password field to the new password.", (done) => {
       const newPassword = sha256("newPassword");
@@ -716,12 +641,5 @@ describe("Testing users with verified and registered accounts", () => {
           );
         });
     });
-
-    // test("When deleting a user while logged in with valid credentials, should return 200 response code, ", async () => {
-    //   await request(app)
-    //     .delete("/users/deleteUser")
-    //     .set("Authorization", "Bearer " + registeredUserUsernameAuthToken)
-    //     .expect(200);
-    // });
   });
 });

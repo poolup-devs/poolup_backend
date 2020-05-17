@@ -289,7 +289,6 @@ Models:
 | /users/updateUser            | PATCH       | [Update a user's name or phonenumber](#update-user)             |
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential) |
 | /users/changePassword        | PATCH       | [Change a user's password](#change-password)                    |
-| /users/my-info               | GET         | [Get my account's information](#my-info)                        |
 | /users/get-rating            | GET         | [Get a user's rating](#get-rating)                              |
 | /users/get-school            | GET         | [Get a user's school](#get-school)                              |
 | /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                   |

@@ -186,7 +186,7 @@ router.get("/users/get-public-profile", async (req, res) => {
 });
 
 // Get school
-router.get("/users/school", async (req, res) => {
+router.get("/users/get-school", async (req, res) => {
   try {
     const school = await db.getSchool(req.query.username);
     res.status(200).send({ school });

@@ -418,13 +418,6 @@ describe("Testing users with verified and registered accounts", () => {
         done();
       });
     });
-
-    // test("When sending an GET request to /users/my-info in an authorized session, should expect 200 response.", async () => {
-    //   await request(app)
-    //     .get("/users/my-info")
-    //     .set("Authorization", "Bearer " + registeredUserUsernameAuthToken)
-    //     .expect(200);
-    // });
   });
 
   describe("Testing uploading/retrieval of a user's profile picture", () => {

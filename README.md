@@ -31,7 +31,6 @@ Tech Stack: NodeJS: Express, MongoDB: Mongoose
 ### Environment Set Up
 
 - Open project folder in a [devcontainer](https://code.visualstudio.com/docs/remote/containers) by opening Visual Studio Code's command palette and executing `Remote-Containers: Open Folder in Container...`. For more information about our devcontainer look at .`devcontainer.json`
-- Initialize the Databse with `npm run docker-init_db`
 - Start the API with `npm run docker-dev`
 - Access the API at `http://localhost:3000`
 

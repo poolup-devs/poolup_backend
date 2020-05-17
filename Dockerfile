@@ -1,26 +1,23 @@
 # base image
 FROM node:12 AS builder
 # default to prod build
-ARG ENV=production
+ARG API_ENV=production
 # set working directory
 WORKDIR /app
 # install dependencies
 COPY package*.json ./
 RUN npm install
-# set up config file
-RUN npm run setup
 # copying soruce files
 COPY . .
-# building app
-RUN npm run build:$REACT_APP_ENV
+# set up config file
+RUN npm run setup
+# initialize database
+RUN npm run docker-init_db
 
 FROM node:alpine
 # set working directory
 WORKDIR /app
-
-# install server
-RUN npm install -g serve
-# copying build files
-COPY --from=builder /app/build ./build
-# start app
-ENTRYPOINT ["serve", "-s", "build"]
+COPY --from=builder . .
+COPY package* ./
+RUN npm install --production
+CMD npm start

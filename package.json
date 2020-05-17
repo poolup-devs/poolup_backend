@@ -5,8 +5,6 @@
   "main": "index.js",
   "scripts": {
     "setup": "node ./setup/setup.js",
-    "build:staging": "env-cmd -r ./config/.env-cmdrc -e base_config,development npm run build",
-    "buld:production": "env-cmd -r ./config/.env-cmdrc -e base_config,production npm run build",
     "init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development node ./setup/init_db.js",
     "start": "env-cmd -r ./config/.env-cmdrc -e base_config,production node src/server.js",
     "dev": "env-cmd -r ./config/.env-cmdrc -e base_config,development nodemon src/server.js",
@@ -33,6 +31,7 @@
     "aws-sdk": "^2.486.0",
     "bluebird": "^3.5.5",
     "body-parser": "^1.19.0",
+    "build": "^0.1.4",
     "chalk": "^2.4.2",
     "connect-mongo": "^3.2.0",
     "cors": "^2.8.5",

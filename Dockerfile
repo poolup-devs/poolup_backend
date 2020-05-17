@@ -11,8 +11,6 @@ RUN npm install
 COPY . .
 # set up config file
 RUN npm run setup
-# initialize database
-RUN npm run docker-init_db
 
 FROM node:alpine
 # set working directory

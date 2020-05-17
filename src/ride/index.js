@@ -1,6 +1,5 @@
 const express = require("express");
 const router = new express.Router();
-const mongoose = require("mongoose");
 const db = require("./controller.js");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");

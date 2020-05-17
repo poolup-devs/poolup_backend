@@ -130,15 +130,15 @@ describe("Testing Ride endpoints", () => {
       // Check whether ride was deleted
       const cancelledRide = await Ride.findOne({
         ownerUsername: ride.ownerUsername,
-      });
+      }).lean();
       expect(cancelledRide).toBe(null);
 
       // Check incrementation of cancelled rides
-      const user = await User.findOne({ username: driver.username });
+      const user = await User.findOne({ username: driver.username }).lean();
       expect(user.ridesCancelled).toBe(1);
 
       // Check creation of notification to each passenger with expected properties
-      const noti1 = await Noti.findOne({ username: "passenger1" });
+      const noti1 = await Noti.findOne({ username: "passenger1" }).lean();
       expect(noti1).toEqual(
         expect.objectContaining({
           username: "passenger1",
@@ -149,7 +149,7 @@ describe("Testing Ride endpoints", () => {
         cancellationReason: "No longer traveling",
       });
 
-      const noti2 = await Noti.findOne({ username: "passenger2" });
+      const noti2 = await Noti.findOne({ username: "passenger2" }).lean();
       expect(noti2).toEqual(
         expect.objectContaining({
           username: "passenger2",
@@ -173,7 +173,7 @@ describe("Testing Ride endpoints", () => {
       // Check whether ride was deleted
       const cancelledRide = await Ride.findOne({
         ownerUsername: ride.ownerUsername,
-      });
+      }).lean();
       expect(cancelledRide).toBe(null);
     });
 
@@ -190,7 +190,7 @@ describe("Testing Ride endpoints", () => {
       await db.cancelRide(ride._id, "passenger1", "Other", "Sorry I can't make it!!!");
 
       // Check whether a notification was sent to the driver
-      const driverNoti = await Noti.findOne({ username: "driverUsername" });
+      const driverNoti = await Noti.findOne({ username: "driverUsername" }).lean();
       expect(driverNoti).toEqual(
         expect.objectContaining({
           username: "driverUsername",
@@ -487,7 +487,7 @@ describe("Testing Ride endpoints", () => {
         const filter = await db.createRideQueryFilter(
           `{ "from": "Santa Barbara", "to": "Los Angeles", "date_from": "${now.toISOString()}", "date_to": "${futureDate.toISOString()}" }`
         );
-        const rides = await Ride.find(filter);
+        const rides = await Ride.find(filter).lean();
         expect(rides.length).toBe(1);
         expect(rides).toEqual(
           expect.arrayContaining([
@@ -501,7 +501,7 @@ describe("Testing Ride endpoints", () => {
 
       test("A filter that specifies only the `from` field should result in a query filter with all rides from that location past the current date.", async () => {
         const filter = await db.createRideQueryFilter('{ "from": "Santa Barbara" }');
-        const rides = await Ride.find(filter);
+        const rides = await Ride.find(filter).lean();
         expect(rides.length).toBe(2);
         expect(rides).toEqual(
           expect.arrayContaining([
@@ -524,7 +524,7 @@ describe("Testing Ride endpoints", () => {
           to: "Santa Monica",
           date: futureDate,
         });
-        const rides = await Ride.find(filter);
+        const rides = await Ride.find(filter).lean();
         expect(rides.length).toBe(2);
         expect(rides).toEqual(
           expect.arrayContaining([

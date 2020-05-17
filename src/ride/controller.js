@@ -108,7 +108,8 @@ const getRideHistory = (authUsername, pageNum) => {
       })
         .sort({ date: -1 })
         .skip(pageNum * 5)
-        .limit(5);
+        .limit(5)
+        .lean();
       return resolve(ride_res);
     } catch (err) {
       return reject(err);
@@ -125,7 +126,8 @@ const getMyRideUpcoming = (authUsername, pageNum) => {
       })
         .sort({ date: -1 })
         .skip(pageNum * 5)
-        .limit(5);
+        .limit(5)
+        .lean();
       const ridesUpcoming = await addDriverInfoToRides(ride_res);
       return resolve(ridesUpcoming);
     } catch (err) {
@@ -147,7 +149,8 @@ const getDriveHistory = (username, pageNum) => {
       })
         .sort({ date: -1 })
         .skip(pageNum * 5)
-        .limit(5);
+        .limit(5)
+        .lean();
       const driveHistory = await addDriverInfoToRides(ride_res);
       return resolve(driveHistory);
     } catch (err) {
@@ -165,7 +168,8 @@ const getDriveUpcoming = (username, pageNum) => {
       })
         .sort({ date: -1 })
         .skip(pageNum * 5)
-        .limit(5);
+        .limit(5)
+        .lean();
       const upcomingDrives = await addDriverInfoToRides(ride_res);
       return resolve(upcomingDrives);
     } catch (err) {
@@ -344,13 +348,12 @@ const addDriverInfoToRides = (rides) => {
         const driver = await User.findOne({
           username: ride.ownerUsername,
         });
-        var modifiedRide = ride.toObject();
         const { picUrl, picType, firstName, lastName } = driver;
-        modifiedRide.picUrl = picUrl;
-        modifiedRide.picType = picType;
-        modifiedRide.firstName = firstName;
-        modifiedRide.lastName = lastName;
-        modifiedRides.push(modifiedRide);
+        ride.picUrl = picUrl;
+        ride.picType = picType;
+        ride.firstName = firstName;
+        ride.lastName = lastName;
+        modifiedRides.push(ride);
       }
       resolve(modifiedRides);
     } catch (e) {

@@ -9,6 +9,7 @@ const errResp = require("../../utils/errors/errResponse");
 // Send verification email
 router.get("/users/sendVerificationEmail", async (req, res) => {
   try {
+    console.log(asdlkfjsd.sdlfj);
     await db.sendVerificationEmail(req.query.email);
     res.status(200).send("Verification email sent successfully.");
   } catch (err) {

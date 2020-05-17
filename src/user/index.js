@@ -1,8 +1,6 @@
 const express = require("express");
 const router = new express.Router();
 
-// const fileType = require("file-type");
-// const fs = require("fs");
 const sha256 = require("sha256");
 const jwt = require("jsonwebtoken");
 
@@ -31,7 +29,6 @@ router.post("/users/login", async (req, res) => {
     );
     res.status(200).send({ authToken: token });
   } catch (err) {
-    // errResp(res, err)
     errResp(res, err);
   }
 });

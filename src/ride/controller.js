@@ -1,10 +1,10 @@
+const agenda = require("../agenda/agenda");
 const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
 const Request = require("../request/request").Request;
 const paymentHandler = require("../stripe/tool/payment-handler");
 const Error = require("../utils/error-model");
-const agenda = require("../agenda/agenda");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
 const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
@@ -13,72 +13,85 @@ const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
 ///////////GET RIDES///////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
 const createRideQueryFilter = (filter_) => {
-  const places = require("./places.json");
-  let filter = {};
-  if (filter_ && Object.keys(filter_).length > 0) {
-    try {
-      filter_ = JSON.parse(filter_);
-    } catch (err) {
-      return reject(Error(400, err));
-    }
-    let fromCitiesQuery = [];
-    let toCitiesQuery = [];
-    let dateQuery = {};
+  return new Promise(async (resolve, reject) => {
+    const places = require("./places.json");
+    let filter = {};
+    if (filter_ && Object.keys(filter_).length > 0) {
+      try {
+        filter_ = JSON.parse(filter_);
+      } catch (err) {
+        return reject(Error(400, err));
+      }
 
-    if (filter_.from && places[filter_.from] !== undefined) {
-      let cities = places[filter_.from];
+      let fromCitiesQuery = [];
+      let toCitiesQuery = [];
+      let dateQuery = {};
 
-      for (var city of cities) {
-        fromCitiesQuery.push({ from: city });
+      console.log("filter: " + filter_.to);
+      // Retrieve all cities that match the county to and from 
+      if (filter_.from && places[filter_.from] !== undefined) {
+        let cities = places[filter_.from];
+
+        for (var city of cities) {
+          fromCitiesQuery.push({ from: city });
+        }
+      }
+      if (filter_.to && places[filter_.to] !== undefined) {
+        let cities = places[filter_.to];
+
+        for (var city of cities) {
+          toCitiesQuery.push({ to: city });
+        }
+      }
+
+      // Create a query that searches for rides between two dates 
+      if (filter_.date_from && filter_.date_to) {
+        dateQuery = {
+          date: {
+            $gte: filter_.date_from,
+            $lte: filter_.date_to,
+          },
+        };
+      } else {
+        dateQuery = {
+          date: {
+            $gte: new Date(),
+          },
+        };
+      }
+      console.log(fromCitiesQuery);
+      console.log(toCitiesQuery);
+      console.log(dateQuery);
+
+      if (toCitiesQuery.length > 0 && fromCitiesQuery.length > 0) {
+        // Filter all rides from a specific starting location to a specific ending location 
+        filter = {
+          $and: [{ $or: fromCitiesQuery }, { $or: toCitiesQuery }, dateQuery],
+        };
+      }
+      else if (toCitiesQuery.length > 0 && fromCitiesQuery.length === 0) {
+        // Filter all rides from any starting location to a specific ending location 
+        filter = {
+          $and: [{ $or: toCitiesQuery }, dateQuery],
+        };
+      }
+      else if (toCitiesQuery.length === 0 && fromCitiesQuery.length > 0) {
+        // Filter all rides from a specific starting location to any ending location 
+        filter = {
+          $and: [{ $or: fromCitiesQuery }, dateQuery],
+        };
       }
     }
-
-    if (filter_.to && places[filter_.to] !== undefined) {
-      let cities = places[filter_.to];
-
-      for (var city of cities) {
-        toCitiesQuery.push({ to: city });
-      }
+    else {
+      // Filter all current rides 
+      filter = { date: { $gte: new Date() } };
     }
-
-    if (filter_.date_from && filter_.date_to) {
-      dateQuery = {
-        date: {
-          $gte: filter_.date_from,
-          $lte: filter_.date_to,
-        },
-      };
-    } else {
-      dateQuery = {
-        date: {
-          $gte: new Date(),
-        },
-      };
-    }
-
-    filter = dateQuery;
-    if (toCitiesQuery.length > 0 && fromCitiesQuery.length === 0) {
-      filter = {
-        $and: [{ $or: toCitiesQuery }, dateQuery],
-      };
-    } else if (toCitiesQuery.length === 0 && fromCitiesQuery.length > 0) {
-      filter = {
-        $and: [{ $or: fromCitiesQuery }, dateQuery],
-      };
-    } else if (toCitiesQuery.length > 0 && fromCitiesQuery.length > 0) {
-      filter = {
-        $and: [{ $or: fromCitiesQuery }, { $or: toCitiesQuery }, dateQuery],
-      };
-    }
-    return filter;
-  } else {
-    filter = { date: { $gte: new Date() } };
-    return filter;
-  }
+    return resolve(filter);
+  })
 };
 
-const getMatchingRides = (filter_, pageNum) => {
-  const filter = createRideQueryFilter(filter_);
+const getMatchingRides = async (filter_, pageNum) => {
+  const filter = await createRideQueryFilter(filter_);
   return new Promise(async (resolve, reject) => {
     try {
       const ride_res = await Ride.find(filter)
@@ -398,4 +411,7 @@ module.exports = {
   joinRide,
   cancelRide,
   rideDetails,
+  // only for unit testing 
+  addDriverInfoToRides,
+  createRideQueryFilter
 };

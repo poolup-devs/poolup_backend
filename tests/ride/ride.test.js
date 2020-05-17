@@ -1,4 +1,5 @@
 require("../../src/db/mongoose");
+const agenda = require("../../src/agenda/agenda");
 const User = require("../../src/user/user").User;
 const Ride = require("../../src/ride/ride").Ride;
 const Noti = require("../../src/noti/noti").Noti;
@@ -8,7 +9,7 @@ const app = require("../../src/app");
 const request = require("supertest");
 const db = require("../../src/ride/controller.js");
 const jwt = require("jsonwebtoken");
-const agenda = require("../../src/agenda/agenda");
+
 
 describe("Testing Ride endpoints", () => {
   describe("Testing ride posting", () => {
@@ -330,9 +331,147 @@ describe("Testing Ride endpoints", () => {
       });
       expect(reviewNotificationJob.length).toBe(1);
 
-      // clean up the jobs
-      await agenda.cancel({ name: "update number of completed rides" });
-      await agenda.cancel({ name: "send leave a review web notifications" });
-    });
+      // clean up the jobs 
+      await agenda.cancel({ name: 'update number of completed rides' });
+      await agenda.cancel({ name: 'send leave a review web notifications' });
+    })
+  })
+
+  describe("Testing querying of rides", () => {
+    describe("Testing adding driver information to each ride", () => {
+      test("Expect when passed an empty list of rides, should return an empty list back.", async () => {
+        const emptyRides = await db.addDriverInfoToRides([]);
+        expect(emptyRides).toEqual([]);
+      })
+
+      test("Expect when passed an array of rides, should fill in driver information fields", async () => {
+        const driver1 = await User.create({ username: "driverUsername1", picUrl: "some_url_1", picType: "png", firstName: "John", lastName: "Smith" });
+        const driver2 = await User.create({ username: "driverUsername2", picUrl: "some_url_2", picType: "png", firstName: "Sarah", lastName: "Smith" });
+        const ride1 = await Ride.create({ ownerUsername: "driverUsername1", date: new Date(), seats: 3 });
+        const ride2 = await Ride.create({ ownerUsername: "driverUsername2", date: new Date(), seats: 3 });
+        const rides = await db.addDriverInfoToRides([ride1, ride2]);
+        expect(rides[0]).toEqual(expect.objectContaining({
+          picUrl: driver1.picUrl,
+          picType: driver1.picType,
+          firstName: driver1.firstName,
+          lastName: driver1.lastName
+        }))
+        expect(rides[1]).toEqual(expect.objectContaining({
+          picUrl: driver2.picUrl,
+          picType: driver2.picType,
+          firstName: driver2.firstName,
+          lastName: driver2.lastName
+        }))
+      })
+    })
+
+    describe("Testing the generation of ride filters", () => {
+      const now = new Date();
+      const futureDate = new Date();
+      futureDate.setDate(now.getDate() + 2);
+      const pastDate = new Date();
+      pastDate.setDate(now.getDate() - 2);
+      let rideFromGoletaToWestCovina;
+      let rideFromGoletaToIrvine;
+
+      beforeAll(async () => {
+        // Past ride that should never show up in any ride query 
+        const pastRide = await Ride.create({
+          ownerEmail: "user1@g.ucla.edu",
+          ownerUsername: "user1",
+          ownerPhoneNumber: "1231231234",
+          from: "Irvine",
+          to: "Los Angeles",
+          date: pastDate,
+          price: "20",
+          seats: 4,
+          detail: "Pick-up at Westwood In-n-out",
+          passengers: ["user2"]
+        });
+
+        // SB -> LA 
+        rideFromGoletaToWestCovina = await Ride.create({
+          ownerEmail: "user1@g.ucla.edu",
+          ownerUsername: "user1",
+          ownerPhoneNumber: "1231231234",
+          from: "Goleta",
+          to: "West Covina",
+          date: futureDate,
+          price: "20",
+          seats: 4,
+          detail: "Pick-up location",
+          passengers: ["user2"]
+        });
+
+        // SB -> OC
+        rideFromGoletaToIrvine = await Ride.create({
+          ownerEmail: "user1@g.ucla.edu",
+          ownerUsername: "user1",
+          ownerPhoneNumber: "1231231234",
+          from: "Goleta",
+          to: "Irvine",
+          date: futureDate,
+          price: "20",
+          seats: 4,
+          detail: "Pick-up location",
+          passengers: ["user2"]
+        });
+      })
+
+      test("An undefined filter should result in a query filter that returns all dates past the current date", async () => {
+        // Mock out the Date constructor 
+        const dateSpy = jest.spyOn(global, 'Date')
+          .mockImplementation(() => now)
+
+        const filter = await db.createRideQueryFilter(undefined);
+        expect(filter.date.$gte).toEqual(now);
+        dateSpy.mockRestore();
+      })
+
+      test("A filter that specifies all fields, should result in a query filter with every from city, to city, and current date", async () => {
+        const filter = await db.createRideQueryFilter(`{ "from": "Santa Barbara", "to": "Los Angeles", "date_from": "${now.toISOString()}", "date_to": "${futureDate.toISOString()}" }`);
+        const rides = await Ride.find(filter);
+        expect(rides.length).toBe(1);
+        expect(rides).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            from: rideFromGoletaToWestCovina.from,
+            to: rideFromGoletaToWestCovina.to,
+          })
+        ]))
+      })
+
+      test("A filter that specifies only the `from` field should result in a query filter with all rides from that location past the current date.", async () => {
+        const filter = await db.createRideQueryFilter('{ "from": "Santa Barbara" }');
+        const rides = await Ride.find(filter);
+        expect(rides.length).toBe(2);
+        expect(rides).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            from: rideFromGoletaToWestCovina.from,
+            to: rideFromGoletaToWestCovina.to,
+          }),
+          expect.objectContaining({
+            from: rideFromGoletaToIrvine.from,
+            to: rideFromGoletaToIrvine.to
+          })
+        ]))
+      })
+
+      test("A filter that specifies only the `to` field should result in a query filter with all rides to that location past the current date.", async () => {
+        const filter = await db.createRideQueryFilter('{ "to": "Los Angeles" }');
+        const rideFromSanDiegoToSantaMonica = await Ride.create({ from: 'San Diego', to: 'Santa Monica', date: futureDate });
+        const rides = await Ride.find(filter);
+        expect(rides.length).toBe(2);
+        expect(rides).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            from: rideFromGoletaToWestCovina.from,
+            to: rideFromGoletaToWestCovina.to,
+          }),
+          expect.objectContaining({
+            from: rideFromSanDiegoToSantaMonica.from,
+            to: rideFromSanDiegoToSantaMonica.to
+          })
+        ]))
+      })
+    })
   });
 });

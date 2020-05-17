@@ -1,6 +1,6 @@
 const RideCompletionJobs = require("../jobs/rideCompletionJobs");
 
-module.exports = (agenda) => {
+module.exports = function (agenda) {
   /* Task to update the number of completed rides in a ride */
   agenda.define("update number of completed rides", async (job, done) => {
     await RideCompletionJobs.updateCompletedRidesTask(job.attrs.data.rideId);

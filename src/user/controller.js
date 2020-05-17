@@ -1,13 +1,9 @@
 const User = require("./user.js").User;
-const Ride = require("../ride/ride.js").Ride;
-const Noti = require("../noti/noti.js").Noti;
 const Email = require("./email/email").Email;
-const jwt = require("jsonwebtoken");
 const multiparty = require("multiparty");
 const fs = require("fs");
 const fileType = require("file-type");
 
-const EmailUtil = require("../utils/email/email");
 const s3_db = require("../db/awsS3_controller");
 const ControllerException = require("../utils/errors/controllerException");
 const School = require("../school/school.js").School;
@@ -15,8 +11,6 @@ const School = require("../school/school.js").School;
 // Users require a certain minimum amount of ratings to calculate an average rating
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
 
-const mongoose = require("mongoose");
-const dataSchema = new mongoose.Schema({});
 const parseDomain = require("parse-domain");
 const sha256 = require("sha256");
 
@@ -110,16 +104,6 @@ const findUserByUsername = (username) => {
   });
 };
 
-// const findUserByPhoneNumber = (phoneNumber, callback) => {
-//   User.find({ phoneNumber }, (err, result) => {
-//     if (err) {
-//       callback(Error(500,err), null);
-//     } else {
-//       callback(null, result);
-//     }
-//   });
-// };
-
 const findUserByEmail = (email, callback) => {
   User.find({ email }, (err, result) => {
     if (err) {
@@ -129,38 +113,6 @@ const findUserByEmail = (email, callback) => {
     }
   });
 };
-
-// const getMyInfo = (authUsername, callback) => {
-//   User.findOne({ username: authUsername }, (err, result) => {
-//     if (err) {
-//       callback(err, null);
-//     } else if (result) {
-//       const res_list = [
-//         "username",
-//         "firstName",
-//         "lastName",
-//         "email",
-//         "createdAt",
-//         "picUrl",
-//         "stripe",
-//       ];
-//       const result_ = {};
-
-//       res_list.forEach(function (item) {
-//         result_[item] = result[item];
-//       });
-
-//       callback(null, result_);
-//     } else {
-//       callback(
-//         {
-//           message: "ERROR: username not found",
-//         },
-//         null
-//       );
-//     }
-//   });
-// };
 
 const getPicType = (username, callback) => {
   User.findOne({ username }, (err, result) => {
@@ -175,17 +127,6 @@ const getPicType = (username, callback) => {
 const updateProfilePic = (authUsername, req) => {
   return new Promise(async (resolve, reject) => {
     try {
-      // const form = new multiparty.Form();
-      // let file;
-      // // const file = await form.parse(req);
-      // form.parse(req, async (err, fields, file) => {
-      //   if (err) {
-      //     throw err;
-      //   } else {
-      //     console.log(data.file[0].path);
-      //   }
-      //   return;
-      // });
       const parsedReqHeader = await promisfiedFormParse(req);
       const files = parsedReqHeader.files;
       // console.log(parsedReqHeader);
@@ -227,21 +168,6 @@ const promisfiedFormParse = (req) => {
     });
   });
 };
-
-// const uploadPicUrl = (username, picUrl, picType, callback) => {
-//   User.findOneAndUpdate(
-//     { username },
-//     { picUrl, picType },
-//     { new: true },
-//     (err, result) => {
-//       if (err) {
-//         callback(err, null);
-//       } else {
-//         callback(null, result);
-//       }
-//     }
-//   );
-// };
 
 const getPicUrl = (username) => {
   return new Promise(async (resolve, reject) => {
@@ -330,29 +256,6 @@ const updateUser = (authUsername, updates, callback) => {
   );
 };
 
-// const deleteUser = (authUsername, callback) => {
-//   //have to delete prof. pic in s3 TOO!!//
-//   User.deleteOne({ username: authUsername }, (err, result) => {
-//     if (err) {
-//       callback(err, null);
-//     } else {
-//       Ride.deleteMany({ ownerUsername: authUsername }, (err, result) => {
-//         if (err) {
-//           callback(err, null);
-//         } else {
-//           Noti.deleteMany({ username: authUsername }, (err, result) => {
-//             if (err) {
-//               callback(err, null);
-//             } else {
-//               callback(null, null);
-//             }
-//           });
-//         }
-//       });
-//     }
-//   });
-// };
-
 const isValidPassword = (password) => {
   return new Promise(async (resolve, reject) => {
     // Password must be a minimum of 8 characters long
@@ -367,27 +270,6 @@ const isValidPassword = (password) => {
     return resolve(true);
   });
 };
-
-// const isValidEmail = (email) => {
-//   return new Promise(async (resolve, reject) => {
-//     // Validate email address
-//     if (isEmail.validate(email)) {
-//       // Must be student email
-//       const emailDomain = parseDomain(email);
-
-//       if (!emailDomain || emailDomain.tld !== "edu") {
-//         return reject("Not an .edu email address!");
-//       }
-//       // A registered account exists with this email
-//       if (await User.findOne({ email: email.trim(), isRegistered: true })) {
-//         return reject("A registered account already exists with this email!");
-//       }
-//       return resolve(true);
-//     } else {
-//       return reject("Not a valid email address!");
-//     }
-//   });
-// };
 
 const confirmCredentials = (authUsername, password) => {
   return new Promise(async (resolve, reject) => {

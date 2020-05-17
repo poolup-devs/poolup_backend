@@ -1,5 +1,14 @@
 const logger = require("../logger");
 
+/**
+ * errorResponse function
+ *
+ * Summary.
+ * It logs and sends HTTP error responses with appropriate logging/ HTTP levels
+ *
+ * @param {resObj} res the res returned in router callback functions (in index.js files)
+ * @param {Error} err Error class instances
+ */
 const errorResponse = (res, err) => {
   var status;
   // check if it has status

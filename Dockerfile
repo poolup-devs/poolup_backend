@@ -4,6 +4,8 @@ FROM node:12 AS builder
 ARG ENV=production
 # set working directory
 WORKDIR /app
+# install helpful tools
+RUN sudo apt-get install git bash-completion
 # install dependencies
 COPY package*.json ./
 RUN npm install

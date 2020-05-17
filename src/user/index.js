@@ -1,9 +1,6 @@
 const express = require("express");
 const router = new express.Router();
 
-const multiparty = require("multiparty");
-const fileType = require("file-type");
-const fs = require("fs");
 const sha256 = require("sha256");
 const jwt = require("jsonwebtoken");
 
@@ -12,11 +9,9 @@ const uploadFile = require("../db/awsS3_controller.js").uploadFile;
 const deleteFile = require("../db/awsS3_controller.js").deleteFile;
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
+const errResp = require("../utils/errors/errResponse");
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
-const JWT_EMAIL_KEY = process.env.JWT_EMAIL_KEY;
-const ACCEPTED_EMAIL = process.env.ACCEPTED_EMAIL;
-const STRIPE_CLIENT_ID = process.env.STRIPE_CLIENT_ID;
 
 //User Login
 router.post("/users/login", async (req, res) => {
@@ -33,8 +28,8 @@ router.post("/users/login", async (req, res) => {
       }
     );
     res.status(200).send({ authToken: token });
-  } catch (e) {
-    res.status(401).send({ message: e });
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
@@ -53,41 +48,8 @@ router.post("/users/signup", async (req, res) => {
       res.status(201).send({ registeredUser, token });
     }
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
-});
-
-// Validate Username
-router.get("/users/usernameValidation", async (req, res) => {
-  try {
-    const data = await db.findUserByUsername(req.query.username);
-    res.status(200).send(data);
-  } catch (e) {
-    res.status(500).json({ error: e });
-  }
-});
-
-//Validate User Phonenumber
-router.get("/users/phoneNumberValidation", (req, res) => {
-  db.findUserByPhoneNumber(req.query.phoneNumber, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(200).send(data);
-    }
-  });
-});
-
-//Get My Info
-router.get("/users/my-info", checkAuth, async (req, res) => {
-  const authUsername = await tokenParser(req.headers.authorization);
-  db.getMyInfo(authUsername, (err, data) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      res.status(200).send(data);
-    }
-  });
 });
 
 //Get a User's Info
@@ -96,53 +58,20 @@ router.get("/users/info", checkAuth, async (req, res) => {
     const userName = req.query.username;
     const data = await db.findUserByUsername(userName);
     res.status(200).send(data);
-  } catch (e) {
-    res.status(500).json({ error: e });
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
 //Uploading User Profile Image
-router.patch("/users/upload-profile-pic", checkAuth, (req, res) => {
-  const form = new multiparty.Form();
-  form.parse(req, async (error, fields, files) => {
-    if (error) {
-      return res.status(400).send(error);
-    }
-    try {
-      const path = files.file[0].path;
-      const buffer = fs.readFileSync(path);
-      const type = fileType(buffer);
-
-      const allowedFileType = ["jpg", "jpeg", "heic", "png"];
-      if (!type || !allowedFileType.includes(type.ext)) {
-        return res.status(400).send({
-          message: "ERROR: file type must be of: jpg, jpeg, heic, or png",
-        });
-      }
-
-      const username = await tokenParser(req.headers.authorization);
-      const fileName = `bucketFolder/${username}-pic`;
-
-      result = await db.findUserByUsername(username);
-      await deleteFile(fileName, result.picType);
-      const data = await uploadFile(buffer, fileName, type);
-
-      await db.uploadPicUrl(
-        username,
-        data.Location,
-        type.ext,
-        (err, result) => {
-          if (err) {
-            return res.sendStatus(501);
-          } else {
-            return res.status(200).send(result);
-          }
-        }
-      );
-    } catch (error) {
-      return res.status(400).send(error);
-    }
-  });
+router.patch("/users/upload-profile-pic", checkAuth, async (req, res) => {
+  try {
+    const authUsername = await tokenParser(req.headers.authorization);
+    const data = await db.updateProfilePic(authUsername, req);
+    res.status(200).send(data);
+  } catch (err) {
+    return errResp(res, err);
+  }
 });
 
 //Get a User's Profile Image
@@ -151,7 +80,7 @@ router.get("/users/usersPic", checkAuth, async (req, res) => {
     const data = await db.getPicUrl(req.query.username);
     res.status(200).send(data);
   } catch (err) {
-    res.status(500).send(err);
+    errResp(res, err);
   }
 });
 
@@ -173,33 +102,9 @@ router.patch("/users/updateUser", checkAuth, async (req, res) => {
 
   db.updateUser(authUsername, updates, (err, result) => {
     if (err) {
-      res.sendStatus(500);
+      errResp(res, err);
     } else {
       res.status(200).send(result); //reminder: fix this back to w/o result
-    }
-  });
-});
-
-//Delete a User Account
-router.delete("/users/deleteUser", checkAuth, async (req, res) => {
-  const authUsername = await tokenParser(req.headers.authorization);
-  const fileName = `bucketFolder/${authUsername}-pic`;
-  db.getPicType(authUsername, async (err, result) => {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      try {
-        await deleteFile(fileName, result.picType);
-      } catch (err) {
-        return res.status(500);
-      }
-      db.deleteUser(authUsername, (err, result) => {
-        if (err) {
-          res.sendStatus(500);
-        } else {
-          res.sendStatus(200);
-        }
-      });
     }
   });
 });
@@ -211,13 +116,12 @@ router.post("/users/checkCredentials", checkAuth, async (req, res) => {
   try {
     const result = await db.confirmCredentials(authUsername, req.body.password);
     if (!result) {
-      res.sendStatus(401);
+      errResp(res, new Error("credential failed"));
     } else {
       res.sendStatus(200);
     }
-  } catch (e) {
-    console.log(e);
-    res.status(500).send(e);
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
@@ -227,9 +131,7 @@ router.patch("/users/changePassword", checkAuth, async (req, res) => {
   req.body.newPassword = sha256(req.body.newPassword);
   db.passwordReset(authUsername, req.body.newPassword, (err, result) => {
     if (err) {
-      res.sendStatus(500);
-    } else if (!result) {
-      res.sendStatus(401);
+      errResp(res, err);
     } else {
       res.sendStatus(200);
     }
@@ -241,8 +143,8 @@ router.get("/users/get-about-me", async (req, res) => {
   try {
     const aboutMe = await db.getAboutMe(req.query.username);
     res.status(200).send({ aboutMe });
-  } catch (e) {
-    res.status(500).send(e);
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
@@ -252,8 +154,8 @@ router.patch("/users/updateAboutMe", checkAuth, async (req, res) => {
   try {
     const updatedUser = await db.updateAboutMe(authUsername, req.body.aboutMe);
     res.status(200).send(updatedUser);
-  } catch (e) {
-    res.status(500).send(e);
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
@@ -262,8 +164,8 @@ router.get("/users/get-rating", async (req, res) => {
   try {
     const averageRating = await db.getAverageRating(req.query.username);
     res.status(200).send({ averageRating });
-  } catch (e) {
-    res.status(404).send({ error: e });
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
@@ -274,8 +176,8 @@ router.get("/users/driverStatus", checkAuth, async (req, res) => {
   try {
     const isDriver = await db.checkIfDriver(authUsername);
     res.status(200).send({ isDriver: isDriver });
-  } catch (e) {
-    res.status(500).send({ error: e.message });
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
@@ -284,8 +186,8 @@ router.get("/users/get-public-profile", async (req, res) => {
   try {
     const publicProfileInfo = await db.getPublicProfileInfo(req.query.username);
     res.status(200).send(publicProfileInfo);
-  } catch (e) {
-    res.status(404).send({ error: e });
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
@@ -294,8 +196,8 @@ router.get("/users/school", async (req, res) => {
   try {
     const school = await db.getSchool(req.query.username);
     res.status(200).send({ school });
-  } catch (e) {
-    res.status(404).send({ error: e });
+  } catch (err) {
+    errResp(res, err);
   }
 });
 

@@ -1,18 +1,18 @@
-const mongoose = require('mongoose')
-const chalk = require("chalk");
+const mongoose = require("mongoose");
+const logger = require("../utils/logger");
 
 //Mongoose config
 mongoose.connect(process.env.MONGODB_URL, {
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useFindAndModify: false,
-    useUnifiedTopology: true 
-})
+  useNewUrlParser: true,
+  useCreateIndex: true,
+  useFindAndModify: false,
+  useUnifiedTopology: true,
+});
 
 const db = mongoose.connection;
 db.on("error", () => {
-  console.log(chalk.red("[ERROR]: Mongoose / Database connection error"));
+  logger.error("[ERROR]: Mongoose / Database connection error");
 });
 db.once("open", () => {
-  console.log(chalk.green("[INIT]: ") + "Mongoose connected successfully");
+  logger.info("[INIT]: " + "Mongoose connected successfully");
 });

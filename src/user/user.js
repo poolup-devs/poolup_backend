@@ -66,7 +66,7 @@ userSchema.statics.setRandomBruinBear = function (username) {
     { picUrl: default_picUrl },
     function (error, result) {
       if (error) {
-        throw new Error();
+        throw err;
       }
     }
   );

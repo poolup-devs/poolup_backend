@@ -4,13 +4,17 @@ const router = new express.Router();
 const db = require("./controller.js");
 const jwt = require("jsonwebtoken");
 
+const errResp = require("../../utils/errors/errResponse");
+
 // Send verification email
 router.get("/users/sendVerificationEmail", async (req, res) => {
   try {
+    console.log(asdlkfjsd.sdlfj);
     await db.sendVerificationEmail(req.query.email);
     res.status(200).send("Verification email sent successfully.");
   } catch (err) {
-    res.status(err.status).send(err.message);
+    // errResp(res, err)
+    errResp(res, err);
   }
 });
 
@@ -36,6 +40,8 @@ router.get("/users/verify", async (req, res) => {
             `/signup/2/expired?email=${req.query.email}`
         );
       }
+    } else {
+      return errResp(res, err);
     }
   }
 
@@ -61,10 +67,7 @@ router.get("/users/verify", async (req, res) => {
         process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`
       );
     }
-    if (err.status) {
-      return res.status(err.status).send(err.message);
-    }
-    return res.status(500).send(err);
+    return errResp(res, err);
   }
 });
 

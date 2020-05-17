@@ -1,10 +1,10 @@
-const agenda = require("../agenda/agenda");
 const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
 const Request = require("../request/request").Request;
 const paymentHandler = require("../stripe/tool/payment-handler");
-const Error = require("../utils/error-model");
+const ControllerException = require("../utils/errors/controllerException");
+const agenda = require("../agenda/agenda");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
 const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
@@ -28,7 +28,7 @@ const createRideQueryFilter = (filter_) => {
       let dateQuery = {};
 
       console.log("filter: " + filter_.to);
-      // Retrieve all cities that match the county to and from 
+      // Retrieve all cities that match the county to and from
       if (filter_.from && places[filter_.from] !== undefined) {
         let cities = places[filter_.from];
 
@@ -44,7 +44,7 @@ const createRideQueryFilter = (filter_) => {
         }
       }
 
-      // Create a query that searches for rides between two dates 
+      // Create a query that searches for rides between two dates
       if (filter_.date_from && filter_.date_to) {
         dateQuery = {
           date: {
@@ -64,30 +64,27 @@ const createRideQueryFilter = (filter_) => {
       console.log(dateQuery);
 
       if (toCitiesQuery.length > 0 && fromCitiesQuery.length > 0) {
-        // Filter all rides from a specific starting location to a specific ending location 
+        // Filter all rides from a specific starting location to a specific ending location
         filter = {
           $and: [{ $or: fromCitiesQuery }, { $or: toCitiesQuery }, dateQuery],
         };
-      }
-      else if (toCitiesQuery.length > 0 && fromCitiesQuery.length === 0) {
-        // Filter all rides from any starting location to a specific ending location 
+      } else if (toCitiesQuery.length > 0 && fromCitiesQuery.length === 0) {
+        // Filter all rides from any starting location to a specific ending location
         filter = {
           $and: [{ $or: toCitiesQuery }, dateQuery],
         };
-      }
-      else if (toCitiesQuery.length === 0 && fromCitiesQuery.length > 0) {
-        // Filter all rides from a specific starting location to any ending location 
+      } else if (toCitiesQuery.length === 0 && fromCitiesQuery.length > 0) {
+        // Filter all rides from a specific starting location to any ending location
         filter = {
           $and: [{ $or: fromCitiesQuery }, dateQuery],
         };
       }
-    }
-    else {
-      // Filter all current rides 
+    } else {
+      // Filter all current rides
       filter = { date: { $gte: new Date() } };
     }
     return resolve(filter);
-  })
+  });
 };
 
 const getMatchingRides = async (filter_, pageNum) => {
@@ -101,7 +98,7 @@ const getMatchingRides = async (filter_, pageNum) => {
       const matchingRides = await addDriverInfoToRides(ride_res);
       return resolve(matchingRides);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -117,7 +114,7 @@ const getRideHistory = (username) => {
         .limit(5);
       return resolve(ride_res);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -134,7 +131,7 @@ const getMyRideHistory = (authUsername, pageNum) => {
         .limit(5);
       return resolve(ride_res);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -151,7 +148,7 @@ const getMyRideUpcoming = (authUsername) => {
       const ridesUpcoming = await addDriverInfoToRides(ride_res);
       return resolve(ridesUpcoming);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -173,7 +170,7 @@ const getDriveHistory = (username) => {
       const driveHistory = await addDriverInfoToRides(ride_res);
       return resolve(driveHistory);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -191,7 +188,7 @@ const getDriveUpcoming = (username, pageNum) => {
       const upcomingDrives = await addDriverInfoToRides(ride_res);
       return resolve(upcomingDrives);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -201,10 +198,7 @@ const postRide = (rideInfo, authUsername) => {
     try {
       if (authUsername != rideInfo.ownerUsername) {
         return reject(
-          Error(
-            403,
-            "unmatching username of the request and the logged in user"
-          )
+          new ControllerException(403, "unmatching username of the request and the logged in user")
         );
       }
       const newRide = await Ride.create(rideInfo);
@@ -224,7 +218,7 @@ const postRide = (rideInfo, authUsername) => {
 
       return resolve(newRide);
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -243,13 +237,13 @@ const joinRide = (rideInfo, passengerUsername) => {
 
       const ride_res = await Ride.findById(ride_id);
       if (!ride_res) {
-        return reject(Error(400, "ride is not found"));
+        return reject(new ControllerException(400, "ride is not found"));
       } else if (ride_res.seats < 1) {
-        return reject(Error(400, "the ride is full"));
+        return reject(new ControllerException(400, "the ride is full"));
       } else if (ride_res.ownerUsername == passengerUsername) {
-        return reject(Error(403, "driver of the ride cannot join the ride"));
+        return reject(new ControllerException(403, "driver of the ride cannot join the ride"));
       } else if (ride_res.passengers.includes(passengerUsername)) {
-        return reject(Error(400, "user is already in the ride"));
+        return reject(new ControllerException(400, "user is already in the ride"));
       }
 
       const ride_upd = await Ride.findByIdAndUpdate(
@@ -261,7 +255,7 @@ const joinRide = (rideInfo, passengerUsername) => {
 
       return resolve(ride_upd);
     } catch (err) {
-      return reject(Error(500, err));
+      return reject(err);
     }
   });
 };
@@ -309,9 +303,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
 
       // There are no passengers in the ride, so the driver can freely cancel without penalties
       if (cancelledRideDoc.passengers.length === 0) {
-        return resolve(
-          "Driver cancelled ride without penalty because there were no passengers."
-        );
+        return resolve("Driver cancelled ride without penalty because there were no passengers.");
       } else {
         // Increment the user's number of cancelled rides
         await User.updateOne({ username }, { $inc: { ridesCancelled: 1 } });
@@ -367,11 +359,11 @@ const rideDetails = (_id) => {
     try {
       const ride_res = await Ride.findById(_id);
       if (ride_res == null) {
-        return reject(Error(404, "ride not found"));
+        return reject(new ControllerException(404, "ride not found"));
       }
-      resolve(ride_res);
+      return resolve(ride_res);
     } catch (err) {
-      reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -411,7 +403,7 @@ module.exports = {
   joinRide,
   cancelRide,
   rideDetails,
-  // only for unit testing 
+  // only for unit testing
   addDriverInfoToRides,
-  createRideQueryFilter
+  createRideQueryFilter,
 };

@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const db = require("./controller.js");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
+const errResp = require("../utils/errors/errResponse");
 
 //Get List of Available/ future Rides
 router.get("/rides/matching-rides", async (req, res) => {
@@ -11,7 +12,7 @@ router.get("/rides/matching-rides", async (req, res) => {
     const data = await db.getMatchingRides(req.query.filter, req.query.pageNum);
     return res.status(200).send(data);
   } catch (err) {
-    return res.status(err.status).send(err.message);
+    return errResp(res, err);
   }
 });
 
@@ -21,7 +22,7 @@ router.get("/rides/user-rides-history", checkAuth, async (req, res) => {
     const data = await db.getRideHistory(req.query.username);
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -32,7 +33,7 @@ router.get("/rides/my-rides-history", checkAuth, async (req, res) => {
     const data = await db.getMyRideHistory(authUsername, req.query.pageNum);
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -43,7 +44,7 @@ router.get("/rides/my-rides-upcoming", checkAuth, async (req, res) => {
     const data = await db.getMyRideUpcoming(authUsername);
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -56,7 +57,7 @@ router.get("/rides/drives-history", checkAuth, async (req, res) => {
     );
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -69,7 +70,7 @@ router.get("/rides/drives-upcoming", checkAuth, async (req, res) => {
     );
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -77,15 +78,11 @@ router.get("/rides/drives-upcoming", checkAuth, async (req, res) => {
 router.post("/rides/post-ride", checkAuth, async (req, res) => {
   try {
     var authUsername = await tokenParser(req.headers.authorization);
-  } catch (err) {
-    res.status(500).send(err);
-  }
 
-  try {
     const data = await db.postRide(req.body.rideInfo, authUsername);
     res.status(201).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -93,31 +90,26 @@ router.post("/rides/post-ride", checkAuth, async (req, res) => {
 router.put("/rides/join-ride", checkAuth, async (req, res) => {
   try {
     var authUsername = await tokenParser(req.headers.authorization);
-  } catch (err) {
-    res.status(500).send(err);
-  }
 
-  try {
     const data = await db.joinRide(req.body.ride, authUsername);
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
 //Cancel a Ride
 router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
-  const ride = req.body.ride;
-  const cancellationReason = req.body.cancellationReason;
-  if (req.body.messageToDriver) {
-    var messageToDriver = req.body.messageToDriver;
-  } else {
-    var messageToDriver = null;
-  }
-
-  const authUsername = await tokenParser(req.headers.authorization);
-
   try {
+    const ride = req.body.ride;
+    const cancellationReason = req.body.cancellationReason;
+    if (req.body.messageToDriver) {
+      var messageToDriver = req.body.messageToDriver;
+    } else {
+      var messageToDriver = null;
+    }
+    const authUsername = await tokenParser(req.headers.authorization);
+
     const msg = await db.cancelRide(
       ride._id,
       authUsername,
@@ -126,8 +118,8 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
     );
 
     res.status(200).send(msg);
-  } catch (e) {
-    res.status(500).send({ error: e });
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
@@ -139,7 +131,7 @@ router.get("/rides/ride-details", checkAuth, async (req, res) => {
     const data = await db.rideDetails(mongoose.Types.ObjectId(rideID));
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 

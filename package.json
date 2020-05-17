@@ -4,16 +4,17 @@
   "description": "#Local Environment Setup 1. Install nodeJS by following installation guides from https://nodejs.org/en/download/ 2. Install all used packages & dependencies using:     `npm install` 3. Install mongoDB by following installation guides from: Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/  - this is different form the npm package listed in package.json, which is the driver that connects the DB to the nodeJS app.",
   "main": "index.js",
   "scripts": {
-    "docker-dev": "env-cmd -r ./config/.env-cmdrc -e base_config,development-docker nodemon src/server.js",
-    "docker-init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development-docker node init_db.js",
-    "docker-test": "env-cmd -r ./config/.env-cmdrc -e development,testing-docker jest --watch --runInBand",
-    "start": "env-cmd -r ./config/.env-cmdrc -e base_config,production node src/server.js",
-    "dev": "env-cmd -r ./config/.env-cmdrc -e base_config,development nodemon src/server.js",
     "setup": "node ./setup/setup.js",
     "init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development node ./setup/init_db.js",
+    "start": "env-cmd -r ./config/.env-cmdrc -e base_config,production node src/server.js",
+    "dev": "env-cmd -r ./config/.env-cmdrc -e base_config,development nodemon src/server.js",
     "test": "env-cmd -r ./config/.env-cmdrc -e base_config,test jest --watch --runInBand",
+    "lint": "./node_modules/.bin/eslint ./",
     "init_db_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,test node ./setup/init_db.js",
-    "ci_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,test jest --noStackTrace --colors --runInBand --forceExit"
+    "ci_test": "env-cmd -r ./config/.env-cmdrc --no-override -e base_config,test jest --noStackTrace --colors --runInBand --forceExit",
+    "docker-dev": "env-cmd -r ./config/.env-cmdrc -e base_config,development-docker nodemon src/server.js",
+    "docker-init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development-docker node setup/init_db.js",
+    "docker-test": "env-cmd -r ./config/.env-cmdrc -e base_config,testing-docker jest --watch --runInBand"
   },
   "jest": {
     "testEnvironment": "node",
@@ -25,10 +26,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sentry/node": "^5.15.5",
     "agenda": "^3.1.0",
     "aws-sdk": "^2.486.0",
     "bluebird": "^3.5.5",
     "body-parser": "^1.19.0",
+    "build": "^0.1.4",
     "chalk": "^2.4.2",
     "connect-mongo": "^3.2.0",
     "cors": "^2.8.5",
@@ -36,6 +39,8 @@
     "email-addresses": "^3.1.0",
     "email-templates": "^7.0.4",
     "env-cmd": "^10.0.1",
+    "eslint": "^7.0.0",
+    "eslint-config-airbnb": "^18.1.0",
     "express": "^4.17.1",
     "express-session": "^1.17.0",
     "file-type": "^12.0.0",
@@ -52,9 +57,21 @@
     "node-schedule": "^1.3.2",
     "nodemailer": "^6.4.6",
     "nodemon": "^1.19.1",
+    "optionator": "^0.9.1",
     "parse-domain": "^2.3.4",
+    "prettier": "^2.0.5",
     "sha256": "^0.2.0",
     "stripe": "^7.14.0",
+    "supertest": "^4.0.2"
+  },
+  "devDependencies": {
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-jest": "^23.13.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.3",
+    "eslint-plugin-react": "^7.20.0",
+    "eslint-plugin-react-hooks": "^4.0.2",
     "supertest": "^4.0.2",
     "winston": "^3.2.1"
   }

@@ -1,0 +1,13 @@
+{
+  "ignorePatterns": ["node_modules/"],
+  "extends": ["airbnb", "airbnb/hooks", "prettier"],
+  "plugins": ["prettier", "jest"],
+  "rules": {
+    "prettier/prettier": ["error"]
+  },
+  "env": {
+    "browser": true,
+    "jest/globals": true
+  },
+  "settings": {}
+}

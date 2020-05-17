@@ -7,9 +7,16 @@ services:
   web:
     build:
       context: .
+      target: builder
+    entrypoint:
+      - tail
+    command:
+      - -f
+      - /dev/null
     ports:
       - 3000:3000
     depends_on:
       - mongo
     volumes:
       - .:/app
+      - /app/node_modules

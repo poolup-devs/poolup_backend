@@ -1,63 +1,74 @@
-# PoolUp Backend
+# PoolUp API
 
-### api.poolup.co
+![CI and CD Pipeline Badge](https://github.com/poolup-devs/poolup_backend/workflows/Continuous%20Integration%20and%20Deployment/badge.svg)
 
-This is the backend code repository for PoolUp: made with NodeJS, Express, and MongoDB w/ Mongoose.
-For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineering Manager.
+PoolUp API repository
 
-1. [Setup](#setup)
-2. [Dev-Rules](#dev-rules)
-3. [Documentation](#documentation)
-4. [Deployment](#deployment)
+Tech Stack: NodeJS: Express, MongoDB: Mongoose
 
-# Setup
+## Table Of Contents
 
-1. [Local Environment Setup](#local-environment-setup)
-2. [Local Development Setup](#local-development-setup)
-3. [Npm Scripts](#npm-scripts)
-4. [Additional Tools](#additional-tools)
-5. [Directory Structure](#directory-structure)
+- [Development](#development)
+- [API Documentation](#api-documentation)
+- [Deployment](#deployment)
 
----
+## Development
 
-## Local Environment Setup
+- [Prerequisites](#prerequisites)
+- [Environment Set Up](#environment-set-up)
+- [Configuration](#configuration)
+- [Npm Scripts](#npm-scripts)
+- [Additional Tools](#additional-tools)
+- [Directory Structure](#directory-structure)
+- [Coding Standards and Rules](#coding-standards-and-rules)
 
-1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
-2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
-3. Install all used packages and dependencies using:
-   > npm install
-4. To connect to the development s3 bucket, run:
+### Prerequisites
 
-   > npm run setup
+- [Docker](https://www.docker.com/)
+- [Visual Studio Code](https://code.visualstudio.com/)
+  - Extension Pack: ms-vscode-remote.vscode-remote-extensionpack
 
-   This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
+### Environment Set Up
 
-   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
-
-5. Install mongoDB by following installation guides from:
-   Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
-   Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
-
-   This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
-   For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
-
-6. Optional: Initialize the database with default objects.
-
-   > npm run init_db
-
-   This REMOVES existing database collections and populates them with default objects.
+- Open project folder in a [devcontainer](https://code.visualstudio.com/docs/remote/containers) by opening Visual Studio Code's command palette and executing `Remote-Containers: Open Folder in Container...`. For more information about our devcontainer look at .`devcontainer.json`
+- Start the API with `npm run docker-dev`
+- Access the API at `http://localhost:3000`
 
 ---
 
-## Local Development Setup
+### Configuration
 
-1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
-2. Open another terminal and run `npm run dev` in the home directory; this starts the backend application with nodemon
-3. The local backend development port is set to 3000, now use Postman to test API endpoints. Look at [Using Postman](#using-postman) for instructions.
+Poolup API is configured via environment variables. The applicable environment variables are:
+
+| Environment Variable   | Description                       |
+| ---------------------- | --------------------------------- |
+| JWT_SECRET_KEY         | API Authentication                |
+| JWT_EMAIL_KEY          | API Authentication                |
+| SESSION_SECRET_KEY     | add description                   |
+| S3_BUCKET              | AWS Database Identification       |
+| AWS_ACCESS_KEY_ID      | AWS Credentials                   |
+| AWS_SECRET_ACCESS_KEY  | AWS Credentials                   |
+| SENDGRID_API_KEY       | API Key for email service         |
+| SENDGRID_USERNAME      | Email Service Credentials         |
+| SENDGRID_PASSWORD      | Email Service Credentials         |
+| STRIPE_PUBLIC_KEY      | Public Key for Stripe Handshakes  |
+| STRIPE_PRIVATE_KEY     | Private Key for Stripe Handshakes |
+| STRIPE_WEBHOOK_SECRET  | Secret Key for Stripe Webhook     |
+| STRIPE_CLIENT_ID       | Client ID for Stripe              |
+| STRIPE_APPLICATION_FEE | Business Logic Parameter          |
+| FLAKER_LIMIT           | Business Logic Parameter          |
+| INDECISION_LIMIT       | Business Logic Parameter          |
+| MY_RIDES_PATH          | Url for redirects                 |
+| MY_DRIVES_PATH         | Url for redirects                 |
+| SEARCH_RIDES_PATH      | Url for redirects                 |
+| MODE                   | add description                   |
+| PORT                   | API Port Number                   |
+| MONGODB_URL            | Mongodb url                       |
+| FRONT_END_URL          | Frontend url for redirects        |
 
 ---
 
-## NPM Scripts
+### NPM Scripts
 
 1. Starting the NodeJS app
 
@@ -68,6 +79,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 2. Start Dev. mode of the NodeJS app
 
    > npm run dev
+   > npm run docker-dev
 
    Similar to npm start, but runs nodemon to automatically restart the node application when file chnages in the directory are detected
 
@@ -82,6 +94,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 4. Run Test Scripts
 
    > npm run test
+   > npm run docker-test
 
    We are using [Jest](https://www.npmjs.com/package/jest) to test our JS code.
    Run tests related to changed files based on Git (uncommitted files).
@@ -90,20 +103,25 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 5. Initialize database with default creations
 
    > npm run init_db
+   > npm run docker-init_db
 
    Removes all documents in all the collections, and initializes the database with default objects.
    Currently only removes and creates from User collection.
 
+### Additional Tools
+
+1. Install [Postman](https://www.postman.com/)
+
+- Use this tool to facilitate endpoint testing during development
+- [Using Postman](#using-postman)
+
+2. Install [MongoDB Compass](https://www.mongodb.com/products/compass)
+
+- Connection String: mongodb://localhost:27017/poolup-test?readPreference=primary&appname=MongoDB%20Compass&ssl=false
+
 ---
 
-## Additional Tools
-
-1. Download and install Postman to test backend REST APIs
-2. Install Robo 3T for mongoDB GUI and create a new connection to the DB using port 27017, the default mongoDB port
-
----
-
-## Directory Structure
+### Directory Structure
 
 ```
 .
@@ -174,9 +192,9 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 ---
 
-# Dev-Rules
+### Coding Standards and Rules
 
-## Creating a new branch
+#### Creating a new branch
 
 **Naming Branches**
 
@@ -184,7 +202,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 ex) han-messagingFeature-12302019
 
-## Posting Git Issues
+#### Posting Git Issues
 
 **Formatting**
 
@@ -206,7 +224,7 @@ Explain potential conflicts that may arise with the current code base, issues th
 
 Additional Comment
 
-## Using POSTMAN
+#### Using POSTMAN
 
 We use a single account that is shared by everyone (b/c we're broke). Ask for PoolUp's dev gmail credential, login, and use the collection located in it.
 
@@ -232,9 +250,9 @@ When creating each requests:
 
 ---
 
-# Documentation
+## API Documentation
 
-## Auth Tokens
+### Auth Tokens
 
 For all API requests after login, the bearer token must be included in headers for authorization/ username extraction.
 
@@ -246,28 +264,29 @@ There must be a white space between the string "Bearer" and the token string
 
 ---
 
-## Scheduling Tasks
+### Scheduling Tasks
 
-We are using [Agenda](https://github.com/agenda/agenda), a persistent job scheduling library, to manage time-based jobs. Scheduled jobs are stored in the MongoDB database under the collection: **scheduledJobs**. Jobs are processed every 5 seconds. When a database connection is lost, Agenda attempts to reconnect indefinitely. 
+We are using [Agenda](https://github.com/agenda/agenda), a persistent job scheduling library, to manage time-based jobs. Scheduled jobs are stored in the MongoDB database under the collection: **scheduledJobs**. Jobs are processed every 5 seconds. When a database connection is lost, Agenda attempts to reconnect indefinitely.
 
-To obtain an instance of agenda, require the following file: */src/agenda/agenda.js*. This instantiates the agenda object, making every job defined in */src/agenda/bindings* available to the instance. You can then use the returned object to perform any scheduling operations as defined in the NPM module. 
+To obtain an instance of agenda, require the following file: _/src/agenda/agenda.js_. This instantiates the agenda object, making every job defined in _/src/agenda/bindings_ available to the instance. You can then use the returned object to perform any scheduling operations as defined in the NPM module.
 
-For scalability purposes, jobs are 'defined' in */src/agenda/bindings* but have their implementation in */src/agenda/jobs*. 
+For scalability purposes, jobs are 'defined' in _/src/agenda/bindings_ but have their implementation in _/src/agenda/jobs_.
 
-The following are some helper functions are defined in agenda.js that may be useful: 
+The following are some helper functions are defined in agenda.js that may be useful:
+
 1. `agenda.scheduleJobHoursAfterDate(taskName, data, date, hoursAfterDate)`
-    - taskName: the name of the task to schedule 
-    - data: an object containing the data needed to run the task 
-    - date: initial date to add hours to 
-    - hoursAfterDate: number of hours after the passed in date 
+   - taskName: the name of the task to schedule
+   - data: an object containing the data needed to run the task
+   - date: initial date to add hours to
+   - hoursAfterDate: number of hours after the passed in date
 2. `agenda.scheduleJobMinutesAfterDate(taskName, data, date, minutesAfterDate)`
 3. `agenda.cancelJobsAssociatedWithRide(rideId)`
-    - cancels jobs associated with rideId
-    - eg. "update number of completed rides" & "send leave a review web notifications" 
+   - cancels jobs associated with rideId
+   - eg. "update number of completed rides" & "send leave a review web notifications"
 
 ---
 
-## Sending Email Notifications
+### Sending Email Notifications
 
 Emails are sent using nodemailer and rendered dynamically using handlebars.
 The email templates can be found at /src/utils/email/email_templates.
@@ -292,7 +311,7 @@ There exists helper methods in /src/utils/email/email.js that can be used to sen
 
 ---
 
-## Models & API Endpoints Documentation
+### Models & API Endpoints Documentation
 
 Models:
 
@@ -957,7 +976,7 @@ GET request
 | /rides/getAvailableCities   | GET         | [Get available cities](#get-available-cities)                             |
 | /rides/getAvailableCounties | GET         | [Get available counties](#get-available-counties)                         |
 
-- Note: all get ride apis (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
+- Note: all get ride APIs (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
 
 ---
 
@@ -2169,7 +2188,7 @@ POST request
 
 GET request
 
-- Used to make direct stripe api requests
+- Used to make direct stripe API requests
 
 **return value**
 
@@ -2231,9 +2250,7 @@ POST request
 
 ---
 
-# Deployment
-
-## Deployment Instructions
+## Deployment
 
 Currently the website uses Netlify for frontend's deployment and AWS for backend's deployment. Backend Node application uses systemd to maintain app's continuous execution.
 

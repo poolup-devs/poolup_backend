@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "setup": "node ./setup/setup.js",
+    "build:staging": "env-cmd -r ./config/.env-cmdrc -e base_config,development npm run build",
+    "buld:production": "env-cmd -r ./config/.env-cmdrc -e base_config,production npm run build",
     "init_db": "env-cmd -r ./config/.env-cmdrc -e base_config,development node ./setup/init_db.js",
     "start": "env-cmd -r ./config/.env-cmdrc -e base_config,production node src/server.js",
     "dev": "env-cmd -r ./config/.env-cmdrc -e base_config,development nodemon src/server.js",

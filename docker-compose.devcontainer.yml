@@ -7,17 +7,16 @@ services:
   web:
     build:
       context: .
+      target: builder
+    entrypoint:
+      - tail
+    command:
+      - -f
+      - /dev/null
     ports:
       - 3000:3000
     depends_on:
       - mongo
     volumes:
       - .:/home/nodejs/app
-  nginx:
-    image: nginx:latest
-    ports:
-      - "8080:80"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - web
+      - /app/node_modules

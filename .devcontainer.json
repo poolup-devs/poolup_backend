@@ -2,14 +2,16 @@
 {
   "name": "Poolup API",
   // The order of the files is important since later fiels override previous ones
-  "dockerComposeFile": ["docker-compose.yml"],
+  "dockerComposeFile": ["docker-compose.yml", "docker-compose.devcontainer.yml"],
   "service": "web",
   "workspaceFolder": "/home/nodejs/app",
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash",
     "editor.formatOnSave": true
   },
-  "appPort": [3000],
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [3000],
+  "postCreateCommand": "npm run docker-dev",
   // Add the IDs of extensions you want installed when the container is created in the array below.
   "extensions": [
     "dbaeumer.vscode-eslint",

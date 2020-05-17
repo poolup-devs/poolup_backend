@@ -26,16 +26,12 @@ Tech Stack: NodeJS: Express, MongoDB: Mongoose
 
 - [Docker](https://www.docker.com/)
 - [Visual Studio Code](https://code.visualstudio.com/)
-  - Extensions:
-    - ms-vscode-remote.vscode-remote-extensionpack
-    - ms-vscode-remote.remote-wsl
-    - ms-vscode-remote.remote-ssh-edit
-    - ms-vscode-remote.remote-ssh
-    - ms-vscode-remote.remote-containers
+  - Extension Pack: ms-vscode-remote.vscode-remote-extensionpack
 
 ### Environment Set Up
 
 - Open project folder in a [devcontainer](https://code.visualstudio.com/docs/remote/containers) by opening Visual Studio Code's command palette and executing `Remote-Containers: Open Folder in Container...`. For more information about our devcontainer look at .`devcontainer.json`
+- Initialize the Databse with `npm run docker-init_db`
 - Start the API with `npm run docker-dev`
 - Access the API at `http://localhost:3000`
 
@@ -84,6 +80,7 @@ Poolup API is configured via environment variables. The applicable environment v
 2. Start Dev. mode of the NodeJS app
 
    > npm run dev
+   > npm run docker-dev
 
    Similar to npm start, but runs nodemon to automatically restart the node application when file chnages in the directory are detected
 
@@ -98,6 +95,7 @@ Poolup API is configured via environment variables. The applicable environment v
 4. Run Test Scripts
 
    > npm run test
+   > npm run docker-test
 
    We are using [Jest](https://www.npmjs.com/package/jest) to test our JS code.
    Run tests related to changed files based on Git (uncommitted files).
@@ -106,6 +104,7 @@ Poolup API is configured via environment variables. The applicable environment v
 5. Initialize database with default creations
 
    > npm run init_db
+   > npm run docker-init_db
 
    Removes all documents in all the collections, and initializes the database with default objects.
    Currently only removes and creates from User collection.
@@ -114,7 +113,7 @@ Poolup API is configured via environment variables. The applicable environment v
 
 1. Install [Postman](https://www.postman.com/)
 
-- Use this tool to faccilatate endpoint testing during development
+- Use this tool to facilitate endpoint testing during development
 - [Using Postman](#using-postman)
 
 2. Install [MongoDB Compass](https://www.mongodb.com/products/compass)

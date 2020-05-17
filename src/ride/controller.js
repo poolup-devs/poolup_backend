@@ -335,20 +335,6 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
   });
 };
 
-const rideDetails = (_id) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const ride_res = await Ride.findById(_id);
-      if (ride_res == null) {
-        return reject(new ControllerException(404, "ride not found"));
-      }
-      return resolve(ride_res);
-    } catch (err) {
-      return reject(err);
-    }
-  });
-};
-
 // Helper method to add driver information to each ride in a list of rides
 const addDriverInfoToRides = (rides) => {
   return new Promise(async (resolve, reject) => {
@@ -382,7 +368,6 @@ module.exports = {
   postRide,
   joinRide,
   cancelRide,
-  rideDetails,
   // only for unit testing
   addDriverInfoToRides,
   createRideQueryFilter,

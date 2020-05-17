@@ -35,11 +35,8 @@ describe("Testing Ride endpoints", () => {
     test("Can't post a ride with different username in rideInfo and authUsername", async () => {
       const user_obj = user_devCon.dev_createDummyUserObj("driver");
       const user = user_devCon.dev_createRegisteredUser(user_obj);
-      // const username = "driver";
-      // await User.create({ username: username });
       let ride = sampleRide;
       ride.ownerUsername = "bogusUsername";
-      // const newRide = await db.postRide(ride, username);
 
       const userAuthToken = jwt.sign(
         { username: user.username, _id: user._id },
@@ -262,10 +259,7 @@ describe("Testing Ride endpoints", () => {
     test("Expect a response code of 200 when cancelling a ride as a passenger.", async () => {
       const driver_obj = user_devCon.dev_createDummyUserObj("driverUsername");
       const driver = user_devCon.dev_createRegisteredUser(driver_obj);
-      // const driver = await User.create({
-      //   username: "driverUsername",
-      //   email: "driver@ucla.edu",
-      // });
+
       const ride = await Ride.create({
         ownerUsername: driver.username,
         passengers: ["passenger1"],
@@ -312,7 +306,7 @@ describe("Testing Ride endpoints", () => {
     });
   });
 
-  describe("Testing querying of rides", () => {
+  describe("Testing ride queries", () => {
     const now = new Date();
 
     const oldestFutureDate = new Date();

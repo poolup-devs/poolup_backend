@@ -112,18 +112,6 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
   }
 });
 
-//Get Ride Details
-router.get("/rides/ride-details", checkAuth, async (req, res) => {
-  var rideID = req.query.rideID;
-
-  try {
-    const data = await db.rideDetails(mongoose.Types.ObjectId(rideID));
-    res.status(200).send(data);
-  } catch (err) {
-    errResp(res, err);
-  }
-});
-
 // Get List of Cities
 router.get("/rides/getAvailableCities", (req, res) => {
   const places = require("./places.json");

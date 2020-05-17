@@ -18,5 +18,5 @@ services:
     depends_on:
       - mongo
     volumes:
-      - .:/home/nodejs/app
+      - .:/app
       - /app/node_modules

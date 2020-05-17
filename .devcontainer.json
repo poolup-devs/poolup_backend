@@ -4,7 +4,7 @@
   // The order of the files is important since later fiels override previous ones
   "dockerComposeFile": ["docker-compose.yml", "docker-compose.devcontainer.yml"],
   "service": "web",
-  "workspaceFolder": "/home/nodejs/app",
+  "workspaceFolder": "/app",
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash",
     "editor.formatOnSave": true

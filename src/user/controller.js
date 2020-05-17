@@ -85,30 +85,10 @@ const signup = async (userInfo) => {
 const findUserByUsername = (username) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const userInfo = await User.findOne({ username });
+      const userInfo = await User.findOne({ username }).lean();
       return resolve(userInfo);
     } catch (err) {
       return reject(err);
-    }
-  });
-};
-
-const findUserByEmail = (email, callback) => {
-  User.find({ email }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
-  });
-};
-
-const getPicType = (username, callback) => {
-  User.findOne({ username }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
     }
   });
 };
@@ -118,7 +98,6 @@ const updateProfilePic = (authUsername, req) => {
     try {
       const parsedReqHeader = await promisfiedFormParse(req);
       const files = parsedReqHeader.files;
-      // console.log(parsedReqHeader);
 
       const path = files.file[0].path;
       const buffer = fs.readFileSync(path);
@@ -193,7 +172,7 @@ const checkIfDriver = (username) => {
           return resolve(false);
         }
       }
-    );
+    ).lean();
   });
 };
 
@@ -329,7 +308,7 @@ const parseSchoolFromEmail = (schoolEmail) => {
 const getAverageRating = (username) => {
   return new Promise(async (resolve, reject) => {
     try {
-      await User.findOne({ username }, (err, user) => {
+      User.findOne({ username }, (err, user) => {
         if (!user) {
           return reject(new ControllerException(404, "User does not exist in the database"));
         }
@@ -349,7 +328,7 @@ const getAverageRating = (username) => {
             )
           );
         }
-      });
+      }).lean();
     } catch (err) {
       return reject(err);
     }
@@ -359,7 +338,7 @@ const getAverageRating = (username) => {
 // Get public profile information
 const getPublicProfileInfo = (username) => {
   return new Promise(async (resolve, reject) => {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username }).lean();
     if (!user) {
       return reject(new ControllerException(404, "User could not be found!"));
     }
@@ -405,7 +384,7 @@ const getPublicProfileInfo = (username) => {
 // Get school name
 const getSchool = (username) => {
   return new Promise(async (resolve, reject) => {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username }).lean();
     if (!user) {
       return reject(new ControllerException(404, "User could not be found!"));
     }
@@ -415,10 +394,8 @@ const getSchool = (username) => {
 
 module.exports = {
   login,
-  findUserByEmail,
   findUserByUsername,
   updateProfilePic,
-  getPicType,
   getPicUrl,
   signup,
   checkIfDriver,

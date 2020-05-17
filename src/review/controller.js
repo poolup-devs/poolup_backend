@@ -9,19 +9,10 @@ const ControllerException = require("../utils/errors/controllerException");
 const addNewReview = (newReviewInfo) => {
   return new Promise(async (resolve, reject) => {
     // Required properties of Review object
-    const requiredProperties = [
-      "reviewerUsername",
-      "revieweeUsername",
-      "rating",
-      "rideId",
-    ];
+    const requiredProperties = ["reviewerUsername", "revieweeUsername", "rating", "rideId"];
     try {
       // Simple field validation
-      if (
-        requiredProperties.every((property) =>
-          newReviewInfo.hasOwnProperty(property)
-        )
-      ) {
+      if (requiredProperties.every((property) => newReviewInfo.hasOwnProperty(property))) {
         const { reviewerUsername, revieweeUsername, rideId } = newReviewInfo;
 
         // Prevent duplicate insertion if document already exists
@@ -48,13 +39,9 @@ const addNewReview = (newReviewInfo) => {
             // Cancel the scheduled tasks that expire the ability to review
             const ride = await Ride.findById(rideId);
             const driverUsername =
-              ride.ownerUsername == reviewerUsername
-                ? reviewerUsername
-                : revieweeUsername;
+              ride.ownerUsername == reviewerUsername ? reviewerUsername : revieweeUsername;
             const passengerUsername =
-              reviewerUsername != driverUsername
-                ? reviewerUsername
-                : revieweeUsername;
+              reviewerUsername != driverUsername ? reviewerUsername : revieweeUsername;
 
             await agenda.cancel({
               name: "expire ability to leave review",
@@ -114,10 +101,7 @@ const declineReview = (rideId, reviewer, reviewee) => {
       reject(
         new ControllerException(
           400,
-          "User has already declined to review " +
-            reviewee +
-            " for ride: " +
-            rideId
+          "User has already declined to review " + reviewee + " for ride: " + rideId
         )
       );
     } catch (err) {
@@ -139,7 +123,8 @@ const getUserReviews = (username, pageNumber) => {
       )
         .sort({ datePosted: -1 })
         .skip(pageNumber * 5)
-        .limit(5);
+        .limit(5)
+        .lean();
     } catch (err) {
       return reject(err);
     }
@@ -148,7 +133,7 @@ const getUserReviews = (username, pageNumber) => {
 
 const getUsersToReviewForRide = (rideId, username) => {
   return new Promise(async (resolve, reject) => {
-    const rideDetails = await Ride.findById(rideId);
+    const rideDetails = await Ride.findById(rideId).lean();
 
     // User was a driver
     if (username == rideDetails.ownerUsername) {
@@ -162,7 +147,7 @@ const getUsersToReviewForRide = (rideId, username) => {
         if (!existingReview) {
           const passenger = await User.findOne({
             username: rideDetails.passengers[i],
-          });
+          }).lean();
           usersToReview.push(passenger);
         }
       }
@@ -174,13 +159,13 @@ const getUsersToReviewForRide = (rideId, username) => {
       reviewerUsername: username,
       revieweeUsername: rideDetails.ownerUsername,
       rideId,
-    });
+    }).lean();
     if (existingReview) {
       resolve([]);
     } else {
       const driver = await User.findOne({
         username: rideDetails.ownerUsername,
-      });
+      }).lean();
       resolve([driver]);
     }
   });

@@ -27,7 +27,6 @@ const createRideQueryFilter = (filter_) => {
       let toCitiesQuery = [];
       let dateQuery = {};
 
-      console.log("filter: " + filter_.to);
       // Retrieve all cities that match the county to and from
       if (filter_.from && places[filter_.from] !== undefined) {
         let cities = places[filter_.from];
@@ -59,9 +58,6 @@ const createRideQueryFilter = (filter_) => {
           },
         };
       }
-      console.log(fromCitiesQuery);
-      console.log(toCitiesQuery);
-      console.log(dateQuery);
 
       if (toCitiesQuery.length > 0 && fromCitiesQuery.length > 0) {
         // Filter all rides from a specific starting location to a specific ending location
@@ -103,30 +99,14 @@ const getMatchingRides = async (filter_, pageNum) => {
   });
 };
 
-const getRideHistory = (username) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const ride_res = await Ride.find({
-        passengers: username,
-        date: { $lt: new Date() },
-      })
-        .sort({ date: 1 })
-        .limit(5);
-      return resolve(ride_res);
-    } catch (err) {
-      return reject(err);
-    }
-  });
-};
-
-const getMyRideHistory = (authUsername, pageNum) => {
+const getRideHistory = (authUsername, pageNum) => {
   return new Promise(async (resolve, reject) => {
     try {
       const ride_res = await Ride.find({
         passengers: authUsername,
         date: { $lt: new Date() },
       })
-        .sort({ date: 1 })
+        .sort({ date: -1 })
         .skip(pageNum * 5)
         .limit(5);
       return resolve(ride_res);
@@ -395,7 +375,6 @@ const addDriverInfoToRides = (rides) => {
 module.exports = {
   getMatchingRides,
   getRideHistory,
-  getMyRideHistory,
   getMyRideUpcoming,
   getDriveHistory,
   getDriveUpcoming,

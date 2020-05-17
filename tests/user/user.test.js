@@ -77,13 +77,9 @@ describe("Testing the verification of an email", () => {
   test("If the verification link is clicked after the email has been verified and the user account for it is registered, should expect an error", async () => {
     const verifiedUserObj = user_devCon.dev_createDummyUserObj("registered");
     await user_devCon.dev_createRegisteredUser(verifiedUserObj);
-    const token = jwt.sign(
-      { email: verifiedUserObj.email },
-      process.env.JWT_EMAIL_KEY,
-      {
-        expiresIn: "24h",
-      }
-    );
+    const token = jwt.sign({ email: verifiedUserObj.email }, process.env.JWT_EMAIL_KEY, {
+      expiresIn: "24h",
+    });
     await request(app).get("/users/verify").query({ token }).expect(403);
   });
 
@@ -211,10 +207,7 @@ describe("Testing users with verified and registered accounts", () => {
     });
 
     test("When logging in with correct email and password credentials, should return true.", async () => {
-      const validCredentials = await db.login(
-        registeredUser.email,
-        sha256("password")
-      );
+      const validCredentials = await db.login(registeredUser.email, sha256("password"));
       const {
         firstName,
         lastName,
@@ -291,10 +284,7 @@ describe("Testing users with verified and registered accounts", () => {
       test("When signing up using an improperly formatted email, should result in an error", async () => {
         try {
           expect.assertions(1);
-          await db_email.sendVerificationEmail(
-            "notAValidEmail@",
-            "validPassword123"
-          );
+          await db_email.sendVerificationEmail("notAValidEmail@", "validPassword123");
         } catch (e) {
           expect(e.message).toBe("Not a valid email address");
         }
@@ -302,9 +292,7 @@ describe("Testing users with verified and registered accounts", () => {
 
       test("When signing up using a properly formatted email that does not yet exist as a verified email, should result in the function returning true", async () => {
         expect(
-          await db_email.sendVerificationEmail(
-            "unregisteredUnverifiedEmail@ucla.edu"
-          )
+          await db_email.sendVerificationEmail("unregisteredUnverifiedEmail@ucla.edu")
         ).toBeTruthy();
       });
 
@@ -313,9 +301,7 @@ describe("Testing users with verified and registered accounts", () => {
           expect.assertions(1);
           await db.isValidPassword("1234567");
         } catch (e) {
-          expect(e.message).toBe(
-            "Password must be at least 8 characters long!"
-          );
+          expect(e.message).toBe("Password must be at least 8 characters long!");
         }
       });
 
@@ -375,9 +361,7 @@ describe("Testing users with verified and registered accounts", () => {
     });
 
     test("When parsing an edu email not found in the database, should return null", async () => {
-      const invalidSchool = await db.parseSchoolFromEmail(
-        "someStudent@fakeschool.edu"
-      );
+      const invalidSchool = await db.parseSchoolFromEmail("someStudent@fakeschool.edu");
       expect(invalidSchool).toEqual(null);
     });
 
@@ -504,13 +488,7 @@ describe("Testing users with verified and registered accounts", () => {
     });
 
     test("When retrieving a user's profile pic url using a valid username, should receive it.", async () => {
-      const {
-        firstName,
-        lastName,
-        password,
-        email,
-        isRegistered,
-      } = registeredUser;
+      const { firstName, lastName, password, email, isRegistered } = registeredUser;
       const registeredUserWithProfilePic = new User({
         firstName,
         lastName,
@@ -521,9 +499,7 @@ describe("Testing users with verified and registered accounts", () => {
         picUrl: "testUrl",
       });
       registeredUserWithProfilePic.save(async (err) => {
-        const picURL = await db.getPicUrl(
-          registeredUserWithProfilePic.username
-        );
+        const picURL = await db.getPicUrl(registeredUserWithProfilePic.username);
         expect(picURL).toEqual("testUrl");
       });
     });
@@ -626,9 +602,7 @@ describe("Testing users with verified and registered accounts", () => {
       try {
         await db.updateAboutMe("nonexistent_user", "Test about me description");
       } catch (e) {
-        expect(e.message).toBe(
-          "Could not find user in database when updating about me."
-        );
+        expect(e.message).toBe("Could not find user in database when updating about me.");
       }
     });
 

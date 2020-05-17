@@ -41,7 +41,7 @@ router.get("/rides/my-rides-history", checkAuth, async (req, res) => {
 router.get("/rides/my-rides-upcoming", checkAuth, async (req, res) => {
   const authUsername = await tokenParser(req.headers.authorization);
   try {
-    const data = await db.getMyRideUpcoming(authUsername);
+    const data = await db.getMyRideUpcoming(authUsername, req.query.pageNum);
     res.status(200).send(data);
   } catch (err) {
     errResp(res, err);

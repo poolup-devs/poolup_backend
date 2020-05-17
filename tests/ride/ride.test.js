@@ -314,13 +314,18 @@ describe("Testing Ride endpoints", () => {
 
   describe("Testing querying of rides", () => {
     const now = new Date();
+
+    const oldestFutureDate = new Date();
+    oldestFutureDate.setDate(now.getDate() + 1);
     const futureDate = new Date();
     futureDate.setDate(now.getDate() + 2);
 
     const pastDate = new Date();
     pastDate.setDate(now.getDate() - 2);
-    const oldestDate = new Date();
-    oldestDate.setDate(now.getDate() - 3);
+    const oldestPastDate = new Date();
+    oldestPastDate.setDate(now.getDate() - 3);
+
+    let driver;
 
     let pastRideFromSacramentoToGoleta;
     let pastRideFromNorwalkToFresno;
@@ -331,46 +336,58 @@ describe("Testing Ride endpoints", () => {
 
     let rideFromGoletaToWestCovina;
     let rideFromGoletaToIrvine;
+    let rideFromPasadenaToOakland;
+    let rideFromLosAngelesToChino;
+    let rideFromRiversideToFullerton;
+    let rideFromAlhambraToIslaVista;
 
     beforeEach(async () => {
+      driver = await User.create({
+        username: "driverUsername",
+        picUrl: "some_url_1",
+        picType: "png",
+        firstName: "John",
+        lastName: "Smith",
+      });
+
       // Past Rides
       pastRideFromSacramentoToGoleta = await Ride.create({
-        ownerUsername: "driverUsername",
-        date: oldestDate,
+        ownerUsername: driver.username,
+        date: oldestPastDate,
         passengers: ["passenger1"],
         from: "Sacramento",
         to: "Goleta",
       });
       pastRideFromNorwalkToFresno = await Ride.create({
-        ownerUsername: "driverUsername",
+        ownerUsername: driver.username,
         date: pastDate,
         passengers: ["passenger1"],
         from: "Norwalk",
         to: "Fresno",
       });
       pastRideFromIrvineToLosAngeles = await Ride.create({
-        ownerUsername: "driverUsername",
+        ownerUsername: driver.username,
         from: "Irvine",
         to: "Los Angeles",
         date: pastDate,
         passengers: ["passenger1"],
       });
       pastRideFromLosAngelesToWestCovina = await Ride.create({
-        ownerUsername: "driverUsername",
+        ownerUsername: driver.username,
         from: "Los Angeles",
         to: "West Covina",
         date: pastDate,
         passengers: ["passenger1"],
       });
       pastRideFromLosAngelesToRiverside = await Ride.create({
-        ownerUsername: "driverUsername",
+        ownerUsername: driver.username,
         from: "Los Angeles",
         to: "Riverside",
         date: pastDate,
         passengers: ["passenger1"],
       });
       pastRideFromSantaBarbaraToOntario = await Ride.create({
-        ownerUsername: "driverUsername",
+        ownerUsername: driver.username,
         from: "Santa Barbara",
         to: "Ontario",
         date: pastDate,
@@ -378,22 +395,55 @@ describe("Testing Ride endpoints", () => {
       });
 
       // Future Rides
-      // SB -> LA
       rideFromGoletaToWestCovina = await Ride.create({
-        ownerUsername: "driverUsername",
+        ownerUsername: driver.username,
         from: "Goleta",
         to: "West Covina",
+        date: oldestFutureDate,
+        price: "20",
+        seats: 4,
+        passengers: ["passenger1"],
+      });
+      rideFromGoletaToIrvine = await Ride.create({
+        ownerUsername: driver.username,
+        from: "Goleta",
+        to: "Irvine",
         date: futureDate,
         price: "20",
         seats: 4,
         passengers: ["passenger1"],
       });
-
-      // SB -> OC
-      rideFromGoletaToIrvine = await Ride.create({
-        ownerUsername: "driverUsername",
-        from: "Goleta",
-        to: "Irvine",
+      rideFromPasadenaToOakland = await Ride.create({
+        ownerUsername: driver.username,
+        from: "Pasadena",
+        to: "Oakland",
+        date: futureDate,
+        price: "20",
+        seats: 4,
+        passengers: ["passenger1"],
+      });
+      rideFromLosAngelesToChino = await Ride.create({
+        ownerUsername: driver.username,
+        from: "Los Angeles",
+        to: "Chino",
+        date: futureDate,
+        price: "20",
+        seats: 4,
+        passengers: ["passenger1"],
+      });
+      rideFromRiversideToFullerton = await Ride.create({
+        ownerUsername: driver.username,
+        from: "Riverside",
+        to: "Fullerton",
+        date: futureDate,
+        price: "20",
+        seats: 4,
+        passengers: ["passenger1"],
+      });
+      rideFromAlhambraToIslaVista = await Ride.create({
+        ownerUsername: driver.username,
+        from: "Alhambra",
+        to: "Isla Vista",
         date: futureDate,
         price: "20",
         seats: 4,
@@ -408,175 +458,322 @@ describe("Testing Ride endpoints", () => {
       });
 
       test("Expect when passed an array of rides, should fill in driver information fields", async () => {
-        const driver1 = await User.create({
-          username: "driverUsername1",
-          picUrl: "some_url_1",
-          picType: "png",
-          firstName: "John",
-          lastName: "Smith",
-        });
-        const driver2 = await User.create({
-          username: "driverUsername2",
-          picUrl: "some_url_2",
-          picType: "png",
-          firstName: "Sarah",
-          lastName: "Smith",
-        });
-        const ride1 = await Ride.create({
-          ownerUsername: "driverUsername1",
-          date: new Date(),
-          seats: 3,
-        });
-        const ride2 = await Ride.create({
-          ownerUsername: "driverUsername2",
-          date: new Date(),
-          seats: 3,
-        });
-        const rides = await db.addDriverInfoToRides([ride1, ride2]);
+        const rides = await db.addDriverInfoToRides([
+          rideFromGoletaToWestCovina,
+          rideFromGoletaToIrvine,
+        ]);
         expect(rides[0]).toEqual(
           expect.objectContaining({
-            picUrl: driver1.picUrl,
-            picType: driver1.picType,
-            firstName: driver1.firstName,
-            lastName: driver1.lastName,
+            picUrl: driver.picUrl,
+            picType: driver.picType,
+            firstName: driver.firstName,
+            lastName: driver.lastName,
           })
         );
         expect(rides[1]).toEqual(
           expect.objectContaining({
-            picUrl: driver2.picUrl,
-            picType: driver2.picType,
-            firstName: driver2.firstName,
-            lastName: driver2.lastName,
+            picUrl: driver.picUrl,
+            picType: driver.picType,
+            firstName: driver.firstName,
+            lastName: driver.lastName,
           })
         );
       });
     });
 
-    describe("Testing the generation of ride filters", () => {
-      describe("Testing the generation of matching ride filters", () => {
-        test("An undefined filter should result in a query filter that returns all dates past the current date", async () => {
-          // Mock out the Date constructor
-          const dateSpy = jest.spyOn(global, "Date").mockImplementation(() => now);
+    describe("Testing the generation of matching ride filters", () => {
+      test("An undefined filter should result in a query filter that returns all dates past the current date", async () => {
+        // Mock out the Date constructor
+        const dateSpy = jest.spyOn(global, "Date").mockImplementation(() => now);
 
-          const filter = await db.createRideQueryFilter(undefined);
-          expect(filter.date.$gte).toEqual(now);
-          dateSpy.mockRestore();
-        });
-
-        test("A filter that specifies all fields, should result in a query filter with every from city, to city, and current date", async () => {
-          const filter = await db.createRideQueryFilter(
-            `{ "from": "Santa Barbara", "to": "Los Angeles", "date_from": "${now.toISOString()}", "date_to": "${futureDate.toISOString()}" }`
-          );
-          const rides = await Ride.find(filter);
-          expect(rides.length).toBe(1);
-          expect(rides).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                from: rideFromGoletaToWestCovina.from,
-                to: rideFromGoletaToWestCovina.to,
-              }),
-            ])
-          );
-        });
-
-        test("A filter that specifies only the `from` field should result in a query filter with all rides from that location past the current date.", async () => {
-          const filter = await db.createRideQueryFilter('{ "from": "Santa Barbara" }');
-          const rides = await Ride.find(filter);
-          expect(rides.length).toBe(2);
-          expect(rides).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                from: rideFromGoletaToWestCovina.from,
-                to: rideFromGoletaToWestCovina.to,
-              }),
-              expect.objectContaining({
-                from: rideFromGoletaToIrvine.from,
-                to: rideFromGoletaToIrvine.to,
-              }),
-            ])
-          );
-        });
-
-        test("A filter that specifies only the `to` field should result in a query filter with all rides to that location past the current date.", async () => {
-          const filter = await db.createRideQueryFilter('{ "to": "Los Angeles" }');
-          const rideFromSanDiegoToSantaMonica = await Ride.create({
-            from: "San Diego",
-            to: "Santa Monica",
-            date: futureDate,
-          });
-          const rides = await Ride.find(filter);
-          expect(rides.length).toBe(2);
-          expect(rides).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                from: rideFromGoletaToWestCovina.from,
-                to: rideFromGoletaToWestCovina.to,
-              }),
-              expect.objectContaining({
-                from: rideFromSanDiegoToSantaMonica.from,
-                to: rideFromSanDiegoToSantaMonica.to,
-              }),
-            ])
-          );
-        });
+        const filter = await db.createRideQueryFilter(undefined);
+        expect(filter.date.$gte).toEqual(now);
+        dateSpy.mockRestore();
       });
 
-      describe("Testing the retrieval of a user's ride history", () => {
-        test("A user with no previous ride history should return an empty list", async () => {
-          const userWithNoRides = await User.create({ username: "username" });
-          const rideHistory = await db.getRideHistory(userWithNoRides.username);
-          expect(rideHistory.length).toBe(0);
-        });
+      test("A filter that specifies all fields, should result in a query filter with every from city, to city, and current date", async () => {
+        const filter = await db.createRideQueryFilter(
+          `{ "from": "Santa Barbara", "to": "Los Angeles", "date_from": "${now.toISOString()}", "date_to": "${futureDate.toISOString()}" }`
+        );
+        const rides = await Ride.find(filter);
+        expect(rides.length).toBe(1);
+        expect(rides).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              from: rideFromGoletaToWestCovina.from,
+              to: rideFromGoletaToWestCovina.to,
+            }),
+          ])
+        );
+      });
 
-        test("A user who has been a passenger should have a list of past rides in their ride history", async () => {
-          const rideHistory = await db.getRideHistory("passenger1", 0);
-          expect(rideHistory.length).toBe(5);
-          // Should not include the oldest date, only latest 5 rides
-          expect(rideHistory).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                ownerUsername: pastRideFromNorwalkToFresno.ownerUsername,
-                from: pastRideFromNorwalkToFresno.from,
-                to: pastRideFromNorwalkToFresno.to,
-              }),
-              expect.objectContaining({
-                ownerUsername: pastRideFromIrvineToLosAngeles.ownerUsername,
-                from: pastRideFromIrvineToLosAngeles.from,
-                to: pastRideFromIrvineToLosAngeles.to,
-              }),
-              expect.objectContaining({
-                ownerUsername: pastRideFromLosAngelesToWestCovina.ownerUsername,
-                from: pastRideFromLosAngelesToWestCovina.from,
-                to: pastRideFromLosAngelesToWestCovina.to,
-              }),
-              expect.objectContaining({
-                ownerUsername: pastRideFromLosAngelesToRiverside.ownerUsername,
-                from: pastRideFromLosAngelesToRiverside.from,
-                to: pastRideFromLosAngelesToRiverside.to,
-              }),
-              expect.objectContaining({
-                ownerUsername: pastRideFromSantaBarbaraToOntario.ownerUsername,
-                from: pastRideFromSantaBarbaraToOntario.from,
-                to: pastRideFromSantaBarbaraToOntario.to,
-              }),
-            ])
-          );
-        });
+      test("A filter that specifies only the `from` field should result in a query filter with all rides from that location past the current date.", async () => {
+        const filter = await db.createRideQueryFilter('{ "from": "Santa Barbara" }');
+        const rides = await Ride.find(filter);
+        expect(rides.length).toBe(2);
+        expect(rides).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              from: rideFromGoletaToWestCovina.from,
+              to: rideFromGoletaToWestCovina.to,
+            }),
+            expect.objectContaining({
+              from: rideFromGoletaToIrvine.from,
+              to: rideFromGoletaToIrvine.to,
+            }),
+          ])
+        );
+      });
 
-        test("Testing pagination of ride history for a user with more than 5 past rides", async () => {
-          const rideHistory = await db.getRideHistory("passenger1", 1);
-          expect(rideHistory.length).toBe(1);
-          // Oldest ride should show up on the second page
-          expect(rideHistory).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({
-                ownerUsername: pastRideFromSacramentoToGoleta.ownerUsername,
-                from: pastRideFromSacramentoToGoleta.from,
-                to: pastRideFromSacramentoToGoleta.to,
-              }),
-            ])
-          );
+      test("A filter that specifies only the `to` field should result in a query filter with all rides to that location past the current date.", async () => {
+        const filter = await db.createRideQueryFilter('{ "to": "Los Angeles" }');
+        const rideFromSanDiegoToSantaMonica = await Ride.create({
+          from: "San Diego",
+          to: "Santa Monica",
+          date: futureDate,
         });
+        const rides = await Ride.find(filter);
+        expect(rides.length).toBe(2);
+        expect(rides).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              from: rideFromGoletaToWestCovina.from,
+              to: rideFromGoletaToWestCovina.to,
+            }),
+            expect.objectContaining({
+              from: rideFromSanDiegoToSantaMonica.from,
+              to: rideFromSanDiegoToSantaMonica.to,
+            }),
+          ])
+        );
+      });
+    });
+
+    describe("Testing the retrieval of a user's ride history", () => {
+      test("A user with no previous ride history should return an empty list", async () => {
+        const userWithNoRides = await User.create({ username: "username" });
+        const rideHistory = await db.getRideHistory(userWithNoRides.username, 0);
+        expect(rideHistory.length).toBe(0);
+      });
+
+      test("A user who has been a passenger should have their latest past rides in their ride history", async () => {
+        const rideHistory = await db.getRideHistory("passenger1", 0);
+        expect(rideHistory.length).toBe(5);
+        // Should not include the oldest date, only latest 5 rides
+        expect(rideHistory).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              ownerUsername: pastRideFromNorwalkToFresno.ownerUsername,
+              from: pastRideFromNorwalkToFresno.from,
+              to: pastRideFromNorwalkToFresno.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: pastRideFromIrvineToLosAngeles.ownerUsername,
+              from: pastRideFromIrvineToLosAngeles.from,
+              to: pastRideFromIrvineToLosAngeles.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: pastRideFromLosAngelesToWestCovina.ownerUsername,
+              from: pastRideFromLosAngelesToWestCovina.from,
+              to: pastRideFromLosAngelesToWestCovina.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: pastRideFromLosAngelesToRiverside.ownerUsername,
+              from: pastRideFromLosAngelesToRiverside.from,
+              to: pastRideFromLosAngelesToRiverside.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: pastRideFromSantaBarbaraToOntario.ownerUsername,
+              from: pastRideFromSantaBarbaraToOntario.from,
+              to: pastRideFromSantaBarbaraToOntario.to,
+            }),
+          ])
+        );
+      });
+
+      test("Testing pagination of ride history for a user with more than 5 past rides", async () => {
+        const rideHistory = await db.getRideHistory("passenger1", 1);
+        expect(rideHistory.length).toBe(1);
+        // Oldest ride should show up on the second page
+        expect(rideHistory).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              ownerUsername: pastRideFromSacramentoToGoleta.ownerUsername,
+              from: pastRideFromSacramentoToGoleta.from,
+              to: pastRideFromSacramentoToGoleta.to,
+            }),
+          ])
+        );
+      });
+    });
+
+    describe("Testing the retrieval of rider's upcoming rides", () => {
+      test("A user with no upcoming rides should receive no rides.", async () => {
+        const upcomingRides = await db.getMyRideUpcoming("userWithNoUpcomingRides", 0);
+        expect(upcomingRides.length).toBe(0);
+      });
+
+      test("A user with upcoming rides should have their latest upcoming rides in a list", async () => {
+        const upcomingRides = await db.getMyRideUpcoming("passenger1", 0);
+        expect(upcomingRides.length).toBe(5);
+        expect(upcomingRides).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              ownerUsername: rideFromGoletaToIrvine.ownerUsername,
+              from: rideFromGoletaToIrvine.from,
+              to: rideFromGoletaToIrvine.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: rideFromPasadenaToOakland.ownerUsername,
+              from: rideFromPasadenaToOakland.from,
+              to: rideFromPasadenaToOakland.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: rideFromLosAngelesToChino.ownerUsername,
+              from: rideFromLosAngelesToChino.from,
+              to: rideFromLosAngelesToChino.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: rideFromRiversideToFullerton.ownerUsername,
+              from: rideFromRiversideToFullerton.from,
+              to: rideFromRiversideToFullerton.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: rideFromAlhambraToIslaVista.ownerUsername,
+              from: rideFromAlhambraToIslaVista.from,
+              to: rideFromAlhambraToIslaVista.to,
+            }),
+          ])
+        );
+      });
+      test("Testing pagination of upcoming rides for a user with more than 5 upcoming rides", async () => {
+        const upcomingRides = await db.getMyRideUpcoming("passenger1", 1);
+        expect(upcomingRides.length).toBe(1);
+        // Oldest upcoming ride should show up on the second page
+        expect(upcomingRides).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              ownerUsername: rideFromGoletaToWestCovina.ownerUsername,
+              from: rideFromGoletaToWestCovina.from,
+              to: rideFromGoletaToWestCovina.to,
+            }),
+          ])
+        );
+      });
+    });
+
+    describe("Testing the retrieval of a user's drive history", () => {
+      test("A user with no previous drive history should return an empty list", async () => {
+        const userWithNoDrives = await User.create({ username: "newDriverUsername" });
+        const driveHistory = await db.getDriveHistory(userWithNoDrives.username, 0);
+        expect(driveHistory.length).toBe(0);
+      });
+
+      test("A user who has been a driver should have their latest drives in their drive history", async () => {
+        // Has driven in 6 past rides
+        const driveHistory = await db.getDriveHistory(driver.username, 0);
+        expect(driveHistory.length).toBe(5);
+        // Should not include the oldest date, only latest 5 rides
+        expect(driveHistory).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              ownerUsername: pastRideFromNorwalkToFresno.ownerUsername,
+              from: pastRideFromNorwalkToFresno.from,
+              to: pastRideFromNorwalkToFresno.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: pastRideFromIrvineToLosAngeles.ownerUsername,
+              from: pastRideFromIrvineToLosAngeles.from,
+              to: pastRideFromIrvineToLosAngeles.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: pastRideFromLosAngelesToWestCovina.ownerUsername,
+              from: pastRideFromLosAngelesToWestCovina.from,
+              to: pastRideFromLosAngelesToWestCovina.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: pastRideFromLosAngelesToRiverside.ownerUsername,
+              from: pastRideFromLosAngelesToRiverside.from,
+              to: pastRideFromLosAngelesToRiverside.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: pastRideFromSantaBarbaraToOntario.ownerUsername,
+              from: pastRideFromSantaBarbaraToOntario.from,
+              to: pastRideFromSantaBarbaraToOntario.to,
+            }),
+          ])
+        );
+      });
+
+      test("Testing pagination of drive history for a user who has driven more than 5 past rides", async () => {
+        const driveHistory = await db.getDriveHistory(driver.username, 1);
+        expect(driveHistory.length).toBe(1);
+        // Oldest ride should show up on the second page
+        expect(driveHistory).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              ownerUsername: pastRideFromSacramentoToGoleta.ownerUsername,
+              from: pastRideFromSacramentoToGoleta.from,
+              to: pastRideFromSacramentoToGoleta.to,
+            }),
+          ])
+        );
+      });
+    });
+
+    describe("Testing the retrieval of a driver's upcoming drives", () => {
+      test("A user with no upcoming rides should receive no rides.", async () => {
+        const upcomingDrives = await db.getDriveUpcoming("userWithNoUpcomingDrives", 0);
+        expect(upcomingDrives.length).toBe(0);
+      });
+
+      test("A user with upcoming drives should have their latest upcoming drives in a list", async () => {
+        const upcomingDrives = await db.getDriveUpcoming(driver.username, 0);
+        expect(upcomingDrives.length).toBe(5);
+        expect(upcomingDrives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              ownerUsername: rideFromGoletaToIrvine.ownerUsername,
+              from: rideFromGoletaToIrvine.from,
+              to: rideFromGoletaToIrvine.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: rideFromPasadenaToOakland.ownerUsername,
+              from: rideFromPasadenaToOakland.from,
+              to: rideFromPasadenaToOakland.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: rideFromLosAngelesToChino.ownerUsername,
+              from: rideFromLosAngelesToChino.from,
+              to: rideFromLosAngelesToChino.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: rideFromRiversideToFullerton.ownerUsername,
+              from: rideFromRiversideToFullerton.from,
+              to: rideFromRiversideToFullerton.to,
+            }),
+            expect.objectContaining({
+              ownerUsername: rideFromAlhambraToIslaVista.ownerUsername,
+              from: rideFromAlhambraToIslaVista.from,
+              to: rideFromAlhambraToIslaVista.to,
+            }),
+          ])
+        );
+      });
+
+      test("Testing pagination of upcoming drives for a user with more than 5 upcoming drives", async () => {
+        const upcomingDrives = await db.getDriveUpcoming(driver.username, 1);
+        expect(upcomingDrives.length).toBe(1);
+        // Oldest upcoming ride should show up on the second page
+        expect(upcomingDrives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              ownerUsername: rideFromGoletaToWestCovina.ownerUsername,
+              from: rideFromGoletaToWestCovina.from,
+              to: rideFromGoletaToWestCovina.to,
+            }),
+          ])
+        );
       });
     });
   });

@@ -116,15 +116,16 @@ const getRideHistory = (authUsername, pageNum) => {
   });
 };
 
-const getMyRideUpcoming = (authUsername) => {
+const getMyRideUpcoming = (authUsername, pageNum) => {
   return new Promise(async (resolve, reject) => {
     try {
       const ride_res = await Ride.find({
         passengers: authUsername,
         date: { $gte: new Date() },
       })
-        .sort({ date: 1 })
-        .limit(3);
+        .sort({ date: -1 })
+        .skip(pageNum * 5)
+        .limit(5);
       const ridesUpcoming = await addDriverInfoToRides(ride_res);
       return resolve(ridesUpcoming);
     } catch (err) {
@@ -137,16 +138,16 @@ const getMyRideUpcoming = (authUsername) => {
 ///////////GET Drives//////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
 
-const getDriveHistory = (username) => {
+const getDriveHistory = (username, pageNum) => {
   return new Promise(async (resolve, reject) => {
     try {
       const ride_res = await Ride.find({
         ownerUsername: username,
         date: { $lt: new Date() },
       })
-        .sort({ date: 1 })
-        .skip(pageNum * 10)
-        .limit(10);
+        .sort({ date: -1 })
+        .skip(pageNum * 5)
+        .limit(5);
       const driveHistory = await addDriverInfoToRides(ride_res);
       return resolve(driveHistory);
     } catch (err) {
@@ -162,9 +163,9 @@ const getDriveUpcoming = (username, pageNum) => {
         ownerUsername: username,
         date: { $gte: new Date() },
       })
-        .sort({ date: 1 })
-        .skip(pageNum * 3)
-        .limit(3);
+        .sort({ date: -1 })
+        .skip(pageNum * 5)
+        .limit(5);
       const upcomingDrives = await addDriverInfoToRides(ride_res);
       return resolve(upcomingDrives);
     } catch (err) {

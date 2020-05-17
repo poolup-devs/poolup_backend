@@ -936,9 +936,7 @@ GET request
 
 | column               | type   | required |
 | -------------------- | ------ | -------- |
-| ownerEmail           | String | Yes      |
 | ownerUsername        | String |          |
-| ownerPhoneNumber     | String |          |
 | from                 | String | Yes      |
 | to                   | String | Yes      |
 | date                 | Date   | Yes      |
@@ -1075,9 +1073,7 @@ localhost:3000/rides/matching-rides?filter=
             "user2"
         ],
         "_id": "5e994d575f233007f86b3b6d",
-        "ownerEmail": "user1@g.ucla.edu",
         "ownerUsername": "user1",
-        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2020-04-18T07:00:00.000Z",
@@ -1102,9 +1098,7 @@ localhost:3000/rides/matching-rides?filter=
             "user1"
         ],
         "_id": "5e994d575f233007f86b3b6f",
-        "ownerEmail": "user4@g.ucla.edu",
         "ownerUsername": "user4",
-        "ownerPhoneNumber": "1231231234",
         "from": "Los Angeles",
         "to": "Irvine",
         "date": "2020-04-18T07:00:00.000Z",
@@ -1230,7 +1224,6 @@ a new ride object:
 
 {
     "rideInfo": {
-        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
         "from": "Irvine",
         "to": "Los Angeles",
@@ -1253,7 +1246,6 @@ a new ride object:
 {
     "passengers": [],
     "_id": "5d55b5721e78951430fdcc66",
-    "ownerEmail": "bin315a1@g.ucla.edu",
     "ownerUsername": "bin315a1",
     "from": "Irvine",
     "to": "Los Angeles",
@@ -1282,9 +1274,7 @@ The ride object that the user is trying to join:
     "ride" : {
         "passengers": [],
         "_id": "5d505ed15482ec4e38597cdb",
-        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2019-09-11T00:00:00.000Z",
@@ -1308,9 +1298,7 @@ The ride object that the user is trying to join:
         "bin315a1"
     ],
     "_id": "5d505ed15482ec4e38597cdb",
-    "ownerEmail": "bin315a1@gmail.com",
     "ownerUsername": "bin315a1",
-    "ownerPhoneNumber": "1231231234",
     "from": "Irvine",
     "to": "Los Angeles",
     "date": "2019-09-11T00:00:00.000Z",
@@ -1355,9 +1343,7 @@ PUT request
         "passengers" : [
             "user1"
         ],
-        "ownerEmail" : "user2@g.ucla.edu.com",
         "ownerUsername" : "user2",
-        "ownerPhoneNumber" : "1231231234",
         "from" : "Los Angeles",
         "to" : "Irvine",
         "date" : "2020-03-05T08:00:00.000Z",
@@ -1414,9 +1400,7 @@ The ride object that the user is trying to delete (The ride object's owner has t
             "bin315a1"
         ],
         "_id": "5d505f0d5482ec4e38597cdd",
-        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2019-08-30T00:00:00.000Z",

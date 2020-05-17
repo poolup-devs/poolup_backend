@@ -20,7 +20,6 @@ describe("Testing Ride endpoints", () => {
 
   describe("Testing ride posting", () => {
     let sampleRide = {
-      ownerEmail: "idc@gmail.com",
       ownerUsername: "",
       from: "Here",
       to: "There",
@@ -53,7 +52,6 @@ describe("Testing Ride endpoints", () => {
 
   describe("Testing when a user joins a ride", () => {
     let sampleRide = {
-      ownerEmail: "idc@gmail.com",
       ownerUsername: "",
       from: "Here",
       to: "There",

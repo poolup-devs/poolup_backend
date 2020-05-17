@@ -19,8 +19,7 @@ describe("Testing request model controllers", () => {
   future_date.setDate(future_date.getDate() + 100);
   const userObj_driver = {
     isRegistered: true,
-    password:
-      "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     username: "driver1",
     firstName: "driver1",
     email: "driver1-noreply@g.ucla.edu",
@@ -29,8 +28,7 @@ describe("Testing request model controllers", () => {
   };
   const userObj_rider1 = {
     isRegistered: true,
-    password:
-      "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     username: "rider1",
     firstName: "rider1",
     email: "rider2@g.ucla.edu",
@@ -39,8 +37,7 @@ describe("Testing request model controllers", () => {
   };
   const userObj_rider2 = {
     isRegistered: true,
-    password:
-      "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     username: "rider2",
     firstName: "rider2",
     email: "rider2@g.ucla.edu",
@@ -49,9 +46,7 @@ describe("Testing request model controllers", () => {
   };
 
   const rideObj_1 = {
-    ownerEmail: userObj_driver.email,
     ownerUsername: userObj_driver.username,
-    ownerPhoneNumber: userObj_driver.phoneNumber,
     from: "Irvine",
     to: "Los Angeles",
     date: future_date.toDateString(),
@@ -94,9 +89,7 @@ describe("Testing request model controllers", () => {
         await db.createRequest(requestObj_rider2);
         await db.createRequest(requestObj_rider2);
       } catch (err) {
-        expect(err.message).toBe(
-          "A request has already been created for this ride"
-        );
+        expect(err.message).toBe("A request has already been created for this ride");
       }
       const res_noti = await Noti.find();
       expect(res_noti.length).toBe(1);
@@ -356,15 +349,9 @@ describe("Testing request model controllers", () => {
       };
       let request_rider2 = await db.createRequest(requestObj_rider2);
 
-      await db.decrementRemindCount(
-        request_rider2._id,
-        request_rider2.requesteeUsername
-      );
+      await db.decrementRemindCount(request_rider2._id, request_rider2.requesteeUsername);
       try {
-        await db.decrementRemindCount(
-          request_rider2._id,
-          request_rider2.requesteeUsername
-        );
+        await db.decrementRemindCount(request_rider2._id, request_rider2.requesteeUsername);
       } catch (err) {
         expect(err.message).toBe("Reminder count is already less than 1");
       }

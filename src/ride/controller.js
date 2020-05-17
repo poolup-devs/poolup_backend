@@ -27,7 +27,7 @@ const createRideQueryFilter = (filter_) => {
       let toCitiesQuery = [];
       let dateQuery = {};
 
-      // Retrieve all cities that match the county to and from
+      // Retrieve all cities that match the county specified by fields: 'to' and 'from'
       if (filter_.from && places[filter_.from] !== undefined) {
         let cities = places[filter_.from];
 
@@ -88,7 +88,7 @@ const getMatchingRides = async (filter_, pageNum) => {
   return new Promise(async (resolve, reject) => {
     try {
       const ride_res = await Ride.find(filter)
-        .sort({ date: 1 })
+        .sort({ date: -1 })
         .skip(pageNum * 10)
         .limit(10);
       const matchingRides = await addDriverInfoToRides(ride_res);

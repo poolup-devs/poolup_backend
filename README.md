@@ -55,9 +55,9 @@ Poolup API is configured via environment variables. The applicable environment v
 | STRIPE_PRIVATE_KEY     | Private Key for Stripe Handshakes |
 | STRIPE_WEBHOOK_SECRET  | Secret Key for Stripe Webhook     |
 | STRIPE_CLIENT_ID       | Client ID for Stripe              |
-| STRIPE_APPLICATION_FEE | Buisness Logic Parameter          |
-| FLAKER_LIMIT           | Buisness Logic Parameter          |
-| INDECISION_LIMIT       | Buisness Logic Parameter          |
+| STRIPE_APPLICATION_FEE | Business Logic Parameter          |
+| FLAKER_LIMIT           | Business Logic Parameter          |
+| INDECISION_LIMIT       | Business Logic Parameter          |
 | MY_RIDES_PATH          | Url for redirects                 |
 | MY_DRIVES_PATH         | Url for redirects                 |
 | SEARCH_RIDES_PATH      | Url for redirects                 |

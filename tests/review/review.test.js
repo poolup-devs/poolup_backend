@@ -145,14 +145,13 @@ describe("Testing rating system operations", () => {
 
     test("A review without a required field, such as rideId, should error instead of creating the review.", async () => {
       try {
-        expect.assertions(1);
         await db.addNewReview({
           reviewerUsername: "reviewer",
           revieweeUsername: "reviewee",
           rating: 2,
         });
       } catch (e) {
-        expect(e).toMatch(
+        expect(e.message).toMatch(
           "Review must contain a reviewer username, reviewee username, rating, and associated ride ID"
         );
       }

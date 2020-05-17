@@ -52,4 +52,7 @@ app.use(stripeRouter);
 app.use(reviewRouter);
 app.use(requestRouter);
 
+const logger = require("./utils/logger");
+app.use(require("morgan")("combined", { stream: logger.stream }));
+
 module.exports = app;

@@ -3,6 +3,7 @@ const router = new express.Router();
 const db = require("./controller");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
+const errResp = require("../utils/errors/errResponse");
 
 // Add a new review using currently logged in account
 router.post("/reviews", checkAuth, async (req, res) => {
@@ -11,8 +12,8 @@ router.post("/reviews", checkAuth, async (req, res) => {
     req.body["reviewerUsername"] = loggedInUser;
     const review = await db.addNewReview(req.body);
     res.status(200).send(review);
-  } catch (e) {
-    res.status(500).send({ error: e });
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
@@ -26,8 +27,8 @@ router.post("/reviews/decline-review", checkAuth, async (req, res) => {
       req.body.revieweeUsername
     );
     res.status(200).send(declinedReview);
-  } catch (e) {
-    res.status(500).send({ error: e });
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
@@ -39,8 +40,8 @@ router.get("/reviews", async (req, res) => {
       req.query.pageNum
     );
     res.status(200).send(userReviews);
-  } catch (e) {
-    res.status(500).send({ error: e });
+  } catch (err) {
+    errResp(res, err);
   }
 });
 
@@ -56,8 +57,8 @@ router.get(
         loggedInUser
       );
       res.status(200).send({ usersToReview });
-    } catch (e) {
-      res.status(500).send({ error: e });
+    } catch (err) {
+      errResp(res, err);
     }
   }
 );

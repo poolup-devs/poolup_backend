@@ -121,6 +121,77 @@ Poolup API is configured via environment variables. The applicable environment v
 
 ---
 
+### Directory Structure
+
+```
+.
+|   .gitignore
+|   .sample_env
+|   init_db.js
+|   LICENSE
+|   package-lock.json
+|   package.json
+|   README.md
+|   setup.js
+|   docker-compose.yml
+|
++---config
+|       .env-cmdrc
++---dockerfiles
+|       main
+|       mongo_seed
+|
++---src
+|   |   app.js
+|   |   server.js
+|   |
+|   +---db
+|   |       awsS3_controller.js
+|   |       mongoose.js
+|   |
+|   +---middleware
+|   |       cors_origin_control.js
+|   |       jwt_authenticator.js
+|   |
+|   +---noti
+|   |       controller.js
+|   |       index.js
+|   |       noti.js
+|   +---request
+|   |       controller.js
+|   |       index.js
+|   |       noti.js
+|   |
+|   +---ride
+|   |       controller.js
+|   |       index.js
+|   |       ride.js
+|   |
+|   +---stripe
+|   |   |    index.js
+|   |   +----tool
+|   |           driver-info-validation.js
+|   |           check-transfer.js
+|   |           payment-handler.js
+|   |   +----transfer
+|   |           controller.js
+|   |           transfer.js
+|   |
+|   +---user
+|   |       controller.js
+|   |       index.js
+|   |       user.js
+|   |
+|   \---utils
+|           token-parser.js
+|
+\---tests
+    \---user
+            rating.test.js
+```
+
+---
+
 ### Coding Standards and Rules
 
 #### Creating a new branch
@@ -278,23 +349,27 @@ Models:
 
 ### API Endpoints
 
-| url                          | HTTP Method | description                                                     |
-| ---------------------------- | ----------- | --------------------------------------------------------------- |
-| /users/login                 | POST        | [User Login](#user-login)                                       |
-| /users/signup                | POST        | [User Signup](#user-signup)                                     |
-| /users/sendVerificationEmail | GET         | [Send a verification email to signup](#send-verification-email) |
-| /users/verify                | GET         | [Verify an email](#email-verification)                          |
-| /users/upload-profile-pic    | PATCH       | [upload a user profile image](#upload-profile-image)            |
-| /users/usersPic              | GET         | [Get a user's profile image](#get-profile-image)                |
-| /users/updateUser            | PATCH       | [Update a user's name or phonenumber](#update-user)             |
-| /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential) |
-| /users/changePassword        | PATCH       | [Change a user's password](#change-password)                    |
-| /users/get-rating            | GET         | [Get a user's rating](#get-rating)                              |
-| /users/get-school            | GET         | [Get a user's school](#get-school)                              |
-| /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                   |
-| /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                             |
-| /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)      |
-| /users/driverStatus          | GET         | [Check if a user is a driver](#check-if-driver)                 |
+| url                          | HTTP Method | description                                                        |
+| ---------------------------- | ----------- | ------------------------------------------------------------------ |
+| /users/login                 | POST        | [User Login](#user-login)                                          |
+| /users/signup                | POST        | [User Signup](#user-signup)                                        |
+| /users/sendVerificationEmail | GET         | [Send a verification email to signup](#send-verification-email)    |
+| /users/verify                | GET         | [Verify an email](#email-verification)                             |
+| /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
+| /users/phoneNumberValidation | GET         | [Validation/usability of a phone number](#phone-number-validation) |
+| /users/upload-profile-pic    | PATCH       | [upload a user profile image](#upload-profile-image)               |
+| /users/usersPic              | GET         | [Get a user's profile image](#get-profile-image)                   |
+| /users/updateUser            | PATCH       | [Update a user's name or phonenumber](#update-user)                |
+| /users/deleteUser            | DELETE      | [Delete a user account](#delete-user)                              |
+| /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
+| /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
+| /users/info                  | GET         | [Get my account's information](#my-info)                           |
+| /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
+| /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
+| /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                      |
+| /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
+| /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |
+| /users/driverStatus          | GET         | [Check if a user is a driver](#check-if-driver)                    |
 
 ---
 
@@ -443,6 +518,58 @@ localhost:3000/users/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpb
 
 ---
 
+### Username Validation
+
+GET request
+
+**params**
+
+username
+
+**example**
+
+localhost:3000/users/usernameValidation?username=bin315a1
+
+**return value**
+
+- 200 status, array of user objects with that username
+
+```
+[
+    {
+        "driverList": [],
+        "riderList": [],
+        "isRegistered": true,
+        "_id": "5d55af9f4c5458138f2efa85",
+        "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+        "username": "bin315a1",
+        "name": "Han",
+        "email": "bin315a1@g.ucla.edu",
+        "__v": 0
+    }
+]
+```
+
+---
+
+### Phone Number Validation
+
+GET request
+
+**params**
+
+phoneNumber
+
+**example**
+
+localhost:3000/users/phoneNumberValidation?phoneNumber=1231231234
+
+**return value**
+
+200 status, array of user objects with that phoneNumber
+
+---
+
 ### Upload Profile Image
 
 PATCH request
@@ -584,23 +711,15 @@ no further return data
 
 GET request
 
-**params/body**
+**params**
 
-none required
+username
 
 **return value**
 
-200 status if successful
+Queries the database for user with `username` and returns the whole document.
 
-```
-{
-    "username": "bin315a1",
-    "name": "Han",
-    "email": "bin315a1@g.ucla.edu",
-    "createdAt": "2019-08-23T11:27:31.739Z",
-    "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png"
-}
-```
+200 status if successful
 
 ---
 
@@ -809,7 +928,9 @@ GET request
 
 | column               | type   | required |
 | -------------------- | ------ | -------- |
+| ownerEmail           | String | Yes      |
 | ownerUsername        | String |          |
+| ownerPhoneNumber     | String |          |
 | from                 | String | Yes      |
 | to                   | String | Yes      |
 | date                 | Date   | Yes      |
@@ -946,7 +1067,9 @@ localhost:3000/rides/matching-rides?filter=
             "user2"
         ],
         "_id": "5e994d575f233007f86b3b6d",
+        "ownerEmail": "user1@g.ucla.edu",
         "ownerUsername": "user1",
+        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2020-04-18T07:00:00.000Z",
@@ -971,7 +1094,9 @@ localhost:3000/rides/matching-rides?filter=
             "user1"
         ],
         "_id": "5e994d575f233007f86b3b6f",
+        "ownerEmail": "user4@g.ucla.edu",
         "ownerUsername": "user4",
+        "ownerPhoneNumber": "1231231234",
         "from": "Los Angeles",
         "to": "Irvine",
         "date": "2020-04-18T07:00:00.000Z",
@@ -1097,6 +1222,7 @@ a new ride object:
 
 {
     "rideInfo": {
+        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
         "from": "Irvine",
         "to": "Los Angeles",
@@ -1119,6 +1245,7 @@ a new ride object:
 {
     "passengers": [],
     "_id": "5d55b5721e78951430fdcc66",
+    "ownerEmail": "bin315a1@g.ucla.edu",
     "ownerUsername": "bin315a1",
     "from": "Irvine",
     "to": "Los Angeles",
@@ -1147,7 +1274,9 @@ The ride object that the user is trying to join:
     "ride" : {
         "passengers": [],
         "_id": "5d505ed15482ec4e38597cdb",
+        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2019-09-11T00:00:00.000Z",
@@ -1171,7 +1300,9 @@ The ride object that the user is trying to join:
         "bin315a1"
     ],
     "_id": "5d505ed15482ec4e38597cdb",
+    "ownerEmail": "bin315a1@gmail.com",
     "ownerUsername": "bin315a1",
+    "ownerPhoneNumber": "1231231234",
     "from": "Irvine",
     "to": "Los Angeles",
     "date": "2019-09-11T00:00:00.000Z",
@@ -1216,7 +1347,9 @@ PUT request
         "passengers" : [
             "user1"
         ],
+        "ownerEmail" : "user2@g.ucla.edu.com",
         "ownerUsername" : "user2",
+        "ownerPhoneNumber" : "1231231234",
         "from" : "Los Angeles",
         "to" : "Irvine",
         "date" : "2020-03-05T08:00:00.000Z",
@@ -1273,7 +1406,9 @@ The ride object that the user is trying to delete (The ride object's owner has t
             "bin315a1"
         ],
         "_id": "5d505f0d5482ec4e38597cdd",
+        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
+        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2019-08-30T00:00:00.000Z",

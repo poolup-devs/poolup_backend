@@ -539,6 +539,15 @@ describe("Testing Ride endpoints", () => {
           ])
         );
       });
+
+      test("When changing a user's password in an authorized session, should return 200 response code", async () => {
+        await request(app)
+          .get("/rides/matching-rides")
+          .send({
+            newPassword: "newPassword",
+          })
+          .expect(200);
+      });
     });
 
     describe("Testing the retrieval of a user's ride history", () => {

@@ -2,8 +2,6 @@ require("../../src/db/mongoose");
 
 const User = require("../../src/user/user").User;
 const Email = require("../../src/user/email/email").Email;
-const Ride = require("../../src/ride/ride").Ride;
-const Noti = require("../../src/noti/noti").Noti;
 
 const user_devCon = require("../../src/user/dev_controller");
 

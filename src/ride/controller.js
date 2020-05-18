@@ -88,7 +88,7 @@ const getMatchingRides = async (filter_, pageNum) => {
   return new Promise(async (resolve, reject) => {
     try {
       const ride_res = await Ride.find(filter)
-        .sort({ date: -1 })
+        .sort({ date: 1 })
         .skip(pageNum * 10)
         .limit(10);
       const matchingRides = await addDriverInfoToRides(ride_res);
@@ -124,7 +124,7 @@ const getMyRideUpcoming = (authUsername, pageNum) => {
         passengers: authUsername,
         date: { $gte: new Date() },
       })
-        .sort({ date: -1 })
+        .sort({ date: 1 })
         .skip(pageNum * 5)
         .limit(5)
         .lean();
@@ -166,7 +166,7 @@ const getDriveUpcoming = (username, pageNum) => {
         ownerUsername: username,
         date: { $gte: new Date() },
       })
-        .sort({ date: -1 })
+        .sort({ date: 1 })
         .skip(pageNum * 5)
         .limit(5)
         .lean();

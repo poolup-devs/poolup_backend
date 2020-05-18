@@ -121,77 +121,6 @@ Poolup API is configured via environment variables. The applicable environment v
 
 ---
 
-### Directory Structure
-
-```
-.
-|   .gitignore
-|   .sample_env
-|   init_db.js
-|   LICENSE
-|   package-lock.json
-|   package.json
-|   README.md
-|   setup.js
-|   docker-compose.yml
-|
-+---config
-|       .env-cmdrc
-+---dockerfiles
-|       main
-|       mongo_seed
-|
-+---src
-|   |   app.js
-|   |   server.js
-|   |
-|   +---db
-|   |       awsS3_controller.js
-|   |       mongoose.js
-|   |
-|   +---middleware
-|   |       cors_origin_control.js
-|   |       jwt_authenticator.js
-|   |
-|   +---noti
-|   |       controller.js
-|   |       index.js
-|   |       noti.js
-|   +---request
-|   |       controller.js
-|   |       index.js
-|   |       noti.js
-|   |
-|   +---ride
-|   |       controller.js
-|   |       index.js
-|   |       ride.js
-|   |
-|   +---stripe
-|   |   |    index.js
-|   |   +----tool
-|   |           driver-info-validation.js
-|   |           check-transfer.js
-|   |           payment-handler.js
-|   |   +----transfer
-|   |           controller.js
-|   |           transfer.js
-|   |
-|   +---user
-|   |       controller.js
-|   |       index.js
-|   |       user.js
-|   |
-|   \---utils
-|           token-parser.js
-|
-\---tests
-    \---user
-            rating.test.js
-```
-
----
-
 ### Coding Standards and Rules
 
 #### Creating a new branch
@@ -1010,6 +939,8 @@ localhost:3000/rides/matching-rides?filter={"from": "Irvine", "to" : "Los Angele
 
 ```
 
+The rides are sorted by date, in ascending order, or by nearest date first.
+
 Get all rides from Irvine to Los Angeles between 8:00 AM to 9:30 AM on 2019-09-13
 
 ```
@@ -1035,12 +966,22 @@ Get all rides from Irvine to anywhere between 8:00 AM to 9:30 AM on 2019-09-13
 
 ```
 
-Get all rides from Irvine to anywhere anytime (after the current timestamp, of course)
+Get all rides from Irvine to anywhere anytime (after the current timestamp)
 
 ```
 
     {
         "from": "Irvine"
+    }
+
+```
+
+Get all rides from anywhere to Irvine anytime (after the current timestamp)
+
+```
+
+    {
+        "to": "Irvine"
     }
 
 ```
@@ -1118,11 +1059,9 @@ localhost:3000/rides/matching-rides?filter=
 
 GET request
 
-- DOES NOT take a pageNum param
-
 **params**
 
-username
+username, pageNum
 
 **example**
 
@@ -1130,6 +1069,7 @@ localhost:3000/rides/user-rides-history?username=bin315a1
 
 **return value**
 
+Each page returns 5 rides, sorted by the most recent ride first (newest->oldest).
 200 status with an array of rides that the user with the username had in the past (before current date&time)
 
 ---
@@ -1148,6 +1088,7 @@ localhost:3000/rides/my-rides-history?pageNum=0
 
 **return value**
 
+Each page returns 5 rides, sorted by the most recent ride first (newest->oldest).
 200 OK status with an array of rides that the user had in the past (before current date&time)
 
 ---
@@ -1162,10 +1103,11 @@ pageNum
 
 **example**
 
-localhost:3000/rides/my-rides-history?pageNum=0
+localhost:3000/rides/my-rides-upcoming?pageNum=0
 
 **return value**
 
+Each page returns 5 rides, sorted by the closest, upcoming ride first (oldest->newest).
 200 OK status with an array of rides that the user will have in the future (after current date&time)
 
 ---
@@ -1184,6 +1126,7 @@ localhost:3000/rides/my-rides-history?pageNum=0&username=bin315a1
 
 **return value**
 
+Each page returns 5 rides, sorted by the most recent ride first (newest->oldest).
 200 OK status with an array of rides that the user was the driver in the past (before current date&time)
 
 ---
@@ -1202,6 +1145,7 @@ localhost:3000/rides/drives-upcoming?pageNum=0&username=bin315a1
 
 **return value**
 
+Each page returns 5 rides, sorted by the closest, upcoming ride first (oldest->newest).
 200 OK status with an array of rides that the user was the driver will drive in the future (after current date&time)
 
 ---
@@ -1366,7 +1310,11 @@ PUT request
 
 **return value**
 
-- 200 status, with a short **description of the event** that occurred. - For example, the following Strings are possible return values: - "Driver cancelled ride without penalty because there were no passengers." - "Driver cancelled ride and received a penalty because there were passengers." - "Passenger cancelled ride and received a penalty."
+- 200 status, with a short **description of the event** that occurred.
+- For example, the following Strings are possible return values:
+  - "Driver cancelled ride without penalty because there were no passengers."
+  - "Driver cancelled ride and received a penalty because there were passengers."
+  - "Passenger cancelled ride and received a penalty."
 - 500 status, with an object containing `error` property. - For example, the following errors are possible messages: - "Ride does not exist in database!" - "User is not a driver or passenger of this ride."
 
 ---

@@ -640,9 +640,9 @@ describe("Testing Ride endpoints", () => {
               to: rideFromRiversideToFullerton.to,
             }),
             expect.objectContaining({
-              ownerUsername: rideFromAlhambraToIslaVista.ownerUsername,
-              from: rideFromAlhambraToIslaVista.from,
-              to: rideFromAlhambraToIslaVista.to,
+              ownerUsername: rideFromGoletaToWestCovina.ownerUsername,
+              from: rideFromGoletaToWestCovina.from,
+              to: rideFromGoletaToWestCovina.to,
             }),
           ])
         );
@@ -654,9 +654,9 @@ describe("Testing Ride endpoints", () => {
         expect(upcomingRides).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
-              ownerUsername: rideFromGoletaToWestCovina.ownerUsername,
-              from: rideFromGoletaToWestCovina.from,
-              to: rideFromGoletaToWestCovina.to,
+              ownerUsername: rideFromAlhambraToIslaVista.ownerUsername,
+              from: rideFromAlhambraToIslaVista.from,
+              to: rideFromAlhambraToIslaVista.to,
             }),
           ])
         );
@@ -754,9 +754,9 @@ describe("Testing Ride endpoints", () => {
               to: rideFromRiversideToFullerton.to,
             }),
             expect.objectContaining({
-              ownerUsername: rideFromAlhambraToIslaVista.ownerUsername,
-              from: rideFromAlhambraToIslaVista.from,
-              to: rideFromAlhambraToIslaVista.to,
+              ownerUsername: rideFromGoletaToWestCovina.ownerUsername,
+              from: rideFromGoletaToWestCovina.from,
+              to: rideFromGoletaToWestCovina.to,
             }),
           ])
         );
@@ -769,9 +769,9 @@ describe("Testing Ride endpoints", () => {
         expect(upcomingDrives).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
-              ownerUsername: rideFromGoletaToWestCovina.ownerUsername,
-              from: rideFromGoletaToWestCovina.from,
-              to: rideFromGoletaToWestCovina.to,
+              ownerUsername: rideFromAlhambraToIslaVista.ownerUsername,
+              from: rideFromAlhambraToIslaVista.from,
+              to: rideFromAlhambraToIslaVista.to,
             }),
           ])
         );

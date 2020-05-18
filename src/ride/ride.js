@@ -4,6 +4,8 @@ const rideSchema = mongoose.Schema({
   ownerUsername: String,
   from: String,
   to: String,
+  pickupLocation: String,
+  dropOffLocation: String,
   date: Date,
   price: String,
   seats: Number,

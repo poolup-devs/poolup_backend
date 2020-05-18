@@ -225,6 +225,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
               date: new Date(),
               redirectPath: MY_RIDES_PATH,
             });
+            console.log("changed status");
             break;
           }
           case "cancelled": {
@@ -268,7 +269,8 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             throw "invalid status to update";
           }
         }
-        return resolve(request_upd);
+        console.log("about to resolve");
+        return resolve();
       }
     } catch (err) {
       if (errFlag) {
@@ -320,23 +322,27 @@ const isAlreadyInRide = (requestInfo) => {
 
 // archiveRequest sets a specified request archived field to true
 const archiveRequest = (requestID) => {
-  const filter = { _id: requestID };
-  // const update = { $set: { archived: true } };
-  // const options = { new: true };
   return new Promise(async (resolve, reject) => {
     try {
+      const filter = { _id: requestID };
       const request_resp = await Request.findById(filter);
       if (request_resp == null) {
         reject(Error(404));
       }
 
-      var archive_request_resp = JSON.stringify(request_resp);
+      // Delete the _id from the request object, we will want a
+      // new one assigned once it is inserted into the
+      // archiveRequest collection.
+      var archive_request_resp = request_resp.toObject();
       delete archive_request_resp._id;
 
-      await ArchiveRequest.create(JSON.parse(archive_request_resp));
-      console.log("here");
+      // Insert to request into ArchiveRequest db collection
+      await ArchiveRequest.create(archive_request_resp);
 
-      return resolve(request_resp);
+      // Remove request from Request db collection
+      await Request.deleteOne({ _id: request_resp._id });
+
+      return resolve();
     } catch (err) {
       console.log(err);
       return reject(Error(500));

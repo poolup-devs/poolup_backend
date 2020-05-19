@@ -2,6 +2,7 @@ const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
 const Request = require("../request/request").Request;
+const requestHandler = require("../request/controller.js");
 const scheduler = require("../tasks/scheduler");
 const scheduledTasks = require("../tasks/scheduledTasks");
 const paymentHandler = require("../stripe/tool/payment-handler");
@@ -199,7 +200,7 @@ const postRide = (rideInfo) => {
       // Schedule a job that archives the remaining ride requests for a ride
       scheduler.scheduleTaskHoursAfterDate(
         `archiveRemainingRideRequests.${ride_new._id}`,
-        scheduledTasks.archiveRemainingRideRequests(ride_new._id),
+        requestHandler.archiveRemainingRideRequests(ride_new._id),
         rideInfo.date,
         0
       );

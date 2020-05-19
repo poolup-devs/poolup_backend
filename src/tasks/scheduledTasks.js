@@ -2,6 +2,8 @@ const Ride = require("../ride/ride").Ride;
 const User = require("../user/user").User;
 const Noti = require("../noti/noti").Noti;
 const Review = require("../review/review").Review;
+const Request = require("../request/request").Request;
+const request = require("../request/controller");
 const declineReview = require("../review/controller").declineReview;
 const makeReviewPublic = require("../review/controller").makeReviewPublic;
 const scheduler = require("./scheduler");
@@ -26,14 +28,6 @@ const updateCompletedRidesTask = (rideId) => {
         );
       });
     }
-  };
-};
-
-// Task to archive the remaining ride requests for a ride after it is completed
-const archiveRemainingRideRequests = (rideID) => {
-  return async function () {
-    const rideDetails = await Ride.findById(rideId);
-    console.log("Ride requests archived");
   };
 };
 
@@ -178,5 +172,4 @@ module.exports = {
   createNotiToLeaveReviewTask,
   expireAbilityToLeaveReviewTask,
   formatPassengerReviewMessage, // for unit testing
-  archiveRemainingRideRequests,
 };

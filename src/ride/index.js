@@ -2,6 +2,8 @@ const express = require("express");
 const router = new express.Router();
 const mongoose = require("mongoose");
 const db = require("./controller.js");
+const request = require("../request/controller.js");
+const scheduler = require("../tasks/scheduler.js");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
 
@@ -56,6 +58,18 @@ router.get("/rides/drives-history", checkAuth, async (req, res) => {
     );
     res.status(200).send(data);
   } catch (err) {
+    res.status(err.status).send(err.message);
+  }
+});
+
+//Get a user's (others & mine) drive history
+router.delete("/rides/delete-ride", checkAuth, async (req, res) => {
+  try {
+    await request.archiveRemainingRideRequests(req.body.ride._id);
+    scheduler.cancelTasksAssociatedWithRide(req.body.ride._id);
+    res.status(200);
+  } catch (err) {
+    console.log(err.message);
     res.status(err.status).send(err.message);
   }
 });

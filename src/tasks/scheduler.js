@@ -4,15 +4,19 @@ var schedule = require("node-schedule");
 const scheduleTaskHoursAfterDate = (uniqueTaskName, task, date, hours) => {
   var scheduledDate = new Date(date);
   scheduledDate.setHours(scheduledDate.getHours() + hours);
-  console.log(scheduledDate);
-  schedule.scheduleJob(uniqueTaskName, scheduledDate, task);
+  console.log("Scheduled date: " + scheduledDate);
+  schedule.scheduleJob(uniqueTaskName, scheduledDate, function () {
+    task;
+  });
 };
 
 // Schedule a task to run once, X hours after a certain date
 const scheduleTaskMinutesAfterDate = (uniqueTaskName, task, date, minutes) => {
   var scheduledDate = new Date(date);
   scheduledDate.setMinutes(scheduledDate.getMinutes() + minutes);
-  schedule.scheduleJob(uniqueTaskName, scheduledDate, task);
+  schedule.scheduleJob(uniqueTaskName, scheduledDate, function () {
+    task;
+  });
 };
 
 const cancelTask = (taskName) => {
@@ -30,6 +34,7 @@ const cancelTasksAssociatedWithRide = (rideId) => {
   const tasksToCancel = [
     `updateCompletedRidesTask.${rideId}`,
     `createNotiToLeaveReviewTask.${rideId}`,
+    `archiveRemainingRideRequests.${rideId}`,
   ];
   tasksToCancel.forEach((task) => {
     cancelTask(task);

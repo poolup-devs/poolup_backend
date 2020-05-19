@@ -350,26 +350,18 @@ const archiveRequest = (requestID) => {
   });
 };
 
-// archiveRequest sets a specified request archived field to false
-const unarchiveRequest = (requestID) => {
-  const filter = { _id: requestID };
-  const update = { $set: { archived: false } };
-  const options = { new: true };
-
+// Aarchive the remaining ride requests
+const archiveRemainingRideRequests = (rideID) => {
   return new Promise(async (resolve, reject) => {
-    try {
-      const request_upd = await Request.findByIdAndUpdate(
-        filter,
-        update,
-        options
-      );
-      if (request_upd == null) {
-        reject(Error(404));
+    const requests = await Request.find({ rideID: rideID });
+    for (const request of requests) {
+      try {
+        await archiveRequest(request._id);
+      } catch (err) {
+        reject(err);
       }
-      return resolve(request_upd);
-    } catch (err) {
-      return reject(Error(500));
     }
+    return resolve();
   });
 };
 
@@ -416,6 +408,6 @@ module.exports = {
   createRequest,
   updateRequestStatus,
   archiveRequest,
-  unarchiveRequest,
+  archiveRemainingRideRequests,
   decrementRemindCount,
 };

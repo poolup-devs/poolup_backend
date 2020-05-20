@@ -17,7 +17,7 @@ const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 router.post("/users/login", async (req, res) => {
   try {
     if (req.body.password) {
-      // req.body.password = sha256(req.body.password);
+      req.body.password = sha256(req.body.password);
     }
     const user = await db.login(req.body.email, req.body.password);
     const token = jwt.sign(

@@ -9,11 +9,12 @@ const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
 const userDB = require("../user/controller.js");
 const paymentHandler = require("./tool/payment-handler.js");
 const driverValidation = require("./tool/driver-info-validation.js");
+const errResp = require("../utils/errors/errResponse");
 
 // This endpoint is only used in the alpha version since stripe is not used
 router.post("/driver/create", async (req, res) => {
   try {
-    const authUsername = tokenParser(req.headers.authorization).username;
+    const authUsername = await tokenParser(req.headers.authorization);
     const userDetails = await userDB.findUserByUsername(authUsername);
 
     // Check if a driver already has a stripe account ID
@@ -49,7 +50,7 @@ router.post("/driver/create", async (req, res) => {
 });
 
 // Called when Stripe redirects from the account setup
-router.get("/stripe/token", (req, res) => {
+router.get("/stripe/token", async (req, res) => {
   const FRONT_END_URL = process.env.FRONT_END_URL;
   // Check that the session exists
   if (!req.session.username || !req.session.driverInfo) {
@@ -109,8 +110,8 @@ router.get("/stripe/token", (req, res) => {
 });
 
 // Redirect to Stripe Express for driver payment setup
-router.post("/stripe/driver/auth", checkAuth, (req, res) => {
-  const authUsername = tokenParser(req.headers.authorization).username;
+router.post("/stripe/driver/auth", checkAuth, async (req, res) => {
+  const authUsername = await tokenParser(req.headers.authorization);
 
   userDB.getMyInfo(authUsername, (err, userInfo) => {
     if (err) {
@@ -206,7 +207,7 @@ router.post("/stripe/create-payment-intent", async (req, res) => {
     );
     res.status(200).send({ clientSecret: clientSecret });
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -281,7 +282,7 @@ router.post("/stripe/dev/triggerSuccessfulPayment", async (req, res) => {
     await paymentHandler.handlePaymentIntentSucceeded(paymentIntent);
     res.sendStatus(200);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -298,7 +299,7 @@ router.post("/stripe/dev/triggerRefund", async (req, res) => {
     );
     res.sendStatus(200);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -310,7 +311,7 @@ router.post("/stripe/dev/customer", async (req, res) => {
     });
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 

@@ -1,7 +1,7 @@
 require("../src/db/mongoose");
 const app = require("./app");
 const path = require("path");
-const chalk = require("chalk");
+const logger = require("./utils/logger");
 const checkS3Connection = require("./db/awsS3_controller.js").checkS3Connection;
 const corsOriginContoller = require("./middleware/cors_origin_control.js");
 const checkTransfer = require("./stripe/tool/check-transfer.js").checkTransfer;
@@ -10,20 +10,10 @@ require("dotenv").config({ override: true });
 //Port config
 const port = process.env.PORT || 3000;
 
-console.log(
-  chalk.green("[INIT]: Service is in ") +
-    chalk.yellow(process.env.MODE) +
-    " MODE"
-);
+logger.info("[INIT]: Service is in " + process.env.MODE + " MODE");
+logger.info("[INIT]: FRONT_END_URL: " + process.env.FRONT_END_URL);
 
-console.log(
-  chalk.green("[INIT]: FRONT_END_URL: ") +
-    chalk.yellow(process.env.FRONT_END_URL)
-);
-
-console.log(
-  chalk.green("[INIT]: MONGODB_URL: ") + chalk.yellow(process.env.MONGODB_URL)
-);
+logger.info("[INIT]: MONGODB_URL: " + process.env.MONGODB_URL);
 
 // ////////////////////////////////////////
 // //TESTER
@@ -53,7 +43,5 @@ app.get("/*", (req, res) => {
 checkS3Connection();
 
 app.listen(port, () => {
-  console.log(
-    chalk.green("[INIT]: ") + "Server Listening on Port " + chalk.yellow(port)
-  );
+  logger.info("[INIT]: " + "Server Listening on Port " + port);
 });

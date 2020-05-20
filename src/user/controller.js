@@ -1,36 +1,30 @@
-const User = require("./user").User;
-const Ride = require("../ride/ride.js").Ride;
-const Noti = require("../noti/noti.js").Noti;
-const jwt = require("jsonwebtoken");
-const Email = require("../utils/email/email");
+const User = require("./user.js").User;
+const Email = require("./email/email").Email;
+const multiparty = require("multiparty");
+const fs = require("fs");
+const fileType = require("file-type");
+
+const s3_db = require("../db/awsS3_controller");
+const ControllerException = require("../utils/errors/controllerException");
+const School = require("../school/school.js").School;
 
 // Users require a certain minimum amount of ratings to calculate an average rating
 const MIN_TO_DISPLAY_AVERAGE_RATING = 1;
 
-const mongoose = require("mongoose");
-const dataSchema = new mongoose.Schema({});
-const Schools = mongoose.model("Schools", dataSchema, "schools");
 const parseDomain = require("parse-domain");
-const isEmail = require("isemail");
 const sha256 = require("sha256");
+
+const isValidEmailToRegister = require("./email/utils").isValidEmailToRegister;
 
 const login = async (email, password) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ email, password });
     if (!user) {
-      return reject("User with email and password not found.");
+      return reject(
+        new ControllerException(401, "User with email and password not found.")
+      );
     }
     return resolve(user);
-  });
-};
-
-const checkAvailability = (email, username, callback) => {
-  User.find({ email, username }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
   });
 };
 
@@ -42,25 +36,36 @@ const signup = async (userInfo) => {
     if (
       !requiredProperties.every((property) => userInfo.hasOwnProperty(property))
     ) {
-      return reject("Not all required fields were specified.");
+      return reject(
+        new ControllerException(400, "Not all required fields were specified.")
+      );
     }
     try {
+      const v = await isValidEmailToRegister(userInfo.email);
+      switch (v) {
+        case "email can be registered":
+          break;
+        case "email not verified":
+          return reject(new ControllerException(401, "Email not verified"));
+        case "email already registered":
+          return reject(
+            new ControllerException(400, "Email already registered")
+          );
+        default:
+          return reject(new ControllerException(400, "email case error"));
+      }
+
       // Create a user document containing a hashed password with username and school fields parsed from email
       userInfo.password = sha256(userInfo.password);
       userInfo.school = await parseSchoolFromEmail(userInfo.email);
       userInfo.username = userInfo.email.split("@")[0];
       userInfo.isRegistered = true;
-      const newlyRegisteredUser = await User.findOneAndUpdate(
+      const newUser = await User.create(userInfo);
+      User.setRandomBruinBear(newUser.username);
+      await Email.updateOne(
         { email: userInfo.email },
-        userInfo,
-        { new: true }
+        { status: "registered" }
       );
-      if (!newlyRegisteredUser) {
-        return reject(
-          "User did not verify email before inputting account information."
-        );
-      }
-      User.setRandomBruinBear(newlyRegisteredUser.username);
 
       // Give the user a stripe id
       var stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
@@ -68,66 +73,33 @@ const signup = async (userInfo) => {
       // Create Customer ID
       stripe.customers.create(
         {
-          email: newlyRegisteredUser.email,
-          name:
-            newlyRegisteredUser.firstName + " " + newlyRegisteredUser.lastName,
+          email: newUser.email,
+          name: newUser.firstName + " " + newUser.lastName,
         },
         function (err, customer) {
           // asynchronously called
           if (err) {
-            console.log("Failed to create Stripe Customer: ", err);
+            // console.log("Failed to create Stripe Customer: ", err);
           } else {
-            newlyRegisteredUser.stripe.customerID = customer.id;
-            return resolve(newlyRegisteredUser);
+            newUser.stripe.customerID = customer.id;
+            return resolve(newUser);
           }
+          return resolve(newUser);
         }
       );
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      return reject(err);
     }
   });
 };
 
-const sendVerificationEmail = (email) => {
+const findUserByUsername = (username) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (await isValidEmail(email)) {
-        // Construct verification email
-        const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, {
-          expiresIn: 60 * 30,
-        });
-        if (process.env.MODE === "STAGING") {
-          var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
-        } else {
-          var verificationUrl = `https://restapi.poolup.co/users/verify?email=${email}&token=${token}`;
-        }
-        await Email.sendVerificationEmail(email, verificationUrl);
-        return resolve(true);
-      }
-    } catch (e) {
-      reject(e);
-    }
-  });
-};
-
-// Adds a user with a verified email to the database.
-// The user will become permanent only once it is registered with a name and password.
-const verifyEmail = (email) => {
-  return new Promise(async (resolve, reject) => {
-    const verifiedEmail = await User.findOne({ email });
-    if (!verifiedEmail) {
-      return resolve(await User.create({ email }));
-    } else {
-      // The email has been verified but the user has not registered yet
-      if (!verifiedEmail.isRegistered) {
-        return resolve(verifiedEmail);
-      } else {
-        return reject({
-          name: "AccountAlreadyRegistered",
-          message:
-            "The user has already verified their email and registered their account.",
-        });
-      }
+      const userInfo = await User.findOne({ username });
+      return resolve(userInfo);
+    } catch (err) {
+      return reject(err);
     }
   });
 };
@@ -142,55 +114,6 @@ const findUserByEmail = (email, callback) => {
   });
 };
 
-const findUserByUsername = (username) => {
-  return new Promise(async (resolve, reject) => {
-    userInfo = await User.findOne({ username });
-    resolve(userInfo);
-  });
-};
-
-const findUserByPhoneNumber = (phoneNumber, callback) => {
-  User.find({ phoneNumber }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      callback(null, result);
-    }
-  });
-};
-
-const getMyInfo = (authUsername, callback) => {
-  User.findOne({ username: authUsername }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else if (result) {
-      const res_list = [
-        "username",
-        "firstName",
-        "lastName",
-        "email",
-        "createdAt",
-        "picUrl",
-        "stripe",
-      ];
-      const result_ = {};
-
-      res_list.forEach(function (item) {
-        result_[item] = result[item];
-      });
-
-      callback(null, result_);
-    } else {
-      callback(
-        {
-          message: "ERROR: username not found",
-        },
-        null
-      );
-    }
-  });
-};
-
 const getPicType = (username, callback) => {
   User.findOne({ username }, (err, result) => {
     if (err) {
@@ -201,28 +124,60 @@ const getPicType = (username, callback) => {
   });
 };
 
-const uploadPicUrl = (username, picUrl, picType, callback) => {
-  User.findOneAndUpdate(
-    { username },
-    { picUrl, picType },
-    { new: true },
-    (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, result);
+const updateProfilePic = (authUsername, req) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const parsedReqHeader = await promisfiedFormParse(req);
+      const files = parsedReqHeader.files;
+      // console.log(parsedReqHeader);
+
+      const path = files.file[0].path;
+      const buffer = fs.readFileSync(path);
+      const type = fileType(buffer);
+
+      const allowedFileType = ["jpg", "jpeg", "heic", "png"];
+      if (!type || !allowedFileType.includes(type.ext)) {
+        return reject(new ControllerException(400, "file type not allowed"));
       }
+
+      const fileName = `bucketFolder/${authUsername}-pic`;
+      const user = await User.findOne({ username: authUsername });
+      await s3_db.deleteFile(fileName, user.picType);
+      const uploadPromise = await s3_db.uploadFile(buffer, fileName, type);
+      const res = await User.findByIdAndUpdate(
+        user._id,
+        { picUrl: uploadPromise.Location, picType: type.ext },
+        { new: true }
+      );
+
+      return resolve(res);
+    } catch (err) {
+      return reject(err);
     }
-  );
+  });
+};
+
+const promisfiedFormParse = (req) => {
+  return new Promise(async (resolve, reject) => {
+    const form = new multiparty.Form();
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve({ fields: fields, files: files });
+    });
+  });
 };
 
 const getPicUrl = (username) => {
   return new Promise(async (resolve, reject) => {
     const userInfo = await findUserByUsername(username);
     if (!userInfo) {
-      return reject("ERROR: no result; potentially wrong username");
+      return reject(new ControllerException(404, "username not found"));
     } else if (userInfo.picUrl === undefined) {
-      return reject("ERROR: user's profile picture undefined");
+      return reject(
+        new ControllerException(400, "user's profile picture undefined")
+      );
     }
 
     return resolve(userInfo.picUrl);
@@ -237,13 +192,14 @@ const checkIfDriver = (username) => {
       },
       (err, result) => {
         if (err) {
-          reject(err);
+          return reject(err);
         }
 
         // If username not found
         if (!result) {
-          reject(new Error("User not found"));
-          return;
+          return reject(
+            new ControllerException(404, "user of username not found")
+          );
         }
 
         if (result.driver.isDriver) {
@@ -300,57 +256,18 @@ const updateUser = (authUsername, updates, callback) => {
   );
 };
 
-const deleteUser = (authUsername, callback) => {
-  //have to delete prof. pic in s3 TOO!!//
-  User.deleteOne({ username: authUsername }, (err, result) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      Ride.deleteMany({ ownerUsername: authUsername }, (err, result) => {
-        if (err) {
-          callback(err, null);
-        } else {
-          Noti.deleteMany({ username: authUsername }, (err, result) => {
-            if (err) {
-              callback(err, null);
-            } else {
-              callback(null, null);
-            }
-          });
-        }
-      });
-    }
-  });
-};
-
 const isValidPassword = (password) => {
   return new Promise(async (resolve, reject) => {
     // Password must be a minimum of 8 characters long
     if (password.length < 8) {
-      return reject("Password must be at least 8 characters long!");
+      return reject(
+        new ControllerException(
+          400,
+          "Password must be at least 8 characters long!"
+        )
+      );
     }
     return resolve(true);
-  });
-};
-
-const isValidEmail = (email) => {
-  return new Promise(async (resolve, reject) => {
-    // Validate email address
-    if (isEmail.validate(email)) {
-      // Must be student email
-      const emailDomain = parseDomain(email);
-
-      if (!emailDomain || emailDomain.tld !== "edu") {
-        return reject("Not an .edu email address!");
-      }
-      // A registered account exists with this email
-      if (await User.findOne({ email: email.trim(), isRegistered: true })) {
-        return reject("A registered account already exists with this email!");
-      }
-      return resolve(true);
-    } else {
-      return reject("Not a valid email address!");
-    }
   });
 };
 
@@ -359,11 +276,11 @@ const confirmCredentials = (authUsername, password) => {
     try {
       const user = await User.findOne({ username: authUsername, password });
       if (!user) {
-        return resolve(null);
+        return reject(new ControllerException(401, "incorrect password"));
       }
       return resolve(user);
-    } catch (e) {
-      reject(e);
+    } catch (err) {
+      return reject(err);
     }
   });
 };
@@ -388,11 +305,16 @@ const getAboutMe = (username) => {
     try {
       const user = await User.findOne({ username });
       if (!user) {
-        reject("There does not exist a user with this username.");
+        return reject(
+          new ControllerException(
+            404,
+            "There does not exist a user with this username."
+          )
+        );
       }
       return resolve(user.aboutMe);
-    } catch (e) {
-      return reject(e);
+    } catch (err) {
+      return reject(err);
     }
   });
 };
@@ -406,12 +328,17 @@ const updateAboutMe = (authUsername, updatedAboutMe) => {
     )
       .then((updatedUser) => {
         if (!updatedUser) {
-          reject("Could not find user in database when updating about me.");
+          return reject(
+            new ControllerException(
+              404,
+              "Could not find user in database when updating about me."
+            )
+          );
         }
         return resolve(updatedUser);
       })
-      .catch((e) => {
-        reject(e);
+      .catch((err) => {
+        return reject(err);
       });
   });
 };
@@ -423,7 +350,7 @@ const parseSchoolFromEmail = (schoolEmail) => {
     if (!emailDomain) {
       reject("Could not parse email to identify school");
     }
-    Schools.findOne({ emailDomain: emailDomain.domain }, (err, result) => {
+    School.findOne({ emailDomain: emailDomain.domain }, (err, result) => {
       if (!result) {
         // Domain -> School not found in database, so set to null until we can add it later
         return resolve(null);
@@ -439,7 +366,9 @@ const getAverageRating = (username) => {
     try {
       await User.findOne({ username }, (err, user) => {
         if (!user) {
-          return reject("User does not exist in the database");
+          return reject(
+            new ControllerException(404, "User does not exist in the database")
+          );
         }
         const { sumOfAllRatings, totalRatings } = user.rating;
 
@@ -449,14 +378,17 @@ const getAverageRating = (username) => {
           return resolve(averageRating);
         } else {
           return reject(
-            "User must have at least " +
-              MIN_TO_DISPLAY_AVERAGE_RATING +
-              " rating(s) to display an average rating!"
+            new ControllerException(
+              400,
+              "User must have at least " +
+                MIN_TO_DISPLAY_AVERAGE_RATING +
+                " rating(s) to display an average rating!"
+            )
           );
         }
       });
-    } catch (e) {
-      return reject("Could not retrieve all reviews left for user.");
+    } catch (err) {
+      return reject(err);
     }
   });
 };
@@ -466,7 +398,7 @@ const getPublicProfileInfo = (username) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ username });
     if (!user) {
-      reject("User could not be found!");
+      return reject(new ControllerException(404, "User could not be found!"));
     }
     const {
       firstName,
@@ -512,30 +444,27 @@ const getSchool = (username) => {
   return new Promise(async (resolve, reject) => {
     const user = await User.findOne({ username });
     if (!user) {
-      return reject("User could not be found!");
+      return reject(new ControllerException(404, "User could not be found!"));
     }
     return resolve(user.school);
   });
 };
 
 module.exports = {
-  checkAvailability,
   login,
-  verifyEmail,
-  isValidEmail,
-  sendVerificationEmail,
   findUserByEmail,
   findUserByUsername,
-  findUserByPhoneNumber,
-  getMyInfo,
-  uploadPicUrl,
+  // findUserByPhoneNumber,
+  // getMyInfo,
+  // uploadPicUrl,
+  updateProfilePic,
   getPicType,
   getPicUrl,
   signup,
   checkIfDriver,
   addUserDriverInfo,
   updateUser,
-  deleteUser,
+  // deleteUser,
   isValidPassword,
   passwordReset,
   getAboutMe,

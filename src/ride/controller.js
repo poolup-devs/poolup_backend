@@ -2,11 +2,9 @@ const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
 const Request = require("../request/request").Request;
-const requestHandler = require("../request/controller.js");
-const scheduler = require("../tasks/scheduler");
-const scheduledTasks = require("../tasks/scheduledTasks");
 const paymentHandler = require("../stripe/tool/payment-handler");
-const Error = require("../utils/error-model");
+const ControllerException = require("../utils/errors/controllerException");
+const agenda = require("../agenda/agenda");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
 const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
@@ -21,7 +19,7 @@ const createRideQueryFilter = (filter_) => {
     try {
       filter_ = JSON.parse(filter_);
     } catch (err) {
-      return reject(Error(400, err));
+      return reject(err);
     }
     let fromCitiesQuery = [];
     let toCitiesQuery = [];
@@ -90,7 +88,7 @@ const getMatchingRides = (filter_, pageNum) => {
       const matchingRides = await addDriverInfoToRides(ride_res);
       return resolve(matchingRides);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -106,7 +104,7 @@ const getRideHistory = (username) => {
         .limit(5);
       return resolve(ride_res);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -123,13 +121,13 @@ const getMyRideHistory = (authUsername, pageNum) => {
         .limit(5);
       return resolve(ride_res);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
 
 const getMyRideUpcoming = (authUsername) => {
-  return new Promise(async (resovle, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const ride_res = await Ride.find({
         passengers: authUsername,
@@ -140,7 +138,7 @@ const getMyRideUpcoming = (authUsername) => {
       const ridesUpcoming = await addDriverInfoToRides(ride_res);
       return resolve(ridesUpcoming);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -162,7 +160,7 @@ const getDriveHistory = (username) => {
       const driveHistory = await addDriverInfoToRides(ride_res);
       return resolve(driveHistory);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -180,72 +178,84 @@ const getDriveUpcoming = (username, pageNum) => {
       const upcomingDrives = await addDriverInfoToRides(ride_res);
       return resolve(upcomingDrives);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
 
-const postRide = (rideInfo) => {
+const postRide = (rideInfo, authUsername) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const ride_new = await Ride.create(rideInfo);
-      // Schedule a job that updates the number of completed rides for each user in the carpool that will occur 2 hours after the carpool begins
-      scheduler.scheduleTaskHoursAfterDate(
-        `updateCompletedRidesTask.${ride_new._id}`,
-        scheduledTasks.updateCompletedRidesTask(ride_new._id),
-        rideInfo.date,
-        2
-      );
+      if (authUsername != rideInfo.ownerUsername) {
+        return reject(
+          new ControllerException(403, "unmatching username of the request and the logged in user")
+        );
+      }
+      const newRide = await Ride.create(rideInfo);
 
       // Schedule a job that archives the remaining ride requests for a ride
-      scheduler.scheduleTaskHoursAfterDate(
-        `archiveRemainingRideRequests.${ride_new._id}`,
-        requestHandler.archiveRemainingRideRequests(ride_new._id),
+      agenda.scheduleJobHoursAfterDate(
+        "archive remaining ride requests",
+        { rideId: newRide._id },
         rideInfo.date,
         0
       );
 
-      // Schedule a job that prompts users in the ride to leave reviews 12 hours after carpool begins
-      scheduler.scheduleTaskHoursAfterDate(
-        `createNotiToLeaveReviewTask.${ride_new._id}`,
-        scheduledTasks.createNotiToLeaveReviewTask(ride_new._id),
+      // Schedule jobs to occur after ride completion
+      await agenda.scheduleJobHoursAfterDate(
+        "update number of completed rides",
+        { rideId: newRide._id },
+        rideInfo.date,
+        2
+      );
+
+      await agenda.scheduleJobHoursAfterDate(
+        "send leave a review web notifications",
+        { rideId: newRide._id },
         rideInfo.date,
         12
       );
-      return resolve(ride_new);
+
+      return resolve(newRide);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
 
-const joinRide = (ownerUsername, ride_id, passengerUsername) => {
+const joinRide = (rideInfo, passengerUsername) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const passenger = await User.findOne({ username: passengerUsername });
-      if (passenger == null) {
-        return reject(Error(404, "passenger not found"));
-      }
+      const ride_id = rideInfo._id;
+      const ownerUsername = rideInfo.ownerUsername;
       const noti = {
         username: ownerUsername,
         msg: `${passengerUsername} has joined your ride`,
         date: new Date(),
         redirectPath: MY_DRIVES_PATH,
       };
-      const ride_upd = await Ride.findOneAndUpdate(
-        { _id: ride_id, seats: { $gte: 1 } },
-        { $push: { passengers: passengerUsername }, $inc: { seats: -1 } },
+
+      const ride_res = await Ride.findById(ride_id);
+      if (!ride_res) {
+        return reject(new ControllerException(400, "ride is not found"));
+      } else if (ride_res.seats < 1) {
+        return reject(new ControllerException(400, "the ride is full"));
+      } else if (ride_res.ownerUsername == passengerUsername) {
+        return reject(new ControllerException(403, "driver of the ride cannot join the ride"));
+      } else if (ride_res.passengers.includes(passengerUsername)) {
+        return reject(new ControllerException(400, "user is already in the ride"));
+      }
+
+      const ride_upd = await Ride.findByIdAndUpdate(
+        ride_id,
+        { $addToSet: { passengers: passengerUsername }, $inc: { seats: -1 } },
         { new: true }
       );
-      if (ride_upd == null) {
-        return reject(
-          Error(400, "either the ride's id is not found, or the ride is full")
-        );
-      }
-      const noti_new = await Noti.create(noti);
+      await Noti.create(noti);
+
       return resolve(ride_upd);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -289,12 +299,11 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
 
       // Delete the ride
       await Ride.deleteOne({ _id: rideId });
-      scheduler.cancelTasksAssociatedWithRide(rideId);
+      await agenda.cancelJobsAssociatedWithRide(rideId);
+
       // There are no passengers in the ride, so the driver can freely cancel without penalties
       if (cancelledRideDoc.passengers.length === 0) {
-        return resolve(
-          "Driver cancelled ride without penalty because there were no passengers."
-        );
+        return resolve("Driver cancelled ride without penalty because there were no passengers.");
       } else {
         // Increment the user's number of cancelled rides
         await User.updateOne({ username }, { $inc: { ridesCancelled: 1 } });
@@ -350,11 +359,11 @@ const rideDetails = (_id) => {
     try {
       const ride_res = await Ride.findById(_id);
       if (ride_res == null) {
-        return reject(Error(404, "ride not found"));
+        return reject(new ControllerException(404, "ride not found"));
       }
-      resolve(ride_res);
+      return resolve(ride_res);
     } catch (err) {
-      reject(Error(500));
+      return reject(err);
     }
   });
 };
@@ -363,16 +372,18 @@ const rideDetails = (_id) => {
 const addDriverInfoToRides = (rides) => {
   return new Promise(async (resolve, reject) => {
     try {
-      let modifiedRides = JSON.parse(JSON.stringify(rides));
-      for (i = 0; i < modifiedRides.length; i++) {
+      modifiedRides = [];
+      for (const ride of rides) {
         const driver = await User.findOne({
-          username: modifiedRides[i].ownerUsername,
+          username: ride.ownerUsername,
         });
+        var modifiedRide = ride.toObject();
         const { picUrl, picType, firstName, lastName } = driver;
-        modifiedRides[i].picUrl = picUrl;
-        modifiedRides[i].picType = picType;
-        modifiedRides[i].firstName = firstName;
-        modifiedRides[i].lastName = lastName;
+        modifiedRide.picUrl = picUrl;
+        modifiedRide.picType = picType;
+        modifiedRide.firstName = firstName;
+        modifiedRide.lastName = lastName;
+        modifiedRides.push(modifiedRide);
       }
       resolve(modifiedRides);
     } catch (e) {

@@ -7,17 +7,18 @@ const router = new express.Router();
 const db = require("./controller.js");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
+const errResp = require("../utils/errors/errResponse");
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 //Get Noti for driver
 router.get("/notis/noti", checkAuth, async (req, res) => {
-  const username = tokenParser(req.headers.authorization).username;
+  const username = await tokenParser(req.headers.authorization);
   try {
     const data = await db.getAllUserNoti(username, req.query.pageNum);
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 
@@ -27,7 +28,7 @@ router.put("/notis/view", checkAuth, async (req, res) => {
     const data = await db.viewNoti(req.body.notiInfo);
     res.status(200).send(data);
   } catch (err) {
-    res.status(err.status).send(err.message);
+    errResp(res, err);
   }
 });
 

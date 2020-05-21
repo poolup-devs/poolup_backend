@@ -1,4 +1,5 @@
 const logger = require("../logger");
+const Sentry = require("../sentry.js");
 
 /**
  * errorResponse function
@@ -23,6 +24,9 @@ const errorResponse = (res, err) => {
   } else {
     logger.error(err.stack);
   }
+
+  // Send to SentryIO
+  Sentry.captureException(err);
 
   // hide details of an internal server error
   if (status == 500) {

@@ -9,7 +9,6 @@ const errResp = require("../../utils/errors/errResponse");
 // Send verification email
 router.get("/users/sendVerificationEmail", async (req, res) => {
   try {
-    console.log(asdlkfjsd.sdlfj);
     await db.sendVerificationEmail(req.query.email);
     res.status(200).send("Verification email sent successfully.");
   } catch (err) {
@@ -30,14 +29,12 @@ router.get("/users/verify", async (req, res) => {
       if (process.env.MODE === "STAGING" || process.env.MODE === "TESTING") {
         return res.redirect(
           302,
-          process.env.FRONT_END_URL +
-            `/signup/2/expired?email=${req.query.email}`
+          process.env.FRONT_END_URL + `/signup/2/expired?email=${req.query.email}`
         );
       } else {
         return res.redirect(
           302,
-          process.env.FRONT_END_URL +
-            `/signup/2/expired?email=${req.query.email}`
+          process.env.FRONT_END_URL + `/signup/2/expired?email=${req.query.email}`
         );
       }
     } else {
@@ -50,22 +47,13 @@ router.get("/users/verify", async (req, res) => {
     await db.verifyEmail(userEmail.email);
     // Redirect to register the user's name and password
     if (process.env.MODE === "STAGING" || process.env.MODE === "TESTING") {
-      return res.redirect(
-        302,
-        process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`
-      );
+      return res.redirect(302, process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`);
     } else {
-      return res.redirect(
-        302,
-        process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`
-      );
+      return res.redirect(302, process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`);
     }
   } catch (err) {
     if (err.message == "The email is in pre-registration status") {
-      return res.redirect(
-        302,
-        process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`
-      );
+      return res.redirect(302, process.env.FRONT_END_URL + `/signup/3?email=${userEmail.email}`);
     }
     return errResp(res, err);
   }

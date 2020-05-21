@@ -26,6 +26,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sentry/browser": "^5.15.5",
     "@sentry/node": "^5.15.5",
     "agenda": "^3.1.0",
     "aws-sdk": "^2.486.0",

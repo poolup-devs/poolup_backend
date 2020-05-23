@@ -20,6 +20,7 @@ Tech Stack: NodeJS: Express, MongoDB: Mongoose
 - [Npm Scripts](#npm-scripts)
 - [Additional Tools](#additional-tools)
 - [Directory Structure](#directory-structure)
+- [Code Reviews](#code-reviews)
 - [Coding Standards and Rules](#coding-standards-and-rules)
 
 ### Prerequisites
@@ -33,6 +34,7 @@ Tech Stack: NodeJS: Express, MongoDB: Mongoose
 - Open project folder in a [devcontainer](https://code.visualstudio.com/docs/remote/containers) by opening Visual Studio Code's command palette and executing `Remote-Containers: Open Folder in Container...`. For more information about our devcontainer look at .`devcontainer.json`
 - Start the API with `npm run docker-dev`
 - Access the API at `http://localhost:3000`
+- Editing Configuration requires you to rebuild the devcontainer. Go to command palette and execute `Remote-Containers: Rebuild Container`
 
 ---
 
@@ -189,6 +191,27 @@ Poolup API is configured via environment variables. The applicable environment v
     \---user
             rating.test.js
 ```
+
+---
+
+### Code Reviews
+
+#### Reviewee
+
+1. When submitting a new PR make sure it is as small and digestible as possible
+2. Make sure PR passes CI/CD Pipeline
+3. Ask for and Assign Reviewer(s)
+4. Add context to the PR in the form of a detailed change log and annotations or setting up a meeting with reviewer(s) to fill them in on the changes.
+
+#### Reviewer
+
+1. Review Context
+2. (Optional) Check out PR in a Container
+   - Start VS Code and run `Remote-Containers: Open Repository in Container...`
+   - Type in Github branch URL, Github PR URL, etc...
+   - VS Code will reload, clone the source code, and start building the dev container. The PR will be automatically checked out, and the [Github Pull Requests extension](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github) will be installed in the container. The
+   - [Source](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume)
+3. By yourself, slowly go through the code while keeping a [checklist](https://www.codementor.io/blog/code-review-checklist-76q7ovkaqj) in mind and add comments where necessasry
 
 ---
 

@@ -20,6 +20,7 @@ Tech Stack: NodeJS: Express, MongoDB: Mongoose
 - [Npm Scripts](#npm-scripts)
 - [Additional Tools](#additional-tools)
 - [Directory Structure](#directory-structure)
+- [Code Reviews](#code-reviews)
 - [Coding Standards and Rules](#coding-standards-and-rules)
 
 ### Prerequisites
@@ -33,6 +34,7 @@ Tech Stack: NodeJS: Express, MongoDB: Mongoose
 - Open project folder in a [devcontainer](https://code.visualstudio.com/docs/remote/containers) by opening Visual Studio Code's command palette and executing `Remote-Containers: Open Folder in Container...`. For more information about our devcontainer look at .`devcontainer.json`
 - Start the API with `npm run docker-dev`
 - Access the API at `http://localhost:3000`
+- Editing Configuration requires you to rebuild the devcontainer. Go to command palette and execute `Remote-Containers: Rebuild Container`
 
 ---
 

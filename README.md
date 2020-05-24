@@ -206,12 +206,7 @@ Poolup API is configured via environment variables. The applicable environment v
 #### Reviewer
 
 1. Review Context
-2. (Optional) Check out PR in a Container
-   - Start VS Code and run `Remote-Containers: Open Repository in Container...`
-   - Type in Github branch URL, Github PR URL, etc...
-   - VS Code will reload, clone the source code, and start building the dev container. The PR will be automatically checked out, and the [Github Pull Requests extension](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github) will be installed in the container. The
-   - [Source](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume)
-3. By yourself, slowly go through the code while keeping a [checklist](https://www.codementor.io/blog/code-review-checklist-76q7ovkaqj) in mind and add comments where necessasry
+2. By yourself, slowly go through the code while keeping a [checklist](https://www.codementor.io/blog/code-review-checklist-76q7ovkaqj) in mind and add comments where necessasry
 
 ---
 

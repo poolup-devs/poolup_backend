@@ -130,4 +130,14 @@ router.get("/rides/getAvailableCounties", (req, res) => {
   res.status(200).json(counties);
 });
 
+router.get("/rides/ride-details", checkAuth, async (req, res) => {
+  let rideID = req.query.rideID;
+  try {
+    const data = await db.getRideDetails(mongoose.Types.ObjectId(rideID));
+    res.status(200).send(data);
+  } catch (err) {
+    errResp(res, err);
+  }
+});
+
 module.exports = router;

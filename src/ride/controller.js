@@ -2,7 +2,6 @@ const Ride = require("./ride").Ride;
 const Noti = require("../noti/noti").Noti;
 const User = require("../user/user").User;
 const Request = require("../request/request").Request;
-const paymentHandler = require("../stripe/tool/payment-handler");
 const ControllerException = require("../utils/errors/controllerException");
 const agenda = require("../agenda/agenda");
 
@@ -130,6 +129,20 @@ const getMyRideUpcoming = (authUsername, pageNum) => {
         .lean();
       const ridesUpcoming = await addDriverInfoToRides(ride_res);
       return resolve(ridesUpcoming);
+    } catch (err) {
+      return reject(err);
+    }
+  });
+};
+
+const getRideDetails = (_id) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ride = await Ride.findById(_id).lean();
+      if (ride == null) {
+        return reject(new ControllerException(404, "ride not found"));
+      }
+      return resolve(ride);
     } catch (err) {
       return reject(err);
     }
@@ -366,6 +379,7 @@ module.exports = {
   getMatchingRides,
   getRideHistory,
   getMyRideUpcoming,
+  getRideDetails,
   getDriveHistory,
   getDriveUpcoming,
   postRide,

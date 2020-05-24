@@ -9,6 +9,7 @@ const app = require("../../src/app");
 const request = require("supertest");
 const db = require("../../src/ride/controller.js");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 describe("Testing Ride endpoints", () => {
   afterEach(async () => {
@@ -775,6 +776,35 @@ describe("Testing Ride endpoints", () => {
             }),
           ])
         );
+      });
+    });
+
+    describe("Testing the retrieval of ride details", () => {
+      test("Test successful retrieval of ride details", async () => {
+        const ride = await db.getRideDetails(pastRideFromSacramentoToGoleta._id);
+        expect(ride).toEqual(
+          expect.objectContaining({
+            ownerUsername: driver.username,
+            date: oldestPastDate,
+            passengers: ["passenger1"],
+            from: "Sacramento",
+            to: "Goleta",
+          })
+        );
+      });
+
+      test("Should expect 404 error if retrieving the ride details of a ride that does not exist", async () => {
+        try {
+          expect.assertions(1);
+          const ride = await db.getRideDetails(mongoose.Types.ObjectId());
+        } catch (e) {
+          expect(e).toEqual(
+            expect.objectContaining({
+              name: "ControllerException (Not Found)",
+              status: 404,
+            })
+          );
+        }
       });
     });
   });

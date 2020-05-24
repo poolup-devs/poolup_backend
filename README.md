@@ -907,7 +907,7 @@ GET request
 
 **params**
 
-filter(JSON object with fields: "from", "to", and "date"), pageNum
+filter(JSON object with fields: "from", "to", "date", and "price"), pageNum
 
 if FILTER IS UNDEFINED, returns ALL available drives sorted in date/time
 
@@ -919,7 +919,8 @@ filter Schema:
         "from": "CITY",
         "to": "CITY",
         "date_from": "TIMERANGE_START",
-        "date_to": "TIMERANGE_END"
+        "date_to": "TIMERANGE_END",
+        "price": 1 for ASC and -1 for DESC
     }
 
 ```
@@ -939,7 +940,7 @@ localhost:3000/rides/matching-rides?filter={"from": "Irvine", "to" : "Los Angele
 
 ```
 
-The rides are sorted by date, in ascending order, or by nearest date first.
+The rides are sorted by date, such that the ride with the closest date is first (ascending order).
 
 Get all rides from Irvine to Los Angeles between 8:00 AM to 9:30 AM on 2019-09-13
 

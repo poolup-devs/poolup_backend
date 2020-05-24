@@ -1271,7 +1271,16 @@ PUT request
 - In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs: 
 1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`. 
 	- An example of a notification received by a passenger in the ride is the following:
-  	`{ viewed: false, _id: 5e6532be23cf21496470c042, username: 'passenger1', msg: 'driverUsername has cancelled your ride', senderEmail: 'driverUsername@ucla.edu', date: 2020-03-08T18:00:30.136Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling' } }` 
+  	```
+	{  
+		_id: 5e6532be23cf21496470c042, 
+		username: 'passenger1', 
+		msg: 'driverUsername has cancelled your ride', 
+		date: 2020-03-08T18:00:30.136Z, 
+		additionalProperties: { cancellationReason: 'No longer traveling' },
+		viewed: false
+	}
+	```
 2. The ride is removed from the Ride collection. 
 3. The driver receives the following penalty: 
 	- `ridesCancelled` property is incremented
@@ -1279,7 +1288,16 @@ PUT request
 - In the event that a **passenger** cancels a ride, the following occurs: 
 1. The driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`. 
 	- An example of a notification received by the driver is the following:
- 	 `{ viewed: false, _id: 5e6534144a54ab39342752d0, username: 'driverUsername', msg: 'passenger1 has cancelled your ride', senderEmail: 'passenger1@ucla.edu', date: 2020-03-08T18:06:12.834Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } }`
+	```
+ 	 { 
+		_id: 5e6534144a54ab39342752d0, 
+		username: 'driverUsername', 
+		msg: 'passenger1 has cancelled your ride', 
+		date: 2020-03-08T18:06:12.834Z, 
+		viewed: false, 
+		additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } 
+	 }
+	 ```
  2. All other passengers, if any, are notified about the cancellation. This notification ONLY includes the additional property: `cancellationReason`.
  3. The passenger who cancelled is removed from the ride, and a new spot is freed up. 4. The passenger who cancelled receive the following penalty: 
 	- `ridesCancelled` property is incremented

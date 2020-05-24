@@ -294,7 +294,7 @@ Models:
 | /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
 | /users/info                  | GET         | [Get my account's information](#my-info)                           |
 | /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
-| /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
+| /users/school                | GET         | [Get a user's school](#get-school)                                 |
 | /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                      |
 | /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
 | /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |

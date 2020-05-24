@@ -1,6 +1,7 @@
 const express = require("express");
 const router = new express.Router();
 const db = require("./controller.js");
+const mongoose = require("mongoose");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
 const errResp = require("../utils/errors/errResponse");
@@ -83,7 +84,6 @@ router.post("/rides/post-ride", checkAuth, async (req, res) => {
 router.put("/rides/join-ride", checkAuth, async (req, res) => {
   try {
     var authUsername = await tokenParser(req.headers.authorization);
-
     const data = await db.joinRide(req.body.ride, authUsername);
     res.status(200).send(data);
   } catch (err) {
@@ -112,7 +112,7 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
 });
 
 // Get a ride from the database by querying with its rideId
-router.get("/rides/rideDetails", checkAuth, async (req, res) => {
+router.get("/rides/ride-details", checkAuth, async (req, res) => {
   let rideID = req.query.rideID;
   try {
     const data = await db.getRideDetails(mongoose.Types.ObjectId(rideID));

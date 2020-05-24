@@ -8,7 +8,6 @@ const user_devCon = require("../../src/user/dev_controller");
 const app = require("../../src/app");
 const request = require("supertest");
 const db = require("../../src/ride/controller.js");
-const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 
 describe("Testing Ride endpoints", () => {
@@ -17,38 +16,6 @@ describe("Testing Ride endpoints", () => {
     await User.deleteMany({});
     await Noti.deleteMany({});
     await Email.deleteMany({});
-  });
-
-  describe("Testing ride posting", () => {
-    let sampleRide = {
-      ownerUsername: "",
-      from: "Here",
-      to: "There",
-      date: new Date(),
-      price: "20",
-      seats: 4,
-      detail: "Third test for post",
-      passengers: [],
-    };
-
-    // Can't post a ride with different username in rideInfo and authUsername
-    test("Can't post a ride with different username in rideInfo and authUsername", async () => {
-      const user_obj = user_devCon.dev_createDummyUserObj("driver");
-      const user = user_devCon.dev_createRegisteredUser(user_obj);
-      let ride = sampleRide;
-      ride.ownerUsername = "bogusUsername";
-
-      const userAuthToken = jwt.sign(
-        { username: user.username, _id: user._id },
-        process.env.JWT_SECRET_KEY
-      );
-
-      await request(app)
-        .post("/rides/post-ride")
-        .send({ rideInfo: ride })
-        .set("Authorization", "Bearer " + userAuthToken)
-        .expect(403);
-    });
   });
 
   describe("Testing when a user joins a ride", () => {
@@ -112,6 +79,57 @@ describe("Testing Ride endpoints", () => {
         expect(i).toBe(newRide.seats);
         expect(err.message).toBe("the ride is full");
       }
+    });
+
+    describe("Testing /rides/join-ride endpoint", () => {
+      let newRide;
+      beforeEach(async () => {
+        newRide = await Ride.create({
+          ownerUsername: "driverUsername",
+          passengers: ["passenger1"],
+          from: "Sacramento",
+          to: "Goleta",
+        });
+      });
+
+      test("Should return 403 response code when driver tries to join their own ride via /rides/join-ride.", async () => {
+        await request(app)
+          .put("/rides/join-ride")
+          .send({
+            ride: newRide,
+          })
+          .set(
+            "Authorization",
+            "Bearer " + user_devCon.dev_createJWTAuthenticationToken("driverUsername")
+          )
+          .expect(403);
+      });
+
+      test("Should return 400 response code when a passenger tries to join their own ride twice via /rides/join-ride.", async () => {
+        await request(app)
+          .put("/rides/join-ride")
+          .send({
+            ride: newRide,
+          })
+          .set(
+            "Authorization",
+            "Bearer " + user_devCon.dev_createJWTAuthenticationToken("passenger1")
+          )
+          .expect(400);
+      });
+
+      test("Should return 200 response code when new passenger successfully joins their own ride via /rides/join-ride.", async () => {
+        await request(app)
+          .put("/rides/join-ride")
+          .send({
+            ride: newRide,
+          })
+          .set(
+            "Authorization",
+            "Bearer " + user_devCon.dev_createJWTAuthenticationToken("passenger2")
+          )
+          .expect(200);
+      });
     });
   });
 
@@ -240,13 +258,12 @@ describe("Testing Ride endpoints", () => {
         seats: 1,
       });
 
-      const authToken = jwt.sign(
-        { username: passenger.username, _id: passenger._id },
-        process.env.JWT_SECRET_KEY
-      );
       await request(app)
         .put("/rides/cancel-ride")
-        .set("Authorization", "Bearer " + authToken)
+        .set(
+          "Authorization",
+          "Bearer " + user_devCon.dev_createJWTAuthenticationToken(passenger.username)
+        )
         .send({
           cancellationReason: "Change of travel plans",
           messageToDriver: "I'm so sorry for cancelling on you! :(",
@@ -264,14 +281,13 @@ describe("Testing Ride endpoints", () => {
         passengers: ["passenger1"],
         seats: 1,
       });
-      const authToken = jwt.sign(
-        { username: driver.username, _id: driver._id },
-        process.env.JWT_SECRET_KEY
-      );
 
       await request(app)
         .put("/rides/cancel-ride")
-        .set("Authorization", "Bearer " + authToken)
+        .set(
+          "Authorization",
+          "Bearer " + user_devCon.dev_createJWTAuthenticationToken(driver.username)
+        )
         .send({ cancellationReason: "Change of travel plans", ride })
         .expect(200);
     });
@@ -303,6 +319,49 @@ describe("Testing Ride endpoints", () => {
       await agenda.cancel({ name: "update number of completed rides" });
       await agenda.cancel({ name: "send leave a review web notifications" });
     });
+
+    test("Should return 201 response code when sucessfully posting a new ride to /rides/post-ride.", async () => {
+      await request(app)
+        .post("/rides/post-ride")
+        .send({
+          rideInfo: {
+            ownerUsername: "driverUsername",
+            passengers: ["passengerUsername"],
+            from: "Sacramento",
+            to: "Goleta",
+          },
+        })
+        .set(
+          "Authorization",
+          "Bearer " + user_devCon.dev_createJWTAuthenticationToken("driverUsername")
+        )
+        .expect(201);
+    });
+
+    test("Can't post a ride with different username in rideInfo and authUsername. Should return 403 response.", async () => {
+      const user_obj = user_devCon.dev_createDummyUserObj("driver");
+      const user = user_devCon.dev_createRegisteredUser(user_obj);
+      let ride = {
+        ownerUsername: "",
+        from: "Here",
+        to: "There",
+        date: new Date(),
+        price: "20",
+        seats: 4,
+        detail: "Third test for post",
+        passengers: [],
+      };
+      ride.ownerUsername = "bogusUsername";
+
+      await request(app)
+        .post("/rides/post-ride")
+        .send({ rideInfo: ride })
+        .set(
+          "Authorization",
+          "Bearer " + user_devCon.dev_createJWTAuthenticationToken(user.username)
+        )
+        .expect(403);
+    });
   });
 
   describe("Testing ride queries", () => {
@@ -319,6 +378,7 @@ describe("Testing Ride endpoints", () => {
     oldestPastDate.setDate(now.getDate() - 3);
 
     let driver;
+    let passenger;
 
     let pastRideFromSacramentoToGoleta;
     let pastRideFromNorwalkToFresno;
@@ -343,18 +403,26 @@ describe("Testing Ride endpoints", () => {
         lastName: "Smith",
       });
 
+      passenger = await User.create({
+        username: "passenger1",
+        picUrl: "some_url_1",
+        picType: "png",
+        firstName: "Sarah",
+        lastName: "Smith",
+      });
+
       // Past Rides
       pastRideFromSacramentoToGoleta = await Ride.create({
         ownerUsername: driver.username,
         date: oldestPastDate,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
         from: "Sacramento",
         to: "Goleta",
       });
       pastRideFromNorwalkToFresno = await Ride.create({
         ownerUsername: driver.username,
         date: pastDate,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
         from: "Norwalk",
         to: "Fresno",
       });
@@ -363,28 +431,28 @@ describe("Testing Ride endpoints", () => {
         from: "Irvine",
         to: "Los Angeles",
         date: pastDate,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
       });
       pastRideFromLosAngelesToWestCovina = await Ride.create({
         ownerUsername: driver.username,
         from: "Los Angeles",
         to: "West Covina",
         date: pastDate,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
       });
       pastRideFromLosAngelesToRiverside = await Ride.create({
         ownerUsername: driver.username,
         from: "Los Angeles",
         to: "Riverside",
         date: pastDate,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
       });
       pastRideFromSantaBarbaraToOntario = await Ride.create({
         ownerUsername: driver.username,
         from: "Santa Barbara",
         to: "Ontario",
         date: pastDate,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
       });
 
       // Future Rides
@@ -395,7 +463,7 @@ describe("Testing Ride endpoints", () => {
         date: oldestFutureDate,
         price: "20",
         seats: 4,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
       });
       rideFromGoletaToIrvine = await Ride.create({
         ownerUsername: driver.username,
@@ -404,7 +472,7 @@ describe("Testing Ride endpoints", () => {
         date: futureDate,
         price: "20",
         seats: 4,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
       });
       rideFromPasadenaToOakland = await Ride.create({
         ownerUsername: driver.username,
@@ -413,7 +481,7 @@ describe("Testing Ride endpoints", () => {
         date: futureDate,
         price: "20",
         seats: 4,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
       });
       rideFromLosAngelesToChino = await Ride.create({
         ownerUsername: driver.username,
@@ -422,7 +490,7 @@ describe("Testing Ride endpoints", () => {
         date: futureDate,
         price: "20",
         seats: 4,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
       });
       rideFromRiversideToFullerton = await Ride.create({
         ownerUsername: driver.username,
@@ -431,7 +499,7 @@ describe("Testing Ride endpoints", () => {
         date: futureDate,
         price: "20",
         seats: 4,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
       });
       rideFromAlhambraToIslaVista = await Ride.create({
         ownerUsername: driver.username,
@@ -440,7 +508,7 @@ describe("Testing Ride endpoints", () => {
         date: futureDate,
         price: "20",
         seats: 4,
-        passengers: ["passenger1"],
+        passengers: [passenger.username],
       });
     });
 
@@ -541,12 +609,12 @@ describe("Testing Ride endpoints", () => {
         );
       });
 
-      test("When changing a user's password in an authorized session, should return 200 response code", async () => {
+      test("Should return 200 response code when filtering rides by using the /rides/matching-rides endpoint.", async () => {
         await request(app)
           .get("/rides/matching-rides")
-          .send({
-            newPassword: "newPassword",
-          })
+          .send(
+            `{ "from": "Santa Barbara", "to": "Los Angeles", "date_from": "${now.toISOString()}", "date_to": "${futureDate.toISOString()}" }`
+          )
           .expect(200);
       });
     });
@@ -559,7 +627,7 @@ describe("Testing Ride endpoints", () => {
       });
 
       test("A user who has been a passenger should have their latest past rides in their ride history", async () => {
-        const rideHistory = await db.getRideHistory("passenger1", 0);
+        const rideHistory = await db.getRideHistory(passenger.username, 0);
         expect(rideHistory.length).toBe(5);
         // Should not include the oldest date, only latest 5 rides
         expect(rideHistory).toEqual(
@@ -594,7 +662,7 @@ describe("Testing Ride endpoints", () => {
       });
 
       test("Testing pagination of ride history for a user with more than 5 past rides", async () => {
-        const rideHistory = await db.getRideHistory("passenger1", 1);
+        const rideHistory = await db.getRideHistory(passenger.username, 1);
         expect(rideHistory.length).toBe(1);
         // Oldest ride should show up on the second page
         expect(rideHistory).toEqual(
@@ -607,6 +675,28 @@ describe("Testing Ride endpoints", () => {
           ])
         );
       });
+
+      test("Should return 200 response code when obtaining another user's ride history by using the /rides/user-rides-history endpoint.", async () => {
+        await request(app)
+          .get("/rides/user-rides-history")
+          .query({ username: passenger.username, pageNum: 0 })
+          .set(
+            "Authorization",
+            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(passenger.username)
+          )
+          .expect(200);
+      });
+
+      test("Should return 200 response code when obtaining the currently logged in user's ride history by using the /rides/my-rides-history endpoint.", async () => {
+        await request(app)
+          .get("/rides/my-rides-history")
+          .query({ pageNum: 0 })
+          .set(
+            "Authorization",
+            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(passenger.username)
+          )
+          .expect(200);
+      });
     });
 
     describe("Testing the retrieval of rider's upcoming rides", () => {
@@ -616,7 +706,7 @@ describe("Testing Ride endpoints", () => {
       });
 
       test("A user with upcoming rides should have their latest upcoming rides in a list", async () => {
-        const upcomingRides = await db.getMyRideUpcoming("passenger1", 0);
+        const upcomingRides = await db.getMyRideUpcoming(passenger.username, 0);
         expect(upcomingRides.length).toBe(5);
         expect(upcomingRides).toEqual(
           expect.arrayContaining([
@@ -648,8 +738,9 @@ describe("Testing Ride endpoints", () => {
           ])
         );
       });
+
       test("Testing pagination of upcoming rides for a user with more than 5 upcoming rides", async () => {
-        const upcomingRides = await db.getMyRideUpcoming("passenger1", 1);
+        const upcomingRides = await db.getMyRideUpcoming(passenger.username, 1);
         expect(upcomingRides.length).toBe(1);
         // Oldest upcoming ride should show up on the second page
         expect(upcomingRides).toEqual(
@@ -661,6 +752,17 @@ describe("Testing Ride endpoints", () => {
             }),
           ])
         );
+      });
+
+      test("Should return 200 response code when obtaining the currently logged in user's upcoming rides by using the /rides/my-rides-upcoming endpoint.", async () => {
+        await request(app)
+          .get("/rides/my-rides-upcoming")
+          .query({ pageNum: 0 })
+          .set(
+            "Authorization",
+            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(passenger.username)
+          )
+          .expect(200);
       });
     });
 
@@ -721,6 +823,28 @@ describe("Testing Ride endpoints", () => {
           ])
         );
       });
+
+      test("Should return 200 response code when obtaining the currently logged in user's drive history by using the /rides/drives-history endpoint.", async () => {
+        await request(app)
+          .get("/rides/drives-history")
+          .query({ username: driver.username, pageNum: 0 })
+          .set(
+            "Authorization",
+            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(driver.username)
+          )
+          .expect(200);
+      });
+
+      test("Should return 200 response code when obtaining another user's drive history by using the /rides/drives-history endpoint.", async () => {
+        await request(app)
+          .get("/rides/drives-history")
+          .query({ username: passenger.username, pageNum: 0 })
+          .set(
+            "Authorization",
+            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(driver.username)
+          )
+          .expect(200);
+      });
     });
 
     describe("Testing the retrieval of a driver's upcoming drives", () => {
@@ -777,6 +901,17 @@ describe("Testing Ride endpoints", () => {
           ])
         );
       });
+
+      test("Should return 200 response code when obtaining a user's upcoming drives by using the /rides/drives-upcoming endpoint.", async () => {
+        await request(app)
+          .get("/rides/drives-upcoming")
+          .query({ username: driver.username, pageNum: 0 })
+          .set(
+            "Authorization",
+            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(driver.username)
+          )
+          .expect(200);
+      });
     });
 
     describe("Testing the retrieval of ride details", () => {
@@ -806,6 +941,17 @@ describe("Testing Ride endpoints", () => {
           );
         }
       });
+    });
+
+    test("Should return 200 response code when retrieving an existing ride's ride details via /rides/rideDetails.", async () => {
+      await request(app)
+        .get("/rides/ride-details")
+        .query({ rideID: pastRideFromSacramentoToGoleta._id.toString() })
+        .set(
+          "Authorization",
+          "Bearer " + user_devCon.dev_createJWTAuthenticationToken(driver.username)
+        )
+        .expect(200);
     });
   });
 });

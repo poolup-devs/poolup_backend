@@ -9,6 +9,7 @@
 
 const User = require("./user").User;
 const Email = require("./email/email").Email;
+const jwt = require("jsonwebtoken");
 
 /* 
     Create a single User with verified Email
@@ -80,14 +81,26 @@ const dev_createDummyUserObj = (alias) => {
     firstname: alias,
     lastname: "lastname",
     email: alias + "@ucla.edu",
-    password:
-      "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
   };
   return dummyUserObj;
+};
+
+/* 
+  Obtain jwt authentication token with username input. Used for testing endpoints that require a valid jwt token. 
+
+  Params: 
+  username 
+*/
+
+const dev_createJWTAuthenticationToken = (username) => {
+  const registeredUserUsernameAuthToken = jwt.sign({ username }, process.env.JWT_SECRET_KEY);
+  return registeredUserUsernameAuthToken;
 };
 
 module.exports = {
   dev_createRegisteredUser,
   dev_createRegisteredUsers,
   dev_createDummyUserObj,
+  dev_createJWTAuthenticationToken,
 };

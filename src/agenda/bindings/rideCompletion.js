@@ -1,4 +1,5 @@
 const RideCompletionJobs = require("../jobs/rideCompletionJobs");
+const request = require("../../request/controller.js");
 
 module.exports = (agenda) => {
   /* Task to update the number of completed rides in a ride */
@@ -10,6 +11,12 @@ module.exports = (agenda) => {
   /* Task to send a notification to all users in a ride to leave a review */
   agenda.define("send leave a review web notifications", async (job, done) => {
     await RideCompletionJobs.createNotiToLeaveReviewTask(job.attrs.data.rideId);
+    done();
+  });
+
+  /* Task to send a notification to all users in a ride to leave a review */
+  agenda.define("archive remaining ride requests", async (job, done) => {
+    await request.archiveRemainingRideRequests(job.attrs.data.rideId);
     done();
   });
 

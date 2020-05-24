@@ -60,6 +60,7 @@ router.put("/request/approve", checkAuth, async (req, res) => {
 
   try {
     await db.updateRequestStatus(requestID, authUsername, "approved");
+    await db.archiveRequest(req.body.requestID);
     res.sendStatus(200);
   } catch (err) {
     errResp(res, err);
@@ -82,13 +83,13 @@ router.put("/request/cancel", checkAuth, async (req, res) => {
 
 // Deny a specified request
 router.put("/request/deny", checkAuth, async (req, res) => {
-  console.log(req.body);
   const requestID = req.body.requestID;
   const msg = req.body.msg;
   const authUsername = await tokenParser(req.headers.authorization);
 
   try {
     await db.updateRequestStatus(requestID, authUsername, "denied");
+    await db.archiveRequest(req.body.requestID);
     res.sendStatus(200);
   } catch (err) {
     errResp(res, err);
@@ -103,19 +104,8 @@ router.put("/request/archive", checkAuth, async (req, res) => {
     await db.archiveRequest(requestID);
     res.sendStatus(200);
   } catch (err) {
-    errResp(res, err);
-  }
-});
-
-// Unarchive a specified request
-router.put("/request/unarchive", checkAuth, async (req, res) => {
-  const requestID = req.body.params.requestID;
-
-  try {
-    await db.unarchiveRequest(requestID);
-    res.sendStatus(200);
-  } catch (err) {
-    errResp(res, err);
+    console.log("error");
+    res.status(err.status).send(err.message);
   }
 });
 

@@ -188,13 +188,19 @@ const postRide = (rideInfo, authUsername) => {
     try {
       if (authUsername != rideInfo.ownerUsername) {
         return reject(
-          new ControllerException(
-            403,
-            "unmatching username of the request and the logged in user"
-          )
+          new ControllerException(403, "unmatching username of the request and the logged in user")
         );
       }
       const newRide = await Ride.create(rideInfo);
+
+      // Schedule a job that archives the remaining ride requests for a ride
+      agenda.scheduleJobHoursAfterDate(
+        "archive remaining ride requests",
+        { rideId: newRide._id },
+        rideInfo.date,
+        0
+      );
+
       // Schedule jobs to occur after ride completion
       await agenda.scheduleJobHoursAfterDate(
         "update number of completed rides",
@@ -202,6 +208,7 @@ const postRide = (rideInfo, authUsername) => {
         rideInfo.date,
         2
       );
+
       await agenda.scheduleJobHoursAfterDate(
         "send leave a review web notifications",
         { rideId: newRide._id },
@@ -234,16 +241,9 @@ const joinRide = (rideInfo, passengerUsername) => {
       } else if (ride_res.seats < 1) {
         return reject(new ControllerException(400, "the ride is full"));
       } else if (ride_res.ownerUsername == passengerUsername) {
-        return reject(
-          new ControllerException(
-            403,
-            "driver of the ride cannot join the ride"
-          )
-        );
+        return reject(new ControllerException(403, "driver of the ride cannot join the ride"));
       } else if (ride_res.passengers.includes(passengerUsername)) {
-        return reject(
-          new ControllerException(400, "user is already in the ride")
-        );
+        return reject(new ControllerException(400, "user is already in the ride"));
       }
 
       const ride_upd = await Ride.findByIdAndUpdate(
@@ -303,9 +303,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
 
       // There are no passengers in the ride, so the driver can freely cancel without penalties
       if (cancelledRideDoc.passengers.length === 0) {
-        return resolve(
-          "Driver cancelled ride without penalty because there were no passengers."
-        );
+        return resolve("Driver cancelled ride without penalty because there were no passengers.");
       } else {
         // Increment the user's number of cancelled rides
         await User.updateOne({ username }, { $inc: { ridesCancelled: 1 } });

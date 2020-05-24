@@ -2,6 +2,8 @@ const express = require("express");
 const router = new express.Router();
 const mongoose = require("mongoose");
 const db = require("./controller.js");
+const request = require("../request/controller.js");
+const scheduler = require("../tasks/scheduler.js");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
 const errResp = require("../utils/errors/errResponse");
@@ -51,23 +53,29 @@ router.get("/rides/my-rides-upcoming", checkAuth, async (req, res) => {
 //Get a user's (others & mine) drive history
 router.get("/rides/drives-history", checkAuth, async (req, res) => {
   try {
-    const data = await db.getDriveHistory(
-      req.query.username,
-      req.query.pageNum
-    );
+    const data = await db.getDriveHistory(req.query.username, req.query.pageNum);
     res.status(200).send(data);
   } catch (err) {
     errResp(res, err);
   }
 });
 
+//Get a user's (others & mine) drive history
+router.delete("/rides/delete-ride", checkAuth, async (req, res) => {
+  try {
+    await request.archiveRemainingRideRequests(req.body.ride._id);
+    scheduler.cancelTasksAssociatedWithRide(req.body.ride._id);
+    res.status(200);
+  } catch (err) {
+    console.log(err.message);
+    res.status(err.status).send(err.message);
+  }
+});
+
 //Get a user's (others & mine) upcoming drives
 router.get("/rides/drives-upcoming", checkAuth, async (req, res) => {
   try {
-    const data = await db.getDriveUpcoming(
-      req.query.username,
-      req.query.pageNum
-    );
+    const data = await db.getDriveUpcoming(req.query.username, req.query.pageNum);
     res.status(200).send(data);
   } catch (err) {
     errResp(res, err);
@@ -110,12 +118,7 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
     }
     const authUsername = await tokenParser(req.headers.authorization);
 
-    const msg = await db.cancelRide(
-      ride._id,
-      authUsername,
-      cancellationReason,
-      messageToDriver
-    );
+    const msg = await db.cancelRide(ride._id, authUsername, cancellationReason, messageToDriver);
 
     res.status(200).send(msg);
   } catch (err) {

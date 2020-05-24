@@ -1,4 +1,5 @@
 const Request = require("./request").Request;
+const ArchiveRequest = require("./request").ArchiveRequest;
 const User = require("../user/user").User;
 const Noti = require("../noti/noti").Noti;
 const Ride = require("../ride/ride").Ride;
@@ -17,9 +18,7 @@ const getRequestInfo = async (requestID) => {
     try {
       const res = await Request.findById(query);
       if (res == null) {
-        return reject(
-          new ControllerException(404, "ride of ride_id not found")
-        );
+        return reject(new ControllerException(404, "ride of ride_id not found"));
       }
       return resolve(res);
     } catch (err) {
@@ -96,15 +95,10 @@ const createRequest = async (requestInfo) => {
       const ride_res = await isAlreadyInRide(requestInfo);
       if (req_res) {
         return reject(
-          new ControllerException(
-            400,
-            "A request has already been created for this ride"
-          )
+          new ControllerException(400, "A request has already been created for this ride")
         );
       } else if (ride_res) {
-        return reject(
-          new ControllerException(400, "The user is already in this ride")
-        );
+        return reject(new ControllerException(400, "The user is already in this ride"));
       }
     } catch (err) {
       return reject(err);
@@ -133,14 +127,10 @@ const createRequest = async (requestInfo) => {
         reject(new ControllerException(404, "ride with rideID not found"));
       }
       if (requesterUsername_res.length == 0) {
-        reject(
-          new ControllerException(404, "specified requesterUsername not found")
-        );
+        reject(new ControllerException(404, "specified requesterUsername not found"));
       }
       if (requesteeUsername_res.length == 0) {
-        reject(
-          new ControllerException(404, "specified requesteeUsername not found")
-        );
+        reject(new ControllerException(404, "specified requesteeUsername not found"));
       }
 
       const request_new = await Request.create(newRequest);
@@ -169,20 +159,11 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
     try {
       let request_res = await Request.findOne(filter);
       if (!request_res) {
-        return reject(
-          new ControllerException(404, "Specified request not found")
-        );
+        return reject(new ControllerException(404, "Specified request not found"));
       } else if (request_res.archived) {
-        return reject(
-          new ControllerException(400, "Ride has already been archived")
-        );
+        return reject(new ControllerException(400, "Ride has already been archived"));
       } else if (request_res.status !== "pending") {
-        return reject(
-          new ControllerException(
-            400,
-            "Ride has already been " + request_res.status
-          )
-        );
+        return reject(new ControllerException(400, "Ride has already been " + request_res.status));
       } else {
         // switch
         switch (status) {
@@ -195,11 +176,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
                 )
               );
             }
-            request_upd = await Request.findOneAndUpdate(
-              filter,
-              update,
-              options
-            );
+            request_upd = await Request.findOneAndUpdate(filter, update, options);
             const user = await User.findOne({
               username: request_upd.requesteeUsername,
             });
@@ -225,11 +202,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
                 )
               );
             }
-            request_upd = await Request.findOneAndUpdate(
-              filter,
-              update,
-              options
-            );
+            request_upd = await Request.findOneAndUpdate(filter, update, options);
             const user = await User.findOne({
               username: request_upd.requesteeUsername,
             });
@@ -239,6 +212,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
               date: new Date(),
               redirectPath: MY_RIDES_PATH,
             });
+            console.log("changed status");
             break;
           }
           case "cancelled": {
@@ -250,11 +224,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
                 )
               );
             }
-            request_upd = await Request.findOneAndUpdate(
-              filter,
-              update,
-              options
-            );
+            request_upd = await Request.findOneAndUpdate(filter, update, options);
             await Noti.create({
               username: request_upd.requesteeUsername,
               msg: `${request_upd.requesterUsername}'s request for your ride has been withdrawn`,
@@ -272,11 +242,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
                 )
               );
             }
-            request_upd = await Request.findOneAndUpdate(
-              filter,
-              update,
-              options
-            );
+            request_upd = await Request.findOneAndUpdate(filter, update, options);
             await Noti.create({
               username: request_upd.requesteeUsername,
               msg: `${request_upd.requesterUsername}'s request for your ride has been paid`,
@@ -286,12 +252,11 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             break;
           }
           default: {
-            return reject(
-              new ControllerException(400, "invalid status to update")
-            );
+            return reject(new ControllerException(400, "invalid status to update"));
           }
         }
-        return resolve(request_upd);
+        console.log("about to resolve");
+        return resolve();
       }
     } catch (err) {
       return reject(err);
@@ -340,46 +305,49 @@ const isAlreadyInRide = (requestInfo) => {
 
 // archiveRequest sets a specified request archived field to true
 const archiveRequest = (requestID) => {
-  const filter = { _id: requestID };
-  const update = { $set: { archived: true } };
-  const options = { new: true };
   return new Promise(async (resolve, reject) => {
     try {
-      const request_upd = await Request.findByIdAndUpdate(
-        filter,
-        update,
-        options
-      );
-      if (request_upd == null) {
-        return reject(new ControllerException(404, "request object not found"));
+      const filter = { _id: requestID };
+      const request_resp = await Request.findById(filter);
+      if (request_resp == null) {
+        reject(new ControllerException(404, "request object not found"));
       }
-      return resolve(request_upd);
+
+      // Delete the _id from the request object, we will want a
+      // new one assigned once it is inserted into the
+      // archiveRequest collection.
+      var archive_request_resp = request_resp.toObject();
+      delete archive_request_resp._id;
+
+      // Insert to request into ArchiveRequest db collection
+      await ArchiveRequest.create(archive_request_resp);
+
+      // Remove request from Request db collection
+      await Request.deleteOne({ _id: request_resp._id });
+
+      return resolve();
     } catch (err) {
+      console.log(err);
       return reject(err);
     }
   });
 };
 
-// archiveRequest sets a specified request archived field to false
-const unarchiveRequest = (requestID) => {
-  const filter = { _id: requestID };
-  const update = { $set: { archived: false } };
-  const options = { new: true };
-
+// Aarchive the remaining ride requests
+const archiveRemainingRideRequests = (rideID) => {
   return new Promise(async (resolve, reject) => {
-    try {
-      const request_upd = await Request.findByIdAndUpdate(
-        filter,
-        update,
-        options
-      );
-      if (request_upd == null) {
-        return reject(new ControllerException(404, "request object not found"));
+    const requests = await Request.find({ rideID: rideID });
+    console.log(requests);
+    console.log(rideID);
+    for (const request of requests) {
+      try {
+        console.log(requests);
+        await archiveRequest(request._id);
+      } catch (err) {
+        reject(err);
       }
-      return resolve(request_upd);
-    } catch (err) {
-      return reject(err);
     }
+    return resolve();
   });
 };
 
@@ -398,21 +366,12 @@ const decrementRemindCount = (requestID, authUsername) => {
       }
       if (request_res.requesteeUsername != authUsername) {
         return reject(
-          new ControllerException(
-            403,
-            "Unauthorized request action: You are not the requestee"
-          )
+          new ControllerException(403, "Unauthorized request action: You are not the requestee")
         );
       } else if (request_res.reminders < 1) {
-        return reject(
-          new ControllerException(400, "Reminder count is already less than 1")
-        );
+        return reject(new ControllerException(400, "Reminder count is already less than 1"));
       }
-      const request_upd = await Request.findOneAndUpdate(
-        filter,
-        update,
-        options
-      );
+      const request_upd = await Request.findOneAndUpdate(filter, update, options);
       return resolve(request_upd);
     } catch (err) {
       return reject(err);
@@ -427,6 +386,6 @@ module.exports = {
   createRequest,
   updateRequestStatus,
   archiveRequest,
-  unarchiveRequest,
+  archiveRemainingRideRequests,
   decrementRemindCount,
 };

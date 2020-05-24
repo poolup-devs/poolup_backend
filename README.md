@@ -1091,6 +1091,7 @@ localhost:3000/rides/my-rides-history?pageNum=0
 **return value**
 
 Each page returns 5 rides, sorted by the most recent ride first (newest->oldest).
+
 200 OK status with an array of rides that the user had in the past (before current date&time)
 
 ---
@@ -1110,6 +1111,7 @@ localhost:3000/rides/my-rides-upcoming?pageNum=0
 **return value**
 
 Each page returns 5 rides, sorted by the closest, upcoming ride first (oldest->newest).
+
 200 OK status with an array of rides that the user will have in the future (after current date&time)
 
 ---
@@ -1129,6 +1131,7 @@ localhost:3000/rides/my-rides-history?pageNum=0&username=bin315a1
 **return value**
 
 Each page returns 5 rides, sorted by the most recent ride first (newest->oldest).
+
 200 OK status with an array of rides that the user was the driver in the past (before current date&time)
 
 ---
@@ -1148,6 +1151,7 @@ localhost:3000/rides/drives-upcoming?pageNum=0&username=bin315a1
 **return value**
 
 Each page returns 5 rides, sorted by the closest, upcoming ride first (oldest->newest).
+
 200 OK status with an array of rides that the user was the driver will drive in the future (after current date&time)
 
 ---

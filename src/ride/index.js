@@ -111,6 +111,17 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
   }
 });
 
+// Get a ride from the database by querying with its rideId
+router.get("/rides/rideDetails", checkAuth, async (req, res) => {
+  let rideID = req.query.rideID;
+  try {
+    const data = await db.getRideDetails(mongoose.Types.ObjectId(rideID));
+    res.status(200).send(data);
+  } catch (err) {
+    errResp(res, err);
+  }
+});
+
 // Get List of Cities
 router.get("/rides/getAvailableCities", (req, res) => {
   const places = require("./places.json");
@@ -128,16 +139,6 @@ router.get("/rides/getAvailableCounties", (req, res) => {
   let counties = Object.keys(places).sort();
 
   res.status(200).json(counties);
-});
-
-router.get("/rides/ride-details", checkAuth, async (req, res) => {
-  let rideID = req.query.rideID;
-  try {
-    const data = await db.getRideDetails(mongoose.Types.ObjectId(rideID));
-    res.status(200).send(data);
-  } catch (err) {
-    errResp(res, err);
-  }
 });
 
 module.exports = router;

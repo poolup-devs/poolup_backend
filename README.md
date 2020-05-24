@@ -894,6 +894,7 @@ GET request
 | /rides/join-ride            | PUT         | [Join a Ride](#join-a-ride)                                               |
 | /rides/cancel-ride          | PUT         | [Cancel a Ride](#cancel-a-ride)                                           |
 | /rides/delete-ride          | DELETE      | [Delete a ride](#delete-a-ride)                                           |
+| /rides/rideDetails          | GET         | [Get ride details](#ride-details)                                         |
 | /rides/getAvailableCities   | GET         | [Get available cities](#get-available-cities)                             |
 | /rides/getAvailableCounties | GET         | [Get available counties](#get-available-counties)                         |
 
@@ -1385,6 +1386,48 @@ The ride object that the user is trying to delete (The ride object's owner has t
 ```
 
 ---
+
+### Ride details
+
+GET request 
+
+**params**
+
+rideID
+
+**return value**
+
+200 status with the entire ride object returned
+
+--- 
+
+### Get available cities 
+
+GET request 
+
+**body/params** 
+
+none 
+
+**return value** 
+
+200 status with an array of city names 
+
+--- 
+
+### Get available counties 
+
+GET request 
+
+**body/params** 
+
+none 
+
+**return value** 
+
+200 status with an array of counties 
+
+--- 
 
 ### Noti Model
 

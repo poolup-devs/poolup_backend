@@ -1,36 +1,40 @@
 const Noti = require("./noti").Noti;
 
-const Error = require("../utils/error-model")
+const ControllerException = require("../utils/errors/controllerException");
 
 const getAllUserNoti = async (username, pageNum) => {
   const pageLimit = 10;
-  return new Promise( async (resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
-      const res = await Noti.find({ username }).sort({date: -1}).skip((Number(pageNum)-1)*pageLimit).limit(pageLimit);
+      const res = await Noti.find({ username })
+        .sort({ date: -1 })
+        .skip((Number(pageNum) - 1) * pageLimit)
+        .limit(pageLimit)
+        .lean();
       return resolve(res);
-    } catch(err) {
-      return reject(Error(500));
+    } catch (err) {
+      return reject(err);
     }
-  })
+  });
 };
 
 const viewNoti = async (notiInfo) => {
-  return new Promise( async (resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const res = await Noti.findByIdAndUpdate(
         { _id: notiInfo._id },
-        { $set: { viewed: true, viewedAt: new Date() }},
-        {new: true}
+        { $set: { viewed: true, viewedAt: new Date() } },
+        { new: true }
       );
-      
+
       return resolve(res);
     } catch (err) {
-      return reject(Error(500));
+      return reject(err);
     }
   });
 };
 
 module.exports = {
   getAllUserNoti,
-  viewNoti
+  viewNoti,
 };

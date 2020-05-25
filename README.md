@@ -1,63 +1,76 @@
-# PoolUp Backend
+# PoolUp API
 
-### api.poolup.co
+![CI and CD Pipeline Badge](https://github.com/poolup-devs/poolup_backend/workflows/Continuous%20Integration%20and%20Deployment/badge.svg)
 
-This is the backend code repository for PoolUp: made with NodeJS, Express, and MongoDB w/ Mongoose.
-For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineering Manager.
+PoolUp API repository
 
-1. [Setup](#setup)
-2. [Dev-Rules](#dev-rules)
-3. [Documentation](#documentation)
-4. [Deployment](#deployment)
+Tech Stack: NodeJS: Express, MongoDB: Mongoose
 
-# Setup
+## Table Of Contents
 
-1. [Local Environment Setup](#local-environment-setup)
-2. [Local Development Setup](#local-development-setup)
-3. [Npm Scripts](#npm-scripts)
-4. [Additional Tools](#additional-tools)
-5. [Directory Structure](#directory-structure)
+- [Development](#development)
+- [API Documentation](#api-documentation)
+- [Deployment](#deployment)
 
----
+## Development
 
-## Local Environment Setup
+- [Prerequisites](#prerequisites)
+- [Environment Set Up](#environment-set-up)
+- [Configuration](#configuration)
+- [Npm Scripts](#npm-scripts)
+- [Additional Tools](#additional-tools)
+- [Directory Structure](#directory-structure)
+- [Code Reviews](#code-reviews)
+- [Coding Standards and Rules](#coding-standards-and-rules)
 
-1. Install nodeJS by following installation guides from https://nodejs.org/en/download/
-2. Clone the repository to your local environment using `git clone https://github.com/poolup-devs/poolup_backend.git`
-3. Install all used packages and dependencies using:
-   > npm install
-4. To connect to the development s3 bucket, run:
+### Prerequisites
 
-   > npm run setup
+- [Docker](https://www.docker.com/)
+- [Visual Studio Code](https://code.visualstudio.com/)
+  - Extension Pack: ms-vscode-remote.vscode-remote-extensionpack
 
-   This creates the files dev.env and test.env and places it in a directory named config in the root directory. There, enter the bucket name, access key, the secret access key, and the MongoDB database URL assigned from the engineering manager and save.
+### Environment Set Up
 
-   !!!Make sure NOT to remove .env in .gitignore; publishing access keys publically causes bigger problems!!!
-
-5. Install mongoDB by following installation guides from:
-   Mac: https://treehouse.github.io/installation-guides/mac/mongo-mac.html
-   Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
-
-   This is different from the npm package listed in package.json: which is the driver that connects the DB to the nodeJS app.
-   For choosing the inital db location, just use the default --dbpath=/data/db to prevent future confusion
-
-6. Optional: Initialize the database with default objects.
-
-   > npm run init_db
-
-   This REMOVES existing database collections and populates them with default objects.
+- Open project folder in a [devcontainer](https://code.visualstudio.com/docs/remote/containers) by opening Visual Studio Code's command palette and executing `Remote-Containers: Open Folder in Container...`. For more information about our devcontainer look at .`devcontainer.json`
+- Start the API with `npm run docker-dev`
+- Access the API at `http://localhost:3000`
+- Editing Configuration requires you to rebuild the devcontainer. Go to command palette and execute `Remote-Containers: Rebuild Container`
 
 ---
 
-## Local Development Setup
+### Configuration
 
-1. Open a terminal, and run the command `mongod` to start the mongodb daemon - may have to run `sudo mongod` for permission purposes
-2. Open another terminal and run `npm run dev` in the home directory; this starts the backend application with nodemon
-3. The local backend development port is set to 3000, now use Postman to test API endpoints. Look at [Using Postman](#using-postman) for instructions.
+Poolup API is configured via environment variables. The applicable environment variables are:
+
+| Environment Variable   | Description                       |
+| ---------------------- | --------------------------------- |
+| JWT_SECRET_KEY         | API Authentication                |
+| JWT_EMAIL_KEY          | API Authentication                |
+| SESSION_SECRET_KEY     | add description                   |
+| S3_BUCKET              | AWS Database Identification       |
+| AWS_ACCESS_KEY_ID      | AWS Credentials                   |
+| AWS_SECRET_ACCESS_KEY  | AWS Credentials                   |
+| SENDGRID_API_KEY       | API Key for email service         |
+| SENDGRID_USERNAME      | Email Service Credentials         |
+| SENDGRID_PASSWORD      | Email Service Credentials         |
+| STRIPE_PUBLIC_KEY      | Public Key for Stripe Handshakes  |
+| STRIPE_PRIVATE_KEY     | Private Key for Stripe Handshakes |
+| STRIPE_WEBHOOK_SECRET  | Secret Key for Stripe Webhook     |
+| STRIPE_CLIENT_ID       | Client ID for Stripe              |
+| STRIPE_APPLICATION_FEE | Business Logic Parameter          |
+| FLAKER_LIMIT           | Business Logic Parameter          |
+| INDECISION_LIMIT       | Business Logic Parameter          |
+| MY_RIDES_PATH          | Url for redirects                 |
+| MY_DRIVES_PATH         | Url for redirects                 |
+| SEARCH_RIDES_PATH      | Url for redirects                 |
+| MODE                   | add description                   |
+| PORT                   | API Port Number                   |
+| MONGODB_URL            | Mongodb url                       |
+| FRONT_END_URL          | Frontend url for redirects        |
 
 ---
 
-## NPM Scripts
+### NPM Scripts
 
 1. Starting the NodeJS app
 
@@ -68,6 +81,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 2. Start Dev. mode of the NodeJS app
 
    > npm run dev
+   > npm run docker-dev
 
    Similar to npm start, but runs nodemon to automatically restart the node application when file chnages in the directory are detected
 
@@ -82,6 +96,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 4. Run Test Scripts
 
    > npm run test
+   > npm run docker-test
 
    We are using [Jest](https://www.npmjs.com/package/jest) to test our JS code.
    Run tests related to changed files based on Git (uncommitted files).
@@ -90,93 +105,43 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 5. Initialize database with default creations
 
    > npm run init_db
+   > npm run docker-init_db
 
    Removes all documents in all the collections, and initializes the database with default objects.
    Currently only removes and creates from User collection.
 
----
+### Additional Tools
 
-## Additional Tools
+1. Install [Postman](https://www.postman.com/)
 
-1. Download and install Postman to test backend REST APIs
-2. Install Robo 3T for mongoDB GUI and create a new connection to the DB using port 27017, the default mongoDB port
+- Use this tool to facilitate endpoint testing during development
+- [Using Postman](#using-postman)
 
----
+2. Install [MongoDB Compass](https://www.mongodb.com/products/compass)
 
-## Directory Structure
-
-```
-.
-|   .gitignore
-|   .sample_env
-|   init_db.js
-|   LICENSE
-|   package-lock.json
-|   package.json
-|   README.md
-|   setup.js
-|   docker-compose.yml
-|
-+---config
-|       .env-cmdrc
-+---dockerfiles
-|       main
-|       mongo_seed
-|
-+---src
-|   |   app.js
-|   |   server.js
-|   |
-|   +---db
-|   |       awsS3_controller.js
-|   |       mongoose.js
-|   |
-|   +---middleware
-|   |       cors_origin_control.js
-|   |       jwt_authenticator.js
-|   |
-|   +---noti
-|   |       controller.js
-|   |       index.js
-|   |       noti.js
-|   +---request
-|   |       controller.js
-|   |       index.js
-|   |       noti.js
-|   |
-|   +---ride
-|   |       controller.js
-|   |       index.js
-|   |       ride.js
-|   |
-|   +---stripe
-|   |   |    index.js
-|   |   +----tool
-|   |           driver-info-validation.js
-|   |           check-transfer.js
-|   |           payment-handler.js
-|   |   +----transfer
-|   |           controller.js
-|   |           transfer.js
-|   |
-|   +---user
-|   |       controller.js
-|   |       index.js
-|   |       user.js
-|   |
-|   \---utils
-|           token-parser.js
-|
-\---tests
-    \---user
-            rating.test.js
-```
+- Connection String: mongodb://localhost:27017/poolup-test?readPreference=primary&appname=MongoDB%20Compass&ssl=false
 
 ---
 
-# Dev-Rules
+### Code Reviews
 
-## Creating a new branch
+#### Reviewee
+
+1. When submitting a new PR make sure it is as small and digestible as possible
+2. Make sure PR passes CI/CD Pipeline
+3. Ask for and Assign Reviewer(s)
+4. Add context to the PR in the form of a detailed change log and annotations or setting up a meeting with reviewer(s) to fill them in on the changes.
+
+#### Reviewer
+
+1. Review Context
+2. By yourself, slowly go through the code while keeping a [checklist](https://www.codementor.io/blog/code-review-checklist-76q7ovkaqj) in mind and add comments where necessary
+
+---
+
+### Coding Standards and Rules
+
+#### Creating a new branch
 
 **Naming Branches**
 
@@ -184,7 +149,7 @@ For additional guidence/help, email bin315a1@g.ucla.edu or your current Engineer
 
 ex) han-messagingFeature-12302019
 
-## Posting Git Issues
+#### Posting Git Issues
 
 **Formatting**
 
@@ -206,7 +171,7 @@ Explain potential conflicts that may arise with the current code base, issues th
 
 Additional Comment
 
-## Using POSTMAN
+#### Using POSTMAN
 
 We use a single account that is shared by everyone (b/c we're broke). Ask for PoolUp's dev gmail credential, login, and use the collection located in it.
 
@@ -232,9 +197,9 @@ When creating each requests:
 
 ---
 
-# Documentation
+## API Documentation
 
-## Auth Tokens
+### Auth Tokens
 
 For all API requests after login, the bearer token must be included in headers for authorization/ username extraction.
 
@@ -246,18 +211,29 @@ There must be a white space between the string "Bearer" and the token string
 
 ---
 
-## Scheduling Tasks
+### Scheduling Tasks
 
-All scheduled tasks should be in /tasks/scheduledTasks.js, with unit tests in /tests/tasks/scheduledTasks.test.js
-Operations
+We are using [Agenda](https://github.com/agenda/agenda), a persistent job scheduling library, to manage time-based jobs. Scheduled jobs are stored in the MongoDB database under the collection: **scheduledJobs**. Jobs are processed every 5 seconds. When a database connection is lost, Agenda attempts to reconnect indefinitely.
 
-- `void scheduleTaskHoursAfterDate(uniqueTaskName, task, date, hours)` - Schedules a task to _run once_, X hours after a certain date - **uniqueTaskName**: uniquely identify the task in the case you ever need to cancel the task - **task**: function pointer of the task to schedule - **date**: JavaScript Date object - **hours**: number of hours after specified date
-- `cancelTasksAssociatedWithRide(rideId)` - Clean up all tasks associated with a ride - This will clean up tasks named with the following format: **taskFunctionName:{rideId}** - ex: **updateCompletedRidesTask:{rideId}** or **promptLeaveAReviewTask:{rideId}** - This can be used to clean up scheduled email reminders and web notifications for rides that have been cancellled
-- `bool cancelTask(taskName)` - Cancel a task, returns a Promise that resolves into a boolean value
+To obtain an instance of agenda, require the following file: _/src/agenda/agenda.js_. This instantiates the agenda object, making every job defined in _/src/agenda/bindings_ available to the instance. You can then use the returned object to perform any scheduling operations as defined in the NPM module.
+
+For scalability purposes, jobs are 'defined' in _/src/agenda/bindings_ but have their implementation in _/src/agenda/jobs_.
+
+The following are some helper functions are defined in agenda.js that may be useful:
+
+1. `agenda.scheduleJobHoursAfterDate(taskName, data, date, hoursAfterDate)`
+   - taskName: the name of the task to schedule
+   - data: an object containing the data needed to run the task
+   - date: initial date to add hours to
+   - hoursAfterDate: number of hours after the passed in date
+2. `agenda.scheduleJobMinutesAfterDate(taskName, data, date, minutesAfterDate)`
+3. `agenda.cancelJobsAssociatedWithRide(rideId)`
+   - cancels jobs associated with rideId
+   - eg. "update number of completed rides" & "send leave a review web notifications"
 
 ---
 
-## Sending Email Notifications
+### Sending Email Notifications
 
 Emails are sent using nodemailer and rendered dynamically using handlebars.
 The email templates can be found at /src/utils/email/email_templates.
@@ -282,7 +258,7 @@ There exists helper methods in /src/utils/email/email.js that can be used to sen
 
 ---
 
-## Models & API Endpoints Documentation
+### Models & API Endpoints Documentation
 
 Models:
 
@@ -299,25 +275,24 @@ Models:
 
 ### Schema
 
-| column         | type    | required | properties                                                   |
-| -------------- | ------- | -------- | ------------------------------------------------------------ |
-| firstName      | String  | Yes      |                                                              |
-| lastName       | String  | Yes      |                                                              |
-| email          | String  | Yes      |                                                              |
-| username       | String  | Yes      |                                                              |
-| password       | String  | Yes      |                                                              |
-| phoneNumber    | String  |          |                                                              |
-| picUrl         | String  |          |                                                              |
-| picType        | String  |          |                                                              |
-| isRegistered   | Boolean | Yes      |                                                              |
-| createdAt      | Date    |          |                                                              |
-| aboutMe        | String  |          |                                                              |
-| school         | String  |          |                                                              |
-| ridesCancelled | Number  |          |                                                              |
-| ridesCompleted | Number  |          |                                                              |
-| rating         | Object  |          | sumOfAllRatings, totalRatings                                |
-| stripe         | Object  |          | accountID, customerID                                        |
-| driver         | Object  |          | licensePlate, vehicleMakeModel, driversLicense, vehicleColor |
+| column         | type   | required | properties                                                   |
+| -------------- | ------ | -------- | ------------------------------------------------------------ |
+| firstName      | String | Yes      |                                                              |
+| lastName       | String | Yes      |                                                              |
+| email          | String | Yes      |                                                              |
+| username       | String | Yes      |                                                              |
+| password       | String | Yes      |                                                              |
+| phoneNumber    | String |          |                                                              |
+| picUrl         | String |          |                                                              |
+| picType        | String |          |                                                              |
+| createdAt      | Date   |          |                                                              |
+| aboutMe        | String |          |                                                              |
+| school         | String |          |                                                              |
+| ridesCancelled | Number |          |                                                              |
+| ridesCompleted | Number |          |                                                              |
+| rating         | Object |          | sumOfAllRatings, totalRatings                                |
+| stripe         | Object |          | accountID, customerID                                        |
+| driver         | Object |          | licensePlate, vehicleMakeModel, driversLicense, vehicleColor |
 
 ### API Endpoints
 
@@ -325,7 +300,6 @@ Models:
 | ---------------------------- | ----------- | ------------------------------------------------------------------ |
 | /users/login                 | POST        | [User Login](#user-login)                                          |
 | /users/signup                | POST        | [User Signup](#user-signup)                                        |
-| /users/emailValidation       | GET         | [Validation/usability of Email](#email-validation)                 |
 | /users/sendVerificationEmail | GET         | [Send a verification email to signup](#send-verification-email)    |
 | /users/verify                | GET         | [Verify an email](#email-verification)                             |
 | /users/usernameValidation    | GET         | [Validation/usability of a username](#username-validation)         |
@@ -336,9 +310,9 @@ Models:
 | /users/deleteUser            | DELETE      | [Delete a user account](#delete-user)                              |
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
 | /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
-| /users/my-info               | GET         | [Get my account's information](#my-info)                           |
+| /users/info                  | GET         | [Get my account's information](#my-info)                           |
 | /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
-| /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
+| /users/school                | GET         | [Get a user's school](#get-school)                                 |
 | /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                      |
 | /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
 | /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |
@@ -443,36 +417,15 @@ POST request
 
 ---
 
-### Email Validation
-
-GET request
-
-**params**
-
-- email
-
-**example**
-
-- localhost:3000/users/emailValidation?email=bin315a1@g.ucla.edu
-
-**return value**
-
-- 200 status, array of user objects with that email
-
 ### Send Verification Email
 
 GET request
 
-This request first verifies whether the email is valid, returning an error message if not. It uses the following criteria to determine validity:
-
-1. **Email is not unique** -> "An account already exists with this email!"
-2. **Email is not properly formatted, according to RFC standards** -> "Not a valid email address!"
-3. **Email is not a student email** -> "Not an .edu email address!"
-4. **Email is associated with a registered account** -> "A registered account already exists with this email!"
+This request first verifies whether the email is valid, returning an error message if not. Validity/ return responses is as below
 
 If the email is valid, the endpoint sends a verification email to the user.
 
-This endpoint can be called multiple times to resend the verification email.
+This endpoint can be called multiple times to resend the verification email, for 10 times.
 
 **params**
 
@@ -480,8 +433,14 @@ email
 
 **return value**
 
-- 200 response if the email was sent
-- 500 reponse otherwise, with the error message attached
+Error Cases:
+
+1. **Email is not unique/ already verified** -> 403, "Email already verified"
+2. **Email is not properly formatted, according to RFC standards** -> 400, "Not a valid email address"
+3. **Email is not a student email** ->400, "Not an .edu email address"
+4. **Email resend limit is reached(10)** -> 403, "Verification email resend limit reached"
+
+else, returns 200 status
 
 ---
 
@@ -699,23 +658,15 @@ no further return data
 
 GET request
 
-**params/body**
+**params**
 
-none required
+username
 
 **return value**
 
-200 status if successful
+Queries the database for user with `username` and returns the whole document.
 
-```
-{
-    "username": "bin315a1",
-    "name": "Han",
-    "email": "bin315a1@g.ucla.edu",
-    "createdAt": "2019-08-23T11:27:31.739Z",
-    "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png"
-}
-```
+200 status if successful
 
 ---
 
@@ -924,9 +875,7 @@ GET request
 
 | column               | type   | required |
 | -------------------- | ------ | -------- |
-| ownerEmail           | String | Yes      |
 | ownerUsername        | String |          |
-| ownerPhoneNumber     | String |          |
 | from                 | String | Yes      |
 | to                   | String | Yes      |
 | date                 | Date   | Yes      |
@@ -961,10 +910,11 @@ GET request
 | /rides/join-ride            | PUT         | [Join a Ride](#join-a-ride)                                               |
 | /rides/cancel-ride          | PUT         | [Cancel a Ride](#cancel-a-ride)                                           |
 | /rides/delete-ride          | DELETE      | [Delete a ride](#delete-a-ride)                                           |
+| /rides/ride-details         | GET         | [Get ride details](#ride-details)                                         |
 | /rides/getAvailableCities   | GET         | [Get available cities](#get-available-cities)                             |
 | /rides/getAvailableCounties | GET         | [Get available counties](#get-available-counties)                         |
 
-- Note: all get ride apis (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
+- Note: all get ride APIs (with some exception, which will be noted) require a pageNum query param for pagination; index starts at 0
 
 ---
 
@@ -974,7 +924,7 @@ GET request
 
 **params**
 
-filter(JSON object with fields: "from", "to", and "date"), pageNum
+filter(JSON object with fields: "from", "to", "date", and "price"), pageNum
 
 if FILTER IS UNDEFINED, returns ALL available drives sorted in date/time
 
@@ -1006,6 +956,8 @@ localhost:3000/rides/matching-rides?filter={"from": "Irvine", "to" : "Los Angele
 
 ```
 
+The rides are sorted by date, such that the ride with the closest date is first (ascending order).
+
 Get all rides from Irvine to Los Angeles between 8:00 AM to 9:30 AM on 2019-09-13
 
 ```
@@ -1031,12 +983,22 @@ Get all rides from Irvine to anywhere between 8:00 AM to 9:30 AM on 2019-09-13
 
 ```
 
-Get all rides from Irvine to anywhere anytime (after the current timestamp, of course)
+Get all rides from Irvine to anywhere anytime (after the current timestamp)
 
 ```
 
     {
         "from": "Irvine"
+    }
+
+```
+
+Get all rides from anywhere to Irvine anytime (after the current timestamp)
+
+```
+
+    {
+        "to": "Irvine"
     }
 
 ```
@@ -1063,9 +1025,7 @@ localhost:3000/rides/matching-rides?filter=
             "user2"
         ],
         "_id": "5e994d575f233007f86b3b6d",
-        "ownerEmail": "user1@g.ucla.edu",
         "ownerUsername": "user1",
-        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2020-04-18T07:00:00.000Z",
@@ -1090,9 +1050,7 @@ localhost:3000/rides/matching-rides?filter=
             "user1"
         ],
         "_id": "5e994d575f233007f86b3b6f",
-        "ownerEmail": "user4@g.ucla.edu",
         "ownerUsername": "user4",
-        "ownerPhoneNumber": "1231231234",
         "from": "Los Angeles",
         "to": "Irvine",
         "date": "2020-04-18T07:00:00.000Z",
@@ -1114,17 +1072,17 @@ localhost:3000/rides/matching-rides?filter=
 
 GET request
 
-- DOES NOT take a pageNum param
-
 **params**
 
-username
+username, pageNum
 
 **example**
 
 localhost:3000/rides/user-rides-history?username=bin315a1
 
 **return value**
+
+Each page returns 5 rides, sorted by the most recent ride first (newest->oldest).
 
 200 status with an array of rides that the user with the username had in the past (before current date&time)
 
@@ -1144,6 +1102,8 @@ localhost:3000/rides/my-rides-history?pageNum=0
 
 **return value**
 
+Each page returns 5 rides, sorted by the most recent ride first (newest->oldest).
+
 200 OK status with an array of rides that the user had in the past (before current date&time)
 
 ---
@@ -1158,9 +1118,11 @@ pageNum
 
 **example**
 
-localhost:3000/rides/my-rides-history?pageNum=0
+localhost:3000/rides/my-rides-upcoming?pageNum=0
 
 **return value**
+
+Each page returns 5 rides, sorted by the closest, upcoming ride first (oldest->newest).
 
 200 OK status with an array of rides that the user will have in the future (after current date&time)
 
@@ -1176,9 +1138,11 @@ username, pageNum
 
 **example**
 
-localhost:3000/rides/my-rides-history?pageNum=0&username=bin315a1
+localhost:3000/rides/drives-history?pageNum=0&username=bin315a1
 
 **return value**
+
+Each page returns 5 rides, sorted by the most recent ride first (newest->oldest).
 
 200 OK status with an array of rides that the user was the driver in the past (before current date&time)
 
@@ -1197,6 +1161,8 @@ username, pageNum
 localhost:3000/rides/drives-upcoming?pageNum=0&username=bin315a1
 
 **return value**
+
+Each page returns 5 rides, sorted by the closest, upcoming ride first (oldest->newest).
 
 200 OK status with an array of rides that the user was the driver will drive in the future (after current date&time)
 
@@ -1218,7 +1184,6 @@ a new ride object:
 
 {
     "rideInfo": {
-        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
         "from": "Irvine",
         "to": "Los Angeles",
@@ -1241,7 +1206,6 @@ a new ride object:
 {
     "passengers": [],
     "_id": "5d55b5721e78951430fdcc66",
-    "ownerEmail": "bin315a1@g.ucla.edu",
     "ownerUsername": "bin315a1",
     "from": "Irvine",
     "to": "Los Angeles",
@@ -1270,9 +1234,7 @@ The ride object that the user is trying to join:
     "ride" : {
         "passengers": [],
         "_id": "5d505ed15482ec4e38597cdb",
-        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2019-09-11T00:00:00.000Z",
@@ -1287,7 +1249,9 @@ The ride object that the user is trying to join:
 
 **return value**
 
-200 status with the same ride object joined
+- 200 status with the same ride object joined
+- 400 status if the ride is not found, full, or if the passenger has already joined this ride
+- 403 status if the driver attempts to join the ride
 
 ```
 
@@ -1296,9 +1260,7 @@ The ride object that the user is trying to join:
         "bin315a1"
     ],
     "_id": "5d505ed15482ec4e38597cdb",
-    "ownerEmail": "bin315a1@gmail.com",
     "ownerUsername": "bin315a1",
-    "ownerPhoneNumber": "1231231234",
     "from": "Irvine",
     "to": "Los Angeles",
     "date": "2019-09-11T00:00:00.000Z",
@@ -1318,15 +1280,46 @@ PUT request
 
 - Whether the logged in user is a driver or a passenger in the ride is abstracted away.
 
-- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs: 1. The ride is removed from the Ride collection. 2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
+- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs:
 
-- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs: 1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`. - An example of a notification received by a passenger in the ride is the following:
-  `{ viewed: false, _id: 5e6532be23cf21496470c042, username: 'passenger1', msg: 'driverUsername has cancelled your ride', senderEmail: 'driverUsername@ucla.edu', date: 2020-03-08T18:00:30.136Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling' } }` 2. The ride is removed from the Ride collection. 3. The driver receives the following penalty: - `ridesCancelled` property is incremented
+1. The ride is removed from the Ride collection.
+2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
 
-- In the event that a **passenger** cancels a ride, the following occurs: 1. The driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`. - An example of a notification received by the driver is the following:
-  `{ viewed: false, _id: 5e6534144a54ab39342752d0, username: 'driverUsername', msg: 'passenger1 has cancelled your ride', senderEmail: 'passenger1@ucla.edu', date: 2020-03-08T18:06:12.834Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } }`
-  2. All other passengers, if any, are notified about the cancellation. This notification ONLY includes the additional property: `cancellationReason`.
-     3. The passenger who cancelled is removed from the ride, and a new spot is freed up. 4. The passenger who cancelled receive the following penalty: - `ridesCancelled` property is incremented
+- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs:
+
+1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`.
+   - An example of a notification received by a passenger in the ride is the following:
+   ```
+   {
+   	_id: 5e6532be23cf21496470c042,
+   	username: 'passenger1',
+   	msg: 'driverUsername has cancelled your ride',
+   	date: 2020-03-08T18:00:30.136Z,
+   	additionalProperties: { cancellationReason: 'No longer traveling' },
+   	viewed: false
+   }
+   ```
+2. The ride is removed from the Ride collection.
+3. The driver receives the following penalty:
+   - `ridesCancelled` property is incremented
+
+- In the event that a **passenger** cancels a ride, the following occurs:
+
+1. The driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`.
+   - An example of a notification received by the driver is the following:
+   ```
+    {
+   	_id: 5e6534144a54ab39342752d0,
+   	username: 'driverUsername',
+   	msg: 'passenger1 has cancelled your ride',
+   	date: 2020-03-08T18:06:12.834Z,
+   	viewed: false,
+   	additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" }
+    }
+   ```
+2. All other passengers, if any, are notified about the cancellation. This notification ONLY includes the additional property: `cancellationReason`.
+3. The passenger who cancelled is removed from the ride, and a new spot is freed up. 4. The passenger who cancelled receive the following penalty:
+   - `ridesCancelled` property is incremented
 
 **body**
 
@@ -1343,9 +1336,7 @@ PUT request
         "passengers" : [
             "user1"
         ],
-        "ownerEmail" : "user2@g.ucla.edu.com",
         "ownerUsername" : "user2",
-        "ownerPhoneNumber" : "1231231234",
         "from" : "Los Angeles",
         "to" : "Irvine",
         "date" : "2020-03-05T08:00:00.000Z",
@@ -1362,7 +1353,11 @@ PUT request
 
 **return value**
 
-- 200 status, with a short **description of the event** that occurred. - For example, the following Strings are possible return values: - "Driver cancelled ride without penalty because there were no passengers." - "Driver cancelled ride and received a penalty because there were passengers." - "Passenger cancelled ride and received a penalty."
+- 200 status, with a short **description of the event** that occurred.
+- For example, the following Strings are possible return values:
+  - "Driver cancelled ride without penalty because there were no passengers."
+  - "Driver cancelled ride and received a penalty because there were passengers."
+  - "Passenger cancelled ride and received a penalty."
 - 500 status, with an object containing `error` property. - For example, the following errors are possible messages: - "Ride does not exist in database!" - "User is not a driver or passenger of this ride."
 
 ---
@@ -1402,9 +1397,7 @@ The ride object that the user is trying to delete (The ride object's owner has t
             "bin315a1"
         ],
         "_id": "5d505f0d5482ec4e38597cdd",
-        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2019-08-30T00:00:00.000Z",
@@ -1430,6 +1423,48 @@ The ride object that the user is trying to delete (The ride object's owner has t
     }
 
 ```
+
+---
+
+### Ride details
+
+GET request
+
+**params**
+
+rideID
+
+**return value**
+
+200 status with the entire ride object returned
+
+---
+
+### Get available cities
+
+GET request
+
+**body/params**
+
+none
+
+**return value**
+
+200 status with an array of city names
+
+---
+
+### Get available counties
+
+GET request
+
+**body/params**
+
+none
+
+**return value**
+
+200 status with an array of counties
 
 ---
 
@@ -2176,7 +2211,7 @@ POST request
 
 GET request
 
-- Used to make direct stripe api requests
+- Used to make direct stripe API requests
 
 **return value**
 
@@ -2238,9 +2273,7 @@ POST request
 
 ---
 
-# Deployment
-
-## Deployment Instructions
+## Deployment
 
 Currently the website uses Netlify for frontend's deployment and AWS for backend's deployment. Backend Node application uses systemd to maintain app's continuous execution.
 

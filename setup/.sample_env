@@ -34,10 +34,11 @@
   "production": {
     "MODE": "PRODUCTION",
     "PORT": "3000",
-    "MONGODB_URL": "mongodb://localhost/poolup-prod",
+    "MONGODB_URL":"mongodb://mongo:27017/poolup-dev",
     "FRONT_END_URL": "https://poolup.co"
   },
   "test": {
+    "MODE": "TESTING",
     "MONGODB_URL": "mongodb://localhost/poolup-test"
   },
   "development-docker": {

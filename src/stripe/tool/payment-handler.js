@@ -5,7 +5,6 @@ const userDB = require("../../user/controller.js");
 const rideDB = require("../../ride/controller.js");
 const Transfer = require("../transfer/transfer").Transfer;
 const Ride = require("../../ride/ride").Ride;
-const Error = require("../../utils/error-model");
 // ====================================================
 // Public Functions
 // ====================================================
@@ -50,7 +49,7 @@ const createPaymentIntent = (rideID, requestID, riderUsername, currency) => {
       const paymentIntent = await stripe.paymentIntents.create(options);
       return resolve(paymentIntent.client_secret);
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(err);
     }
   });
 };
@@ -102,7 +101,7 @@ const handlePaymentIntentSucceeded = (paymentIntent) => {
 
       return resolve();
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(err);
     }
   });
 };
@@ -124,7 +123,7 @@ const triggerTransfer = (transfer) => {
       await transferDB.updateTransferStatus(transfer._id, "completed");
       return resolve();
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(err);
     }
   });
 };
@@ -150,7 +149,7 @@ const issueRefund = (riderUsername, rideID, responsibleForCancellation) => {
 
       return resolve();
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(err);
     }
   });
 };
@@ -215,7 +214,7 @@ const policyChecker = (transfer, responsibleForCancellation) => {
 
       return resolve(params);
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(err);
     }
   });
 };
@@ -254,7 +253,7 @@ const didRiderCancelInAdvance = (rideID, timeCancelled) => {
         return resolve(false);
       }
     } catch (err) {
-      return reject(Error(500), err);
+      return reject(err);
     }
   });
 };

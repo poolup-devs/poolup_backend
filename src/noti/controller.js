@@ -9,7 +9,8 @@ const getAllUserNoti = async (username, pageNum) => {
       const res = await Noti.find({ username })
         .sort({ date: -1 })
         .skip((Number(pageNum) - 1) * pageLimit)
-        .limit(pageLimit);
+        .limit(pageLimit)
+        .lean();
       return resolve(res);
     } catch (err) {
       return reject(err);

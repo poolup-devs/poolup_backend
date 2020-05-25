@@ -1,6 +1,8 @@
 const express = require("express");
 const router = new express.Router();
 
+const User = require("../user/user");
+
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const querystring = require("querystring");
 const tokenParser = require("../utils/token-parser.js");
@@ -113,70 +115,60 @@ router.get("/stripe/token", async (req, res) => {
 router.post("/stripe/driver/auth", checkAuth, async (req, res) => {
   const authUsername = await tokenParser(req.headers.authorization);
 
-  userDB.getMyInfo(authUsername, (err, userInfo) => {
-    if (err) {
-      res.status(500).send({
-        error: err,
-      });
-      return;
-    }
-
-    // Check if a driver already has a stripe account ID
-    // If they do then that means they already registered as a drive
-    if (userInfo.driver.isDriver) {
-      res.status(400).send({
-        error: "User is already registered as a driver",
-      });
-      return;
-    }
-
-    // The username needs to be retreived when stripe redirects
-    // back to /stripe/token after the oAuth is complete
-    req.session.username = authUsername;
-
-    const driverInfo = {
-      phoneNumber: req.body.phoneNumber,
-      licensePlate: req.body.licensePlate,
-      vehicleMakeModel: req.body.vehicleMakeModel,
-      driversLicense: req.body.driversLicense,
-      vehicleColor: req.body.vehicleColor,
-    };
-
-    // Check that all the fields of the driverInfo object are populated
-    if (!driverValidation.containsDriverInfo(driverInfo)) {
-      console.log("Invalid driver info");
-      res.send(400, {
-        error:
-          "Invalid driver information; check that all fields are populated",
-      });
-      return;
-    }
-
-    // Save the driver info to the session, it will be retrieved once stripe
-    // redirects back to PoolUp
-    req.session.driverInfo = driverInfo;
-
-    //Generate a random string as `state` to protect from CSRF and include it in the session
-    req.session.state = Math.random().toString(36).slice(2);
-
-    // Populate the parameters that will be sent in the Stripe redirect. They will
-    // be used to autopopulate some of the fields in the Stripe Express setup
-    parameters = {
-      client_id: process.env.STRIPE_CLIENT_ID,
-      state: req.session.state,
-      "stripe_user[business_type]": "individual",
-      "stripe_user[email]": userInfo.email,
-      "stripe_user[phone_number]": driverInfo.phoneNumber,
-      "stripe_user[product_description]": "PoolUp Driver",
-    };
-
-    res.status(200).send({
-      redirectUrl:
-        "https://connect.stripe.com/express/oauth/authorize?" +
-        querystring.stringify(parameters),
+  const userInfo = await User.find({ username: authUsername });
+  // Check if a driver already has a stripe account ID
+  // If they do then that means they already registered as a drive
+  if (userInfo.driver.isDriver) {
+    res.status(400).send({
+      error: "User is already registered as a driver",
     });
     return;
+  }
+
+  // The username needs to be retreived when stripe redirects
+  // back to /stripe/token after the oAuth is complete
+  req.session.username = authUsername;
+
+  const driverInfo = {
+    phoneNumber: req.body.phoneNumber,
+    licensePlate: req.body.licensePlate,
+    vehicleMakeModel: req.body.vehicleMakeModel,
+    driversLicense: req.body.driversLicense,
+    vehicleColor: req.body.vehicleColor,
+  };
+
+  // Check that all the fields of the driverInfo object are populated
+  if (!driverValidation.containsDriverInfo(driverInfo)) {
+    console.log("Invalid driver info");
+    res.send(400, {
+      error: "Invalid driver information; check that all fields are populated",
+    });
+    return;
+  }
+
+  // Save the driver info to the session, it will be retrieved once stripe
+  // redirects back to PoolUp
+  req.session.driverInfo = driverInfo;
+
+  //Generate a random string as `state` to protect from CSRF and include it in the session
+  req.session.state = Math.random().toString(36).slice(2);
+
+  // Populate the parameters that will be sent in the Stripe redirect. They will
+  // be used to autopopulate some of the fields in the Stripe Express setup
+  parameters = {
+    client_id: process.env.STRIPE_CLIENT_ID,
+    state: req.session.state,
+    "stripe_user[business_type]": "individual",
+    "stripe_user[email]": userInfo.email,
+    "stripe_user[phone_number]": driverInfo.phoneNumber,
+    "stripe_user[product_description]": "PoolUp Driver",
+  };
+
+  res.status(200).send({
+    redirectUrl:
+      "https://connect.stripe.com/express/oauth/authorize?" + querystring.stringify(parameters),
   });
+  return;
 });
 
 // Send back Stripe Public Key
@@ -186,9 +178,7 @@ router.get("/stripe/public-key", (req, res) => {
 
 // Send back Application Fee
 router.get("/stripe/application-fee", (req, res) => {
-  res
-    .status(200)
-    .send({ applicationFee: paymentHandler.getApplicationFeePercentage() });
+  res.status(200).send({ applicationFee: paymentHandler.getApplicationFeePercentage() });
 });
 
 // Create a Payment Intent
@@ -292,11 +282,7 @@ router.post("/stripe/dev/triggerRefund", async (req, res) => {
     const riderUsername = req.body.riderUsername;
     const rideID = req.body.rideID;
     const responsibleForCancellation = req.body.responsibleForCancellation;
-    await paymentHandler.issueRefund(
-      riderUsername,
-      rideID,
-      responsibleForCancellation
-    );
+    await paymentHandler.issueRefund(riderUsername, rideID, responsibleForCancellation);
     res.sendStatus(200);
   } catch (err) {
     errResp(res, err);

@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 
 const rideSchema = mongoose.Schema({
-  ownerEmail: String,
   ownerUsername: String,
-  ownerPhoneNumber: String,
   from: String,
   to: String,
+  pickupLocation: String,
+  dropOffLocation: String,
   date: Date,
   price: String,
   seats: Number,

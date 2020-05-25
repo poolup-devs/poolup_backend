@@ -17,6 +17,7 @@ describe("Testing scheduling of jobs", () => {
   });
 
   afterAll(async () => {
+    await agenda.close();
     await mongoClient.close();
   });
 

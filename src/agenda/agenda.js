@@ -33,12 +33,6 @@ fs.readdir(bindingsDirectory, (err, jobTypes) => {
   }
 })
 
-// Graceful shutdown
-const graceful = async () => {
-  await agenda.stop();
-  process.exit(0);
-};
-
 // Helper function to clean up any jobs associated with a ride when it is deleted
 agenda.cancelJobsAssociatedWithRide = async function (rideId) {
   const tasksToCancel = [
@@ -78,7 +72,14 @@ agenda.scheduleJobMinutesAfterDate = function (
   });
 };
 
+// Graceful shutdown
+const graceful = async () => {
+  await agenda.stop();
+  process.exit(0);
+};
+
 process.on("SIGTERM", graceful);
 process.on("SIGINT", graceful);
+
 
 module.exports = agenda;

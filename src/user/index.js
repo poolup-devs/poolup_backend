@@ -5,8 +5,6 @@ const sha256 = require("sha256");
 const jwt = require("jsonwebtoken");
 
 const db = require("./controller.js");
-const uploadFile = require("../db/awsS3_controller.js").uploadFile;
-const deleteFile = require("../db/awsS3_controller.js").deleteFile;
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
 const errResp = require("../utils/errors/errResponse");
@@ -20,13 +18,9 @@ router.post("/users/login", async (req, res) => {
       req.body.password = sha256(req.body.password);
     }
     const user = await db.login(req.body.email, req.body.password);
-    const token = jwt.sign(
-      { username: user.username, _id: user._id },
-      JWT_SECRET_KEY,
-      {
-        expiresIn: "24h",
-      }
-    );
+    const token = jwt.sign({ username: user.username, _id: user._id }, JWT_SECRET_KEY, {
+      expiresIn: "24h",
+    });
     res.status(200).send({ authToken: token });
   } catch (err) {
     errResp(res, err);

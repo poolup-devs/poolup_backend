@@ -123,77 +123,6 @@ Poolup API is configured via environment variables. The applicable environment v
 
 ---
 
-### Directory Structure
-
-```
-.
-|   .gitignore
-|   .sample_env
-|   init_db.js
-|   LICENSE
-|   package-lock.json
-|   package.json
-|   README.md
-|   setup.js
-|   docker-compose.yml
-|
-+---config
-|       .env-cmdrc
-+---dockerfiles
-|       main
-|       mongo_seed
-|
-+---src
-|   |   app.js
-|   |   server.js
-|   |
-|   +---db
-|   |       awsS3_controller.js
-|   |       mongoose.js
-|   |
-|   +---middleware
-|   |       cors_origin_control.js
-|   |       jwt_authenticator.js
-|   |
-|   +---noti
-|   |       controller.js
-|   |       index.js
-|   |       noti.js
-|   +---request
-|   |       controller.js
-|   |       index.js
-|   |       noti.js
-|   |
-|   +---ride
-|   |       controller.js
-|   |       index.js
-|   |       ride.js
-|   |
-|   +---stripe
-|   |   |    index.js
-|   |   +----tool
-|   |           driver-info-validation.js
-|   |           check-transfer.js
-|   |           payment-handler.js
-|   |   +----transfer
-|   |           controller.js
-|   |           transfer.js
-|   |
-|   +---user
-|   |       controller.js
-|   |       index.js
-|   |       user.js
-|   |
-|   \---utils
-|           token-parser.js
-|
-\---tests
-    \---user
-            rating.test.js
-```
-
----
-
 ### Code Reviews
 
 #### Reviewee
@@ -206,7 +135,7 @@ Poolup API is configured via environment variables. The applicable environment v
 #### Reviewer
 
 1. Review Context
-2. By yourself, slowly go through the code while keeping a [checklist](https://www.codementor.io/blog/code-review-checklist-76q7ovkaqj) in mind and add comments where necessasry
+2. By yourself, slowly go through the code while keeping a [checklist](https://www.codementor.io/blog/code-review-checklist-76q7ovkaqj) in mind and add comments where necessary
 
 ---
 
@@ -381,9 +310,9 @@ Models:
 | /users/deleteUser            | DELETE      | [Delete a user account](#delete-user)                              |
 | /users/checkCredential       | POST        | [Check a user's password before changing it](#check-credential)    |
 | /users/changePassword        | PATCH       | [Change a user's password](#change-password)                       |
-| /users/my-info               | GET         | [Get my account's information](#my-info)                           |
+| /users/info                  | GET         | [Get my account's information](#my-info)                           |
 | /users/get-rating            | GET         | [Get a user's rating](#get-rating)                                 |
-| /users/get-school            | GET         | [Get a user's school](#get-school)                                 |
+| /users/school                | GET         | [Get a user's school](#get-school)                                 |
 | /users/get-about-me          | PATCH       | [Get about me](#get-about-me)                                      |
 | /users/updateAboutMe         | PATCH       | [Update about me](#update-about-me)                                |
 | /users/get-public-profile    | GET         | [Get user's public profile info](#get-public-profile-info)         |
@@ -729,23 +658,15 @@ no further return data
 
 GET request
 
-**params/body**
+**params**
 
-none required
+username
 
 **return value**
 
-200 status if successful
+Queries the database for user with `username` and returns the whole document.
 
-```
-{
-    "username": "bin315a1",
-    "name": "Han",
-    "email": "bin315a1@g.ucla.edu",
-    "createdAt": "2019-08-23T11:27:31.739Z",
-    "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png"
-}
-```
+200 status if successful
 
 ---
 
@@ -954,9 +875,7 @@ GET request
 
 | column               | type   | required |
 | -------------------- | ------ | -------- |
-| ownerEmail           | String | Yes      |
 | ownerUsername        | String |          |
-| ownerPhoneNumber     | String |          |
 | from                 | String | Yes      |
 | to                   | String | Yes      |
 | date                 | Date   | Yes      |
@@ -991,6 +910,7 @@ GET request
 | /rides/join-ride            | PUT         | [Join a Ride](#join-a-ride)                                               |
 | /rides/cancel-ride          | PUT         | [Cancel a Ride](#cancel-a-ride)                                           |
 | /rides/delete-ride          | DELETE      | [Delete a ride](#delete-a-ride)                                           |
+| /rides/ride-details         | GET         | [Get ride details](#ride-details)                                         |
 | /rides/getAvailableCities   | GET         | [Get available cities](#get-available-cities)                             |
 | /rides/getAvailableCounties | GET         | [Get available counties](#get-available-counties)                         |
 
@@ -1004,7 +924,7 @@ GET request
 
 **params**
 
-filter(JSON object with fields: "from", "to", and "date"), pageNum
+filter(JSON object with fields: "from", "to", "date", and "price"), pageNum
 
 if FILTER IS UNDEFINED, returns ALL available drives sorted in date/time
 
@@ -1036,6 +956,8 @@ localhost:3000/rides/matching-rides?filter={"from": "Irvine", "to" : "Los Angele
 
 ```
 
+The rides are sorted by date, such that the ride with the closest date is first (ascending order).
+
 Get all rides from Irvine to Los Angeles between 8:00 AM to 9:30 AM on 2019-09-13
 
 ```
@@ -1061,12 +983,22 @@ Get all rides from Irvine to anywhere between 8:00 AM to 9:30 AM on 2019-09-13
 
 ```
 
-Get all rides from Irvine to anywhere anytime (after the current timestamp, of course)
+Get all rides from Irvine to anywhere anytime (after the current timestamp)
 
 ```
 
     {
         "from": "Irvine"
+    }
+
+```
+
+Get all rides from anywhere to Irvine anytime (after the current timestamp)
+
+```
+
+    {
+        "to": "Irvine"
     }
 
 ```
@@ -1093,9 +1025,7 @@ localhost:3000/rides/matching-rides?filter=
             "user2"
         ],
         "_id": "5e994d575f233007f86b3b6d",
-        "ownerEmail": "user1@g.ucla.edu",
         "ownerUsername": "user1",
-        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2020-04-18T07:00:00.000Z",
@@ -1120,9 +1050,7 @@ localhost:3000/rides/matching-rides?filter=
             "user1"
         ],
         "_id": "5e994d575f233007f86b3b6f",
-        "ownerEmail": "user4@g.ucla.edu",
         "ownerUsername": "user4",
-        "ownerPhoneNumber": "1231231234",
         "from": "Los Angeles",
         "to": "Irvine",
         "date": "2020-04-18T07:00:00.000Z",
@@ -1144,17 +1072,17 @@ localhost:3000/rides/matching-rides?filter=
 
 GET request
 
-- DOES NOT take a pageNum param
-
 **params**
 
-username
+username, pageNum
 
 **example**
 
 localhost:3000/rides/user-rides-history?username=bin315a1
 
 **return value**
+
+Each page returns 5 rides, sorted by the most recent ride first (newest->oldest).
 
 200 status with an array of rides that the user with the username had in the past (before current date&time)
 
@@ -1174,6 +1102,8 @@ localhost:3000/rides/my-rides-history?pageNum=0
 
 **return value**
 
+Each page returns 5 rides, sorted by the most recent ride first (newest->oldest).
+
 200 OK status with an array of rides that the user had in the past (before current date&time)
 
 ---
@@ -1188,9 +1118,11 @@ pageNum
 
 **example**
 
-localhost:3000/rides/my-rides-history?pageNum=0
+localhost:3000/rides/my-rides-upcoming?pageNum=0
 
 **return value**
+
+Each page returns 5 rides, sorted by the closest, upcoming ride first (oldest->newest).
 
 200 OK status with an array of rides that the user will have in the future (after current date&time)
 
@@ -1206,9 +1138,11 @@ username, pageNum
 
 **example**
 
-localhost:3000/rides/my-rides-history?pageNum=0&username=bin315a1
+localhost:3000/rides/drives-history?pageNum=0&username=bin315a1
 
 **return value**
+
+Each page returns 5 rides, sorted by the most recent ride first (newest->oldest).
 
 200 OK status with an array of rides that the user was the driver in the past (before current date&time)
 
@@ -1227,6 +1161,8 @@ username, pageNum
 localhost:3000/rides/drives-upcoming?pageNum=0&username=bin315a1
 
 **return value**
+
+Each page returns 5 rides, sorted by the closest, upcoming ride first (oldest->newest).
 
 200 OK status with an array of rides that the user was the driver will drive in the future (after current date&time)
 
@@ -1248,7 +1184,6 @@ a new ride object:
 
 {
     "rideInfo": {
-        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
         "from": "Irvine",
         "to": "Los Angeles",
@@ -1271,7 +1206,6 @@ a new ride object:
 {
     "passengers": [],
     "_id": "5d55b5721e78951430fdcc66",
-    "ownerEmail": "bin315a1@g.ucla.edu",
     "ownerUsername": "bin315a1",
     "from": "Irvine",
     "to": "Los Angeles",
@@ -1300,9 +1234,7 @@ The ride object that the user is trying to join:
     "ride" : {
         "passengers": [],
         "_id": "5d505ed15482ec4e38597cdb",
-        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2019-09-11T00:00:00.000Z",
@@ -1317,7 +1249,9 @@ The ride object that the user is trying to join:
 
 **return value**
 
-200 status with the same ride object joined
+- 200 status with the same ride object joined
+- 400 status if the ride is not found, full, or if the passenger has already joined this ride
+- 403 status if the driver attempts to join the ride
 
 ```
 
@@ -1326,9 +1260,7 @@ The ride object that the user is trying to join:
         "bin315a1"
     ],
     "_id": "5d505ed15482ec4e38597cdb",
-    "ownerEmail": "bin315a1@gmail.com",
     "ownerUsername": "bin315a1",
-    "ownerPhoneNumber": "1231231234",
     "from": "Irvine",
     "to": "Los Angeles",
     "date": "2019-09-11T00:00:00.000Z",
@@ -1348,15 +1280,46 @@ PUT request
 
 - Whether the logged in user is a driver or a passenger in the ride is abstracted away.
 
-- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs: 1. The ride is removed from the Ride collection. 2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
+- In the event that a **driver** cancels a ride **without any passengers** in it, the following occurs:
 
-- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs: 1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`. - An example of a notification received by a passenger in the ride is the following:
-  `{ viewed: false, _id: 5e6532be23cf21496470c042, username: 'passenger1', msg: 'driverUsername has cancelled your ride', senderEmail: 'driverUsername@ucla.edu', date: 2020-03-08T18:00:30.136Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling' } }` 2. The ride is removed from the Ride collection. 3. The driver receives the following penalty: - `ridesCancelled` property is incremented
+1. The ride is removed from the Ride collection.
+2. The driver does not incur any penalties, such as +1 to their number of cancelled rides on their profile.
 
-- In the event that a **passenger** cancels a ride, the following occurs: 1. The driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`. - An example of a notification received by the driver is the following:
-  `{ viewed: false, _id: 5e6534144a54ab39342752d0, username: 'driverUsername', msg: 'passenger1 has cancelled your ride', senderEmail: 'passenger1@ucla.edu', date: 2020-03-08T18:06:12.834Z, __v: 0, additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" } }`
-  2. All other passengers, if any, are notified about the cancellation. This notification ONLY includes the additional property: `cancellationReason`.
-     3. The passenger who cancelled is removed from the ride, and a new spot is freed up. 4. The passenger who cancelled receive the following penalty: - `ridesCancelled` property is incremented
+- In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs:
+
+1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`.
+   - An example of a notification received by a passenger in the ride is the following:
+   ```
+   {
+   	_id: 5e6532be23cf21496470c042,
+   	username: 'passenger1',
+   	msg: 'driverUsername has cancelled your ride',
+   	date: 2020-03-08T18:00:30.136Z,
+   	additionalProperties: { cancellationReason: 'No longer traveling' },
+   	viewed: false
+   }
+   ```
+2. The ride is removed from the Ride collection.
+3. The driver receives the following penalty:
+   - `ridesCancelled` property is incremented
+
+- In the event that a **passenger** cancels a ride, the following occurs:
+
+1. The driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`.
+   - An example of a notification received by the driver is the following:
+   ```
+    {
+   	_id: 5e6534144a54ab39342752d0,
+   	username: 'driverUsername',
+   	msg: 'passenger1 has cancelled your ride',
+   	date: 2020-03-08T18:06:12.834Z,
+   	viewed: false,
+   	additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" }
+    }
+   ```
+2. All other passengers, if any, are notified about the cancellation. This notification ONLY includes the additional property: `cancellationReason`.
+3. The passenger who cancelled is removed from the ride, and a new spot is freed up. 4. The passenger who cancelled receive the following penalty:
+   - `ridesCancelled` property is incremented
 
 **body**
 
@@ -1373,9 +1336,7 @@ PUT request
         "passengers" : [
             "user1"
         ],
-        "ownerEmail" : "user2@g.ucla.edu.com",
         "ownerUsername" : "user2",
-        "ownerPhoneNumber" : "1231231234",
         "from" : "Los Angeles",
         "to" : "Irvine",
         "date" : "2020-03-05T08:00:00.000Z",
@@ -1392,7 +1353,11 @@ PUT request
 
 **return value**
 
-- 200 status, with a short **description of the event** that occurred. - For example, the following Strings are possible return values: - "Driver cancelled ride without penalty because there were no passengers." - "Driver cancelled ride and received a penalty because there were passengers." - "Passenger cancelled ride and received a penalty."
+- 200 status, with a short **description of the event** that occurred.
+- For example, the following Strings are possible return values:
+  - "Driver cancelled ride without penalty because there were no passengers."
+  - "Driver cancelled ride and received a penalty because there were passengers."
+  - "Passenger cancelled ride and received a penalty."
 - 500 status, with an object containing `error` property. - For example, the following errors are possible messages: - "Ride does not exist in database!" - "User is not a driver or passenger of this ride."
 
 ---
@@ -1432,9 +1397,7 @@ The ride object that the user is trying to delete (The ride object's owner has t
             "bin315a1"
         ],
         "_id": "5d505f0d5482ec4e38597cdd",
-        "ownerEmail": "bin315a1@gmail.com",
         "ownerUsername": "bin315a1",
-        "ownerPhoneNumber": "1231231234",
         "from": "Irvine",
         "to": "Los Angeles",
         "date": "2019-08-30T00:00:00.000Z",
@@ -1460,6 +1423,48 @@ The ride object that the user is trying to delete (The ride object's owner has t
     }
 
 ```
+
+---
+
+### Ride details
+
+GET request
+
+**params**
+
+rideID
+
+**return value**
+
+200 status with the entire ride object returned
+
+---
+
+### Get available cities
+
+GET request
+
+**body/params**
+
+none
+
+**return value**
+
+200 status with an array of city names
+
+---
+
+### Get available counties
+
+GET request
+
+**body/params**
+
+none
+
+**return value**
+
+200 status with an array of counties
 
 ---
 

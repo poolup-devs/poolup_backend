@@ -23,8 +23,7 @@ past_date.setDate(curr_date.getDate() - 2);
 const user_list = [
   {
     isRegistered: true,
-    password:
-      "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     username: "admin",
     firstName: "adminFirstName",
     lastName: "adminLastName",
@@ -34,8 +33,7 @@ const user_list = [
   },
   {
     isRegistered: true,
-    password:
-      "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     username: "user1",
     firstName: "user1FirstName",
     lastName: "user1LastName",
@@ -45,8 +43,7 @@ const user_list = [
   },
   {
     isRegistered: true,
-    password:
-      "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     username: "user2",
     firstName: "user2FirstName",
     lastName: "user2LastName",
@@ -56,8 +53,7 @@ const user_list = [
   },
   {
     isRegistered: true,
-    password:
-      "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     username: "user3",
     firstName: "user3FirstName",
     lastName: "user3LastName",
@@ -67,8 +63,7 @@ const user_list = [
   },
   {
     isRegistered: true,
-    password:
-      "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     username: "user4",
     firstName: "user4FirstName",
     lastName: "user4LastName",
@@ -80,9 +75,7 @@ const user_list = [
 const ride_list = [
   // user1's upcoming drive
   {
-    ownerEmail: "user1@g.ucla.edu",
     ownerUsername: "user1",
-    ownerPhoneNumber: "1231231234",
     from: "Irvine",
     to: "Los Angeles",
     date: future_date_1.toDateString(),
@@ -93,9 +86,7 @@ const ride_list = [
   },
   // user1's previous drive
   {
-    ownerEmail: "user1@g.ucla.edu",
     ownerUsername: "user1",
-    ownerPhoneNumber: "1231231234",
     from: "Irvine",
     to: "Los Angeles",
     date: past_date.toDateString(),
@@ -106,9 +97,7 @@ const ride_list = [
   },
   // user1's planned ride (approved)
   {
-    ownerEmail: "user4@g.ucla.edu",
     ownerUsername: "user4",
-    ownerPhoneNumber: "1231231234",
     from: "Los Angeles",
     to: "Irvine",
     date: future_date_1.toDateString(),
@@ -119,9 +108,7 @@ const ride_list = [
   },
   // user1's planned ride (pending)
   {
-    ownerEmail: "user4@g.ucla.edu",
     ownerUsername: "user4",
-    ownerPhoneNumber: "1231231234",
     from: "Los Angeles",
     to: "Irvine",
     date: future_date_2.toDateString(),
@@ -176,8 +163,7 @@ const userSeed = () => {
       return reject();
     }
     console.log(
-      chalk.green("[DB_INIT]: ") +
-        "Successfully initialized development database - User!"
+      chalk.green("[DB_INIT]: ") + "Successfully initialized development database - User!"
     );
     return resolve();
   });
@@ -200,8 +186,7 @@ const emailSeed = () => {
       return reject();
     }
     console.log(
-      chalk.green("[DB_INIT]: ") +
-        "Successfully initialized development database - Email!"
+      chalk.green("[DB_INIT]: ") + "Successfully initialized development database - Email!"
     );
     return resolve();
   });
@@ -218,8 +203,7 @@ const rideSeed = () => {
       return reject();
     }
     console.log(
-      chalk.green("[DB_INIT]: ") +
-        "Successfully initialized development database - Ride!"
+      chalk.green("[DB_INIT]: ") + "Successfully initialized development database - Ride!"
     );
     return resolve();
   });
@@ -236,8 +220,7 @@ const notificationSeed = () => {
       return reject();
     }
     console.log(
-      chalk.green("[DB_INIT]: ") +
-        "Successfully initialized development database - Noti!"
+      chalk.green("[DB_INIT]: ") + "Successfully initialized development database - Noti!"
     );
     return resolve();
   });
@@ -254,8 +237,7 @@ const schoolSeed = () => {
       return reject();
     }
     console.log(
-      chalk.green("[DB_INIT]: ") +
-        "Successfully initialized development database - School!"
+      chalk.green("[DB_INIT]: ") + "Successfully initialized development database - School!"
     );
     return resolve();
   });

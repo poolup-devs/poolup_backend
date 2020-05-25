@@ -17,9 +17,7 @@ class ControllerException extends Error {
       throw Error("missing message field for ControllerException class");
     }
     super(message);
-    this.name = `ControllerException (${this.constructor.getExceptionTag(
-      status
-    )})`;
+    this.name = `ControllerException (${this.constructor.getExceptionTag(status)})`;
     this.status = status;
   }
 
@@ -31,7 +29,7 @@ class ControllerException extends Error {
       404: "Not Found",
     };
     const res = statusDictionary[status];
-    return res ? res : "undefined staus";
+    return res ? res : "undefined status";
   }
 }
 

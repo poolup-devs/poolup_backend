@@ -1,7 +1,7 @@
 const express = require("express");
 const router = new express.Router();
-const mongoose = require("mongoose");
 const db = require("./controller.js");
+const mongoose = require("mongoose");
 const checkAuth = require("../middleware/jwt_authenticator.js");
 const tokenParser = require("../utils/token-parser.js");
 const errResp = require("../utils/errors/errResponse");
@@ -16,10 +16,10 @@ router.get("/rides/matching-rides", async (req, res) => {
   }
 });
 
-//Get another user's ride history
+//Get a user's ride history
 router.get("/rides/user-rides-history", checkAuth, async (req, res) => {
   try {
-    const data = await db.getRideHistory(req.query.username);
+    const data = await db.getRideHistory(req.query.username, req.query.pageNum);
     res.status(200).send(data);
   } catch (err) {
     errResp(res, err);
@@ -30,7 +30,7 @@ router.get("/rides/user-rides-history", checkAuth, async (req, res) => {
 router.get("/rides/my-rides-history", checkAuth, async (req, res) => {
   const authUsername = await tokenParser(req.headers.authorization);
   try {
-    const data = await db.getMyRideHistory(authUsername, req.query.pageNum);
+    const data = await db.getRideHistory(authUsername, req.query.pageNum);
     res.status(200).send(data);
   } catch (err) {
     errResp(res, err);
@@ -41,7 +41,7 @@ router.get("/rides/my-rides-history", checkAuth, async (req, res) => {
 router.get("/rides/my-rides-upcoming", checkAuth, async (req, res) => {
   const authUsername = await tokenParser(req.headers.authorization);
   try {
-    const data = await db.getMyRideUpcoming(authUsername);
+    const data = await db.getMyRideUpcoming(authUsername, req.query.pageNum);
     res.status(200).send(data);
   } catch (err) {
     errResp(res, err);
@@ -51,10 +51,7 @@ router.get("/rides/my-rides-upcoming", checkAuth, async (req, res) => {
 //Get a user's (others & mine) drive history
 router.get("/rides/drives-history", checkAuth, async (req, res) => {
   try {
-    const data = await db.getDriveHistory(
-      req.query.username,
-      req.query.pageNum
-    );
+    const data = await db.getDriveHistory(req.query.username, req.query.pageNum);
     res.status(200).send(data);
   } catch (err) {
     errResp(res, err);
@@ -64,10 +61,7 @@ router.get("/rides/drives-history", checkAuth, async (req, res) => {
 //Get a user's (others & mine) upcoming drives
 router.get("/rides/drives-upcoming", checkAuth, async (req, res) => {
   try {
-    const data = await db.getDriveUpcoming(
-      req.query.username,
-      req.query.pageNum
-    );
+    const data = await db.getDriveUpcoming(req.query.username, req.query.pageNum);
     res.status(200).send(data);
   } catch (err) {
     errResp(res, err);
@@ -90,7 +84,6 @@ router.post("/rides/post-ride", checkAuth, async (req, res) => {
 router.put("/rides/join-ride", checkAuth, async (req, res) => {
   try {
     var authUsername = await tokenParser(req.headers.authorization);
-
     const data = await db.joinRide(req.body.ride, authUsername);
     res.status(200).send(data);
   } catch (err) {
@@ -110,12 +103,7 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
     }
     const authUsername = await tokenParser(req.headers.authorization);
 
-    const msg = await db.cancelRide(
-      ride._id,
-      authUsername,
-      cancellationReason,
-      messageToDriver
-    );
+    const msg = await db.cancelRide(ride._id, authUsername, cancellationReason, messageToDriver);
 
     res.status(200).send(msg);
   } catch (err) {
@@ -123,12 +111,11 @@ router.put("/rides/cancel-ride", checkAuth, async (req, res) => {
   }
 });
 
-//Get Ride Details
+// Get a ride from the database by querying with its rideId
 router.get("/rides/ride-details", checkAuth, async (req, res) => {
-  var rideID = req.query.rideID;
-
+  let rideID = req.query.rideID;
   try {
-    const data = await db.rideDetails(mongoose.Types.ObjectId(rideID));
+    const data = await db.getRideDetails(mongoose.Types.ObjectId(rideID));
     res.status(200).send(data);
   } catch (err) {
     errResp(res, err);

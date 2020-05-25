@@ -18,10 +18,7 @@ const sendVerificationEmail = (email) => {
           const token = jwt.sign({ email }, process.env.JWT_EMAIL_KEY, {
             expiresIn: VERIFICATION_EMAIL_EXPIRY,
           });
-          if (
-            process.env.MODE === "STAGING" ||
-            process.env.MODE === "TESTING"
-          ) {
+          if (process.env.MODE === "STAGING" || process.env.MODE === "TESTING") {
             var verificationUrl = `http://localhost:${process.env.PORT}/users/verify?email=${email}&token=${token}`;
           } else {
             var verificationUrl = `https://restapi.poolup.co/users/verify?email=${email}&token=${token}`;
@@ -40,20 +37,11 @@ const sendVerificationEmail = (email) => {
           return resolve(true);
         }
         case "not a valid email address":
-          return reject(
-            new ControllerException(400, "Not a valid email address")
-          );
+          return reject(new ControllerException(400, "Not a valid email address"));
         case "not an .edu email address":
-          return reject(
-            new ControllerException(400, "Not an .edu email address")
-          );
+          return reject(new ControllerException(400, "Not an .edu email address"));
         case "verification email resend limit reached":
-          return reject(
-            new ControllerException(
-              400,
-              "Verification email resend limit reached"
-            )
-          );
+          return reject(new ControllerException(400, "Verification email resend limit reached"));
         case "email already verified":
           return reject(new ControllerException(400, "Email already verified"));
         default: {
@@ -76,12 +64,7 @@ const verifyEmail = (email) => {
         return reject(new ControllerException(404, "Email not found"));
       }
       if (res_email.status != "pre-verification") {
-        return reject(
-          new ControllerException(
-            403,
-            `The email is in ${res_email.status} status`
-          )
-        );
+        return reject(new ControllerException(403, `The email is in ${res_email.status} status`));
       }
       await Email.findByIdAndUpdate(
         res_email._id,

@@ -7,7 +7,7 @@ const agenda = require("../agenda/agenda");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
 const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
-const LAST_MINUTE_BOOKING = process.env.LAST_MINUTE_BOOKING ? process.env.LAST_MINUTE_BOOKING : 15;
+const LAST_MINUTE_BOOKING = parseFloat(process.env.LAST_MINUTE_BOOKING) || 15;
 
 ///////////////////////////////////////////////////////////////
 ///////////GET RIDES///////////////////////////////////////////

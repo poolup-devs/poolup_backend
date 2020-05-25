@@ -7,9 +7,7 @@ const agenda = require("../agenda/agenda");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
 const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
-const MINUTES_UNTIL_LAST_MINUTE_BOOKING = process.env.MINUTES_UNTIL_LAST_MINUTE_BOOKING
-  ? process.env.MINUTES_UNTIL_LAST_MINUTE_BOOKING
-  : 15;
+const LAST_MINUTE_BOOKING = process.env.LAST_MINUTE_BOOKING ? process.env.LAST_MINUTE_BOOKING : 15;
 
 ///////////////////////////////////////////////////////////////
 ///////////GET RIDES///////////////////////////////////////////
@@ -230,7 +228,7 @@ const isLastMinuteBooking = (startingTime) => {
   const minutesToMiliseconds = (minutes) => {
     return minutes * 60 * 1000;
   };
-  return currentTime + minutesToMiliseconds(MINUTES_UNTIL_LAST_MINUTE_BOOKING) > startingTime;
+  return currentTime + minutesToMiliseconds(LAST_MINUTE_BOOKING) > startingTime;
 };
 
 const joinRide = (rideInfo, passengerUsername) => {

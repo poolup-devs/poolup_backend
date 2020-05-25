@@ -21,6 +21,8 @@
     "FLAKER_LIMIT": "<Default: 24 INSERT FLAKER_LIMIT HERE>",
     "INDECISION_LIMIT": "<Default: 30 INSERT INDECISION_LIMIT HERE>",
 
+    "MINUTES_UNTIL_LAST_MINUTE_BOOKING": <Default: 15 MINUTES_UNTIL_LAST_MINUTE_BOOKING> 
+
     "MY_RIDES_PATH": "/rider/my-rides",
     "MY_DRIVES_PATH": "/driver/my-drives",
     "SEARCH_RIDES_PATH": "/rider"

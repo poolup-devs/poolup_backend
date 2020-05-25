@@ -42,31 +42,32 @@ Tech Stack: NodeJS: Express, MongoDB: Mongoose
 
 Poolup API is configured via environment variables. The applicable environment variables are:
 
-| Environment Variable   | Description                       |
-| ---------------------- | --------------------------------- |
-| JWT_SECRET_KEY         | API Authentication                |
-| JWT_EMAIL_KEY          | API Authentication                |
-| SESSION_SECRET_KEY     | add description                   |
-| S3_BUCKET              | AWS Database Identification       |
-| AWS_ACCESS_KEY_ID      | AWS Credentials                   |
-| AWS_SECRET_ACCESS_KEY  | AWS Credentials                   |
-| SENDGRID_API_KEY       | API Key for email service         |
-| SENDGRID_USERNAME      | Email Service Credentials         |
-| SENDGRID_PASSWORD      | Email Service Credentials         |
-| STRIPE_PUBLIC_KEY      | Public Key for Stripe Handshakes  |
-| STRIPE_PRIVATE_KEY     | Private Key for Stripe Handshakes |
-| STRIPE_WEBHOOK_SECRET  | Secret Key for Stripe Webhook     |
-| STRIPE_CLIENT_ID       | Client ID for Stripe              |
-| STRIPE_APPLICATION_FEE | Business Logic Parameter          |
-| FLAKER_LIMIT           | Business Logic Parameter          |
-| INDECISION_LIMIT       | Business Logic Parameter          |
-| MY_RIDES_PATH          | Url for redirects                 |
-| MY_DRIVES_PATH         | Url for redirects                 |
-| SEARCH_RIDES_PATH      | Url for redirects                 |
-| MODE                   | add description                   |
-| PORT                   | API Port Number                   |
-| MONGODB_URL            | Mongodb url                       |
-| FRONT_END_URL          | Frontend url for redirects        |
+| Environment Variable                      | Description                       |
+| ----------------------                    | --------------------------------- |
+| JWT_SECRET_KEY                            | API Authentication                |
+| JWT_EMAIL_KEY                             | API Authentication                |
+| SESSION_SECRET_KEY                        | add description                   |
+| S3_BUCKET                                 | AWS Database Identification       |
+| AWS_ACCESS_KEY_ID                         | AWS Credentials                   |
+| AWS_SECRET_ACCESS_KEY                     | AWS Credentials                   |
+| SENDGRID_API_KEY                          | API Key for email service         |
+| SENDGRID_USERNAME                         | Email Service Credentials         |
+| SENDGRID_PASSWORD                         | Email Service Credentials         |
+| STRIPE_PUBLIC_KEY                         | Public Key for Stripe Handshakes  |
+| STRIPE_PRIVATE_KEY                        | Private Key for Stripe Handshakes |
+| STRIPE_WEBHOOK_SECRET                     | Secret Key for Stripe Webhook     |
+| STRIPE_CLIENT_ID                          | Client ID for Stripe              |
+| STRIPE_APPLICATION_FEE                    | Business Logic Parameter          |
+| FLAKER_LIMIT                              | Business Logic Parameter          |
+| INDECISION_LIMIT                          | Business Logic Parameter          |
+| MINUTES_UNTIL_LAST_MINUTE_BOOKING         | Business Logic Parameter          |
+| MY_RIDES_PATH                             | Url for redirects                 |
+| MY_DRIVES_PATH                            | Url for redirects                 |
+| SEARCH_RIDES_PATH                         | Url for redirects                 |
+| MODE                                      | add description                   |
+| PORT                                      | API Port Number                   |
+| MONGODB_URL                               | Mongodb url                       |
+| FRONT_END_URL                             | Frontend url for redirects        |
 
 ---
 

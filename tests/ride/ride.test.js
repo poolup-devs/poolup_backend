@@ -19,11 +19,14 @@ describe("Testing Ride endpoints", () => {
   });
 
   describe("Testing when a user joins a ride", () => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 2);
+
     let sampleRide = {
       ownerUsername: "",
       from: "Here",
       to: "There",
-      date: new Date(),
+      date: futureDate,
       price: "20",
       seats: 4,
       detail: "Third test for post",
@@ -62,7 +65,6 @@ describe("Testing Ride endpoints", () => {
       }
     });
 
-    // ride is full
     test("The ride is full", async () => {
       const username = "rider";
       let ride = sampleRide;
@@ -70,6 +72,7 @@ describe("Testing Ride endpoints", () => {
       const newRide = await db.postRide(ride, username);
       let i = 0;
       try {
+        expect.assertions(2);
         for (; i < newRide.seats + 3; i++) {
           const username_ = username + i;
           const user = await User.create({ username: username_ });
@@ -79,6 +82,39 @@ describe("Testing Ride endpoints", () => {
         expect(i).toBe(newRide.seats);
         expect(err.message).toBe("the ride is full");
       }
+    });
+
+    test("The user joined the ride too late because he joined 14 minutes before the start of the ride.", async () => {
+      const now = new Date();
+      const tooLateDate = now.getTime() - 14 * 60 * 1000;
+      const ride = await Ride.create({
+        ownerUsername: "driverUsername",
+        date: now,
+        passengers: [],
+      });
+      const spy = jest.spyOn(global.Date, "now").mockImplementation(() => tooLateDate);
+      try {
+        expect.assertions(2);
+        const updatedRide = await db.joinRide(ride, "passenger1");
+      } catch (e) {
+        expect(e.status).toBe(400);
+        expect(e.message).toEqual("user joined the ride too late");
+      }
+      spy.mockRestore();
+    });
+
+    test("The user joined the ride barely on time because he joined 15 minutes before the start of the ride.", async () => {
+      const now = new Date();
+      const rightOnTimeDate = now.getTime() - 15 * 60 * 1000;
+      const ride = await Ride.create({
+        ownerUsername: "driverUsername",
+        date: now,
+        passengers: [],
+      });
+      const spy = jest.spyOn(global.Date, "now").mockImplementation(() => rightOnTimeDate);
+      const updatedRide = await db.joinRide(ride, "passenger1");
+      expect(updatedRide).toBeTruthy();
+      spy.mockRestore();
     });
 
     describe("Testing /rides/join-ride endpoint", () => {

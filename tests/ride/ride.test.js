@@ -98,7 +98,11 @@ describe("Testing Ride endpoints", () => {
         const updatedRide = await db.joinRide(ride, "passenger1");
       } catch (e) {
         expect(e.status).toBe(400);
-        expect(e.message).toEqual("user joined the ride too late");
+        expect(e.message).toEqual(
+          `Cannot join ride within ${
+            parseFloat(process.env.LAST_MINUTE_BOOKING) || 15
+          } mins from departure`
+        );
       }
       spy.mockRestore();
     });

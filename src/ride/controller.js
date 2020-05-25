@@ -247,7 +247,12 @@ const joinRide = (rideInfo, passengerUsername) => {
       } else if (ride.passengers.includes(passengerUsername)) {
         return reject(new ControllerException(400, "user is already in the ride"));
       } else if (isLastMinuteBooking(date)) {
-        return reject(new ControllerException(400, "user joined the ride too late"));
+        return reject(
+          new ControllerException(
+            400,
+            `Cannot join ride within ${LAST_MINUTE_BOOKING} mins from departure`
+          )
+        );
       }
 
       const updatedRide = await Ride.findByIdAndUpdate(

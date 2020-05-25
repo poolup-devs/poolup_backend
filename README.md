@@ -135,7 +135,7 @@ Poolup API is configured via environment variables. The applicable environment v
 #### Reviewer
 
 1. Review Context
-2. By yourself, slowly go through the code while keeping a [checklist](https://www.codementor.io/blog/code-review-checklist-76q7ovkaqj) in mind and add comments where necessary
+2. By yourself, slowly go through the code while keeping a [checklist](https://www.dropbox.com/scl/fi/71ryveptkopd62b4nufha/Code-Review-Checklist.gdoc?dl=0&rlkey=ymzqqca8mpo6gsw3b4zhakwkg) in mind and add comments where necessary
 
 ---
 

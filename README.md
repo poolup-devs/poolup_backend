@@ -60,6 +60,7 @@ Poolup API is configured via environment variables. The applicable environment v
 | STRIPE_APPLICATION_FEE | Business Logic Parameter          |
 | FLAKER_LIMIT           | Business Logic Parameter          |
 | INDECISION_LIMIT       | Business Logic Parameter          |
+| LAST_MINUTE_BOOKING    | Business Logic Parameter          |
 | MY_RIDES_PATH          | Url for redirects                 |
 | MY_DRIVES_PATH         | Url for redirects                 |
 | SEARCH_RIDES_PATH      | Url for redirects                 |

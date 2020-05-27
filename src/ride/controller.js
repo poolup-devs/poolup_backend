@@ -7,6 +7,7 @@ const agenda = require("../agenda/agenda");
 
 const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
 const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
+const LAST_MINUTE_BOOKING = parseFloat(process.env.LAST_MINUTE_BOOKING) || 15;
 
 ///////////////////////////////////////////////////////////////
 ///////////GET RIDES///////////////////////////////////////////
@@ -221,37 +222,55 @@ const postRide = (rideInfo, authUsername) => {
   });
 };
 
+// A last minute booking is one that is made within LAST_MINUTE_BOOKING minutes prior to the ride beginning
+const isLastMinuteBooking = (startingTime) => {
+  const currentTime = Date.now();
+  const minutesToMiliseconds = (minutes) => {
+    return minutes * 60 * 1000;
+  };
+  return currentTime + minutesToMiliseconds(LAST_MINUTE_BOOKING) > startingTime;
+};
+
 const joinRide = (rideInfo, passengerUsername) => {
   return new Promise(async (resolve, reject) => {
     try {
       const ride_id = rideInfo._id;
-      const ownerUsername = rideInfo.ownerUsername;
+      const { ownerUsername, date } = rideInfo;
+
+      const ride = await Ride.findById(ride_id);
+      if (!ride) {
+        return reject(new ControllerException(400, "ride is not found"));
+      } else if (ride.seats < 1) {
+        return reject(new ControllerException(400, "the ride is full"));
+      } else if (ride.ownerUsername == passengerUsername) {
+        return reject(new ControllerException(403, "driver of the ride cannot join the ride"));
+      } else if (ride.passengers.includes(passengerUsername)) {
+        return reject(new ControllerException(400, "user is already in the ride"));
+      } else if (isLastMinuteBooking(date)) {
+        return reject(
+          new ControllerException(
+            400,
+            `Cannot join ride within ${LAST_MINUTE_BOOKING} mins from departure`
+          )
+        );
+      }
+
+      const updatedRide = await Ride.findByIdAndUpdate(
+        ride_id,
+        { $addToSet: { passengers: passengerUsername }, $inc: { seats: -1 } },
+        { new: true }
+      );
+
+      // Notify the driver that a new passenger has joined the ride
       const noti = {
         username: ownerUsername,
         msg: `${passengerUsername} has joined your ride`,
         date: new Date(),
         redirectPath: MY_DRIVES_PATH,
       };
-
-      const ride_res = await Ride.findById(ride_id);
-      if (!ride_res) {
-        return reject(new ControllerException(400, "ride is not found"));
-      } else if (ride_res.seats < 1) {
-        return reject(new ControllerException(400, "the ride is full"));
-      } else if (ride_res.ownerUsername == passengerUsername) {
-        return reject(new ControllerException(403, "driver of the ride cannot join the ride"));
-      } else if (ride_res.passengers.includes(passengerUsername)) {
-        return reject(new ControllerException(400, "user is already in the ride"));
-      }
-
-      const ride_upd = await Ride.findByIdAndUpdate(
-        ride_id,
-        { $addToSet: { passengers: passengerUsername }, $inc: { seats: -1 } },
-        { new: true }
-      );
       await Noti.create(noti);
 
-      return resolve(ride_upd);
+      return resolve(updatedRide);
     } catch (err) {
       return reject(err);
     }

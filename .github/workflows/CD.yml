@@ -1,5 +1,4 @@
 name: Continuous Deployment
-
 on:
   push:
     branches:
@@ -7,7 +6,6 @@ on:
   pull_request:
     branches:
       - stable
-
 jobs:
   cd:
     runs-on: ubuntu-latest
@@ -26,13 +24,3 @@ jobs:
         run: |
           docker push ${{ secrets.DOCKER_USER }}/poolup_backend_web:${{ github.sha }}
           docker push ${{ secrets.DOCKER_USER }}/poolup_backend_web:latest
-
-name: Continuous Integration
-
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master

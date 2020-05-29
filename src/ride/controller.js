@@ -200,6 +200,10 @@ const postRide = (rideInfo, authUsername) => {
           new ControllerException(403, "unmatching username of the request and the logged in user")
         );
       }
+      const maxSeats = 7;
+      if (rideInfo.seats > maxSeats) {
+        return reject(new ControllerException(403, "max seat limit exceeded"));
+      }
       const newRide = await Ride.create(rideInfo);
       // Schedule jobs to occur after ride completion
       await agenda.scheduleJobHoursAfterDate(

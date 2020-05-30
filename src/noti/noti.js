@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const notiSchema = mongoose.Schema({
   username: { type: String, index: true },
   msg: String,
+  iconUrl: String,
   viewed: { type: Boolean, default: false },
   viewedAt: Date,
   date: { type: Date, default: Date.now() },

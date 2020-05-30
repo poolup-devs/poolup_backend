@@ -8,16 +8,14 @@ const agenda = require("../agenda");
 
 // A completed ride is one that hasn't been cancelled and contains at least one passenger
 const isCompletedRide = (rideDetails) => {
-  return new Promise(async (resolve, reject) => {
-    return resolve(rideDetails && rideDetails.passengers.length > 0);
-  });
+  return rideDetails && rideDetails.passengers.length > 0;
 };
 
 // Task to update the # completed rides for all users in a ride
 const updateCompletedRidesTask = async (rideId) => {
   const rideDetails = await Ride.findById(rideId);
   // At least a single passenger on the completed ride
-  if (await isCompletedRide(rideDetails)) {
+  if (isCompletedRide(rideDetails)) {
     // Update the driver's number of completed rides based on the number of passengers dropped off
     await User.findOneAndUpdate(
       { username: rideDetails.ownerUsername },
@@ -34,7 +32,7 @@ const updateCompletedRidesTask = async (rideId) => {
 // Task to send a notification to all users in a ride to leave a review
 const createNotiToLeaveReviewTask = async (rideId) => {
   const rideDetails = await Ride.findById(rideId);
-  if (await isCompletedRide(rideDetails)) {
+  if (isCompletedRide(rideDetails)) {
     const driverUsername = rideDetails.ownerUsername;
     // Query for a list of passenger names to create driver notification
     let passengerInfo = [];

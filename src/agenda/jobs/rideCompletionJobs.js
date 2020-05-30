@@ -50,6 +50,7 @@ const createNotiToLeaveReviewTask = async (rideId) => {
     const notiToDriver = await Noti.create({
       username: driverUsername,
       msg,
+      iconUrl: passengerInfo[0].picUrl,
       date: new Date(),
     });
     // Update schema-less property: additionalProperties to contain rideId and usersToReview
@@ -69,6 +70,7 @@ const createNotiToLeaveReviewTask = async (rideId) => {
       const notiToPassenger = await Noti.create({
         username: passengerUsername,
         msg: `Leave a review for your driver, ${driverInfo.firstName}.`,
+        iconUrl: driverInfo.picUrl,
         date: new Date(),
       });
       // Update schema-less property: additionalProperties to contain rideId and driverInfo

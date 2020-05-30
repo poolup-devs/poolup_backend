@@ -117,6 +117,7 @@ describe("Testing the implementation of scheduled jobs that occur after a ride i
         expect(driverNoti).toEqual(
           expect.objectContaining({
             username: driver.username,
+            iconUrl: passenger1.picUrl,
             msg: "Leave a review for your passengers, John and Aiden.",
           })
         );
@@ -143,6 +144,7 @@ describe("Testing the implementation of scheduled jobs that occur after a ride i
         expect(passenger1Noti).toEqual(
           expect.objectContaining({
             username: passenger1.username,
+            iconUrl: driver.picUrl,
             msg: "Leave a review for your driver, Sarah.",
           })
         );
@@ -164,6 +166,7 @@ describe("Testing the implementation of scheduled jobs that occur after a ride i
         expect(passenger2Noti).toEqual(
           expect.objectContaining({
             username: passenger2.username,
+            iconUrl: driver.picUrl,
             msg: "Leave a review for your driver, Sarah.",
           })
         );

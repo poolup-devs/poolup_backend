@@ -380,9 +380,8 @@ const addDriverInfoToRides = (rides) => {
         const driver = await User.findOne({
           username: ride.ownerUsername,
         });
-        const { picUrl, picType, firstName, lastName } = driver;
+        const { picUrl, firstName, lastName } = driver;
         ride.picUrl = picUrl;
-        ride.picType = picType;
         ride.firstName = firstName;
         ride.lastName = lastName;
         modifiedRides.push(ride);

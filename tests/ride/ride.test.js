@@ -438,7 +438,6 @@ describe("Testing Ride endpoints", () => {
       driver = await User.create({
         username: "driverUsername",
         picUrl: "some_url_1",
-        picType: "png",
         firstName: "John",
         lastName: "Smith",
       });
@@ -446,7 +445,6 @@ describe("Testing Ride endpoints", () => {
       passenger = await User.create({
         username: "passenger1",
         picUrl: "some_url_1",
-        picType: "png",
         firstName: "Sarah",
         lastName: "Smith",
       });
@@ -566,7 +564,6 @@ describe("Testing Ride endpoints", () => {
         expect(rides[0]).toEqual(
           expect.objectContaining({
             picUrl: driver.picUrl,
-            picType: driver.picType,
             firstName: driver.firstName,
             lastName: driver.lastName,
           })
@@ -574,7 +571,6 @@ describe("Testing Ride endpoints", () => {
         expect(rides[1]).toEqual(
           expect.objectContaining({
             picUrl: driver.picUrl,
-            picType: driver.picType,
             firstName: driver.firstName,
             lastName: driver.lastName,
           })

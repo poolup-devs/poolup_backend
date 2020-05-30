@@ -22,13 +22,9 @@ const checkS3Connection = async () => {
   };
   try {
     await s3.headObject(params).promise();
-    logger.info(
-      "[INIT]: " + "S3 bucket connection to " + S3_BUCKET + " successful"
-    );
+    logger.info("[INIT]: " + "S3 bucket connection to " + S3_BUCKET + " successful");
   } catch (err) {
-    logger.error(
-      "ERROR: Staging S3 bucket connection failure; check .env file"
-    );
+    logger.error("ERROR: Staging S3 bucket connection failure; check .env file");
   }
 };
 
@@ -44,10 +40,10 @@ const uploadFile = (buffer, name, type) => {
   return s3.upload(params).promise().catch();
 };
 
-const deleteFile = (name, type) => {
+const deleteFile = (key) => {
   const params = {
     Bucket: S3_BUCKET,
-    Key: `${name}.${type}`,
+    Key: key,
   };
   return s3.deleteObject(params).promise().catch();
 };

@@ -41,7 +41,6 @@ const userSchema = mongoose.Schema({
   },
   phoneNumber: String,
   picUrl: String,
-  picType: { type: String, default: "png" },
   createdAt: { type: Date, default: new Date() },
 
   // Personal information
@@ -61,15 +60,11 @@ userSchema.statics.setRandomBruinBear = function (username) {
     "https://poolup-bucket-deployment.s3.us-east-2.amazonaws.com/DefaultProfilePic/PoolUpLogo_" +
     colors[Math.floor(Math.random() * colors.length)] +
     ".png";
-  return this.findOneAndUpdate(
-    { username },
-    { picUrl: default_picUrl },
-    function (error, result) {
-      if (error) {
-        throw err;
-      }
+  return this.findOneAndUpdate({ username }, { picUrl: default_picUrl }, function (error, result) {
+    if (error) {
+      throw err;
     }
-  );
+  });
 };
 
 userSchema.index(

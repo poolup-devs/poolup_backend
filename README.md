@@ -285,7 +285,6 @@ Models:
 | password       | String | Yes      |                                                              |
 | phoneNumber    | String |          |                                                              |
 | picUrl         | String |          |                                                              |
-| picType        | String |          |                                                              |
 | createdAt      | Date   |          |                                                              |
 | aboutMe        | String |          |                                                              |
 | school         | String |          |                                                              |
@@ -395,7 +394,6 @@ POST request
             "sumOfAllRatings": 0,
             "totalRatings": 0
         },
-        "picType": "png",
         "isRegistered": true,
         "createdAt": "2020-04-12T20:13:40.851Z",
         "ridesCancelled": 0,
@@ -547,7 +545,6 @@ Upload a profile picture for the currently logged in user.
     "name": "Han",
     "email": "bin315a1@g.ucla.edu",
     "__v": 0,
-    "picType": "jpg",
     "picUrl": "https://bruinpool-bucket-staging.s3.us-east-2.amazonaws.com/bucketFolder/bin315a1-pic.jpg"
 }
 ```
@@ -835,7 +832,7 @@ Returns the user document containing the updated aboutMe property
 GET request
 
 - Get all of a user's public information
-- Returns the following user properties: - `name, school, aboutMe, rating, ridesCompleted, ridesCancelled, picUrl, picType`
+- Returns the following user properties: - `name, school, aboutMe, rating, ridesCompleted, ridesCancelled, picUrl`
 - Any properties that are not defined are not included; for example, if a user has not received any reviews yet, the `rating` property cannot be computed and subsequently will not be returned
 
 - Additional Note: - `ridesCompleted` automatically updates 2 hours after a ride containing at least one passenger begins - Drivers will receive a **completed ride** for each passenger dropped off - Passengers will receive a single **completed ride** after a carpooling session
@@ -857,7 +854,6 @@ GET request
 
 {
     "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
-    "picType": "png",
     "name": "First Last",
     "school": "UCLA",
     "rating": "3.33",
@@ -1035,7 +1031,6 @@ localhost:3000/rides/matching-rides?filter=
         "detail": "driver1_future",
         "__v": 0,
         "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
-        "picType": "png",
         "firstName": "user1"
     },
     {
@@ -1060,7 +1055,6 @@ localhost:3000/rides/matching-rides?filter=
         "detail": "rider1_future",
         "__v": 0,
         "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png",
-        "picType": "png",
         "firstName": "user4"
     }
 ]
@@ -1511,13 +1505,11 @@ The "Leave a review" notification contains the following additionalProperties: `
                 "username" : "user2",
                 "firstName" : "user2",
                 "picUrl" : "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_pink.png",
-                "picType" : "png"
             },
             {
                 "username" : "user3",
                 "firstName" : "user3",
                 "picUrl" : "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_purple.png",
-                "picType" : "png"
             }
         ]
     }
@@ -1842,7 +1834,6 @@ GET request
             stripe: [Object],
             driver: [Object],
             rating: [Object],
-            picType: 'png',
             isRegistered: false,
             createdAt: 2020-04-08T05:47:55.927Z,
             ridesCancelled: 0,
@@ -1855,7 +1846,6 @@ GET request
             stripe: [Object],
             driver: [Object],
             rating: [Object],
-            picType: 'png',
             isRegistered: false,
             createdAt: 2020-04-08T05:47:55.927Z,
             ridesCancelled: 0,

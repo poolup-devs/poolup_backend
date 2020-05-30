@@ -108,13 +108,17 @@ const updateProfilePic = (authUsername, req) => {
         return reject(new ControllerException(400, "file type not allowed"));
       }
 
-      const fileName = `bucketFolder/${authUsername}-pic`;
+      // Delete the previously stored image
       const user = await User.findOne({ username: authUsername });
-      await s3_db.deleteFile(fileName, user.picType);
+      if (user) {
+        let profilePicKey = user.picUrl.match(`\/bucketFolder\/${authUsername}-pic.[a-z]*`).join();
+        await s3_db.deleteFile(profilePicKey);
+      }
+      const fileName = `bucketFolder/${authUsername}-pic`;
       const uploadPromise = await s3_db.uploadFile(buffer, fileName, type);
       const res = await User.findByIdAndUpdate(
         user._id,
-        { picUrl: uploadPromise.Location, picType: type.ext },
+        { picUrl: uploadPromise.Location },
         { new: true }
       );
 
@@ -342,16 +346,7 @@ const getPublicProfileInfo = (username) => {
     if (!user) {
       return reject(new ControllerException(404, "User could not be found!"));
     }
-    const {
-      firstName,
-      lastName,
-      picUrl,
-      picType,
-      aboutMe,
-      school,
-      ridesCancelled,
-      ridesCompleted,
-    } = user;
+    const { firstName, lastName, picUrl, aboutMe, school, ridesCancelled, ridesCompleted } = user;
     try {
       var rating = await getAverageRating(username);
     } catch (e) {
@@ -360,7 +355,6 @@ const getPublicProfileInfo = (username) => {
         firstName,
         lastName,
         picUrl,
-        picType,
         school,
         ridesCompleted,
         ridesCancelled,
@@ -371,7 +365,6 @@ const getPublicProfileInfo = (username) => {
       firstName,
       lastName,
       picUrl,
-      picType,
       school,
       rating,
       ridesCompleted,

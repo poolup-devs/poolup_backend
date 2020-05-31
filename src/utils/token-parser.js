@@ -13,9 +13,7 @@ const getAuthUsername = (authorization) => {
 
       const validUser = await User.findById(decoded._id);
       if (!validUser && process.env.MODE != "TESTING") {
-        return reject(
-          new ControllerException(404, "User with the authToken not found")
-        );
+        return reject(new ControllerException(404, "User with the authToken not found"));
       }
       return resolve(decoded.username);
     } catch (err) {

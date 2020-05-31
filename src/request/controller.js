@@ -17,9 +17,7 @@ const getRequestInfo = async (requestID) => {
     try {
       const res = await Request.findById(query);
       if (res == null) {
-        return reject(
-          new ControllerException(404, "ride of ride_id not found")
-        );
+        return reject(new ControllerException(404, "ride of ride_id not found"));
       }
       return resolve(res);
     } catch (err) {
@@ -92,19 +90,12 @@ const createRequest = async (requestInfo) => {
   //Check to see if a request has already been sent by this user and ride
   return new Promise(async (resolve, reject) => {
     try {
-      const req_res = await doesRequestExist(requestInfo);
-      const ride_res = await isAlreadyInRide(requestInfo);
-      if (req_res) {
+      if (await doesRequestExist(requestInfo)) {
         return reject(
-          new ControllerException(
-            400,
-            "A request has already been created for this ride"
-          )
+          new ControllerException(400, "A request has already been created for this ride")
         );
-      } else if (ride_res) {
-        return reject(
-          new ControllerException(400, "The user is already in this ride")
-        );
+      } else if (await isAlreadyInRide(requestInfo)) {
+        return reject(new ControllerException(400, "The user is already in this ride"));
       }
     } catch (err) {
       return reject(err);
@@ -117,41 +108,35 @@ const createRequest = async (requestInfo) => {
       carryOn: requestInfo.carryOn,
       luggage: requestInfo.luggage,
       msg: requestInfo.msg,
-      date: new Date(),
     };
 
     try {
-      const ride_res = await Ride.findById(newRequest.rideID);
-      const requesterUsername_res = await User.find({
+      const ride = await Ride.findById(newRequest.rideID);
+      const requester = await User.findOne({
         username: newRequest.requesterUsername,
-      });
-      const requesteeUsername_res = await User.find({
+      }).lean();
+      const requestee = await User.findOne({
         username: newRequest.requesteeUsername,
-      });
+      }).lean();
 
-      if (ride_res == null) {
+      if (ride == null) {
         reject(new ControllerException(404, "ride with rideID not found"));
       }
-      if (requesterUsername_res.length == 0) {
-        reject(
-          new ControllerException(404, "specified requesterUsername not found")
-        );
+      if (!requester) {
+        reject(new ControllerException(404, "specified requesterUsername not found"));
       }
-      if (requesteeUsername_res.length == 0) {
-        reject(
-          new ControllerException(404, "specified requesteeUsername not found")
-        );
+      if (!requestee) {
+        reject(new ControllerException(404, "specified requesteeUsername not found"));
       }
 
-      const request_new = await Request.create(newRequest);
+      const request = await Request.create(newRequest);
       await Noti.create({
-        username: newRequest.requesteeUsername,
-        msg: `${newRequest.requesterUsername} is requesting a spot on your trip from ${ride_res.from} to ${ride_res.to}`,
-        date: new Date(),
+        username: request.requesteeUsername,
+        iconUrl: requester.picUrl,
+        msg: `${requester.firstName} is requesting a spot on your trip from ${ride.from} to ${ride.to}`,
         redirectPath: MY_DRIVES_PATH,
       });
-
-      return resolve(request_new);
+      return resolve(request);
     } catch (err) {
       return reject(err);
     }
@@ -163,28 +148,17 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
   const filter = { _id: requestID };
   const update = { $set: { status: status } };
   const options = { new: true };
-  let errFlag = 0;
 
   return new Promise(async (resolve, reject) => {
     try {
       let request_res = await Request.findOne(filter);
       if (!request_res) {
-        return reject(
-          new ControllerException(404, "Specified request not found")
-        );
+        return reject(new ControllerException(404, "Specified request not found"));
       } else if (request_res.archived) {
-        return reject(
-          new ControllerException(400, "Ride has already been archived")
-        );
+        return reject(new ControllerException(400, "Ride has already been archived"));
       } else if (request_res.status !== "pending") {
-        return reject(
-          new ControllerException(
-            400,
-            "Ride has already been " + request_res.status
-          )
-        );
+        return reject(new ControllerException(400, "Ride has already been " + request_res.status));
       } else {
-        // switch
         switch (status) {
           case "approved": {
             if (authUsername != request_res.requesteeUsername) {
@@ -195,14 +169,10 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
                 )
               );
             }
-            request_upd = await Request.findOneAndUpdate(
-              filter,
-              update,
-              options
-            );
-            const user = await User.findOne({
+            request_upd = await Request.findOneAndUpdate(filter, update, options);
+            const requestee = await User.findOne({
               username: request_upd.requesteeUsername,
-            });
+            }).lean();
             await Ride.findByIdAndUpdate(
               { _id: request_upd.rideID },
               { $addToSet: { passengers: request_upd.requesterUsername } },
@@ -210,8 +180,8 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             );
             await Noti.create({
               username: request_upd.requesterUsername,
-              msg: `${user.username} has accepted your ride request`,
-              date: new Date(),
+              msg: `${requestee.firstName} has accepted your ride request`,
+              iconUrl: requestee.picUrl,
               redirectPath: MY_RIDES_PATH,
             });
             break;
@@ -225,18 +195,14 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
                 )
               );
             }
-            request_upd = await Request.findOneAndUpdate(
-              filter,
-              update,
-              options
-            );
-            const user = await User.findOne({
+            request_upd = await Request.findOneAndUpdate(filter, update, options);
+            const requestee = await User.findOne({
               username: request_upd.requesteeUsername,
-            });
+            }).lean();
             await Noti.create({
               username: request_upd.requesterUsername,
-              msg: `Your request to join ${user.username}'s ride has been denied`,
-              date: new Date(),
+              msg: `Your request to join ${requestee.firstName}'s ride has been denied`,
+              iconUrl: requestee.picUrl,
               redirectPath: MY_RIDES_PATH,
             });
             break;
@@ -250,15 +216,14 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
                 )
               );
             }
-            request_upd = await Request.findOneAndUpdate(
-              filter,
-              update,
-              options
-            );
+            request_upd = await Request.findOneAndUpdate(filter, update, options);
+            const requester = await User.findOne({
+              username: request_upd.requesterUsername,
+            }).lean();
             await Noti.create({
               username: request_upd.requesteeUsername,
-              msg: `${request_upd.requesterUsername}'s request for your ride has been withdrawn`,
-              date: new Date(),
+              msg: `${requester.firstName}'s request for your ride has been withdrawn`,
+              iconUrl: requester.picUrl,
               redirectPath: MY_DRIVES_PATH,
             });
             break;
@@ -272,23 +237,20 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
                 )
               );
             }
-            request_upd = await Request.findOneAndUpdate(
-              filter,
-              update,
-              options
-            );
+            request_upd = await Request.findOneAndUpdate(filter, update, options);
+            const requester = await User.findOne({
+              username: request_upd.requesterUsername,
+            }).lean();
             await Noti.create({
               username: request_upd.requesteeUsername,
-              msg: `${request_upd.requesterUsername}'s request for your ride has been paid`,
-              date: new Date(),
+              msg: `${requester.firstName}'s request for your ride has been paid`,
+              iconUrl: requester.picUrl,
               redirectPath: MY_DRIVES_PATH,
             });
             break;
           }
           default: {
-            return reject(
-              new ControllerException(400, "invalid status to update")
-            );
+            return reject(new ControllerException(400, "invalid status to update"));
           }
         }
         return resolve(request_upd);
@@ -345,11 +307,7 @@ const archiveRequest = (requestID) => {
   const options = { new: true };
   return new Promise(async (resolve, reject) => {
     try {
-      const request_upd = await Request.findByIdAndUpdate(
-        filter,
-        update,
-        options
-      );
+      const request_upd = await Request.findByIdAndUpdate(filter, update, options);
       if (request_upd == null) {
         return reject(new ControllerException(404, "request object not found"));
       }
@@ -368,11 +326,7 @@ const unarchiveRequest = (requestID) => {
 
   return new Promise(async (resolve, reject) => {
     try {
-      const request_upd = await Request.findByIdAndUpdate(
-        filter,
-        update,
-        options
-      );
+      const request_upd = await Request.findByIdAndUpdate(filter, update, options);
       if (request_upd == null) {
         return reject(new ControllerException(404, "request object not found"));
       }
@@ -398,21 +352,12 @@ const decrementRemindCount = (requestID, authUsername) => {
       }
       if (request_res.requesteeUsername != authUsername) {
         return reject(
-          new ControllerException(
-            403,
-            "Unauthorized request action: You are not the requestee"
-          )
+          new ControllerException(403, "Unauthorized request action: You are not the requestee")
         );
       } else if (request_res.reminders < 1) {
-        return reject(
-          new ControllerException(400, "Reminder count is already less than 1")
-        );
+        return reject(new ControllerException(400, "Reminder count is already less than 1"));
       }
-      const request_upd = await Request.findOneAndUpdate(
-        filter,
-        update,
-        options
-      );
+      const request_upd = await Request.findOneAndUpdate(filter, update, options);
       return resolve(request_upd);
     } catch (err) {
       return reject(err);

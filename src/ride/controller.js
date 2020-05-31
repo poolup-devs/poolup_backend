@@ -234,10 +234,10 @@ const isLastMinuteBooking = (startingTime) => {
 const joinRide = (rideInfo, passengerUsername) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const ride_id = rideInfo._id;
+      const rideId = rideInfo._id;
       const { ownerUsername, date } = rideInfo;
 
-      const ride = await Ride.findById(ride_id);
+      const ride = await Ride.findById(rideId);
       if (!ride) {
         return reject(new ControllerException(400, "ride is not found"));
       } else if (ride.seats < 1) {
@@ -256,19 +256,19 @@ const joinRide = (rideInfo, passengerUsername) => {
       }
 
       const updatedRide = await Ride.findByIdAndUpdate(
-        ride_id,
+        rideId,
         { $addToSet: { passengers: passengerUsername }, $inc: { seats: -1 } },
         { new: true }
       );
 
       // Notify the driver that a new passenger has joined the ride
-      const noti = {
+      const passenger = await User.findOne({ username: passengerUsername });
+      await Noti.create({
         username: ownerUsername,
-        msg: `${passengerUsername} has joined your ride`,
-        date: new Date(),
+        msg: `${passenger.firstName} has joined your ride`,
+        iconUrl: passenger.picUrl,
         redirectPath: MY_DRIVES_PATH,
-      };
-      await Noti.create(noti);
+      });
 
       return resolve(updatedRide);
     } catch (err) {
@@ -280,7 +280,7 @@ const joinRide = (rideInfo, passengerUsername) => {
 // Cancel a ride, whether the user was a driver or passenger
 const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
   return new Promise(async (resolve, reject) => {
-    const cancelledRideDoc = await Ride.findOne({ _id: rideId });
+    const cancelledRideDoc = await Ride.findOne({ _id: rideId }).lean();
     if (!cancelledRideDoc) {
       return reject("Ride does not exist in database!");
     }
@@ -288,12 +288,13 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
     // Driver cancellation
     if (username === cancelledRideDoc.ownerUsername) {
       let affectedUsers = cancelledRideDoc.passengers;
-      const associatedRequests = await Request.find({ rideID: rideId });
+      const associatedRequests = await Request.find({ rideID: rideId }).lean();
       for (request of associatedRequests) {
         affectedUsers.push(request.requesterUsername);
       }
 
       // Notify all passengers/ requesters that the ride has been cancelled
+      const driver = await User.findOne({ username }).lean();
       affectedUsers.forEach(async (passengerUsername) => {
         // Refund Passenger
         // TODO: Write Test
@@ -301,8 +302,8 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
 
         let noti = await Noti.create({
           username: passengerUsername,
-          msg: `${username} has cancelled your ride`,
-          date: new Date(),
+          msg: `${driver.firstName} has cancelled your ride`,
+          iconUrl: driver.picUrl,
           redirectPath: SEARCH_RIDES_PATH,
         });
         // Update schema-less property: additionalProperties
@@ -341,10 +342,11 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       // );
 
       // Notify driver of passenger cancellation
+      const passenger = await User.findOne({ username }).lean();
       let noti = await Noti.create({
         username: cancelledRideDoc.ownerUsername,
-        msg: `${username} has cancelled your ride`,
-        date: new Date(),
+        msg: `${passenger.firstName} has cancelled your ride`,
+        iconUrl: passenger.picUrl,
         redirectPath: MY_DRIVES_PATH,
       });
       // Update schema-less property: additionalProperties
@@ -380,9 +382,8 @@ const addDriverInfoToRides = (rides) => {
         const driver = await User.findOne({
           username: ride.ownerUsername,
         });
-        const { picUrl, picType, firstName, lastName } = driver;
+        const { picUrl, firstName, lastName } = driver;
         ride.picUrl = picUrl;
-        ride.picType = picType;
         ride.firstName = firstName;
         ride.lastName = lastName;
         modifiedRides.push(ride);

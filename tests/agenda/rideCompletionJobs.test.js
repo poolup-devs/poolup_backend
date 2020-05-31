@@ -67,25 +67,18 @@ describe("Testing the implementation of scheduled jobs that occur after a ride i
 
     describe("Testing review notification message formatting helper function", () => {
       test("Testing message to leave a review for a single passenger", async () => {
-        expect(
-          await RideCompletionJobs.formatPassengerReviewMessage(["Sarah"])
-        ).toBe("Leave a review for your passenger, Sarah.");
+        expect(await RideCompletionJobs.formatPassengerReviewMessage(["Sarah"])).toBe(
+          "Leave a review for your passenger, Sarah."
+        );
       });
       test("Testing message to leave a review for two passengers", async () => {
-        expect(
-          await RideCompletionJobs.formatPassengerReviewMessage([
-            "Sarah",
-            "Mike",
-          ])
-        ).toBe("Leave a review for your passengers, Sarah and Mike.");
+        expect(await RideCompletionJobs.formatPassengerReviewMessage(["Sarah", "Mike"])).toBe(
+          "Leave a review for your passengers, Sarah and Mike."
+        );
       });
       test("Testing message to leave a review for three passengers", async () => {
         expect(
-          await RideCompletionJobs.formatPassengerReviewMessage([
-            "Sarah",
-            "Mike",
-            "Sammy",
-          ])
+          await RideCompletionJobs.formatPassengerReviewMessage(["Sarah", "Mike", "Sammy"])
         ).toBe("Leave a review for your passengers, Sarah, Mike, and Sammy.");
       });
     });
@@ -102,19 +95,16 @@ describe("Testing the implementation of scheduled jobs that occur after a ride i
           firstName: "Sarah",
           username: "driverUsername",
           picUrl: "driver_pic.png",
-          picType: "png",
         });
         let passenger1 = await User.create({
           firstName: "John",
           username: "passenger1",
           picUrl: "passenger1_pic.png",
-          picType: "png",
         });
         let passenger2 = await User.create({
           firstName: "Aiden",
           username: "passenger2",
           picUrl: "passenger2_pic.png",
-          picType: "png",
         });
         const ride = await Ride.create({
           ownerUsername: "driverUsername",
@@ -127,26 +117,23 @@ describe("Testing the implementation of scheduled jobs that occur after a ride i
         expect(driverNoti).toEqual(
           expect.objectContaining({
             username: driver.username,
+            iconUrl: passenger1.picUrl,
             msg: "Leave a review for your passengers, John and Aiden.",
           })
         );
         // Check additional properties in the driver notification
-        expect(driverNoti.additionalProperties.rideId.toString()).toBe(
-          ride._id.toString()
-        );
+        expect(driverNoti.additionalProperties.rideId.toString()).toBe(ride._id.toString());
         expect(driverNoti.additionalProperties.usersToReview).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
               username: passenger1.username,
               firstName: passenger1.firstName,
               picUrl: passenger1.picUrl,
-              picType: passenger1.picType,
             }),
             expect.objectContaining({
               username: passenger2.username,
               firstName: passenger2.firstName,
               picUrl: passenger2.picUrl,
-              picType: passenger2.picType,
             }),
           ])
         );
@@ -157,20 +144,18 @@ describe("Testing the implementation of scheduled jobs that occur after a ride i
         expect(passenger1Noti).toEqual(
           expect.objectContaining({
             username: passenger1.username,
+            iconUrl: driver.picUrl,
             msg: "Leave a review for your driver, Sarah.",
           })
         );
         // Check additional properties in passenger one's notification
-        expect(passenger1Noti.additionalProperties.rideId.toString()).toBe(
-          ride._id.toString()
-        );
+        expect(passenger1Noti.additionalProperties.rideId.toString()).toBe(ride._id.toString());
         expect(passenger1Noti.additionalProperties.usersToReview).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
               username: driver.username,
               firstName: driver.firstName,
               picUrl: driver.picUrl,
-              picType: driver.picType,
             }),
           ])
         );
@@ -181,20 +166,18 @@ describe("Testing the implementation of scheduled jobs that occur after a ride i
         expect(passenger2Noti).toEqual(
           expect.objectContaining({
             username: passenger2.username,
+            iconUrl: driver.picUrl,
             msg: "Leave a review for your driver, Sarah.",
           })
         );
         // Check additional properties in passenger one's notification
-        expect(passenger2Noti.additionalProperties.rideId.toString()).toBe(
-          ride._id.toString()
-        );
+        expect(passenger2Noti.additionalProperties.rideId.toString()).toBe(ride._id.toString());
         expect(passenger2Noti.additionalProperties.usersToReview).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
               username: driver.username,
               firstName: driver.firstName,
               picUrl: driver.picUrl,
-              picType: driver.picType,
             }),
           ])
         );
@@ -228,9 +211,7 @@ describe("Testing the implementation of scheduled jobs that occur after a ride i
           },
         });
         expect(scheduledJobs.length).toBe(1);
-        expect(scheduledJobs[0].attrs.name).toEqual(
-          "expire ability to leave review"
-        );
+        expect(scheduledJobs[0].attrs.name).toEqual("expire ability to leave review");
 
         scheduledJobs = await agenda.jobs({
           data: {
@@ -240,9 +221,7 @@ describe("Testing the implementation of scheduled jobs that occur after a ride i
           },
         });
         expect(scheduledJobs.length).toBe(1);
-        expect(scheduledJobs[0].attrs.name).toEqual(
-          "expire ability to leave review"
-        );
+        expect(scheduledJobs[0].attrs.name).toEqual("expire ability to leave review");
       });
 
       test("Testing that a review should be made public if one exists before the time for leaving a review expires", async () => {
@@ -272,12 +251,8 @@ describe("Testing the implementation of scheduled jobs that occur after a ride i
         );
 
         expect((await Review.findById(review._id)).isPublished).toBe(true);
-        expect(
-          (await User.findById(passenger1._id)).rating.sumOfAllRatings
-        ).toBe(14);
-        expect((await User.findById(passenger1._id)).rating.totalRatings).toBe(
-          3
-        );
+        expect((await User.findById(passenger1._id)).rating.sumOfAllRatings).toBe(14);
+        expect((await User.findById(passenger1._id)).rating.totalRatings).toBe(3);
       });
 
       test("Testing that reviews can no longer be made if a user does not leave a review before the ability to leave a review expires", async () => {

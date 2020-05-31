@@ -8,16 +8,14 @@ const agenda = require("../agenda");
 
 // A completed ride is one that hasn't been cancelled and contains at least one passenger
 const isCompletedRide = (rideDetails) => {
-  return new Promise(async (resolve, reject) => {
-    return resolve(rideDetails && rideDetails.passengers.length > 0);
-  });
+  return rideDetails && rideDetails.passengers.length > 0;
 };
 
 // Task to update the # completed rides for all users in a ride
 const updateCompletedRidesTask = async (rideId) => {
   const rideDetails = await Ride.findById(rideId);
   // At least a single passenger on the completed ride
-  if (await isCompletedRide(rideDetails)) {
+  if (isCompletedRide(rideDetails)) {
     // Update the driver's number of completed rides based on the number of passengers dropped off
     await User.findOneAndUpdate(
       { username: rideDetails.ownerUsername },
@@ -26,10 +24,7 @@ const updateCompletedRidesTask = async (rideId) => {
 
     // Update each passenger's number of completed rides by 1
     rideDetails.passengers.forEach(async (passenger) => {
-      await User.findOneAndUpdate(
-        { username: passenger },
-        { $inc: { ridesCompleted: 1 } }
-      );
+      await User.findOneAndUpdate({ username: passenger }, { $inc: { ridesCompleted: 1 } });
     });
   }
 };
@@ -37,15 +32,15 @@ const updateCompletedRidesTask = async (rideId) => {
 // Task to send a notification to all users in a ride to leave a review
 const createNotiToLeaveReviewTask = async (rideId) => {
   const rideDetails = await Ride.findById(rideId);
-  if (await isCompletedRide(rideDetails)) {
+  if (isCompletedRide(rideDetails)) {
     const driverUsername = rideDetails.ownerUsername;
     // Query for a list of passenger names to create driver notification
     let passengerInfo = [];
     for (let i = 0; i < rideDetails.passengers.length; i++) {
       const passengerUsername = rideDetails.passengers[i];
       const passenger = await User.findOne({ username: passengerUsername });
-      const { username, firstName, picUrl, picType } = passenger;
-      passengerInfo.push({ username, firstName, picUrl, picType });
+      const { username, firstName, picUrl } = passenger;
+      passengerInfo.push({ username, firstName, picUrl });
     }
 
     // Send a notification to the driver to review their passengers
@@ -55,7 +50,7 @@ const createNotiToLeaveReviewTask = async (rideId) => {
     const notiToDriver = await Noti.create({
       username: driverUsername,
       msg,
-      date: new Date(),
+      iconUrl: passengerInfo[0].picUrl,
     });
     // Update schema-less property: additionalProperties to contain rideId and usersToReview
     notiToDriver.additionalProperties = {
@@ -67,14 +62,14 @@ const createNotiToLeaveReviewTask = async (rideId) => {
 
     // Passengers each receive a notification to review driver
     const driver = await User.findOne({ username: driverUsername }).lean();
-    const { username, firstName, picUrl, picType } = driver;
-    const driverInfo = { username, firstName, picUrl, picType };
+    const { username, firstName, picUrl } = driver;
+    const driverInfo = { username, firstName, picUrl };
     for (let i = 0; i < rideDetails.passengers.length; i++) {
       const passengerUsername = rideDetails.passengers[i];
       const notiToPassenger = await Noti.create({
         username: passengerUsername,
         msg: `Leave a review for your driver, ${driverInfo.firstName}.`,
-        date: new Date(),
+        iconUrl: driverInfo.picUrl,
       });
       // Update schema-less property: additionalProperties to contain rideId and driverInfo
       notiToPassenger.additionalProperties = {
@@ -95,11 +90,7 @@ const createNotiToLeaveReviewTask = async (rideId) => {
 };
 
 // Task to make unidirectional reviews visible and prevent users from leaving further reviews
-const expireAbilityToLeaveReviewTask = async (
-  rideId,
-  driverUsername,
-  passengerUsername
-) => {
+const expireAbilityToLeaveReviewTask = async (rideId, driverUsername, passengerUsername) => {
   const driverReviewToPassenger = await Review.findOne({
     rideId,
     reviewerUsername: driverUsername,
@@ -133,9 +124,7 @@ const expireAbilityToLeaveReviewTask = async (
 const formatPassengerReviewMessage = (passengerFirstNames) => {
   return new Promise((resolve, reject) => {
     if (passengerFirstNames.length == 1)
-      return resolve(
-        `Leave a review for your passenger, ${passengerFirstNames[0]}.`
-      );
+      return resolve(`Leave a review for your passenger, ${passengerFirstNames[0]}.`);
     if (passengerFirstNames.length == 2)
       return resolve(
         `Leave a review for your passengers, ${passengerFirstNames[0]} and ${passengerFirstNames[1]}.`

@@ -285,7 +285,6 @@ Models:
 | password       | String | Yes      |                                                              |
 | phoneNumber    | String |          |                                                              |
 | picUrl         | String |          |                                                              |
-| picType        | String |          |                                                              |
 | createdAt      | Date   |          |                                                              |
 | aboutMe        | String |          |                                                              |
 | school         | String |          |                                                              |
@@ -395,7 +394,6 @@ POST request
             "sumOfAllRatings": 0,
             "totalRatings": 0
         },
-        "picType": "png",
         "isRegistered": true,
         "createdAt": "2020-04-12T20:13:40.851Z",
         "ridesCancelled": 0,
@@ -547,7 +545,6 @@ Upload a profile picture for the currently logged in user.
     "name": "Han",
     "email": "bin315a1@g.ucla.edu",
     "__v": 0,
-    "picType": "jpg",
     "picUrl": "https://bruinpool-bucket-staging.s3.us-east-2.amazonaws.com/bucketFolder/bin315a1-pic.jpg"
 }
 ```
@@ -835,7 +832,7 @@ Returns the user document containing the updated aboutMe property
 GET request
 
 - Get all of a user's public information
-- Returns the following user properties: - `name, school, aboutMe, rating, ridesCompleted, ridesCancelled, picUrl, picType`
+- Returns the following user properties: - `name, school, aboutMe, rating, ridesCompleted, ridesCancelled, picUrl`
 - Any properties that are not defined are not included; for example, if a user has not received any reviews yet, the `rating` property cannot be computed and subsequently will not be returned
 
 - Additional Note: - `ridesCompleted` automatically updates 2 hours after a ride containing at least one passenger begins - Drivers will receive a **completed ride** for each passenger dropped off - Passengers will receive a single **completed ride** after a carpooling session
@@ -857,7 +854,6 @@ GET request
 
 {
     "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
-    "picType": "png",
     "name": "First Last",
     "school": "UCLA",
     "rating": "3.33",
@@ -1035,7 +1031,6 @@ localhost:3000/rides/matching-rides?filter=
         "detail": "driver1_future",
         "__v": 0,
         "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
-        "picType": "png",
         "firstName": "user1"
     },
     {
@@ -1060,7 +1055,6 @@ localhost:3000/rides/matching-rides?filter=
         "detail": "rider1_future",
         "__v": 0,
         "picUrl": "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_blue.png",
-        "picType": "png",
         "firstName": "user4"
     }
 ]
@@ -1288,36 +1282,14 @@ PUT request
 
 - In the event that a **driver** cancels a ride **with at least one passenger** in it, the following occurs:
 
-1. All passengers receive a notification that their ride has been cancelled. This notification will include an additional property: `cancellationReason`.
-   - An example of a notification received by a passenger in the ride is the following:
-   ```
-   {
-   	_id: 5e6532be23cf21496470c042,
-   	username: 'passenger1',
-   	msg: 'driverUsername has cancelled your ride',
-   	date: 2020-03-08T18:00:30.136Z,
-   	additionalProperties: { cancellationReason: 'No longer traveling' },
-   	viewed: false
-   }
-   ```
+1. All passengers receive a notification that their ride has been cancelled.
 2. The ride is removed from the Ride collection.
-3. The driver receives the following penalty:
+3. The driver receives the following penalties:
    - `ridesCancelled` property is incremented
 
 - In the event that a **passenger** cancels a ride, the following occurs:
 
-1. The driver is notified about the cancellation. This notification will include the additional properties: `cancellationReason` and `messageToDriver`.
-   - An example of a notification received by the driver is the following:
-   ```
-    {
-   	_id: 5e6534144a54ab39342752d0,
-   	username: 'driverUsername',
-   	msg: 'passenger1 has cancelled your ride',
-   	date: 2020-03-08T18:06:12.834Z,
-   	viewed: false,
-   	additionalProperties: { cancellationReason: 'No longer traveling', messageToDriver: "Sorry I can't make it!!!" }
-    }
-   ```
+1. The driver is notified about the cancellation.
 2. All other passengers, if any, are notified about the cancellation. This notification ONLY includes the additional property: `cancellationReason`.
 3. The passenger who cancelled is removed from the ride, and a new spot is freed up. 4. The passenger who cancelled receive the following penalty:
    - `ridesCancelled` property is incremented
@@ -1477,6 +1449,7 @@ none
 | -------------------- | ------- | -------- | ------------------------------------------- |
 | username             | String  | Yes      | user receiving message                      |
 | msg                  | String  | Yes      | message to be displayed                     |
+| iconUrl              | String  | Yes      | AWS S3 image URL to be displayed            |
 | redirectPath         | String  |          | path to redirect when clicked               |
 | viewed               | Boolean | Yes      |                                             |
 | viewedAt             | Date    | Yes      |                                             |
@@ -1497,35 +1470,72 @@ The "Leave a review" notification contains the following additionalProperties: `
 - For example, a driver who rode with two passengers, user2 and user3, would receive the following notification.
 
 ```
-{
-    "_id" : ObjectId("5e98c4f1d1f2f342c4e30c94"),
-    "viewed" : false,
-    "date" : ISODate("2020-04-16T20:49:53.010Z"),
-    "username" : "user1",
-    "msg" : "Leave a review for your passengers, user2 and user3.",
-    "__v" : 0,
-    "additionalProperties" : {
-        "rideId" : ObjectId("5e98c4bdd1f2f342c4e30c93"),
-        "usersToReview" : [
-            {
-                "username" : "user2",
-                "firstName" : "user2",
-                "picUrl" : "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_pink.png",
-                "picType" : "png"
-            },
-            {
-                "username" : "user3",
-                "firstName" : "user3",
-                "picUrl" : "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_purple.png",
-                "picType" : "png"
-            }
+    {
+      viewed: false,
+      date: 2020-05-31T19:54:05.165Z,
+      _id: 5ed40b5d761ace1560872539,
+      username: 'driverUsername',
+      msg: 'Leave a review for your passengers, John and Aiden.',
+      iconUrl: 'passenger1_pic.png',
+      __v: 0,
+      additionalProperties: {
+        rideId: 5ed40b5d761ace1560872538,
+        usersToReview: [
+          {
+            username: 'passenger1',
+            firstName: 'John',
+            picUrl: 'passenger1_pic.png'
+          },
+          {
+            username: 'passenger2',
+            firstName: 'Aiden',
+            picUrl: 'passenger2_pic.png'
+          }
         ]
+      }
     }
-}
 
 ```
 
 ---
+
+### Ride Cancellation Notifications 
+- An example of a notification received by a passenger in the ride is the following:
+   ```
+    {
+      _id: 5ed40a1ee5c07b364c24d8cd,
+      viewed: false,
+      date: 2020-05-31T19:48:43.732Z,
+      username: 'passenger_1',
+      msg: 'John has cancelled your ride',
+      iconUrl: 'driverProfilePic.png',
+      redirectPath: '/rider',
+      __v: 0,
+      additionalProperties: { cancellationReason: 'No longer traveling' }
+    }
+   ```
+   This notification will include an additional property: `cancellationReason` which corresponds to a dropdown value. 
+
+- An example of a notification received by the driver is the following:
+   ```
+    {
+      _id: 5ed40a9bae696c364cfacffc,
+      viewed: false,
+      date: 2020-05-31T19:50:48.961Z,
+      username: 'driverUsername',
+      msg: 'Sarah has cancelled your ride',
+      iconUrl: 'profilePic.png',
+      redirectPath: '/driver/my-drives',
+      __v: 0,
+      additionalProperties: {
+        cancellationReason: 'Other',
+        messageToDriver: "Sorry I can't make it!!!"
+      }
+    }
+   ```
+   This notification will include the additional properties: `cancellationReason` and `messageToDriver`, which corresponds to a dropdown value and an input field, respectively. 
+
+   
 
 ### API Endpoints
 
@@ -1842,7 +1852,6 @@ GET request
             stripe: [Object],
             driver: [Object],
             rating: [Object],
-            picType: 'png',
             isRegistered: false,
             createdAt: 2020-04-08T05:47:55.927Z,
             ridesCancelled: 0,
@@ -1855,7 +1864,6 @@ GET request
             stripe: [Object],
             driver: [Object],
             rating: [Object],
-            picType: 'png',
             isRegistered: false,
             createdAt: 2020-04-08T05:47:55.927Z,
             ridesCancelled: 0,

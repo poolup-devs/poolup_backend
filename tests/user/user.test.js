@@ -178,6 +178,8 @@ describe("Testing users with verified and registered accounts", () => {
     email: "registeredUser@g.ucla.edu",
     phoneNumber: "1231231234",
     aboutMe: "This was my old about me.",
+    picUrl:
+      "https://poolup-bucket-staging.s3.us-east-2.amazonaws.com/bucketFolder/registeredUser-pic.png",
   };
 
   const registeredUserUsernameAuthToken = jwt.sign(
@@ -431,7 +433,14 @@ describe("Testing users with verified and registered accounts", () => {
     test("When retrieving a user's profile pic url that has not been set, the response should be an error", async () => {
       try {
         expect.assertions(1);
-        await db.getPicUrl(registeredUser.username);
+        const user = await User.create({
+          firstName: "John",
+          lastName: "Smith",
+          username: "uniqueUsername",
+          password: sha256("password"),
+          email: "uniqueUsername@g.ucla.edu",
+        });
+        await db.getPicUrl(user.username);
       } catch (e) {
         expect(e.message).toEqual("user's profile picture undefined");
       }
@@ -454,7 +463,7 @@ describe("Testing users with verified and registered accounts", () => {
       });
     });
 
-    test("When sending a PATCH request to /users/upload-profile-pic with a valid PNG image, should expect 200 response and stored correct picUrl and picType", async () => {
+    test("When sending a PATCH request to /users/upload-profile-pic with a valid PNG image, should expect 200 response and stored correct picUrl", async () => {
       await request(app)
         .patch("/users/upload-profile-pic")
         .set("Authorization", "Bearer " + registeredUserUsernameAuthToken)
@@ -464,7 +473,6 @@ describe("Testing users with verified and registered accounts", () => {
           expect(JSON.parse(res.text).picUrl).toEqual(
             "https://poolup-bucket-staging.s3.us-east-2.amazonaws.com/bucketFolder/registeredUser-pic.png"
           );
-          expect(JSON.parse(res.text).picType).toEqual("png");
         });
     });
 

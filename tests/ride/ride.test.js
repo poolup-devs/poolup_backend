@@ -10,7 +10,31 @@ const request = require("supertest");
 const db = require("../../src/ride/controller.js");
 const mongoose = require("mongoose");
 
+const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
+const MY_RIDES_PATH = process.env.MY_RIDES_PATH;
+const SEARCH_RIDES_PATH = process.env.SEARCH_RIDES_PATH;
+
 describe("Testing Ride endpoints", () => {
+  let driver;
+  let passenger_1;
+  let passenger_2;
+
+  beforeEach(async () => {
+    driver = await User.create({
+      username: "driverUsername",
+      picUrl: "driverProfilePic.png",
+      firstName: "John",
+      lastName: "Smith",
+    });
+    passenger_1 = await User.create({
+      username: "passenger_1",
+      picUrl: "profilePic.png",
+      firstName: "Sarah",
+      lastName: "Smith",
+    });
+    passenger_2 = await User.create({ username: "passenger_2", picUrl: "profilePic.png" });
+  });
+
   afterEach(async () => {
     await Ride.deleteMany({});
     await User.deleteMany({});
@@ -34,20 +58,21 @@ describe("Testing Ride endpoints", () => {
     };
 
     test("Expect when a user joins a ride, the user is added to the ride's list of passengers, the number of seats is decremented, and a notification is sent to the driver", async () => {
-      const passenger = await User.create({ username: "passenger_2" });
       const ownerUsername = "driverUsername";
       let ride = await Ride.create({
         ownerUsername,
         passengers: ["passenger_1"],
         seats: 2,
       });
-      const res = await db.joinRide(ride, passenger.username);
+      const res = await db.joinRide(ride, passenger_2.username);
       expect(Array.from(res.passengers).sort()).toEqual(["passenger_1", "passenger_2"]);
       expect(res.seats).toBe(1);
       expect(await Noti.findOne({ username: ownerUsername }).lean()).toEqual(
         expect.objectContaining({
           username: ownerUsername,
-          msg: "passenger_2 has joined your ride",
+          msg: `${passenger_2.firstName} has joined your ride`,
+          iconUrl: passenger_2.picUrl,
+          redirectPath: MY_DRIVES_PATH,
         })
       );
     });
@@ -116,7 +141,7 @@ describe("Testing Ride endpoints", () => {
         passengers: [],
       });
       const spy = jest.spyOn(global.Date, "now").mockImplementation(() => rightOnTimeDate);
-      const updatedRide = await db.joinRide(ride, "passenger1");
+      const updatedRide = await db.joinRide(ride, passenger_1.username);
       expect(updatedRide).toBeTruthy();
       spy.mockRestore();
     });
@@ -125,8 +150,8 @@ describe("Testing Ride endpoints", () => {
       let newRide;
       beforeEach(async () => {
         newRide = await Ride.create({
-          ownerUsername: "driverUsername",
-          passengers: ["passenger1"],
+          ownerUsername: driver.username,
+          passengers: [passenger_1.username],
           from: "Sacramento",
           to: "Goleta",
         });
@@ -140,7 +165,7 @@ describe("Testing Ride endpoints", () => {
           })
           .set(
             "Authorization",
-            "Bearer " + user_devCon.dev_createJWTAuthenticationToken("driverUsername")
+            "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(driver.username))
           )
           .expect(403);
       });
@@ -153,7 +178,7 @@ describe("Testing Ride endpoints", () => {
           })
           .set(
             "Authorization",
-            "Bearer " + user_devCon.dev_createJWTAuthenticationToken("passenger1")
+            "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(passenger_1.username))
           )
           .expect(400);
       });
@@ -166,7 +191,7 @@ describe("Testing Ride endpoints", () => {
           })
           .set(
             "Authorization",
-            "Bearer " + user_devCon.dev_createJWTAuthenticationToken("passenger2")
+            "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(passenger_2.username))
           )
           .expect(200);
       });
@@ -175,16 +200,12 @@ describe("Testing Ride endpoints", () => {
 
   describe("Testing cancellation of rides", () => {
     test("Test cancellation of a ride with passengers as a driver", async () => {
-      const driver = await User.create({
-        username: "driverUsername",
-        email: "driverUsername@ucla.edu",
-      });
       const ride = await Ride.create({
-        ownerUsername: "driverUsername",
-        passengers: ["passenger1", "passenger2"],
+        ownerUsername: driver.username,
+        passengers: [passenger_1.username, passenger_2.username],
       });
 
-      await db.cancelRide(ride._id, "driverUsername", "No longer traveling");
+      await db.cancelRide(ride._id, driver.username, "No longer traveling");
 
       // Check whether ride was deleted
       const cancelledRide = await Ride.findOne({
@@ -197,22 +218,23 @@ describe("Testing Ride endpoints", () => {
       expect(user.ridesCancelled).toBe(1);
 
       // Check creation of notification to each passenger with expected properties
-      const noti1 = await Noti.findOne({ username: "passenger1" }).lean();
+      const noti1 = await Noti.findOne({ username: passenger_1.username }).lean();
       expect(noti1).toEqual(
         expect.objectContaining({
-          username: "passenger1",
-          msg: "driverUsername has cancelled your ride",
+          msg: `${driver.firstName} has cancelled your ride`,
+          iconUrl: driver.picUrl,
+          redirectPath: SEARCH_RIDES_PATH,
         })
       );
       expect(noti1.additionalProperties).toEqual({
         cancellationReason: "No longer traveling",
       });
 
-      const noti2 = await Noti.findOne({ username: "passenger2" }).lean();
+      const noti2 = await Noti.findOne({ username: passenger_2.username }).lean();
       expect(noti2).toEqual(
         expect.objectContaining({
-          username: "passenger2",
-          msg: "driverUsername has cancelled your ride",
+          username: passenger_2.username,
+          msg: `${driver.firstName} has cancelled your ride`,
         })
       );
       expect(noti1.additionalProperties).toEqual({
@@ -221,13 +243,8 @@ describe("Testing Ride endpoints", () => {
     });
 
     test("Test cancellation of a ride without passengers as a driver", async () => {
-      const driver = await User.create({
-        username: "driverUsername",
-        email: "driverUsername@ucla.edu",
-      });
-      const ride = await Ride.create({ ownerUsername: "driverUsername" });
-
-      await db.cancelRide(ride._id, "driverUsername");
+      const ride = await Ride.create({ ownerUsername: driver.username });
+      await db.cancelRide(ride._id, driver.username);
 
       // Check whether ride was deleted
       const cancelledRide = await Ride.findOne({
@@ -237,23 +254,20 @@ describe("Testing Ride endpoints", () => {
     });
 
     test("Test cancellation of a ride as a passenger", async () => {
-      const passenger = await User.create({
-        username: "passenger1",
-        email: "passenger1@ucla.edu",
-      });
       const ride = await Ride.create({
-        ownerUsername: "driverUsername",
-        passengers: ["passenger1", "passenger2"],
+        ownerUsername: driver.username,
+        passengers: [passenger_1.username, passenger_2.username],
         seats: 0,
       });
-      await db.cancelRide(ride._id, "passenger1", "Other", "Sorry I can't make it!!!");
+      await db.cancelRide(ride._id, passenger_1.username, "Other", "Sorry I can't make it!!!");
 
       // Check whether a notification was sent to the driver
-      const driverNoti = await Noti.findOne({ username: "driverUsername" }).lean();
+      const driverNoti = await Noti.findOne({ username: driver.username }).lean();
       expect(driverNoti).toEqual(
         expect.objectContaining({
-          username: "driverUsername",
-          msg: "passenger1 has cancelled your ride",
+          username: driver.username,
+          iconUrl: passenger_1.picUrl,
+          msg: `${passenger_1.firstName} has cancelled your ride`,
         })
       );
       expect(driverNoti.additionalProperties).toEqual({
@@ -266,17 +280,17 @@ describe("Testing Ride endpoints", () => {
         ownerUsername: ride.ownerUsername,
       }).lean();
       expect(cancelledRide.seats).toBe(1);
-      expect(cancelledRide.passengers).toEqual(["passenger2"]);
+      expect(cancelledRide.passengers).toEqual([passenger_2.username]);
 
       // Check incrementation of cancelled rides
-      const user = await User.findOne({ username: passenger.username });
+      const user = await User.findOne({ username: passenger_1.username });
       expect(user.ridesCancelled).toBe(1);
     });
 
     test("Test error when trying to cancel a ride that the user does not belong to", async () => {
       const ride = await Ride.create({
-        ownerUsername: "driverUsername",
-        passengers: ["passenger1"],
+        ownerUsername: driver.username,
+        passengers: [passenger_1.username],
         seats: 1,
       });
       expect.assertions(1);
@@ -289,20 +303,17 @@ describe("Testing Ride endpoints", () => {
     });
 
     test("Expect a response code of 200 when cancelling a ride as a passenger.", async () => {
-      const passenger_obj = user_devCon.dev_createDummyUserObj("passenger1");
-      const passenger = await user_devCon.dev_createRegisteredUser(passenger_obj);
-
-      const ride = await Ride.create({
-        ownerUsername: "driverUsername",
-        passengers: ["passenger1"],
-        seats: 1,
+      let ride = await Ride.create({
+        ownerUsername: driver.username,
+        passengers: [passenger_2.username],
+        seats: 2,
       });
 
       await request(app)
         .put("/rides/cancel-ride")
         .set(
           "Authorization",
-          "Bearer " + user_devCon.dev_createJWTAuthenticationToken(passenger.username)
+          "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(passenger_2.username))
         )
         .send({
           cancellationReason: "Change of travel plans",
@@ -312,21 +323,22 @@ describe("Testing Ride endpoints", () => {
         .expect(200);
     });
 
-    test("Expect a response code of 200 when cancelling a ride as a passenger.", async () => {
-      const driver_obj = user_devCon.dev_createDummyUserObj("driverUsername");
-      const driver = user_devCon.dev_createRegisteredUser(driver_obj);
+    test("Expect a response code of 200 when cancelling a ride as a driver.", async () => {
+      const driver_obj = user_devCon.dev_createDummyUserObj(driver.username);
+      const registeredDriver = await user_devCon.dev_createRegisteredUser(driver_obj);
 
       const ride = await Ride.create({
-        ownerUsername: driver.username,
-        passengers: ["passenger1"],
-        seats: 1,
+        ownerUsername: registeredDriver.username,
+        passengers: [passenger_1.username],
+        seats: 3,
       });
 
       await request(app)
         .put("/rides/cancel-ride")
         .set(
           "Authorization",
-          "Bearer " + user_devCon.dev_createJWTAuthenticationToken(driver.username)
+          "Bearer " +
+            (await user_devCon.dev_createJWTAuthenticationToken(registeredDriver.username))
         )
         .send({ cancellationReason: "Change of travel plans", ride })
         .expect(200);
@@ -373,14 +385,14 @@ describe("Testing Ride endpoints", () => {
         })
         .set(
           "Authorization",
-          "Bearer " + user_devCon.dev_createJWTAuthenticationToken("driverUsername")
+          "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken("driverUsername"))
         )
         .expect(201);
     });
 
     test("Can't post a ride with different username in rideInfo and authUsername. Should return 403 response.", async () => {
       const user_obj = user_devCon.dev_createDummyUserObj("driver");
-      const user = user_devCon.dev_createRegisteredUser(user_obj);
+      const user = await user_devCon.dev_createRegisteredUser(user_obj);
       let ride = {
         ownerUsername: "",
         from: "Here",
@@ -398,7 +410,7 @@ describe("Testing Ride endpoints", () => {
         .send({ rideInfo: ride })
         .set(
           "Authorization",
-          "Bearer " + user_devCon.dev_createJWTAuthenticationToken(user.username)
+          "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(user.username))
         )
         .expect(403);
     });
@@ -417,9 +429,6 @@ describe("Testing Ride endpoints", () => {
     const oldestPastDate = new Date();
     oldestPastDate.setDate(now.getDate() - 3);
 
-    let driver;
-    let passenger;
-
     let pastRideFromSacramentoToGoleta;
     let pastRideFromNorwalkToFresno;
     let pastRideFromIrvineToLosAngeles;
@@ -435,34 +444,18 @@ describe("Testing Ride endpoints", () => {
     let rideFromAlhambraToIslaVista;
 
     beforeEach(async () => {
-      driver = await User.create({
-        username: "driverUsername",
-        picUrl: "some_url_1",
-        picType: "png",
-        firstName: "John",
-        lastName: "Smith",
-      });
-
-      passenger = await User.create({
-        username: "passenger1",
-        picUrl: "some_url_1",
-        picType: "png",
-        firstName: "Sarah",
-        lastName: "Smith",
-      });
-
       // Past Rides
       pastRideFromSacramentoToGoleta = await Ride.create({
         ownerUsername: driver.username,
         date: oldestPastDate,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
         from: "Sacramento",
         to: "Goleta",
       });
       pastRideFromNorwalkToFresno = await Ride.create({
         ownerUsername: driver.username,
         date: pastDate,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
         from: "Norwalk",
         to: "Fresno",
       });
@@ -471,28 +464,28 @@ describe("Testing Ride endpoints", () => {
         from: "Irvine",
         to: "Los Angeles",
         date: pastDate,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
       });
       pastRideFromLosAngelesToWestCovina = await Ride.create({
         ownerUsername: driver.username,
         from: "Los Angeles",
         to: "West Covina",
         date: pastDate,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
       });
       pastRideFromLosAngelesToRiverside = await Ride.create({
         ownerUsername: driver.username,
         from: "Los Angeles",
         to: "Riverside",
         date: pastDate,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
       });
       pastRideFromSantaBarbaraToOntario = await Ride.create({
         ownerUsername: driver.username,
         from: "Santa Barbara",
         to: "Ontario",
         date: pastDate,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
       });
 
       // Future Rides
@@ -503,7 +496,7 @@ describe("Testing Ride endpoints", () => {
         date: oldestFutureDate,
         price: "20",
         seats: 4,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
       });
       rideFromGoletaToIrvine = await Ride.create({
         ownerUsername: driver.username,
@@ -512,7 +505,7 @@ describe("Testing Ride endpoints", () => {
         date: futureDate,
         price: "20",
         seats: 4,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
       });
       rideFromPasadenaToOakland = await Ride.create({
         ownerUsername: driver.username,
@@ -521,7 +514,7 @@ describe("Testing Ride endpoints", () => {
         date: futureDate,
         price: "20",
         seats: 4,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
       });
       rideFromLosAngelesToChino = await Ride.create({
         ownerUsername: driver.username,
@@ -530,7 +523,7 @@ describe("Testing Ride endpoints", () => {
         date: futureDate,
         price: "20",
         seats: 4,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
       });
       rideFromRiversideToFullerton = await Ride.create({
         ownerUsername: driver.username,
@@ -539,7 +532,7 @@ describe("Testing Ride endpoints", () => {
         date: futureDate,
         price: "20",
         seats: 4,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
       });
       rideFromAlhambraToIslaVista = await Ride.create({
         ownerUsername: driver.username,
@@ -548,7 +541,7 @@ describe("Testing Ride endpoints", () => {
         date: futureDate,
         price: "20",
         seats: 4,
-        passengers: [passenger.username],
+        passengers: [passenger_1.username],
       });
     });
 
@@ -566,7 +559,6 @@ describe("Testing Ride endpoints", () => {
         expect(rides[0]).toEqual(
           expect.objectContaining({
             picUrl: driver.picUrl,
-            picType: driver.picType,
             firstName: driver.firstName,
             lastName: driver.lastName,
           })
@@ -574,7 +566,6 @@ describe("Testing Ride endpoints", () => {
         expect(rides[1]).toEqual(
           expect.objectContaining({
             picUrl: driver.picUrl,
-            picType: driver.picType,
             firstName: driver.firstName,
             lastName: driver.lastName,
           })
@@ -667,7 +658,7 @@ describe("Testing Ride endpoints", () => {
       });
 
       test("A user who has been a passenger should have their latest past rides in their ride history", async () => {
-        const rideHistory = await db.getRideHistory(passenger.username, 0);
+        const rideHistory = await db.getRideHistory(passenger_1.username, 0);
         expect(rideHistory.length).toBe(5);
         // Should not include the oldest date, only latest 5 rides
         expect(rideHistory).toEqual(
@@ -702,7 +693,7 @@ describe("Testing Ride endpoints", () => {
       });
 
       test("Testing pagination of ride history for a user with more than 5 past rides", async () => {
-        const rideHistory = await db.getRideHistory(passenger.username, 1);
+        const rideHistory = await db.getRideHistory(passenger_1.username, 1);
         expect(rideHistory.length).toBe(1);
         // Oldest ride should show up on the second page
         expect(rideHistory).toEqual(
@@ -719,10 +710,10 @@ describe("Testing Ride endpoints", () => {
       test("Should return 200 response code when obtaining another user's ride history by using the /rides/user-rides-history endpoint.", async () => {
         await request(app)
           .get("/rides/user-rides-history")
-          .query({ username: passenger.username, pageNum: 0 })
+          .query({ username: passenger_1.username, pageNum: 0 })
           .set(
             "Authorization",
-            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(passenger.username)
+            "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(passenger_1.username))
           )
           .expect(200);
       });
@@ -733,7 +724,7 @@ describe("Testing Ride endpoints", () => {
           .query({ pageNum: 0 })
           .set(
             "Authorization",
-            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(passenger.username)
+            "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(passenger_1.username))
           )
           .expect(200);
       });
@@ -746,7 +737,7 @@ describe("Testing Ride endpoints", () => {
       });
 
       test("A user with upcoming rides should have their latest upcoming rides in a list", async () => {
-        const upcomingRides = await db.getMyRideUpcoming(passenger.username, 0);
+        const upcomingRides = await db.getMyRideUpcoming(passenger_1.username, 0);
         expect(upcomingRides.length).toBe(5);
         expect(upcomingRides).toEqual(
           expect.arrayContaining([
@@ -780,7 +771,7 @@ describe("Testing Ride endpoints", () => {
       });
 
       test("Testing pagination of upcoming rides for a user with more than 5 upcoming rides", async () => {
-        const upcomingRides = await db.getMyRideUpcoming(passenger.username, 1);
+        const upcomingRides = await db.getMyRideUpcoming(passenger_1.username, 1);
         expect(upcomingRides.length).toBe(1);
         // Oldest upcoming ride should show up on the second page
         expect(upcomingRides).toEqual(
@@ -800,7 +791,7 @@ describe("Testing Ride endpoints", () => {
           .query({ pageNum: 0 })
           .set(
             "Authorization",
-            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(passenger.username)
+            "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(passenger_1.username))
           )
           .expect(200);
       });
@@ -870,7 +861,7 @@ describe("Testing Ride endpoints", () => {
           .query({ username: driver.username, pageNum: 0 })
           .set(
             "Authorization",
-            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(driver.username)
+            "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(driver.username))
           )
           .expect(200);
       });
@@ -878,10 +869,10 @@ describe("Testing Ride endpoints", () => {
       test("Should return 200 response code when obtaining another user's drive history by using the /rides/drives-history endpoint.", async () => {
         await request(app)
           .get("/rides/drives-history")
-          .query({ username: passenger.username, pageNum: 0 })
+          .query({ username: passenger_1.username, pageNum: 0 })
           .set(
             "Authorization",
-            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(driver.username)
+            "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(driver.username))
           )
           .expect(200);
       });
@@ -948,7 +939,7 @@ describe("Testing Ride endpoints", () => {
           .query({ username: driver.username, pageNum: 0 })
           .set(
             "Authorization",
-            "Bearer " + user_devCon.dev_createJWTAuthenticationToken(driver.username)
+            "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(driver.username))
           )
           .expect(200);
       });
@@ -961,7 +952,7 @@ describe("Testing Ride endpoints", () => {
           expect.objectContaining({
             ownerUsername: driver.username,
             date: oldestPastDate,
-            passengers: ["passenger1"],
+            passengers: [passenger_1.username],
             from: "Sacramento",
             to: "Goleta",
           })
@@ -989,7 +980,7 @@ describe("Testing Ride endpoints", () => {
         .query({ rideID: pastRideFromSacramentoToGoleta._id.toString() })
         .set(
           "Authorization",
-          "Bearer " + user_devCon.dev_createJWTAuthenticationToken(driver.username)
+          "Bearer " + (await user_devCon.dev_createJWTAuthenticationToken(driver.username))
         )
         .expect(200);
     });

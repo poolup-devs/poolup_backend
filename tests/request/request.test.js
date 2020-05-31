@@ -1,6 +1,3 @@
-const mongoose = require("mongoose");
-const request = require("supertest");
-
 require("../../src/db/mongoose");
 const db = require("../../src/request/controller.js");
 const rideDB = require("../../src/ride/controller.js");
@@ -9,9 +6,9 @@ const Request = require("../../src/request/request").Request;
 const Ride = require("../../src/ride/ride").Ride;
 const User = require("../../src/user/user").User;
 const Noti = require("../../src/noti/noti").Noti;
-const jwt = require("jsonwebtoken");
 
-const app = require("../../src/app");
+const MY_RIDES_PATH = process.env.MY_RIDES_PATH;
+const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
 
 describe("Testing request model controllers", () => {
   const curr_date = new Date();
@@ -97,7 +94,7 @@ describe("Testing request model controllers", () => {
         expect.objectContaining({
           iconUrl: userObj_rider2.picUrl,
           msg: `${requestObj_rider2.requesterUsername} is requesting a spot on your trip from ${ride.from} to ${ride.to}`,
-          redirectPath: process.env.MY_DRIVES_PATH,
+          redirectPath: MY_DRIVES_PATH,
         })
       );
     });
@@ -158,14 +155,21 @@ describe("Testing request model controllers", () => {
           request_rider2.requesteeUsername,
           "approved"
         );
-        ride_1 = await Ride.findById(ride_1._id);
+        ride_1 = await Ride.findById(ride_1._id).lean();
 
         expect(request_rider2.status).toBe("approved");
         expect(ride_1.passengers.length).toBe(2);
 
-        const res_noti = await Noti.find();
-        expect(res_noti.length).toBe(2);
+        const approvalNoti = await Noti.findOne({ username: userObj_rider2.username }).lean();
+        expect(approvalNoti).toEqual(
+          expect.objectContaining({
+            msg: `${requestObj_rider2.requesteeUsername} has accepted your ride request`,
+            iconUrl: userObj_driver.picUrl,
+            redirectPath: MY_RIDES_PATH,
+          })
+        );
       });
+
       test("Attempt to approve a request that's either archived or is not pending", async () => {
         let ride_1 = await Ride.create(rideObj_1);
         const requestObj_rider2 = {
@@ -201,11 +205,9 @@ describe("Testing request model controllers", () => {
         } catch (err) {
           expect(err.message).toBe("Ride has already been archived");
         }
-
-        const res_noti = await Noti.find();
-        expect(res_noti.length).toBe(2);
       });
     });
+
     describe("Testing Request Denial", () => {
       afterEach(async () => {
         await Ride.deleteMany();
@@ -227,14 +229,21 @@ describe("Testing request model controllers", () => {
           request_rider2.requesteeUsername,
           "denied"
         );
-        ride_1 = await Ride.findById(ride_1._id);
+        ride_1 = await Ride.findById(ride_1._id).lean();
 
         expect(request_rider2.status).toBe("denied");
         expect(ride_1.passengers.length).toBe(1);
 
-        const res_noti = await Noti.find();
-        expect(res_noti.length).toBe(2);
+        const deniedNoti = await Noti.findOne({ username: userObj_rider2.username }).lean();
+        expect(deniedNoti).toEqual(
+          expect.objectContaining({
+            msg: `Your request to join ${userObj_driver.username}'s ride has been denied`,
+            iconUrl: userObj_driver.picUrl,
+            redirectPath: MY_RIDES_PATH,
+          })
+        );
       });
+
       test("Attempt to deny a request that's either archived or is not pending", async () => {
         let ride_1 = await Ride.create(rideObj_1);
         const requestObj_rider2 = {
@@ -270,11 +279,9 @@ describe("Testing request model controllers", () => {
         } catch (err) {
           expect(err.message).toBe("Ride has already been archived");
         }
-
-        const res_noti = await Noti.find();
-        expect(res_noti.length).toBe(2);
       });
     });
+
     describe("Testing Request Cancellation", () => {
       afterEach(async () => {
         await Ride.deleteMany();
@@ -300,9 +307,19 @@ describe("Testing request model controllers", () => {
         expect(request_rider2.status).toBe("cancelled");
         expect(ride_1.passengers.length).toBe(1);
 
-        const res_noti = await Noti.find();
-        expect(res_noti.length).toBe(2);
+        const requestCancelledNoti = await Noti.findOne({
+          username: userObj_driver.username,
+          msg: `${requestObj_rider2.requesterUsername}'s request for your ride has been withdrawn`,
+        }).lean();
+
+        expect(requestCancelledNoti).toEqual(
+          expect.objectContaining({
+            iconUrl: userObj_rider2.picUrl,
+            redirectPath: MY_DRIVES_PATH,
+          })
+        );
       });
+
       test("Attempt to cancel a request that's either archived or is not pending", async () => {
         let ride_1 = await Ride.create(rideObj_1);
         const requestObj_rider2 = {
@@ -333,9 +350,6 @@ describe("Testing request model controllers", () => {
         } catch (err) {
           expect(err.message).toBe("Ride has already been archived");
         }
-
-        const res_noti = await Noti.find();
-        expect(res_noti.length).toBe(2);
       });
     });
   });

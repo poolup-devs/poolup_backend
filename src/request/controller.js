@@ -149,7 +149,6 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
   const filter = { _id: requestID };
   const update = { $set: { status: status } };
   const options = { new: true };
-  let errFlag = 0;
 
   return new Promise(async (resolve, reject) => {
     try {
@@ -161,7 +160,6 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
       } else if (request_res.status !== "pending") {
         return reject(new ControllerException(400, "Ride has already been " + request_res.status));
       } else {
-        // switch
         switch (status) {
           case "approved": {
             if (authUsername != request_res.requesteeUsername) {
@@ -173,9 +171,9 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
               );
             }
             request_upd = await Request.findOneAndUpdate(filter, update, options);
-            const user = await User.findOne({
+            const requestee = await User.findOne({
               username: request_upd.requesteeUsername,
-            });
+            }).lean();
             await Ride.findByIdAndUpdate(
               { _id: request_upd.rideID },
               { $addToSet: { passengers: request_upd.requesterUsername } },
@@ -183,8 +181,8 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             );
             await Noti.create({
               username: request_upd.requesterUsername,
-              msg: `${user.username} has accepted your ride request`,
-              date: new Date(),
+              msg: `${requestee.username} has accepted your ride request`,
+              iconUrl: requestee.picUrl,
               redirectPath: MY_RIDES_PATH,
             });
             break;
@@ -199,13 +197,13 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
               );
             }
             request_upd = await Request.findOneAndUpdate(filter, update, options);
-            const user = await User.findOne({
+            const requestee = await User.findOne({
               username: request_upd.requesteeUsername,
-            });
+            }).lean();
             await Noti.create({
               username: request_upd.requesterUsername,
-              msg: `Your request to join ${user.username}'s ride has been denied`,
-              date: new Date(),
+              msg: `Your request to join ${requestee.username}'s ride has been denied`,
+              iconUrl: requestee.picUrl,
               redirectPath: MY_RIDES_PATH,
             });
             break;
@@ -220,10 +218,13 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
               );
             }
             request_upd = await Request.findOneAndUpdate(filter, update, options);
+            const requester = await User.findOne({
+              username: request_upd.requesterUsername,
+            }).lean();
             await Noti.create({
               username: request_upd.requesteeUsername,
               msg: `${request_upd.requesterUsername}'s request for your ride has been withdrawn`,
-              date: new Date(),
+              iconUrl: requester.picUrl,
               redirectPath: MY_DRIVES_PATH,
             });
             break;
@@ -238,10 +239,13 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
               );
             }
             request_upd = await Request.findOneAndUpdate(filter, update, options);
+            const requester = await User.findOne({
+              username: request_upd.requesterUsername,
+            }).lean();
             await Noti.create({
               username: request_upd.requesteeUsername,
               msg: `${request_upd.requesterUsername}'s request for your ride has been paid`,
-              date: new Date(),
+              iconUrl: requester.picUrl,
               redirectPath: MY_DRIVES_PATH,
             });
             break;

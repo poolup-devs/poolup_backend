@@ -108,7 +108,6 @@ const createRequest = async (requestInfo) => {
       carryOn: requestInfo.carryOn,
       luggage: requestInfo.luggage,
       msg: requestInfo.msg,
-      date: new Date(),
     };
 
     try {

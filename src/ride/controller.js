@@ -265,7 +265,7 @@ const joinRide = (rideInfo, passengerUsername) => {
       const passenger = await User.findOne({ username: passengerUsername });
       await Noti.create({
         username: ownerUsername,
-        msg: `${passengerUsername} has joined your ride`,
+        msg: `${passenger.firstName} has joined your ride`,
         iconUrl: passenger.picUrl,
         redirectPath: MY_DRIVES_PATH,
       });
@@ -302,7 +302,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
 
         let noti = await Noti.create({
           username: passengerUsername,
-          msg: `${driver.username} has cancelled your ride`,
+          msg: `${driver.firstName} has cancelled your ride`,
           iconUrl: driver.picUrl,
           redirectPath: SEARCH_RIDES_PATH,
         });
@@ -345,7 +345,7 @@ const cancelRide = (rideId, username, cancellationReason, messageToDriver) => {
       const passenger = await User.findOne({ username }).lean();
       let noti = await Noti.create({
         username: cancelledRideDoc.ownerUsername,
-        msg: `${passenger.username} has cancelled your ride`,
+        msg: `${passenger.firstName} has cancelled your ride`,
         iconUrl: passenger.picUrl,
         redirectPath: MY_DRIVES_PATH,
       });

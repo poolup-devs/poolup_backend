@@ -18,7 +18,7 @@ describe("Testing request model controllers", () => {
     isRegistered: true,
     password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     username: "driver1",
-    firstName: "driver1",
+    firstName: "Mike",
     email: "driver1-noreply@g.ucla.edu",
     picUrl:
       "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
@@ -27,7 +27,7 @@ describe("Testing request model controllers", () => {
     isRegistered: true,
     password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     username: "rider1",
-    firstName: "rider1",
+    firstName: "Sarah",
     email: "rider2@g.ucla.edu",
     picUrl:
       "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_white.png",
@@ -36,7 +36,7 @@ describe("Testing request model controllers", () => {
     isRegistered: true,
     password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     username: "rider2",
-    firstName: "rider2",
+    firstName: "John",
     email: "rider2@g.ucla.edu",
     picUrl:
       "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_pink.png",
@@ -93,7 +93,7 @@ describe("Testing request model controllers", () => {
       expect(driverNotification).toEqual(
         expect.objectContaining({
           iconUrl: userObj_rider2.picUrl,
-          msg: `${requestObj_rider2.requesterUsername} is requesting a spot on your trip from ${ride.from} to ${ride.to}`,
+          msg: `${userObj_rider2.firstName} is requesting a spot on your trip from ${ride.from} to ${ride.to}`,
           redirectPath: MY_DRIVES_PATH,
         })
       );
@@ -163,7 +163,7 @@ describe("Testing request model controllers", () => {
         const approvalNoti = await Noti.findOne({ username: userObj_rider2.username }).lean();
         expect(approvalNoti).toEqual(
           expect.objectContaining({
-            msg: `${requestObj_rider2.requesteeUsername} has accepted your ride request`,
+            msg: `${userObj_driver.firstName} has accepted your ride request`,
             iconUrl: userObj_driver.picUrl,
             redirectPath: MY_RIDES_PATH,
           })
@@ -237,7 +237,7 @@ describe("Testing request model controllers", () => {
         const deniedNoti = await Noti.findOne({ username: userObj_rider2.username }).lean();
         expect(deniedNoti).toEqual(
           expect.objectContaining({
-            msg: `Your request to join ${userObj_driver.username}'s ride has been denied`,
+            msg: `Your request to join ${userObj_driver.firstName}'s ride has been denied`,
             iconUrl: userObj_driver.picUrl,
             redirectPath: MY_RIDES_PATH,
           })
@@ -309,7 +309,7 @@ describe("Testing request model controllers", () => {
 
         const requestCancelledNoti = await Noti.findOne({
           username: userObj_driver.username,
-          msg: `${requestObj_rider2.requesterUsername}'s request for your ride has been withdrawn`,
+          msg: `${userObj_rider2.firstName}'s request for your ride has been withdrawn`,
         }).lean();
 
         expect(requestCancelledNoti).toEqual(

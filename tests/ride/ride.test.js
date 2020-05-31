@@ -70,7 +70,7 @@ describe("Testing Ride endpoints", () => {
       expect(await Noti.findOne({ username: ownerUsername }).lean()).toEqual(
         expect.objectContaining({
           username: ownerUsername,
-          msg: `${passenger_2.username} has joined your ride`,
+          msg: `${passenger_2.firstName} has joined your ride`,
           iconUrl: passenger_2.picUrl,
           redirectPath: MY_DRIVES_PATH,
         })
@@ -221,7 +221,7 @@ describe("Testing Ride endpoints", () => {
       const noti1 = await Noti.findOne({ username: passenger_1.username }).lean();
       expect(noti1).toEqual(
         expect.objectContaining({
-          msg: `${driver.username} has cancelled your ride`,
+          msg: `${driver.firstName} has cancelled your ride`,
           iconUrl: driver.picUrl,
           redirectPath: SEARCH_RIDES_PATH,
         })
@@ -234,7 +234,7 @@ describe("Testing Ride endpoints", () => {
       expect(noti2).toEqual(
         expect.objectContaining({
           username: passenger_2.username,
-          msg: `${driver.username} has cancelled your ride`,
+          msg: `${driver.firstName} has cancelled your ride`,
         })
       );
       expect(noti1.additionalProperties).toEqual({
@@ -267,7 +267,7 @@ describe("Testing Ride endpoints", () => {
         expect.objectContaining({
           username: driver.username,
           iconUrl: passenger_1.picUrl,
-          msg: "passenger_1 has cancelled your ride",
+          msg: `${passenger_1.firstName} has cancelled your ride`,
         })
       );
       expect(driverNoti.additionalProperties).toEqual({

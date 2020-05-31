@@ -133,7 +133,7 @@ const createRequest = async (requestInfo) => {
       await Noti.create({
         username: request.requesteeUsername,
         iconUrl: requester.picUrl,
-        msg: `${request.requesterUsername} is requesting a spot on your trip from ${ride.from} to ${ride.to}`,
+        msg: `${requester.firstName} is requesting a spot on your trip from ${ride.from} to ${ride.to}`,
         redirectPath: MY_DRIVES_PATH,
       });
       return resolve(request);
@@ -180,7 +180,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             );
             await Noti.create({
               username: request_upd.requesterUsername,
-              msg: `${requestee.username} has accepted your ride request`,
+              msg: `${requestee.firstName} has accepted your ride request`,
               iconUrl: requestee.picUrl,
               redirectPath: MY_RIDES_PATH,
             });
@@ -201,7 +201,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             }).lean();
             await Noti.create({
               username: request_upd.requesterUsername,
-              msg: `Your request to join ${requestee.username}'s ride has been denied`,
+              msg: `Your request to join ${requestee.firstName}'s ride has been denied`,
               iconUrl: requestee.picUrl,
               redirectPath: MY_RIDES_PATH,
             });
@@ -222,7 +222,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             }).lean();
             await Noti.create({
               username: request_upd.requesteeUsername,
-              msg: `${request_upd.requesterUsername}'s request for your ride has been withdrawn`,
+              msg: `${requester.firstName}'s request for your ride has been withdrawn`,
               iconUrl: requester.picUrl,
               redirectPath: MY_DRIVES_PATH,
             });
@@ -243,7 +243,7 @@ const updateRequestStatus = async (requestID, authUsername, status) => {
             }).lean();
             await Noti.create({
               username: request_upd.requesteeUsername,
-              msg: `${request_upd.requesterUsername}'s request for your ride has been paid`,
+              msg: `${requester.firstName}'s request for your ride has been paid`,
               iconUrl: requester.picUrl,
               redirectPath: MY_DRIVES_PATH,
             });

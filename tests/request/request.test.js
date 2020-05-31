@@ -77,10 +77,9 @@ describe("Testing request model controllers", () => {
     });
 
     test("Request for that ride has already been made", async () => {
-      await Noti.deleteMany();
-      const ride_1 = await Ride.create(rideObj_1);
+      const ride = await Ride.create(rideObj_1);
       const requestObj_rider2 = {
-        rideID: ride_1._id,
+        rideID: ride._id,
         requesterUsername: "rider2",
         requesteeUsername: "driver1",
         date: new Date(),
@@ -91,8 +90,16 @@ describe("Testing request model controllers", () => {
       } catch (err) {
         expect(err.message).toBe("A request has already been created for this ride");
       }
-      const res_noti = await Noti.find();
-      expect(res_noti.length).toBe(1);
+      const driverNotification = await Noti.findOne({
+        username: requestObj_rider2.requesteeUsername,
+      }).lean();
+      expect(driverNotification).toEqual(
+        expect.objectContaining({
+          iconUrl: userObj_rider2.picUrl,
+          msg: `${requestObj_rider2.requesterUsername} is requesting a spot on your trip from ${ride.from} to ${ride.to}`,
+          redirectPath: process.env.MY_DRIVES_PATH,
+        })
+      );
     });
     test("Requester's already approved to be in the ride", async () => {
       const ride_1 = await Ride.create(rideObj_1);

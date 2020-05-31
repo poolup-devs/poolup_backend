@@ -10,6 +10,9 @@ const request = require("supertest");
 const db = require("../../src/ride/controller.js");
 const mongoose = require("mongoose");
 
+const MY_DRIVES_PATH = process.env.MY_DRIVES_PATH;
+const MY_RIDES_PATH = process.env.MY_RIDES_PATH;
+
 describe("Testing Ride endpoints", () => {
   afterEach(async () => {
     await Ride.deleteMany({});
@@ -19,6 +22,14 @@ describe("Testing Ride endpoints", () => {
   });
 
   describe("Testing when a user joins a ride", () => {
+    let passenger_1 = new User({ username: "passenger_1", picUrl: "profilePic.png" });
+    let passenger_2 = new User({ username: "passenger_2", picUrl: "profilePic.png" });
+
+    beforeEach(async () => {
+      passenger_1 = await User.create(passenger_1);
+      passenger_2 = await User.create(passenger_2);
+    });
+
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 2);
 
@@ -34,20 +45,21 @@ describe("Testing Ride endpoints", () => {
     };
 
     test("Expect when a user joins a ride, the user is added to the ride's list of passengers, the number of seats is decremented, and a notification is sent to the driver", async () => {
-      const passenger = await User.create({ username: "passenger_2" });
       const ownerUsername = "driverUsername";
       let ride = await Ride.create({
         ownerUsername,
         passengers: ["passenger_1"],
         seats: 2,
       });
-      const res = await db.joinRide(ride, passenger.username);
+      const res = await db.joinRide(ride, passenger_2.username);
       expect(Array.from(res.passengers).sort()).toEqual(["passenger_1", "passenger_2"]);
       expect(res.seats).toBe(1);
       expect(await Noti.findOne({ username: ownerUsername }).lean()).toEqual(
         expect.objectContaining({
           username: ownerUsername,
-          msg: "passenger_2 has joined your ride",
+          msg: `${passenger_2.username} has joined your ride`,
+          iconUrl: passenger_2.picUrl,
+          redirectPath: MY_DRIVES_PATH,
         })
       );
     });
@@ -116,7 +128,7 @@ describe("Testing Ride endpoints", () => {
         passengers: [],
       });
       const spy = jest.spyOn(global.Date, "now").mockImplementation(() => rightOnTimeDate);
-      const updatedRide = await db.joinRide(ride, "passenger1");
+      const updatedRide = await db.joinRide(ride, passenger_1.username);
       expect(updatedRide).toBeTruthy();
       spy.mockRestore();
     });

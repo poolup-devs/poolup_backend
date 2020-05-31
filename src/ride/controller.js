@@ -234,10 +234,10 @@ const isLastMinuteBooking = (startingTime) => {
 const joinRide = (rideInfo, passengerUsername) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const ride_id = rideInfo._id;
+      const rideId = rideInfo._id;
       const { ownerUsername, date } = rideInfo;
 
-      const ride = await Ride.findById(ride_id);
+      const ride = await Ride.findById(rideId);
       if (!ride) {
         return reject(new ControllerException(400, "ride is not found"));
       } else if (ride.seats < 1) {
@@ -256,19 +256,19 @@ const joinRide = (rideInfo, passengerUsername) => {
       }
 
       const updatedRide = await Ride.findByIdAndUpdate(
-        ride_id,
+        rideId,
         { $addToSet: { passengers: passengerUsername }, $inc: { seats: -1 } },
         { new: true }
       );
 
       // Notify the driver that a new passenger has joined the ride
-      const noti = {
+      const passenger = await User.findOne({ username: passengerUsername });
+      await Noti.create({
         username: ownerUsername,
         msg: `${passengerUsername} has joined your ride`,
-        date: new Date(),
+        iconUrl: passenger.picUrl,
         redirectPath: MY_DRIVES_PATH,
-      };
-      await Noti.create(noti);
+      });
 
       return resolve(updatedRide);
     } catch (err) {

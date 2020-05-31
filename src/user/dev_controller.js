@@ -78,10 +78,13 @@ const dev_createRegisteredUsers = (user_objList) => {
 
 const dev_createDummyUserObj = (alias) => {
   const dummyUserObj = {
+    username: alias,
     firstname: alias,
     lastname: "lastname",
     email: alias + "@ucla.edu",
     password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    picUrl:
+      "https://bruinpool-bucket-alpha.s3.us-east-2.amazonaws.com/defaultProfilePic/BruinPoolLogo_pink.png",
   };
   return dummyUserObj;
 };
@@ -93,8 +96,10 @@ const dev_createDummyUserObj = (alias) => {
   username 
 */
 
-const dev_createJWTAuthenticationToken = (username) => {
-  const registeredUserUsernameAuthToken = jwt.sign({ username }, process.env.JWT_SECRET_KEY);
+const dev_createJWTAuthenticationToken = async (username) => {
+  const user = await User.findOne({ username }).lean();
+  const _id = user._id;
+  const registeredUserUsernameAuthToken = jwt.sign({ username, _id }, process.env.JWT_SECRET_KEY);
   return registeredUserUsernameAuthToken;
 };
 

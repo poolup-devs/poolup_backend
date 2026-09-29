@@ -11,6 +11,8 @@ const db = require("../../src/user/controller.js");
 const db_email = require("../../src/user/email/controller.js");
 const sha256 = require("sha256");
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
+const s3Db = require("../../src/db/awsS3_controller");
 
 describe("Testing the verification of an email", () => {
   afterEach(async () => {
@@ -476,6 +478,48 @@ describe("Testing users with verified and registered accounts", () => {
         .expect(400)
         .then((res) => {
           expect(res.text).toEqual("file type not allowed");
+        });
+    });
+
+    test("When sending a PATCH request to /users/upload-profile-pic with a valid PNG image, the uploaded file should reach S3 and the user's picUrl/picType should be stored", async () => {
+      const picUrl = "https://example-bucket.s3.amazonaws.com/bucketFolder/registeredUser-pic.png";
+      const deleteSpy = jest.spyOn(s3Db, "deleteFile").mockResolvedValue({});
+      const uploadSpy = jest.spyOn(s3Db, "uploadFile").mockResolvedValue({ Location: picUrl });
+
+      try {
+        await request(app)
+          .patch("/users/upload-profile-pic")
+          .set("Authorization", `Bearer ${registeredUserUsernameAuthToken}`)
+          .attach("file", "./tests/user/test_profile.png")
+          .expect(200)
+          .then((res) => {
+            expect(JSON.parse(res.text).picUrl).toEqual(picUrl);
+            expect(JSON.parse(res.text).picType).toEqual("png");
+          });
+
+        expect(uploadSpy).toHaveBeenCalledTimes(1);
+        const [buffer, fileName, type] = uploadSpy.mock.calls[0];
+        expect(buffer.equals(fs.readFileSync("./tests/user/test_profile.png"))).toBe(true);
+        expect(fileName).toEqual("bucketFolder/registeredUser-pic");
+        expect(type.ext).toEqual("png");
+
+        const user = await User.findOne({ username: registeredUser.username }).lean();
+        expect(user.picUrl).toEqual(picUrl);
+        expect(user.picType).toEqual("png");
+      } finally {
+        deleteSpy.mockRestore();
+        uploadSpy.mockRestore();
+      }
+    });
+
+    test("When sending a PATCH request to /users/upload-profile-pic without a file, should expect 400 error response.", async () => {
+      await request(app)
+        .patch("/users/upload-profile-pic")
+        .set("Authorization", `Bearer ${registeredUserUsernameAuthToken}`)
+        .field("notAFile", "value")
+        .expect(400)
+        .then((res) => {
+          expect(res.text).toEqual("no file uploaded");
         });
     });
 

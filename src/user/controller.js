@@ -98,6 +98,9 @@ const updateProfilePic = (authUsername, req) => {
     try {
       const parsedReqHeader = await promisfiedFormParse(req);
       const files = parsedReqHeader.files;
+      if (!files.file || !files.file.length) {
+        return reject(new ControllerException(400, "no file uploaded"));
+      }
 
       const path = files.file[0].path;
       const buffer = fs.readFileSync(path);
